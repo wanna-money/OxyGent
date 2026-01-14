@@ -23,6 +23,9 @@ from .version import (
     stop_version_sync,
 )
 
+# Prompt optimization
+from .optimizer import get_prompt_optimizer, PromptOptimizer
+
 __all__ = [
     # Core ES-based prompt management
     'get_prompt_manager',
@@ -41,4 +44,8 @@ __all__ = [
     'get_version_sync_coordinator',
     'start_version_sync',
     'stop_version_sync',
+
+    # Prompt optimization
+    'get_prompt_optimizer',
+    'PromptOptimizer',
 ]

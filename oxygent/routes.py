@@ -647,98 +647,6 @@ async def search_prompts(
         logger.error(f"Failed to search prompts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.post("/api/prompts/hot-reload/{prompt_key}", response_model=PromptApiResponse)
-async def hot_reload_prompt_by_key(prompt_key: str):
-    """Hot reload specified prompt to all related agents"""
-    try:
-        from .live_prompt import hot_reload_prompt, dynamic_agent_manager
-
-        # Execute hot reload
-        success = await hot_reload_prompt(prompt_key)
-
-        if not success:
-            return PromptApiResponse(
-                success=False,
-                message=f"No agents found using prompt {prompt_key} or update failed",
-                data={"prompt_key": prompt_key, "updated_agents": []}
-            )
-
-        # Get list of updated agents
-        agent_mapping = dynamic_agent_manager.get_agent_prompt_mapping()
-        updated_agents = [
-            agent_name for agent_name, key in agent_mapping.items()
-            if key == prompt_key
-        ]
-
-        return PromptApiResponse(
-            success=True,
-            message=f"Successfully hot reloaded prompt {prompt_key}",
-            data={
-                "prompt_key": prompt_key,
-                "updated_agents": updated_agents,
-                "reload_time": datetime.now().isoformat()
-            }
-        )
-    except Exception as e:
-        logger.error(f"Failed to hot reload prompt {prompt_key}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/api/prompts/hot-reload/agent/{agent_name}", response_model=PromptApiResponse)
-async def hot_reload_agent_prompt(agent_name: str):
-    """Hot reload prompt for specified agent"""
-    try:
-        from .live_prompt import hot_reload_agent, dynamic_agent_manager
-
-        success = await hot_reload_agent(agent_name)
-
-        if not success:
-            return PromptApiResponse(
-                success=False,
-                message=f"Agent {agent_name} not found or update failed",
-                data={"agent_name": agent_name}
-            )
-
-        # Get agent's corresponding prompt key
-        agent_mapping = dynamic_agent_manager.get_agent_prompt_mapping()
-        prompt_key = agent_mapping.get(agent_name, "unknown")
-
-        return PromptApiResponse(
-            success=True,
-            message=f"Successfully hot reloaded agent {agent_name}'s prompt",
-            data={
-                "agent_name": agent_name,
-                "prompt_key": prompt_key,
-                "reload_time": datetime.now().isoformat()
-            }
-        )
-    except Exception as e:
-        logger.error(f"Failed to hot reload agent {agent_name}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/api/prompts/hot-reload/all", response_model=PromptApiResponse)
-async def hot_reload_all_agent_prompts():
-    """Hot reload all agent prompts"""
-    try:
-        from .live_prompt import hot_reload_all_prompts
-
-        results = await hot_reload_all_prompts()
-
-        return PromptApiResponse(
-            success=bool(results),
-            message="Successfully completed batch hot reload" if results else "No agents to reload",
-            data={
-                "reload_success": results,
-                "reload_time": datetime.now().isoformat()
-            }
-        )
-    except Exception as e:
-        logger.error(f"Failed to hot reload all prompts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 # =============================================================================
 # Prompt Version Management API Routes
 # =============================================================================
@@ -1428,3 +1336,126 @@ async def delete_rating(rating_id: str):
         error_msg = traceback.format_exc()
         logger.error(f"Delete rating error: {error_msg}")
         return WebResponse(code=500, message="Failed to delete rating").to_dict()
+
+
+# =============================================================================
+# Prompt Optimization API Routes
+# =============================================================================
+
+class PromptOptimizeRequest(BaseModel):
+    """Request model for prompt optimization."""
+    prompt_key: str
+    agent_type: str = "general"
+    optimization_strategy: str = "comprehensive"
+    custom_requirements: str = ""
+    auto_apply: bool = False
+    llm_model: Optional[str] = None  # Optional: specify which LLM to use
+
+
+@router.post("/api/prompts/optimize", response_model=PromptApiResponse)
+async def optimize_prompt(request: PromptOptimizeRequest):
+    """Optimize a prompt using AI-powered analysis.
+
+    This endpoint analyzes the current prompt and provides an improved version
+    based on the specified optimization strategy and framework constraints.
+
+    Args:
+        request: Optimization request containing prompt_key, strategy, and requirements
+
+    Returns:
+        dict: PromptApiResponse with optimization results including:
+            - analysis: Analysis of the original prompt
+            - improvements: List of improvements made
+            - optimized_prompt: The improved prompt text
+            - rationale: Explanation of improvements
+            - validation: Validation results
+
+    Example:
+        POST /api/prompts/optimize
+        {
+            "prompt_key": "SYSTEM_PROMPT",
+            "agent_type": "react",
+            "optimization_strategy": "comprehensive",
+            "custom_requirements": "Make it more concise",
+            "auto_apply": false
+        }
+    """
+    try:
+        from .live_prompt import get_prompt_manager
+        from .live_prompt.optimizer import get_prompt_optimizer
+
+        # Get current prompt
+        manager = await get_prompt_manager()
+        current_prompt_data = await manager.get_prompt(request.prompt_key, use_cache=True)
+
+        if not current_prompt_data:
+            raise HTTPException(status_code=404, detail=f"Prompt '{request.prompt_key}' not found")
+
+        current_prompt_content = current_prompt_data.get("prompt_content", "")
+
+        # Optimize prompt
+        optimizer = get_prompt_optimizer(llm_model=request.llm_model)
+        optimization_result = await optimizer.optimize(
+            current_prompt=current_prompt_content,
+            agent_type=request.agent_type,
+            optimization_strategy=request.optimization_strategy,
+            custom_requirements=request.custom_requirements
+        )
+
+        # Check if optimization was successful
+        if optimization_result.get("error"):
+            return PromptApiResponse(
+                success=False,
+                message=f"Optimization failed: {optimization_result['error']}",
+                data=optimization_result
+            )
+
+        # If auto_apply is True, save the optimized prompt
+        if request.auto_apply and optimization_result.get("optimized_prompt"):
+            update_data = {
+                "prompt_content": optimization_result["optimized_prompt"],
+                "description": current_prompt_data.get("description", ""),
+                "category": current_prompt_data.get("category", "agent"),
+                "agent_type": current_prompt_data.get("agent_type", ""),
+                "tags": current_prompt_data.get("tags", []),
+            }
+
+            save_success = await manager.save_prompt(
+                prompt_key=request.prompt_key,
+                is_active=current_prompt_data.get("is_active", True),
+                created_by=current_prompt_data.get("created_by", "user"),
+                **update_data
+            )
+
+            if save_success:
+                # Hot reload the prompt
+                from .live_prompt import hot_reload_prompt
+                await hot_reload_prompt(request.prompt_key)
+
+                optimization_result["auto_applied"] = True
+                optimization_result["new_version"] = current_prompt_data.get("version", 1) + 1
+            else:
+                optimization_result["auto_applied"] = False
+                optimization_result["save_error"] = "Failed to save optimized prompt"
+        else:
+            optimization_result["auto_applied"] = False
+
+        return PromptApiResponse(
+            success=True,
+            message="Prompt optimized successfully" + (
+                " and applied" if optimization_result.get("auto_applied") else ""
+            ),
+            data={
+                "prompt_key": request.prompt_key,
+                "original_prompt": current_prompt_content,
+                **optimization_result
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to optimize prompt {request.prompt_key}: {e}")
+        error_msg = traceback.format_exc()
+        logger.error(error_msg)
+        raise HTTPException(status_code=500, detail=str(e))
