@@ -38,7 +38,8 @@ class VersionSyncCoordinator:
         # Read polling interval from config, or use default value
         if polling_interval is None:
             polling_interval = Config.get_live_prompt_es_polling_interval()
-
+        if polling_interval == 0 or polling_interval is None:
+            polling_interval = 2  # Default to 2 seconds
         self.polling_interval = polling_interval
         self.use_es_polling = False
         self.polling_task = None
