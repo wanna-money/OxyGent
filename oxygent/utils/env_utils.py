@@ -35,7 +35,7 @@ def get_env_var(
 
     if value is None:
         raise ValueError(
-            f"Environment variable '{key}' is not set and no default value provided. Please check your .env or system env."
+            f"Environment variable '{key}' is not set and no default value provided. Please check your .env.example or system env."
         )
 
     # If expected type is str, simply check and return

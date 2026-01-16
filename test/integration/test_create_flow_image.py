@@ -10,7 +10,7 @@ Based on the actual demo implementation, this test suite covers:
 
 Before running integration tests, ensure:
     + The OpenAI compatible API endpoint is accessible and configured
-    + The API keys and environment variables are set in .env file
+    + The API keys and environment variables are set in .env.example file
     + The models are available and accessible
     + The file system has write permissions for test output
     + Network connectivity is available for API calls

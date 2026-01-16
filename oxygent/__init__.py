@@ -14,7 +14,7 @@ from .live_prompt import (
     hot_reload_all_prompts,
 )
 
-load_dotenv(".env")
+load_dotenv(".env.example")
 
 __all__ = [
     "Oxy",
