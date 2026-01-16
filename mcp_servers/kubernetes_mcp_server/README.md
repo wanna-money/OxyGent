@@ -18,10 +18,10 @@ pip install -r mcp_servers/kubernetes_mcp_server/requirements.txt
 
 ```bash
 # 备份本地环境变量
-cp .env.example .env.example.bak
+cp .env .env.bak
 
 # 使用本mcp的环境变量文件
-cp mcp_servers/kubernetes_mcp_server/.env.example.example .env.example
+cp mcp_servers/kubernetes_mcp_server/.env.example .env
 ```
 
 ### 3. 基础使用

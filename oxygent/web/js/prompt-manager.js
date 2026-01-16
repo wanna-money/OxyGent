@@ -251,7 +251,7 @@ function createPromptCard(prompt) {
         <div class="prompt-content">
             ${escapeHtml(truncatedContent)}
         </div>
-        <div class="prompt-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="prompt-actions" style="grid-template-columns: 1fr 1fr; gap: 8px;">
             <button class="btn btn-sm btn-primary" onclick="editPrompt('${escapeHtml(prompt.prompt_key)}')">
                 ✏️ Edit
                 <span class="btn-badge"></span>

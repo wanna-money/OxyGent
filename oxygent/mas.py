@@ -1183,13 +1183,13 @@ class MAS(BaseModel):
             app.include_router(app_router)
             if isinstance(app_router, BankRouter):
                 app_router.set_mas(self)
-            banks.extend(get_banks_from_router(app_router))
+                banks.extend(get_banks_from_router(app_router))
 
-        @app.get("/list_banks")
-        def list_banks():
-            return banks
+        if banks:
 
-        app.include_router(router)
+            @app.get("/list_banks")
+            def list_banks():
+                return banks
 
         web_src = "web"
         with importlib.resources.as_file(
@@ -1418,6 +1418,24 @@ class MAS(BaseModel):
             await queue.put(data)
             return WebResponse().to_dict()
 
+        async def log_and_open():
+            await asyncio.sleep(0.1)
+            url_prefix = os.getenv("OXYGENT_URL", f"http://{host}:{port}/")
+            web_url = url_prefix + "web/index.html"
+            logger.info(
+                f"The web page URL is: {web_url}, click to open.",
+                extra={"color": "yellow"},
+            )
+
+            # Automatically open the web page after a short delay
+            if Config.get_server_auto_open_webpage():
+                import webbrowser
+
+                if webbrowser.open(web_url):
+                    logger.info(
+                        "The web page has been opened.", extra={"color": "yellow"}
+                    )
+
         async def run_uvicorn():
             """Run the Uvicorn server with the FastAPI app."""
             logger.info("🔗 OxyGent MAS FastAPI Service Initialization")
@@ -1431,21 +1449,11 @@ class MAS(BaseModel):
                 workers=Config.set_server_workers(),
             )
             server = uvicorn.Server(config)
-
+            asyncio.create_task(log_and_open())
             await server.serve()
 
         web_task = asyncio.create_task(run_uvicorn())
 
-        # Automatically open the web page after a short delay
-        if Config.get_server_auto_open_webpage():
-            import webbrowser
-
-            await asyncio.sleep(1)
-            web_url = f"http://{host}:{port}/web/index.html"
-            webbrowser.open(web_url)
-            logger.info(
-                f"The web page {web_url} has been opened.", extra={"color": "yellow"}
-            )
         await asyncio.gather(web_task)
 
     # ------------------------------------------------------------------

@@ -118,6 +118,7 @@ class Config:
             "timeout": 60,
         },
         "live_prompt": {
+            "is_active": False,
             "es_polling_interval": 2,  # ES polling interval in seconds for version sync
         },
     }
@@ -722,6 +723,14 @@ class Config:
     @classmethod
     def get_live_prompt_config(cls):
         return cls.get_module_config("live_prompt")
+
+    @classmethod
+    def set_live_prompt_is_active(cls, is_active):
+        cls.set_module_config("live_prompt", "is_active", is_active)
+
+    @classmethod
+    def get_live_prompt_is_active(cls):
+        return cls.get_module_config("live_prompt", "is_active")
 
     @classmethod
     def set_live_prompt_es_polling_interval(cls, es_polling_interval):
