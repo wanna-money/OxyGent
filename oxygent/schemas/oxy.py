@@ -382,12 +382,10 @@ class OxyRequest(BaseModel):
                             first_response_ms = (time.time() - query_start_time) * 1000
                             metrics["first_response_time_ms"] = first_response_ms
                             logger.info(
-                                f"First response time: {first_response_ms:.2f}ms",
+                                f"First response time: {first_response_ms:.2f}ms, message_type: {msg_type}",
                                 extra={
                                     "trace_id": self.current_trace_id,
                                     "node_id": self.node_id,
-                                    "message_type": msg_type,
-                                    "metric_type": "first_response_time",
                                 },
                             )
 
