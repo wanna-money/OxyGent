@@ -13,6 +13,7 @@ import asyncio
 import copy
 import logging
 import os
+import time
 import traceback
 from enum import Enum, auto
 from functools import partial
@@ -368,6 +369,28 @@ class OxyRequest(BaseModel):
 
     async def send_message(self, message=None, event=None, id=None, retry=None):
         if self.mas and self.is_send_message:
+            # Record first response time on user-facing messages
+            # Exclude: tool_call (preparing to execute), observation (internal execution result)
+            # Include: answer, stream, stream_end (messages sent to user)
+            if message is not None and isinstance(message, dict):
+                msg_type = message.get("type", "")
+                if msg_type not in ["tool_call", "observation"]:
+                    metrics = self.shared_data.get("_metrics", {})
+                    if "first_response_time_ms" not in metrics:
+                        query_start_time = metrics.get("_query_start_time")
+                        if query_start_time:
+                            first_response_ms = (time.time() - query_start_time) * 1000
+                            metrics["first_response_time_ms"] = first_response_ms
+                            logger.info(
+                                f"First response time: {first_response_ms:.2f}ms",
+                                extra={
+                                    "trace_id": self.current_trace_id,
+                                    "node_id": self.node_id,
+                                    "message_type": msg_type,
+                                    "metric_type": "first_response_time",
+                                },
+                            )
+
             dict_message = {"id": id, "event": event, "data": message, "retry": retry}
             dict_message_processed = self.mas.func_process_message(dict_message, self)
             dict_message_filtered = {

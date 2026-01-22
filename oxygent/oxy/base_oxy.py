@@ -521,25 +521,6 @@ class Oxy(BaseModel, ABC):
         """Send observation and answer messages to frontend if enabled."""
         oxy_request = oxy_response.oxy_request
 
-        # Record first response time when any node completes execution
-        metrics = oxy_request.shared_data.setdefault("_metrics", {})
-        if "first_response_time_ms" not in metrics:
-            query_start_time = oxy_request.shared_data.get("_query_start_time")
-            if query_start_time:
-                import time
-
-                first_response_ms = (time.time() - query_start_time) * 1000
-                metrics["first_response_time_ms"] = first_response_ms
-                logger.info(
-                    f"First response time: {first_response_ms:.2f}ms",
-                    extra={
-                        "trace_id": oxy_request.current_trace_id,
-                        "node_id": oxy_request.node_id,
-                        "callee": oxy_request.callee,
-                        "metric_type": "first_response_time",
-                    },
-                )
-
         # Send observation message to frontend
         if self.is_send_observation:
             await oxy_request.send_message(
