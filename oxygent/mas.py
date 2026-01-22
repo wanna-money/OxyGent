@@ -20,6 +20,7 @@ NOTE: This module contains the following parts:
 import asyncio
 import json
 import os
+import time
 import traceback
 from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional
@@ -873,6 +874,7 @@ class MAS(BaseModel):
             if "shared_data" not in payload:
                 payload["shared_data"] = dict()
             payload["shared_data"]["query"] = payload["query"]
+            payload["shared_data"]["_query_start_time"] = time.time()
 
             group_data = payload.get("group_data", {})
 
