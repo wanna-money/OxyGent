@@ -23,10 +23,13 @@ class Observation(BaseModel):
         """Add a exec result to exec_results."""
         self.exec_results.append(exec_result)
 
-    def to_str(self):
+    def to_str(self, is_prefix_included=True):
         outs = []
         for exec_result in self.exec_results:
-            prefix = f"Tool [{exec_result.executor}] execution result: "
+            if is_prefix_included:
+                prefix = f"Tool [{exec_result.executor}] execution result: "
+            else:
+                prefix = ""
             if isinstance(exec_result.oxy_response.output, OxyOutput):
                 outs.append(prefix + to_json(exec_result.oxy_response.output.result))
             else:

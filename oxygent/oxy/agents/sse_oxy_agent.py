@@ -1,9 +1,9 @@
+import asyncio
 import json
 import logging
 
 import aiohttp
 import httpx
-import asyncio
 from pydantic import Field
 
 from ...schemas import OxyRequest, OxyResponse, OxyState
@@ -25,6 +25,15 @@ class SSEOxyGent(RemoteAgent):
         async with httpx.AsyncClient() as client:
             response = await client.get(build_url(self.server_url, "/get_organization"))
             self.org = response.json()["data"]["organization"]
+
+        if self.desc == "":
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    build_url(self.server_url, "/get_description")
+                )
+                if response.json().get("code") == 200:
+                    self.desc = response.json()["data"]["description"]
+        self._set_desc_for_llm()
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         logger.info(
@@ -83,12 +92,12 @@ class SSEOxyGent(RemoteAgent):
         )
 
         max_retries = 3
-        base_retry_delay = 1.0  
-        retry_multiplier = 2.0  
-        
+        base_retry_delay = 1.0
+        retry_multiplier = 2.0
+
         retry_count = 0
         last_retry_delay = None
-        
+
         while retry_count <= max_retries:
             try:
                 async with aiohttp.ClientSession() as session:
@@ -99,9 +108,9 @@ class SSEOxyGent(RemoteAgent):
                             raise aiohttp.ClientResponseError(
                                 request_info=resp.request_info,
                                 history=resp.history,
-                                status=resp.status
+                                status=resp.status,
                             )
-                        
+
                         # 使用规范的 SSE 事件解析
                         async for event in iter_sse_events(resp):
                             message_event = event.get("event")
@@ -118,7 +127,9 @@ class SSEOxyGent(RemoteAgent):
                                     },
                                 )
                                 await resp.release()
-                                return OxyResponse(state=OxyState.COMPLETED, output=answer)
+                                return OxyResponse(
+                                    state=OxyState.COMPLETED, output=answer
+                                )
                             else:
                                 try:
                                     data = json.loads(message_data)
@@ -131,7 +142,8 @@ class SSEOxyGent(RemoteAgent):
                                     ]:
                                         if (
                                             data["content"]["caller_category"] == "user"
-                                            or data["content"]["callee_category"] == "user"
+                                            or data["content"]["callee_category"]
+                                            == "user"
                                         ):
                                             continue
                                         else:
@@ -142,20 +154,29 @@ class SSEOxyGent(RemoteAgent):
                                                     + data["content"]["call_stack"][2:]
                                                 )
                                             await oxy_request.send_message(
-                                                data, event=message_event, id=message_id, retry=message_retry
+                                                data,
+                                                event=message_event,
+                                                id=message_id,
+                                                retry=message_retry,
                                             )
                                     else:
                                         await oxy_request.send_message(
-                                            data, event=message_event, id=message_id, retry=message_retry
+                                            data,
+                                            event=message_event,
+                                            id=message_id,
+                                            retry=message_retry,
                                         )
                                 except json.JSONDecodeError:
                                     await oxy_request.send_message(
-                                        data, event=message_event, id=message_id, retry=message_retry
+                                        data,
+                                        event=message_event,
+                                        id=message_id,
+                                        retry=message_retry,
                                     )
-                                
+
                         # 如果正常完成，直接返回
                         return OxyResponse(state=OxyState.COMPLETED, output=answer)
-                        
+
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                 retry_count += 1
                 if retry_count > max_retries:
@@ -169,20 +190,20 @@ class SSEOxyGent(RemoteAgent):
                     )
                     return OxyResponse(
                         state=OxyState.FAILED,
-                        output=f"SSE connection failed after {max_retries} retries: {str(e)}"
+                        output=f"SSE connection failed after {max_retries} retries: {str(e)}",
                     )
-                
+
                 if message_retry is not None:
                     retry_delay = message_retry / 1000.0
                 elif last_retry_delay is not None:
                     retry_delay = last_retry_delay * retry_multiplier
                 else:
                     retry_delay = base_retry_delay
-                
+
                 # 限制最大重试延迟
-                retry_delay = min(retry_delay, 30.0)  
+                retry_delay = min(retry_delay, 30.0)
                 last_retry_delay = retry_delay
-                
+
                 logger.warning(
                     f"SSE connection failed, retrying in {retry_delay:.2f} seconds (attempt {retry_count}/{max_retries}). {self.server_url}",
                     extra={
@@ -191,9 +212,9 @@ class SSEOxyGent(RemoteAgent):
                         "error": str(e),
                     },
                 )
-                
+
                 await asyncio.sleep(retry_delay)
-                
+
             except Exception as e:
                 logger.error(
                     f"Unexpected error in SSE connection: {str(e)}",
@@ -204,5 +225,5 @@ class SSEOxyGent(RemoteAgent):
                 )
                 return OxyResponse(
                     state=OxyState.FAILED,
-                    output=f"Unexpected error in SSE connection: {str(e)}"
+                    output=f"Unexpected error in SSE connection: {str(e)}",
                 )

@@ -9,6 +9,21 @@
 
 ---
 
+## [1.0.11] - 2026-01-23
+
+### Added
+- 新增History管理界面，支持按条件搜索历史对话内容
+- 新增Prompt优化功能
+- 在shared_data中新增首响耗时统计项
+- 新增PlanAndSolveAgent，支持动态判断下一步“重新规划、继续执行或直接中断”，详见 [./examples/agents/demo_plan_and_solve_agent.py](./examples/agents/demo_plan_and_solve_agent.py)
+- 新增Agent发现接口 /get_description，SSEOxyGent初始化时自动调用该接口
+
+### Changed
+- 动态提示词管理功能默认修改为不开启
+- 丰富trust_mode能力，并去除trust_mode模式下answer的多余前缀
+
+---
+
 ## [1.0.10.4] - 2025-12-24
 
 ### Added

@@ -1,6 +1,7 @@
 from .agents import (
     ChatAgent,
     ParallelAgent,
+    PlanAndSolveAgent,
     RAGAgent,
     ReActAgent,
     SSEOxyGent,
@@ -26,6 +27,7 @@ __all__ = [
     "RAGAgent",
     "ReActAgent",
     "WorkflowAgent",
+    "PlanAndSolveAgent",
     "ParallelAgent",
     "SSEOxyGent",
     "HttpTool",

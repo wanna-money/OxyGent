@@ -1275,6 +1275,12 @@ class MAS(BaseModel):
                 }
             ).to_dict()
 
+        @app.get("/get_description")
+        def get_description():
+            return WebResponse(
+                data={"description": self.oxy_name_to_oxy[self.master_agent_name].desc}
+            ).to_dict()
+
         @app.get("/get_agents")
         def get_agents():
             """Get detailed agent information for frontend display."""

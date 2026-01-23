@@ -8,6 +8,7 @@ with tool execution in an iterative loop.
 import asyncio
 import json
 import logging
+import re
 from typing import Callable, Optional
 
 from pydantic import Field
@@ -373,11 +374,33 @@ class ReActAgent(LocalAgent):
 
                 # When trust_mode == 1, write in short_memory，return observation
                 if isinstance(llm_response.output, dict):
+                    if (
+                        isinstance(llm_response.output, dict)
+                        and isinstance(oxy_response.output, dict)
+                        and "trust_mode" in oxy_response.output
+                    ):
+                        llm_response.output["trust_mode"] = oxy_response.output[
+                            "trust_mode"
+                        ]
+                    elif (
+                        isinstance(llm_response.output, dict)
+                        and isinstance(oxy_response.output, dict)
+                        and "trust_mode" in oxy_response.output
+                    ):
+                        try:
+                            llm_response.output["trust_mode"] = int(
+                                re.search(
+                                    r'"trust_mode"\s*:\s*(\d+)', oxy_response.output
+                                ).group(1)
+                            )
+                        except (AttributeError, ValueError):
+                            llm_response.output["trust_mode"] = 0
+
                     if self.trust_mode or (
                         "trust_mode" in llm_response.output
                         and llm_response.output["trust_mode"] == 1
                     ):
-                        result_payload = observation.to_str()
+                        result_payload = observation.to_str(is_prefix_included=False)
                         return OxyResponse(
                             state=OxyState.COMPLETED,
                             output=result_payload,
