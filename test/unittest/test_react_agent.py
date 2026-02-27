@@ -143,7 +143,7 @@ def test_parse_llm_response(react_agent):
 async def test_execute_trust_mode(react_agent, oxy_request):
     result = await react_agent.execute(oxy_request)
     assert result.state is OxyState.COMPLETED
-    assert "dummy_tool" in result.output
+    assert "tool-exec-ok" in result.output
 
 
 @pytest.mark.asyncio
