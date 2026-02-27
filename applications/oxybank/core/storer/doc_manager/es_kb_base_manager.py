@@ -27,7 +27,7 @@ class ElasticsearchKbBaseManager:
             hits = self.kb_info_search_name(kb_name=kb_name)
             return len(hits) > 0
         except Exception as e:
-            print(f"Query index {self.index_name} failed: {str(e)}")
+            logger.error(f"Query index {self.index_name} failed: {str(e)}")
             return False
 
     def kb_info_search_name(self, kb_name: str) -> Optional[List[Dict[str, Any]]]:
@@ -57,7 +57,7 @@ class ElasticsearchKbBaseManager:
             )
             return [hit["_source"] for hit in resp['hits']['hits']]
         except Exception as e:
-            print(f"Query index {self.index_name} failed: {str(e)}")
+            logger.error(f"Query index {self.index_name} failed: {str(e)}")
             return None
 
 
@@ -80,7 +80,7 @@ class ElasticsearchKbBaseManager:
             )
             return [hit["_source"] for hit in resp['hits']['hits']]
         except Exception as e:
-            print(f"Query index {self.index_name} failed: {str(e)}")
+            logger.error(f"Query index {self.index_name} failed: {str(e)}")
             return None
 
     def get_kb_schema_by_id(self, kb_id: str) -> Dict[str, Any] | None:

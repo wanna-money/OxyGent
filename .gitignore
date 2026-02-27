@@ -11,6 +11,7 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+!applications/oxybank/web/dist/
 downloads/
 eggs/
 .eggs/

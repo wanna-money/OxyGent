@@ -17,7 +17,7 @@ from core.storer.doc_manager.es_index_manager import ElasticsearchIndexManager
 from core.storer.doc_manager.es_kb_base_manager import ElasticsearchKbBaseManager
 from core.storer.doc_manager.es_kb_chunk_manager import ElasticsearchKbChunkManager
 from core.storer.doc_manager.es_kb_file_manager import ElasticsearchKbFileManager
-from core.storer.doc_manager.knowledge_index import KBSchema, infer_mapping_from_schema, infer_vearch_space_schema
+from core.storer.doc_manager.knowledge_index import KBSchema, check_kb_schema, infer_mapping_from_schema, infer_vearch_space_schema
 from core.storer.doc_manager.rule_query_infer import DynamicEndpointGenerator
 from core.storer.vector_manager.vearch_manager import VearchManager
 from utils.hash_util import str_to_md5
@@ -364,6 +364,20 @@ async def update_kb_schema(
         raise HTTPException(
             status_code=400,
             detail="Schema must contain at least one field definition"
+        )
+
+    # Validate Schema rules (match_rules configuration)
+    try:
+        if not check_kb_schema(kb_schema):
+            raise HTTPException(
+                status_code=400,
+                detail="Schema validation failed, please check schema configuration"
+            )
+    except ValueError as e:
+        logger.error(f"Schema validation failed: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Schema validation failed: {str(e)}"
         )
 
     # 1. Query whether knowledge base exists

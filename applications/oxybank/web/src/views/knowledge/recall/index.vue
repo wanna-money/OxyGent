@@ -124,6 +124,8 @@ watch(
 interface ParamItem {
   key: string
   value: string
+  placeholder?: string
+  inputType?: 'text' | 'boolean'
   description?: string
   required?: boolean
 }
@@ -131,6 +133,18 @@ interface ParamItem {
 const params = ref<ParamItem[]>([])
 
 const hiddenParamKeys = new Set(['rerank', 'rerank_enabled', 'enable_rerank'])
+
+function isBooleanParam(meta: UnknownRecord | null | undefined): boolean {
+  const rawType = String(
+    meta?.type
+    ?? meta?.data_type
+    ?? meta?.dataType
+    ?? meta?.schema?.type
+    ?? meta?.value_type
+    ?? '',
+  ).toLowerCase()
+  return rawType === 'boolean' || rawType === 'bool'
+}
 
 function normalizeParams(raw: unknown): ParamItem[] {
   const items: ParamItem[] = []
@@ -140,9 +154,12 @@ function normalizeParams(raw: unknown): ParamItem[] {
       const key = String(p?.key ?? p?.name ?? p?.field ?? '')
       if (!key || hiddenParamKeys.has(key))
         continue
+      const placeholder = String(p?.default ?? p?.value ?? '')
       items.push({
         key,
-        value: String(p?.default ?? p?.value ?? ''),
+        value: '',
+        ...(placeholder ? { placeholder } : {}),
+        inputType: isBooleanParam(p) ? 'boolean' : 'text',
         description: p?.description ?? p?.desc,
         required: Boolean(p?.required ?? p?.is_required),
       })
@@ -155,15 +172,27 @@ function normalizeParams(raw: unknown): ParamItem[] {
       if (!key || hiddenParamKeys.has(key))
         continue
       if (v && typeof v === 'object') {
+        const placeholder = String((v as UnknownRecord).default ?? (v as UnknownRecord).value ?? '')
         items.push({
           key,
-          value: String((v as UnknownRecord).default ?? (v as UnknownRecord).value ?? ''),
+          value: '',
+          ...(placeholder ? { placeholder } : {}),
+          inputType: isBooleanParam(v as UnknownRecord) ? 'boolean' : 'text',
           description: (v as UnknownRecord).description ?? (v as UnknownRecord).desc,
           required: Boolean((v as UnknownRecord).required ?? (v as UnknownRecord).is_required),
         })
       }
       else {
-        items.push({ key, value: String(v ?? '') })
+        // v 是字符串，可能是类型标识（如 "str", "int", "bool"）
+        const typeStr = String(v ?? '').toLowerCase()
+        const isBool = typeStr === 'bool' || typeStr === 'boolean'
+
+        items.push({
+          key,
+          value: '',
+          placeholder: isBool ? '' : typeStr,
+          inputType: isBool ? 'boolean' : 'text',
+        })
       }
     }
     return items
@@ -180,11 +209,23 @@ const responseTime = ref<string>('')
 const responseData = ref<any>(null)
 
 function buildParamsObject() {
-  return Object.fromEntries(
-    params.value
-      .filter(p => p.key)
-      .map(p => [p.key, p.value]),
-  ) as Record<string, any>
+  const obj: Record<string, any> = {}
+
+  for (const p of params.value) {
+    if (!p.key)
+      continue
+
+    const raw = p.value.trim()
+    if (!raw)
+      continue
+
+    if (p.inputType === 'boolean')
+      obj[p.key] = raw === '1' ? 1 : 0
+    else
+      obj[p.key] = raw
+  }
+
+  return obj
 }
 
 async function handleSend() {
@@ -333,9 +374,19 @@ function filterInterfaceOption(input: string, option?: { label?: string }) {
                   class="flex-1 font-mono text-xs"
                   :readonly="true"
                 />
-                <a-input
+                <a-select
+                  v-if="param.inputType === 'boolean'"
                   v-model:value="param.value"
-                  :placeholder="t('Value')"
+                  allow-clear
+                  size="small"
+                  class="flex-[2]"
+                  :placeholder="t('Please select')"
+                  :options="[{ label: 'false', value: '0' }, { label: 'true', value: '1' }]"
+                />
+                <a-input
+                  v-else
+                  v-model:value="param.value"
+                  :placeholder="param.placeholder || t('Value')"
                   size="small"
                   class="flex-[2]"
                 />

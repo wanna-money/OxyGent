@@ -11,6 +11,39 @@ from core.config import settings
 from core.storer.doc_manager.es_index_manager import ElasticsearchIndexManager
 
 
+# ==================== Chunk System Field Configuration ====================
+# Default values for system fields
+CHUNK_DEFAULT_VALUES = {
+    "sys_template": "default",
+    "sys_priority": 3,
+    "sys_status": "已入库",
+    "sys_executor": "",
+    "sys_overview": "",
+    "sys_remarks": "",
+}
+
+# Enum definitions
+CHUNK_STATUS_ENUM = ["已入库", "待分配", "已分配", "待标注", "已标注", "待审核", "已审核", "待发布", "已发布"]
+CHUNK_TEMPLATE_ENUM = ["default", "qa", "rag", "custom"]
+CHUNK_PRIORITY_RANGE = (0, 4)  # P0=0, P1=1, P2=2, P3=3, P4=4
+
+# System field names (these fields are automatically added to every chunk)
+CHUNK_SYSTEM_FIELDS = [
+    "sys_sample_id",      # Sample ID
+    "sys_group",          # Group identifier
+    "sys_template",       # Template type (enum)
+    "sys_priority",       # Priority (0-4)
+    "sys_status",         # Status (enum)
+    "sys_executor",       # Executor/assignee
+    "sys_overview",       # Data overview/summary
+    "sys_remarks",        # Remarks/notes
+    "sys_create_time",    # Creation time
+    "sys_update_time",    # Update time
+    "kb_id",              # Knowledge base ID (unchanged)
+]
+# =========================================================================
+
+
 # Field information has a *:1 relationship with a knowledge base
 class FieldInfo(BaseModel):
     """Structured knowledge base field information
@@ -171,9 +204,23 @@ def check_kb_schema(schema: KBSchema):
     return True
 
 
-# Create corresponding ES index mapping schema based on structured knowledge base schema. Note to add kb_id, ori_file_id, chunk_id by default
+# Create corresponding ES index mapping schema based on structured knowledge base schema
+# System fields (_sample_id, _group, _template, _priority, _status, _executor, _overview, _remarks, _create_time, _update_time, kb_id) are automatically added
 def infer_mapping_from_schema(schema: KBSchema):
     """Infer ES index for storing structured data from structured knowledge base schema
+
+    Automatically adds system fields for chunk management:
+    - kb_id: Knowledge base ID (unchanged)
+    - _sample_id: Sample ID (renamed from chunk_id)
+    - _group: Group identifier (renamed from ori_file_id)
+    - _template: Template type (enum)
+    - _priority: Priority (0-4)
+    - _status: Status (enum)
+    - _executor: Executor/assignee
+    - _overview: Data overview (searchable)
+    - _remarks: Remarks (searchable)
+    - _create_time: Creation time
+    - _update_time: Update time
     """
     fields = schema.fields
     index_mapping = {}
@@ -189,8 +236,8 @@ def infer_mapping_from_schema(schema: KBSchema):
                     text_match_fields.update(policy.input_fields)
 
     # Fast fail when no ES-related rules exist, return None
-    if not text_match_fields:
-        return None
+    # if not text_match_fields:
+    #     return None
 
     for field in fields:
         field_mapping = {}
@@ -215,10 +262,19 @@ def infer_mapping_from_schema(schema: KBSchema):
             field_mapping["type"] = "double"
         index_mapping[field.field_name] = field_mapping
 
-    # Add kb_id, ori_file_id, chunk_id storage fields, uniformly use keyword type
-    index_mapping["kb_id"] = {"type": "keyword"}
-    index_mapping["ori_file_id"] = {"type": "keyword"}
-    index_mapping["chunk_id"] = {"type": "keyword"}
+    # Add system fields for chunk management
+    # These fields are automatically added to every chunk and managed by the system
+    index_mapping["kb_id"] = {"type": "keyword"}  # Knowledge base ID
+    index_mapping["sys_sample_id"] = {"type": "keyword"}  # Sample ID
+    index_mapping["sys_group"] = {"type": "keyword"}  # Group identifier
+    index_mapping["sys_template"] = {"type": "keyword"}  # Template type (enum)
+    index_mapping["sys_priority"] = {"type": "integer"}  # Priority (0-4)
+    index_mapping["sys_status"] = {"type": "keyword"}  # Status (enum: 待分配, 待标注, 待审核, 待发布, 已发布)
+    index_mapping["sys_executor"] = {"type": "keyword"}  # Executor/assignee
+    index_mapping["sys_overview"] = {"type": "text", "analyzer": "smartcn"}  # Data overview (searchable)
+    index_mapping["sys_remarks"] = {"type": "text", "analyzer": "smartcn"}  # Remarks (searchable)
+    index_mapping["sys_create_time"] = {"type": "date", "format": "yyyy-MM-dd HH:mm:ss"}  # Creation time
+    index_mapping["sys_update_time"] = {"type": "date", "format": "yyyy-MM-dd HH:mm:ss"}  # Update time
 
     return {"properties": index_mapping}
 
@@ -283,14 +339,37 @@ def infer_vearch_space_schema(schema: KBSchema, kb_name: str):
                 )
             )
 
-    # 2. Add three scalar index fields by default, these are framework reserved fields, users cannot use these three fields in documents. All three fields are string type
-    for fixed_field_name in ["kb_id", "ori_file_id", "chunk_id"]:
+    # 2. Add system fields by default, these are framework reserved fields
+    # These fields are automatically managed by the system for chunk tracking and annotation
+
+    # String fields with scalar index
+    for field_name in ["kb_id", "sys_sample_id", "sys_group", "sys_template", "sys_status", "sys_executor"]:
         space_fields.append(
             Field(
-                name=fixed_field_name,
+                name=field_name,
                 data_type=DataType.STRING,
-                desc=fixed_field_name,
-                index=ScalarIndex(f"{fixed_field_name}_idx")
+                desc=field_name,
+                index=ScalarIndex(f"{field_name}_idx")
+            )
+        )
+
+    # Integer field with scalar index
+    space_fields.append(
+        Field(
+            name="sys_priority",
+            data_type=DataType.INTEGER,
+            desc="Priority (0-4)",
+            index=ScalarIndex("sys_priority_idx")
+        )
+    )
+
+    # Text fields without index (stored as STRING)
+    for field_name in ["sys_overview", "sys_remarks", "sys_create_time", "sys_update_time"]:
+        space_fields.append(
+            Field(
+                name=field_name,
+                data_type=DataType.STRING,
+                desc=field_name,
             )
         )
 
@@ -358,6 +437,55 @@ kb_info_index = {
         },
         "auto_bind_query": {
             "type": "boolean"
+        },
+        "kb_triggers": {
+            "type": "object",
+            "dynamic": False
+        }
+    }
+}
+
+# Trigger execution history index
+trigger_history_index = {
+    "properties": {
+        "execution_id": {
+            "type": "keyword"
+        },
+        "kb_id": {
+            "type": "keyword"
+        },
+        "kb_name": {
+            "type": "keyword"
+        },
+        "trigger_id": {
+            "type": "keyword"
+        },
+        "trigger_name": {
+            "type": "keyword"
+        },
+        "sample_ids": {
+            "type": "keyword"
+        },
+        "status": {
+            "type": "keyword"
+        },
+        "http_status_code": {
+            "type": "integer"
+        },
+        "response_body": {
+            "type": "text",
+            "index": False
+        },
+        "error_message": {
+            "type": "text",
+            "index": False
+        },
+        "retry_count": {
+            "type": "integer"
+        },
+        "executed_at": {
+            "type": "date",
+            "format": "yyyy-MM-dd HH:mm:ss"
         }
     }
 }
@@ -405,7 +533,8 @@ kb_file_index = {
 
 index_configs = {
     "knowledge_base_info": kb_info_index,
-    "knowledge_file_info": kb_file_index
+    "knowledge_file_info": kb_file_index,
+    "knowledge_trigger_history": trigger_history_index
 }
 
 

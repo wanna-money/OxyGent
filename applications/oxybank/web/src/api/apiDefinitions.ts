@@ -90,166 +90,32 @@ export default {
   'annotationStatistics.get_overall_stats_api_v1_stats_get': ['GET', '/api/v1/stats'],
   'annotationStatistics.get_pending_p0_stats_api_v1_stats_pending_p0_get': ['GET', '/api/v1/stats/pending-p0'],
   'annotationStatistics.get_stats_by_type_api_v1_stats_by_type_get': ['GET', '/api/v1/stats/by-type'],
+  'trigger.create_trigger_api_v1_trigger__kb_name___post': ['POST', '/api/v1/trigger/{kb_name}/'],
+  'trigger.get_triggers_api_v1_trigger__kb_name___get': ['GET', '/api/v1/trigger/{kb_name}/'],
+  'trigger.get_trigger_api_v1_trigger__kb_name___trigger_id__get': ['GET', '/api/v1/trigger/{kb_name}/{trigger_id}'],
+  'trigger.update_trigger_api_v1_trigger__kb_name___trigger_id__put': ['PUT', '/api/v1/trigger/{kb_name}/{trigger_id}'],
+  'trigger.delete_trigger_api_v1_trigger__kb_name___trigger_id__delete': [
+    'DELETE',
+    '/api/v1/trigger/{kb_name}/{trigger_id}'
+  ],
+  'trigger.enable_trigger_api_v1_trigger__kb_name___trigger_id__enable_patch': [
+    'PATCH',
+    '/api/v1/trigger/{kb_name}/{trigger_id}/enable'
+  ],
+  'trigger.disable_trigger_api_v1_trigger__kb_name___trigger_id__disable_patch': [
+    'PATCH',
+    '/api/v1/trigger/{kb_name}/{trigger_id}/disable'
+  ],
+  'trigger.manual_trigger_api_v1_trigger__kb_name___trigger_id__manual_post': [
+    'POST',
+    '/api/v1/trigger/{kb_name}/{trigger_id}/manual'
+  ],
+  'trigger.query_history_by_kb_api_v1_trigger_history__kb_name__get': ['GET', '/api/v1/trigger/history/{kb_name}'],
+  'trigger.query_history_by_trigger_api_v1_trigger_history__kb_name___trigger_id__get': [
+    'GET',
+    '/api/v1/trigger/history/{kb_name}/{trigger_id}'
+  ],
+  'trigger.get_trigger_stats_api_v1_trigger_stats__kb_name__get': ['GET', '/api/v1/trigger/stats/{kb_name}'],
   'logConfiguration.get_current_log_level_api_v1_log_level_get': ['GET', '/api/v1/log/level'],
-  'logConfiguration.set_log_level_endpoint_api_v1_log_level_post': ['POST', '/api/v1/log/level'],
-  'kbWeather.weather_search_rule_0_kb_weather_search_rule_0_post': ['POST', '/kb/weather/search/rule_0'],
-  'kbWeather1.weather_search_rule_0_kb_weather_search_rule_0_post': ['POST', '/kb/weather/search/rule_0'],
-  'kbWeather.deposit_data_kb_weather_deposit_post': ['POST', '/kb/weather/deposit'],
-  'kbWeather1.deposit_data_kb_weather_deposit_post': ['POST', '/kb/weather/deposit'],
-  'kbWeather.list_banks_kb_weather_list_banks_get': ['GET', '/kb/weather/list_banks'],
-  'kbWeather1.list_banks_kb_weather_list_banks_get': ['GET', '/kb/weather/list_banks'],
-  'kbWeatherTemp.weather_temp_search_rule_0_kb_weather_temp_search_rule_0_post': [
-    'POST',
-    '/kb/weather-temp/search/rule_0'
-  ],
-  'kbWeatherTemp1.weather_temp_search_rule_0_kb_weather_temp_search_rule_0_post': [
-    'POST',
-    '/kb/weather-temp/search/rule_0'
-  ],
-  'kbWeatherTemp.deposit_data_kb_weather_temp_deposit_post': ['POST', '/kb/weather-temp/deposit'],
-  'kbWeatherTemp1.deposit_data_kb_weather_temp_deposit_post': ['POST', '/kb/weather-temp/deposit'],
-  'kbWeatherTemp.list_banks_kb_weather_temp_list_banks_get': ['GET', '/kb/weather-temp/list_banks'],
-  'kbWeatherTemp1.list_banks_kb_weather_temp_list_banks_get': ['GET', '/kb/weather-temp/list_banks'],
-  'kbUnstructureDocTest.unstructure_doc_test_search_rule_0_kb_unstructure_doc_test_search_rule_0_post': [
-    'POST',
-    '/kb/unstructure_doc_test/search/rule_0'
-  ],
-  'kbUnstructureDocTest1.unstructure_doc_test_search_rule_0_kb_unstructure_doc_test_search_rule_0_post': [
-    'POST',
-    '/kb/unstructure_doc_test/search/rule_0'
-  ],
-  'kbUnstructureDocTest.unstructure_doc_test_search_rule_1_kb_unstructure_doc_test_search_rule_1_post': [
-    'POST',
-    '/kb/unstructure_doc_test/search/rule_1'
-  ],
-  'kbUnstructureDocTest1.unstructure_doc_test_search_rule_1_kb_unstructure_doc_test_search_rule_1_post': [
-    'POST',
-    '/kb/unstructure_doc_test/search/rule_1'
-  ],
-  'kbUnstructureDocTest.deposit_data_kb_unstructure_doc_test_deposit_post': [
-    'POST',
-    '/kb/unstructure_doc_test/deposit'
-  ],
-  'kbUnstructureDocTest1.deposit_data_kb_unstructure_doc_test_deposit_post': [
-    'POST',
-    '/kb/unstructure_doc_test/deposit'
-  ],
-  'kbUnstructureDocTest.list_banks_kb_unstructure_doc_test_list_banks_get': [
-    'GET',
-    '/kb/unstructure_doc_test/list_banks'
-  ],
-  'kbUnstructureDocTest1.list_banks_kb_unstructure_doc_test_list_banks_get': [
-    'GET',
-    '/kb/unstructure_doc_test/list_banks'
-  ],
-  'kbQaBank2.qa_bank_2_search_rule_0_kb_qa_bank_2_search_rule_0_post': ['POST', '/kb/qa_bank_2/search/rule_0'],
-  'kbQaBank21.qa_bank_2_search_rule_0_kb_qa_bank_2_search_rule_0_post': ['POST', '/kb/qa_bank_2/search/rule_0'],
-  'kbQaBank2.deposit_data_kb_qa_bank_2_deposit_post': ['POST', '/kb/qa_bank_2/deposit'],
-  'kbQaBank21.deposit_data_kb_qa_bank_2_deposit_post': ['POST', '/kb/qa_bank_2/deposit'],
-  'kbQaBank2.list_banks_kb_qa_bank_2_list_banks_get': ['GET', '/kb/qa_bank_2/list_banks'],
-  'kbQaBank21.list_banks_kb_qa_bank_2_list_banks_get': ['GET', '/kb/qa_bank_2/list_banks'],
-  'kbAnnoBank.anno_bank_search_rule_0_kb_anno_bank_search_rule_0_post': ['POST', '/kb/anno_bank/search/rule_0'],
-  'kbAnnoBank1.anno_bank_search_rule_0_kb_anno_bank_search_rule_0_post': ['POST', '/kb/anno_bank/search/rule_0'],
-  'kbAnnoBank.deposit_data_kb_anno_bank_deposit_post': ['POST', '/kb/anno_bank/deposit'],
-  'kbAnnoBank1.deposit_data_kb_anno_bank_deposit_post': ['POST', '/kb/anno_bank/deposit'],
-  'kbAnnoBank.list_banks_kb_anno_bank_list_banks_get': ['GET', '/kb/anno_bank/list_banks'],
-  'kbAnnoBank1.list_banks_kb_anno_bank_list_banks_get': ['GET', '/kb/anno_bank/list_banks'],
-  'kbTestK.testK_search_rule_0_kb_testK_search_rule_0_post': ['POST', '/kb/testK/search/rule_0'],
-  'kbTestK1.testK_search_rule_0_kb_testK_search_rule_0_post': ['POST', '/kb/testK/search/rule_0'],
-  'kbTestK.testK_search_rule_1_kb_testK_search_rule_1_post': ['POST', '/kb/testK/search/rule_1'],
-  'kbTestK1.testK_search_rule_1_kb_testK_search_rule_1_post': ['POST', '/kb/testK/search/rule_1'],
-  'kbTestK.deposit_data_kb_testK_deposit_post': ['POST', '/kb/testK/deposit'],
-  'kbTestK1.deposit_data_kb_testK_deposit_post': ['POST', '/kb/testK/deposit'],
-  'kbTestK.list_banks_kb_testK_list_banks_get': ['GET', '/kb/testK/list_banks'],
-  'kbTestK1.list_banks_kb_testK_list_banks_get': ['GET', '/kb/testK/list_banks'],
-  'kbHyyNewStructure1.hyy_new_structure_1_search_rule_0_kb_hyy_new_structure_1_search_rule_0_post': [
-    'POST',
-    '/kb/hyy_new_structure_1/search/rule_0'
-  ],
-  'kbHyyNewStructure11.hyy_new_structure_1_search_rule_0_kb_hyy_new_structure_1_search_rule_0_post': [
-    'POST',
-    '/kb/hyy_new_structure_1/search/rule_0'
-  ],
-  'kbHyyNewStructure1.deposit_data_kb_hyy_new_structure_1_deposit_post': ['POST', '/kb/hyy_new_structure_1/deposit'],
-  'kbHyyNewStructure11.deposit_data_kb_hyy_new_structure_1_deposit_post': ['POST', '/kb/hyy_new_structure_1/deposit'],
-  'kbHyyNewStructure1.list_banks_kb_hyy_new_structure_1_list_banks_get': ['GET', '/kb/hyy_new_structure_1/list_banks'],
-  'kbHyyNewStructure11.list_banks_kb_hyy_new_structure_1_list_banks_get': ['GET', '/kb/hyy_new_structure_1/list_banks'],
-  'kbKbUn.kb_un_search_rule_0_kb_kb_un_search_rule_0_post': ['POST', '/kb/kb_un/search/rule_0'],
-  'kbKbUn1.kb_un_search_rule_0_kb_kb_un_search_rule_0_post': ['POST', '/kb/kb_un/search/rule_0'],
-  'kbKbUn.kb_un_search_rule_1_kb_kb_un_search_rule_1_post': ['POST', '/kb/kb_un/search/rule_1'],
-  'kbKbUn1.kb_un_search_rule_1_kb_kb_un_search_rule_1_post': ['POST', '/kb/kb_un/search/rule_1'],
-  'kbKbUn.deposit_data_kb_kb_un_deposit_post': ['POST', '/kb/kb_un/deposit'],
-  'kbKbUn1.deposit_data_kb_kb_un_deposit_post': ['POST', '/kb/kb_un/deposit'],
-  'kbKbUn.list_banks_kb_kb_un_list_banks_get': ['GET', '/kb/kb_un/list_banks'],
-  'kbKbUn1.list_banks_kb_kb_un_list_banks_get': ['GET', '/kb/kb_un/list_banks'],
-  'kbTest222.test222_search_rule_0_kb_test222_search_rule_0_post': ['POST', '/kb/test222/search/rule_0'],
-  'kbTest2221.test222_search_rule_0_kb_test222_search_rule_0_post': ['POST', '/kb/test222/search/rule_0'],
-  'kbTest222.deposit_data_kb_test222_deposit_post': ['POST', '/kb/test222/deposit'],
-  'kbTest2221.deposit_data_kb_test222_deposit_post': ['POST', '/kb/test222/deposit'],
-  'kbTest222.list_banks_kb_test222_list_banks_get': ['GET', '/kb/test222/list_banks'],
-  'kbTest2221.list_banks_kb_test222_list_banks_get': ['GET', '/kb/test222/list_banks'],
-  'kbHyyDemo1.hyy_demo_1_search_rule_0_kb_hyy_demo_1_search_rule_0_post': ['POST', '/kb/hyy_demo_1/search/rule_0'],
-  'kbHyyDemo11.hyy_demo_1_search_rule_0_kb_hyy_demo_1_search_rule_0_post': ['POST', '/kb/hyy_demo_1/search/rule_0'],
-  'kbHyyDemo1.deposit_data_kb_hyy_demo_1_deposit_post': ['POST', '/kb/hyy_demo_1/deposit'],
-  'kbHyyDemo11.deposit_data_kb_hyy_demo_1_deposit_post': ['POST', '/kb/hyy_demo_1/deposit'],
-  'kbHyyDemo1.list_banks_kb_hyy_demo_1_list_banks_get': ['GET', '/kb/hyy_demo_1/list_banks'],
-  'kbHyyDemo11.list_banks_kb_hyy_demo_1_list_banks_get': ['GET', '/kb/hyy_demo_1/list_banks'],
-  'kbHyyTest111.hyy_test_111_search_rule_0_kb_hyy_test_111_search_rule_0_post': [
-    'POST',
-    '/kb/hyy_test_111/search/rule_0'
-  ],
-  'kbHyyTest1111.hyy_test_111_search_rule_0_kb_hyy_test_111_search_rule_0_post': [
-    'POST',
-    '/kb/hyy_test_111/search/rule_0'
-  ],
-  'kbHyyTest111.deposit_data_kb_hyy_test_111_deposit_post': ['POST', '/kb/hyy_test_111/deposit'],
-  'kbHyyTest1111.deposit_data_kb_hyy_test_111_deposit_post': ['POST', '/kb/hyy_test_111/deposit'],
-  'kbHyyTest111.list_banks_kb_hyy_test_111_list_banks_get': ['GET', '/kb/hyy_test_111/list_banks'],
-  'kbHyyTest1111.list_banks_kb_hyy_test_111_list_banks_get': ['GET', '/kb/hyy_test_111/list_banks'],
-  'kbTestK2.testK2_search_rule_0_kb_testK2_search_rule_0_post': ['POST', '/kb/testK2/search/rule_0'],
-  'kbTestK21.testK2_search_rule_0_kb_testK2_search_rule_0_post': ['POST', '/kb/testK2/search/rule_0'],
-  'kbTestK2.testK2_search_rule_1_kb_testK2_search_rule_1_post': ['POST', '/kb/testK2/search/rule_1'],
-  'kbTestK21.testK2_search_rule_1_kb_testK2_search_rule_1_post': ['POST', '/kb/testK2/search/rule_1'],
-  'kbTestK2.deposit_data_kb_testK2_deposit_post': ['POST', '/kb/testK2/deposit'],
-  'kbTestK21.deposit_data_kb_testK2_deposit_post': ['POST', '/kb/testK2/deposit'],
-  'kbTestK2.list_banks_kb_testK2_list_banks_get': ['GET', '/kb/testK2/list_banks'],
-  'kbTestK21.list_banks_kb_testK2_list_banks_get': ['GET', '/kb/testK2/list_banks'],
-  'kbTest3.test3_search_rule_0_kb_test3_search_rule_0_post': ['POST', '/kb/test3/search/rule_0'],
-  'kbTest31.test3_search_rule_0_kb_test3_search_rule_0_post': ['POST', '/kb/test3/search/rule_0'],
-  'kbTest3.deposit_data_kb_test3_deposit_post': ['POST', '/kb/test3/deposit'],
-  'kbTest31.deposit_data_kb_test3_deposit_post': ['POST', '/kb/test3/deposit'],
-  'kbTest3.list_banks_kb_test3_list_banks_get': ['GET', '/kb/test3/list_banks'],
-  'kbTest31.list_banks_kb_test3_list_banks_get': ['GET', '/kb/test3/list_banks'],
-  'kbHyyaaaaaaaaaaa.hyyaaaaaaaaaaa_search_rule_0_kb_hyyaaaaaaaaaaa_search_rule_0_post': [
-    'POST',
-    '/kb/hyyaaaaaaaaaaa/search/rule_0'
-  ],
-  'kbHyyaaaaaaaaaaa1.hyyaaaaaaaaaaa_search_rule_0_kb_hyyaaaaaaaaaaa_search_rule_0_post': [
-    'POST',
-    '/kb/hyyaaaaaaaaaaa/search/rule_0'
-  ],
-  'kbHyyaaaaaaaaaaa.deposit_data_kb_hyyaaaaaaaaaaa_deposit_post': ['POST', '/kb/hyyaaaaaaaaaaa/deposit'],
-  'kbHyyaaaaaaaaaaa1.deposit_data_kb_hyyaaaaaaaaaaa_deposit_post': ['POST', '/kb/hyyaaaaaaaaaaa/deposit'],
-  'kbHyyaaaaaaaaaaa.list_banks_kb_hyyaaaaaaaaaaa_list_banks_get': ['GET', '/kb/hyyaaaaaaaaaaa/list_banks'],
-  'kbHyyaaaaaaaaaaa1.list_banks_kb_hyyaaaaaaaaaaa_list_banks_get': ['GET', '/kb/hyyaaaaaaaaaaa/list_banks'],
-  'kbDaefwasfa1111.daefwasfa1111_search_rule_0_kb_daefwasfa1111_search_rule_0_post': [
-    'POST',
-    '/kb/daefwasfa1111/search/rule_0'
-  ],
-  'kbDaefwasfa11111.daefwasfa1111_search_rule_0_kb_daefwasfa1111_search_rule_0_post': [
-    'POST',
-    '/kb/daefwasfa1111/search/rule_0'
-  ],
-  'kbDaefwasfa1111.daefwasfa1111_search_rule_1_kb_daefwasfa1111_search_rule_1_post': [
-    'POST',
-    '/kb/daefwasfa1111/search/rule_1'
-  ],
-  'kbDaefwasfa11111.daefwasfa1111_search_rule_1_kb_daefwasfa1111_search_rule_1_post': [
-    'POST',
-    '/kb/daefwasfa1111/search/rule_1'
-  ],
-  'kbDaefwasfa1111.deposit_data_kb_daefwasfa1111_deposit_post': ['POST', '/kb/daefwasfa1111/deposit'],
-  'kbDaefwasfa11111.deposit_data_kb_daefwasfa1111_deposit_post': ['POST', '/kb/daefwasfa1111/deposit'],
-  'kbDaefwasfa1111.list_banks_kb_daefwasfa1111_list_banks_get': ['GET', '/kb/daefwasfa1111/list_banks'],
-  'kbDaefwasfa11111.list_banks_kb_daefwasfa1111_list_banks_get': ['GET', '/kb/daefwasfa1111/list_banks']
+  'logConfiguration.set_log_level_endpoint_api_v1_log_level_post': ['POST', '/api/v1/log/level']
 };

@@ -1,5 +1,26 @@
 import type { Dayjs } from 'dayjs'
 
+export interface BankChunkItem {
+  sys_sample_id: string
+  kb_id?: string | null
+  sys_group?: string | null
+  sys_template?: string | null
+  sys_priority?: number | null
+  sys_status?: string | null
+  sys_executor?: string | null
+  sys_overview?: string | null
+  sys_remarks?: string | null
+  sys_create_time?: string | null
+  sys_update_time?: string | null
+
+  // 兼容后端可能返回的字段
+  query?: string | null
+  answer?: string | null
+
+  // 其他业务字段（由模板决定）
+  [key: string]: any
+}
+
 export type AnnotationStatus =
   | 'pending'
   | 'annotated'

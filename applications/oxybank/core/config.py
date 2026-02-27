@@ -1,5 +1,7 @@
 """Configuration management for knowledge base platform."""
 from pathlib import Path
+import logging.handlers
+import os
 
 from elasticsearch import Elasticsearch
 from pydantic import field_validator, model_validator
@@ -10,6 +12,28 @@ from vearch.config import Config
 from vearch.core.vearch import Vearch
 
 from utils.url_util import ensure_url_protocol
+
+# Remove vearch's file log handler to prevent err.log file creation
+# Vearch SDK automatically creates err.log via TimedRotatingFileHandler during import
+# The file is created by the handler even before we can intercept it,
+# so we need to: 1) remove and close the handler, 2) delete the empty err.log file
+_vearch_logger = logging.getLogger("vearch")
+_handlers_to_remove = [
+    h for h in _vearch_logger.handlers
+    if isinstance(h, logging.handlers.TimedRotatingFileHandler)
+]
+for _handler in _handlers_to_remove:
+    _vearch_logger.removeHandler(_handler)
+    _handler.close()
+
+# Delete the empty err.log file created by vearch during import
+# The file is created in the current working directory when the handler is initialized
+import glob
+for _err_log in glob.glob("err.log"):
+    try:
+        os.remove(_err_log)
+    except OSError:
+        pass  # Ignore if file doesn't exist or can't be removed
 
 # Get the path to the project root directory
 ROOT_DIR = Path(__file__).parent.parent
@@ -185,6 +209,79 @@ class AnnotationConfig(BaseSettings):
         return self
 
 
+class TriggerConfig(BaseSettings):
+    """Bank trigger system configuration
+
+    The trigger system enables automatic HTTP callbacks when knowledge base data
+    meets specified conditions. Features include:
+    - Polling-based detection (configurable interval)
+    - Batch processing support
+    - Concurrency control (Semaphore + rate limiting)
+    - Automatic retry with exponential backoff
+    - Execution history tracking
+
+    Environment Variables:
+    - TRIGGER_POLL_INTERVAL: Seconds between detection cycles (default: 60)
+    - TRIGGER_BATCH_SIZE: Max records per query (default: 100)
+    - TRIGGER_MAX_CONCURRENT_TRIGGERS: Max concurrent HTTP requests (default: 10)
+    - TRIGGER_MAX_QPS: Rate limit per URL in requests/second (default: 10)
+    - TRIGGER_HTTP_TIMEOUT: HTTP request timeout in seconds (default: 30)
+    - TRIGGER_HTTP_RETRY_TIMES: Retry attempts on failure (default: 3)
+    - TRIGGER_HTTP_RETRY_INTERVAL: Seconds between retries (default: 5)
+    - TRIGGER_HISTORY_RETENTION_DAYS: Days to keep execution history (default: 30)
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="TRIGGER_",
+        env_file=ROOT_DIR / ".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+
+    # Polling configuration
+    poll_interval: int = 60  # seconds
+
+    # Batch processing
+    batch_size: int = 100
+
+    # Concurrency control
+    max_concurrent_triggers: int = 10  # Semaphore limit
+    max_qps: int = 10  # Rate limit per URL
+
+    # HTTP settings
+    http_timeout: int = 30
+    http_retry_times: int = 3
+    http_retry_interval: int = 5
+
+    # History retention
+    history_retention_days: int = 30
+
+    @field_validator("poll_interval", "batch_size", "max_concurrent_triggers", "max_qps")
+    @classmethod
+    def validate_positive_int(cls, v):
+        """Validate positive integer"""
+        if v < 1:
+            raise ValueError("Must be a positive integer")
+        return v
+
+    @field_validator("http_timeout", "http_retry_times", "http_retry_interval")
+    @classmethod
+    def validate_http_config(cls, v):
+        """Validate HTTP configuration"""
+        if v < 0:
+            raise ValueError("Must be a non-negative integer")
+        return v
+
+    @field_validator("history_retention_days")
+    @classmethod
+    def validate_retention(cls, v):
+        """Validate retention period"""
+        if v < 1:
+            raise ValueError("Must be at least 1 day")
+        return v
+
+
 class ServiceConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=ROOT_DIR / ".env",
@@ -201,6 +298,7 @@ class ServiceConfig(BaseSettings):
     vearch_config: VearchConfig = VearchConfig()
     embedding_config: EmbeddingConfig = EmbeddingConfig()
     annotation_config: AnnotationConfig = AnnotationConfig()
+    trigger_config: TriggerConfig = TriggerConfig()
 
     @property
     def es_client(self) -> Elasticsearch:

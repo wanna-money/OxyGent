@@ -22,7 +22,7 @@ router = APIRouter(prefix="/deposit", tags=["Annotation Data Deposit"])
     summary="Deposit single QA pair",
     description="Store QA pair to annotation platform with type inference"
 )
-async def deposit_data(
+async def deposit(
     request: DepositRequest,
     service: AnnotationService = Depends(get_annotation_service)
 ) -> APIResponse[DepositResponse]:

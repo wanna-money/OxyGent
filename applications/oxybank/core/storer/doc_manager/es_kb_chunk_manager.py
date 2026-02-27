@@ -25,32 +25,32 @@ class ElasticsearchKbChunkManager:
         except Exception as e:
             raise ConnectionError(f"Elasticsearch client error: {str(e)}")
 
-    def kb_delete_chunk(self, kb_id: str, file_ids: List[str]) -> bool:
+    def kb_delete_chunk(self, kb_id: str, group_ids: List[str]) -> bool:
         """
-        Delete corresponding file information based on knowledge base ID and file ID list
+        Delete corresponding chunk information based on knowledge base ID and group ID list
 
         Args:
             kb_id: Knowledge base ID
-            file_ids: List of file IDs to delete
+            group_ids: List of group IDs to delete (sys_group field values)
 
         Returns:
             bool: Whether deletion was successful
         """
         try:
-            if not file_ids:
-                logger.info("No file IDs to delete")
+            if not group_ids:
+                logger.info("No group IDs to delete")
                 return True
             if not self.client.indices.exists(index=self.index_name):
                 logger.info(f"Index {self.index_name} does not exist, no need to delete chunk data")
                 return True
 
-            # Build delete query: match both kb_id and file_id
+            # Build delete query: match both kb_id and sys_group
             query = {
                 "query": {
                     "bool": {
                         "must": [
                             {"term": {"kb_id": kb_id}},
-                            {"terms": {"ori_file_id": file_ids}}
+                            {"terms": {"sys_group": group_ids}}
                         ]
                     }
                 }
@@ -64,7 +64,7 @@ class ElasticsearchKbChunkManager:
             )
 
             deleted_count = response.get("deleted", 0)
-            logger.info(f"Successfully deleted {deleted_count} file records (kb_id: {kb_id}, file_ids: {file_ids})")
+            logger.info(f"Successfully deleted {deleted_count} chunk records (kb_id: {kb_id}, group_ids: {group_ids})")
 
             return True
 
@@ -72,7 +72,7 @@ class ElasticsearchKbChunkManager:
             logger.info(f"Index {self.index_name} does not exist, no need to delete chunk data")
             return True
         except Exception as e:
-            logger.error(f"Failed to delete file records (kb_id: {kb_id}, file_ids: {file_ids}): {str(e)}")
+            logger.error(f"Failed to delete chunk records (kb_id: {kb_id}, group_ids: {group_ids}): {str(e)}")
             return False
 
     def kb_add_chunk(self, nodes: Sequence[BaseNode]) -> bool:
@@ -99,12 +99,12 @@ class ElasticsearchKbChunkManager:
                 # Get Document metadata
                 metadata = node.metadata or {}
 
-                # Map to ES index fields
+                # Map to ES index fields with new system field names
                 es_doc = {
                     # RAG related fields
                     "kb_id": metadata.get('kb_id', ''),
-                    "ori_file_id": metadata.get('ori_file_id', metadata.get('file_id', '')),
-                    "chunk_id": metadata.get('chunk_id', f"chunk_{uuid.uuid4().hex[:16]}"),
+                    "sys_sample_id": metadata.get('sys_sample_id', f"sample_{uuid.uuid4().hex[:16]}"),
+                    "sys_group": metadata.get('sys_group', ''),
                     "chunk_text": node.text,
                     "chunk_extra_data": {},
                     "language": ""
@@ -190,7 +190,7 @@ class ElasticsearchKbChunkManager:
     def get_kb_file_chunks(
             self,
             kb_id: str,
-            file_id: str,
+            group_id: str,
             page: int = 1,
             size: int = 10
     ) -> Dict[str, Any]:
@@ -205,7 +205,7 @@ class ElasticsearchKbChunkManager:
                         "bool": {
                             "must": [
                                 {"term": {"kb_id": kb_id}},
-                                {"term": {"ori_file_id": file_id}}
+                                {"term": {"sys_group": group_id}}
                             ]
                         },
                     "from": from_value,
@@ -224,7 +224,7 @@ class ElasticsearchKbChunkManager:
                 "pages": (total + size - 1) // size
             }
         except Exception as e:
-            logger.error(f"search knowledge chunks of [kb_id:{kb_id}] [file_id:{file_id}] error: {e}")
+            logger.error(f"search knowledge chunks of [kb_id:{kb_id}] [group_id:{group_id}] error: {e}")
             return {
                 "items": [],
                 "total": 0,

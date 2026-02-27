@@ -1,59 +1,34 @@
 <script setup lang="ts">
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import {
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons-vue'
 import type { TableColumnsType } from 'ant-design-vue'
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { message } from 'ant-design-vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useWindowSize } from '@vueuse/core'
-import { useAnnotationPlatform } from '@/composables/useAnnotationPlatform'
-import type { AnnotationItem } from '@/views/annotation/types'
+import { useRoute } from 'vue-router'
+import type { AnnotationFilters, AnnotationStats, BankChunkItem } from '@/views/annotation/types'
+import AgentSidebar from '@/views/annotation/components/AgentSidebar.vue'
+import QaAnnotationDrawer from '@/views/annotation/components/QaAnnotationDrawer.vue'
+import DefaultAnnotationDrawer from '@/views/annotation/components/DefaultAnnotationDrawer.vue'
 import { useI18n } from '@/locales'
 
-const {
-  annotationEntries,
-  annotationForm,
-  approveAnnotation,
-  applyFilters,
-  closeDrawer,
-  confirmReject,
-  dataList,
-  detailLoading,
-  detailTags,
-  drawerOpen,
-  filters,
-  formatDateShort,
-  formatDateTimeFull,
-  getAgentAvatarStyle,
-  getDataTypeLabel,
-  getStatusLabel,
-  hasAnnotationResult,
-  hasRejectReason,
-  ingestToKb,
-  loadData,
-  loadStats,
-  loading,
-  openDetail,
-  openRejectModal,
-  pagination,
-  paginationInfo,
-  progressSegments,
-  qaContent,
-  rejectModalOpen,
-  rejectReason,
-  resetFilters,
-  selectedData,
-  selectedId,
-  setDefaultTimeRange,
-  showAnnotationForm,
-  showKbSection,
-  showReviewSection,
-  stats,
-  statsLoading,
-  submitAnnotation,
-} = useAnnotationPlatform()
-
 const { t } = useI18n()
+
+dayjs.extend(utc)
+
+const route = useRoute()
+
+const bankName = computed(() => {
+  const value = route.query.bank_name
+  return typeof value === 'string' ? value : ''
+})
+
+// 左侧筛选条件面板：按需恢复（设置为 true）
+const showSidebar = ref(false)
 
 const sidebarWidth = ref(320)
 const sidebarMinWidth = 200
@@ -63,14 +38,16 @@ let sidebarStartX = 0
 let sidebarStartWidth = 0
 
 const columnWidths = reactive({
-  id: 160,
-  priority: 70,
-  status: 90,
-  type: 80,
-  relation: 200,
-  question: 320,
-  groupTrace: 180,
-  time: 150,
+  sampleId: 160,
+  group: 140,
+  template: 140,
+  priority: 110,
+  status: 110,
+  executor: 120,
+  overview: 260,
+  remarks: 220,
+  createTime: 160,
+  updateTime: 160,
   action: 110,
 })
 
@@ -115,55 +92,212 @@ const priorityOptions = computed(() => ([
   { label: t('P4-Other'), value: '4' },
 ]))
 
+const filters = reactive<AnnotationFilters>({
+  timeRange: undefined,
+  dataType: '',
+  status: '',
+  priority: '',
+  caller: '',
+  callee: '',
+  groupId: '',
+  traceId: '',
+  search: '',
+})
+
+const statsLoading = ref(false)
+const stats = reactive<AnnotationStats>({
+  pending: 0,
+  annotated: 0,
+  approved: 0,
+  rejected: 0,
+  kb_ingested: 0,
+  kb_failed: 0,
+})
+
+const pagination = reactive({
+  page: 1,
+  pageSize: 10,
+  total: 0,
+})
+
+const dataList = ref<BankChunkItem[]>([])
+const loading = ref(false)
+
+const drawerOpen = ref(false)
+const selectedIndex = ref(-1)
+const submitting = ref(false)
+
+const schemaDraft = ref<Record<string, any>>({})
+
+const selectedRow = computed(() => {
+  if (selectedIndex.value < 0)
+    return null
+  return dataList.value[selectedIndex.value] || null
+})
+
+const activeTemplate = computed(() => {
+  const raw = String(selectedRow.value?.sys_template ?? 'default').toLowerCase()
+  return raw === 'qa' ? 'qa' : 'default'
+})
+
+const isSatisfiedModel = computed({
+  get: () => String(schemaDraft.value?.is_satisfied ?? '1'),
+  set: value => (schemaDraft.value.is_satisfied = value),
+})
+
+const reasonModel = computed({
+  get: () => String(schemaDraft.value?.reason ?? ''),
+  set: value => (schemaDraft.value.reason = value),
+})
+
+const selectedSampleId = computed(() => selectedRow.value?.sys_sample_id || null)
+
+const drawerTitle = computed(() => {
+  if (!selectedRow.value)
+    return t('标注')
+  return t('标注 ({cur}/{total})', {
+    cur: selectedIndex.value + 1,
+    total: dataList.value.length,
+  })
+})
+
+function formatCellValue(value: unknown) {
+  if (value === null || value === undefined || value === '')
+    return '--'
+  return String(value)
+}
+
+const totalPages = computed(() => Math.max(1, Math.ceil(pagination.total / pagination.pageSize)))
+const paginationInfo = computed(
+  () => t('Page {page}/{total}, {count} items', {
+    page: pagination.page,
+    total: totalPages.value,
+    count: pagination.total,
+  }),
+)
+
+const progressTotal = computed(
+  () => stats.pending + stats.annotated + stats.approved + stats.rejected + stats.kb_ingested + stats.kb_failed,
+)
+
+const progressSegments = computed(() => {
+  const total = progressTotal.value
+  const calc = (value: number) => (total > 0 ? (value / total) * 100 : 0)
+  return {
+    pending: calc(stats.pending),
+    annotated: calc(stats.annotated),
+    approved: calc(stats.approved),
+    rejected: calc(stats.rejected),
+    kb_ingested: calc(stats.kb_ingested),
+    kb_failed: calc(stats.kb_failed),
+  }
+})
+
+function setDefaultTimeRange() {
+  const now = dayjs().utcOffset(8 * 60)
+  const roundedNow = now.second(0).millisecond(0).add(1, 'minute')
+  const threeDaysAgo = roundedNow.subtract(3, 'day')
+  filters.timeRange = [threeDaysAgo, roundedNow]
+}
+
+function resetFilters() {
+  filters.dataType = ''
+  filters.status = ''
+  filters.priority = ''
+  filters.caller = ''
+  filters.callee = ''
+  filters.groupId = ''
+  filters.traceId = ''
+  filters.search = ''
+  setDefaultTimeRange()
+  applyFilters()
+}
+
+function loadStats() {
+  stats.pending = pagination.total
+  stats.annotated = 0
+  stats.approved = 0
+  stats.rejected = 0
+  stats.kb_ingested = 0
+  stats.kb_failed = 0
+}
+
+function applyFilters() {
+  pagination.page = 1
+  loadData(pagination.page)
+}
+
 const columns = computed<TableColumnsType>(() => [
   {
-    title: t('ID'),
-    dataIndex: 'data_id',
-    key: 'id',
-    width: columnWidths.id,
+    title: t('样本ID'),
+    dataIndex: 'sys_sample_id',
+    key: 'sampleId',
+    width: columnWidths.sampleId,
     ellipsis: true,
   },
   {
-    title: t('Priority'),
+    title: t('分组'),
+    dataIndex: 'sys_group',
+    key: 'group',
+    width: columnWidths.group,
+    ellipsis: true,
+  },
+  {
+    title: t('模板'),
+    dataIndex: 'sys_template',
+    key: 'template',
+    width: columnWidths.template,
+    ellipsis: true,
+  },
+  {
+    title: t('优先级'),
+    dataIndex: 'sys_priority',
     key: 'priority',
     width: columnWidths.priority,
     align: 'center',
   },
   {
-    title: t('Status'),
+    title: t('状态'),
+    dataIndex: 'sys_status',
     key: 'status',
     width: columnWidths.status,
     align: 'center',
   },
   {
-    title: t('Type'),
-    key: 'type',
-    width: columnWidths.type,
-    align: 'center',
-  },
-  {
-    title: t('Call Relationship'),
-    key: 'relation',
-    width: columnWidths.relation,
-  },
-  {
-    title: t('Question'),
-    key: 'question',
-    width: columnWidths.question,
+    title: t('执行人'),
+    dataIndex: 'sys_executor',
+    key: 'executor',
+    width: columnWidths.executor,
     ellipsis: true,
   },
   {
-    title: t('Group / Trace'),
-    key: 'groupTrace',
-    width: columnWidths.groupTrace,
+    title: t('概览'),
+    dataIndex: 'sys_overview',
+    key: 'overview',
+    width: columnWidths.overview,
+    ellipsis: true,
   },
   {
-    title: t('Time'),
-    key: 'time',
-    width: columnWidths.time,
+    title: t('备注'),
+    dataIndex: 'sys_remarks',
+    key: 'remarks',
+    width: columnWidths.remarks,
+    ellipsis: true,
   },
   {
-    title: t('Action'),
+    title: t('创建时间'),
+    dataIndex: 'sys_create_time',
+    key: 'createTime',
+    width: columnWidths.createTime,
+  },
+  {
+    title: t('更新时间'),
+    dataIndex: 'sys_update_time',
+    key: 'updateTime',
+    width: columnWidths.updateTime,
+  },
+  {
+    title: t('操作'),
     key: 'action',
     width: columnWidths.action,
     align: 'center',
@@ -172,7 +306,7 @@ const columns = computed<TableColumnsType>(() => [
 ])
 
 function getPriorityStyle(priority?: number | null) {
-  const value = priority ?? 4
+  const value = priority ?? 0
   if (value === 0)
     return { backgroundColor: '#EF4444', color: '#FFFFFF' }
   if (value === 1)
@@ -186,41 +320,211 @@ function getPriorityStyle(priority?: number | null) {
 
 function getStatusStyle(status?: string | null) {
   const map: Record<string, { backgroundColor: string, color: string }> = {
-    pending: { backgroundColor: '#FEF3C7', color: '#D97706' },
-    annotated: { backgroundColor: '#D1FAE5', color: '#059669' },
-    approved: { backgroundColor: '#10B981', color: '#FFFFFF' },
-    rejected: { backgroundColor: '#FEE2E2', color: '#DC2626' },
-    kb_ingested: { backgroundColor: '#C7D2FE', color: '#4338CA' },
-    kb_failed: { backgroundColor: '#FEE2E2', color: '#DC2626' },
+    待分配: { backgroundColor: '#FEF3C7', color: '#D97706' },
+    待标注: { backgroundColor: '#DBEAFE', color: '#2563EB' },
+    待审核: { backgroundColor: '#E0E7FF', color: '#4F46E5' },
+    待发布: { backgroundColor: '#C7D2FE', color: '#4338CA' },
+    已标注: { backgroundColor: '#D1FAE5', color: '#059669' },
   }
-  return map[status || 'pending'] || { backgroundColor: '#F3F4F6', color: '#6B7280' }
+  return map[status || ''] || { backgroundColor: '#F3F4F6', color: '#6B7280' }
 }
 
-function getDataTypeStyle(type?: string | null) {
-  const map: Record<string, { backgroundColor: string, color: string }> = {
-    e2e: { backgroundColor: '#FEE2E2', color: '#DC2626' },
-    agent: { backgroundColor: '#DBEAFE', color: '#2563EB' },
-    llm: { backgroundColor: '#EDE9FE', color: '#7C3AED' },
-    tool: { backgroundColor: '#D1FAE5', color: '#059669' },
-    custom: { backgroundColor: '#F3F4F6', color: '#6B7280' },
+function getRowSchema(row: BankChunkItem | null | undefined): Record<string, any> {
+  const raw = (row as any)?.schema
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw))
+    return {}
+  return raw as Record<string, any>
+}
+
+function clonePlainObject<T extends Record<string, any>>(obj: T): T {
+  try {
+    return structuredClone(obj)
   }
-  return map[type || 'custom'] || { backgroundColor: '#F3F4F6', color: '#6B7280' }
+  catch {
+    return JSON.parse(JSON.stringify(obj)) as T
+  }
 }
 
-function getAvatarInitial(name?: string | null) {
-  if (!name)
-    return '?'
-  return name.slice(0, 1).toUpperCase()
+function resetDraftFromRow(row: BankChunkItem | null) {
+  schemaDraft.value = clonePlainObject(getRowSchema(row))
 }
 
-type AnnotationRow = Partial<AnnotationItem> & Record<string, any>
-
-function getCaller(record: AnnotationRow) {
-  return record.caller || t('User')
+function getDisplayQuery(row: BankChunkItem) {
+  const schema = getRowSchema(row)
+  return String(schema.query ?? row.query ?? row.sys_overview ?? '')
 }
 
-function getCallee(record: AnnotationRow) {
-  return record.callee || t('Unknown')
+function getDisplayAnswer(row: BankChunkItem) {
+  const schema = getRowSchema(row)
+  return String(schema.answer ?? row.answer ?? '')
+}
+
+const legacyToSysFieldMap: Record<string, string> = {
+  _sample_id: 'sys_sample_id',
+  _status: 'sys_status',
+  _group: 'sys_group',
+  _priority: 'sys_priority',
+  _executor: 'sys_executor',
+  _overview: 'sys_overview',
+  _remarks: 'sys_remarks',
+}
+
+function normalizeSubmissionSchema(schema: Record<string, any>) {
+  const next = { ...schema }
+
+  for (const [legacyKey, sysKey] of Object.entries(legacyToSysFieldMap)) {
+    if (next[legacyKey] !== undefined && next[sysKey] === undefined)
+      next[sysKey] = next[legacyKey]
+    delete next[legacyKey]
+  }
+
+  delete next.sys_sample_id
+  delete next.sys_status
+  return next
+}
+
+async function requestJson<T>(url: string, options?: RequestInit): Promise<T> {
+  const token = localStorage.getItem('token')
+  const response = await fetch(url, {
+    credentials: 'include',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options?.headers || {}),
+    },
+  })
+
+  const json = await response.json().catch(() => null)
+  if (!response.ok) {
+    const errMsg = json?.message || json?.msg || `HTTP ${response.status}`
+    throw new Error(errMsg)
+  }
+  return json as T
+}
+
+function unwrapResponseData(value: any) {
+  return value?.data ?? value
+}
+
+async function loadData(page = pagination.page) {
+  if (!bankName.value) {
+    dataList.value = []
+    pagination.total = 0
+    pagination.page = 1
+    loadStats()
+    return
+  }
+
+  loading.value = true
+  try {
+    const payload = {
+      _page_size: pagination.pageSize,
+      _page_number: page,
+    }
+    const resp = await requestJson<any>(`/kb/${encodeURIComponent(bankName.value)}/search`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+
+    const data = unwrapResponseData(resp)
+    const items = data?.items || data?.list || data?.records || data?.results || data?.data || []
+    dataList.value = Array.isArray(items) ? (items as BankChunkItem[]) : []
+
+    const total = data?.total ?? data?._total ?? data?.count ?? data?.total_count
+    pagination.total = typeof total === 'number' ? total : (Number(total) || dataList.value.length)
+    pagination.page = page
+    loadStats()
+  }
+  catch (err: any) {
+    message.error(err?.message || t('请求失败'))
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+function openDrawer(record: BankChunkItem) {
+  const idx = dataList.value.findIndex(item => item.sys_sample_id === record.sys_sample_id)
+  selectedIndex.value = idx >= 0 ? idx : 0
+  resetDraftFromRow(record)
+  drawerOpen.value = true
+}
+
+function closeDrawer() {
+  drawerOpen.value = false
+  selectedIndex.value = -1
+  schemaDraft.value = {}
+}
+
+function gotoPrev() {
+  if (selectedIndex.value <= 0) {
+    message.info(t('已经是本页第一条'))
+    return
+  }
+  selectedIndex.value -= 1
+  resetDraftFromRow(selectedRow.value)
+}
+
+function gotoNext() {
+  if (selectedIndex.value >= dataList.value.length - 1) {
+    message.info(t('已经是本页最后一条'))
+    return
+  }
+  selectedIndex.value += 1
+  resetDraftFromRow(selectedRow.value)
+}
+
+async function submit() {
+  const row = selectedRow.value
+  if (!row)
+    return
+  if (!bankName.value) {
+    message.error(t('缺少 bank_name'))
+    return
+  }
+  if (activeTemplate.value === 'qa') {
+    const isSatisfied = String(schemaDraft.value?.is_satisfied ?? '1')
+    const reason = String(schemaDraft.value?.reason ?? '')
+
+    if (isSatisfied === '3' && !reason.trim()) {
+      message.warning(t('请填写不满意原因'))
+      return
+    }
+    if ((reason || '').length > 500) {
+      message.warning(t('原因最多 500 字'))
+      return
+    }
+  }
+
+  submitting.value = true
+  try {
+    const safeSchema = normalizeSubmissionSchema(schemaDraft.value || {})
+
+    if (activeTemplate.value === 'qa') {
+      safeSchema.is_satisfied = safeSchema.is_satisfied ?? '1'
+      safeSchema.reason = safeSchema.reason ?? ''
+    }
+    const payload = {
+      sys_sample_id: row.sys_sample_id,
+      sys_status: '已标注',
+      ...safeSchema,
+    }
+    await requestJson<any>(`/kb/${encodeURIComponent(bankName.value)}/deposit`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    message.success(t('提交成功'))
+    closeDrawer()
+    await loadData(pagination.page)
+  }
+  catch (err: any) {
+    message.error(err?.message || t('提交失败'))
+  }
+  finally {
+    submitting.value = false
+  }
 }
 
 function startSidebarResize(event: MouseEvent) {
@@ -280,19 +584,16 @@ function stopColumnResize() {
   window.removeEventListener('mouseup', stopColumnResize)
 }
 
-function rowClassName(record: AnnotationItem) {
-  return selectedId.value === record.data_id ? 'bg-blue-50' : ''
+function rowClassName(record: BankChunkItem) {
+  return selectedSampleId.value === record.sys_sample_id ? 'bg-blue-50' : ''
 }
 
-function handleTableRow(record: AnnotationItem) {
-  return {
-    onClick: () => openDetail(record.data_id),
-  }
+function handleTableRow(_record: BankChunkItem) {
+  return {}
 }
 
 onMounted(() => {
   setDefaultTimeRange()
-  loadStats()
   loadData()
 })
 
@@ -300,10 +601,19 @@ onBeforeUnmount(() => {
   stopSidebarResize()
   stopColumnResize()
 })
+
+watch(
+  bankName,
+  () => {
+    closeDrawer()
+    pagination.page = 1
+    loadData(1)
+  },
+)
 </script>
 
 <template>
-  <div class="flex h-full flex-col gap-4">
+  <div class="annotation-page flex h-full flex-col gap-4">
     <div class="flex items-center justify-between">
       <div>
         <h1 class="m-0 text-2xl font-semibold text-gray-800">
@@ -316,259 +626,264 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="flex min-h-0 flex-1 gap-4">
-      <div
-        class="relative flex-shrink-0"
-        :style="{ width: `${sidebarWidth}px` }"
-      >
-        <a-card
-          class="h-full overflow-hidden"
-          :body-style="{ height: '100%', padding: '16px', display: 'flex', flexDirection: 'column' }"
-        >
-          <div class="flex flex-1 flex-col gap-4 overflow-y-auto pr-1">
-            <a-collapse default-active-key="filter" expand-icon-position="end" ghost>
-              <a-collapse-panel key="filter">
-                <template #header>
-                  <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <span>🔍</span>
-                    <span>{{ t('Filter Conditions') }}</span>
-                  </div>
-                </template>
-                <a-form layout="vertical" class="filter-form">
-                  <a-form-item :label="t('Time Range')">
-                    <a-range-picker
-                      v-model:value="filters.timeRange"
-                      show-time
-                      format="YYYY-MM-DD HH:mm"
-                      class="w-full"
-                    />
-                  </a-form-item>
-                  <a-form-item :label="t('Type & Status')">
-                    <div class="flex flex-col gap-2">
-                      <a-select
-                        v-model:value="filters.dataType"
-                        :options="dataTypeOptions"
-                        @change="applyFilters"
-                      />
-                      <a-select
-                        v-model:value="filters.status"
-                        :options="statusOptions"
-                        @change="applyFilters"
-                      />
-                      <a-select
-                        v-model:value="filters.priority"
-                        :options="priorityOptions"
-                        @change="applyFilters"
-                      />
-                    </div>
-                  </a-form-item>
-                  <a-form-item :label="t('Caller')">
-                    <a-input
-                      v-model:value="filters.caller"
-                      :placeholder="t('Enter Caller...')"
-                    >
-                      <template #suffix>
-                        <search-outlined
-                          class="cursor-pointer text-gray-400 transition hover:text-blue-500"
-                          @click="applyFilters"
-                        />
-                      </template>
-                    </a-input>
-                  </a-form-item>
-                  <a-form-item :label="t('Callee')">
-                    <a-input
-                      v-model:value="filters.callee"
-                      :placeholder="t('Enter Callee...')"
-                    >
-                      <template #suffix>
-                        <search-outlined
-                          class="cursor-pointer text-gray-400 transition hover:text-blue-500"
-                          @click="applyFilters"
-                        />
-                      </template>
-                    </a-input>
-                  </a-form-item>
-                  <a-form-item :label="t('Group ID')">
-                    <a-input
-                      v-model:value="filters.groupId"
-                      :placeholder="t('Enter Group ID...')"
-                    >
-                      <template #suffix>
-                        <search-outlined
-                          class="cursor-pointer text-gray-400 transition hover:text-blue-500"
-                          @click="applyFilters"
-                        />
-                      </template>
-                    </a-input>
-                  </a-form-item>
-                  <a-form-item :label="t('Trace ID')">
-                    <a-input
-                      v-model:value="filters.traceId"
-                      :placeholder="t('Enter Trace ID...')"
-                    >
-                      <template #suffix>
-                        <search-outlined
-                          class="cursor-pointer text-gray-400 transition hover:text-blue-500"
-                          @click="applyFilters"
-                        />
-                      </template>
-                    </a-input>
-                  </a-form-item>
-                  <a-form-item :label="t('Search')">
-                    <a-input
-                      v-model:value="filters.search"
-                      :placeholder="t('Search Question content...')"
-                    >
-                      <template #suffix>
-                        <search-outlined
-                          class="cursor-pointer text-gray-400 transition hover:text-blue-500"
-                          @click="applyFilters"
-                        />
-                      </template>
-                    </a-input>
-                  </a-form-item>
-                  <div class="flex flex-col gap-2">
-                    <a-button type="primary" block @click="applyFilters">
-                      {{ t('Search') }}
-                    </a-button>
-                    <a-button block @click="resetFilters">
-                      {{ t('Reset') }}
-                    </a-button>
-                  </div>
-                </a-form>
-              </a-collapse-panel>
-            </a-collapse>
+      <agent-sidebar :bank-name="bankName" />
 
-            <a-collapse default-active-key="progress" expand-icon-position="end" ghost>
-              <a-collapse-panel key="progress">
-                <template #header>
-                  <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <span>📊</span>
-                    <span>{{ t('Annotation Progress') }}</span>
-                  </div>
-                </template>
-                <a-spin :spinning="statsLoading">
-                  <div class="grid grid-cols-2 gap-3">
-                    <div class="rounded-lg bg-amber-50 p-3 text-center">
-                      <div class="text-lg font-semibold text-amber-600">
-                        {{ stats.pending }}
-                      </div>
-                      <div class="text-xs text-gray-500">
-                        {{ t('Pending') }}
-                      </div>
-                    </div>
-                    <div class="rounded-lg bg-emerald-50 p-3 text-center">
-                      <div class="text-lg font-semibold text-emerald-600">
-                        {{ stats.annotated }}
-                      </div>
-                      <div class="text-xs text-gray-500">
-                        {{ t('Annotated') }}
-                      </div>
-                    </div>
-                    <div class="rounded-lg bg-emerald-500/10 p-3 text-center">
-                      <div class="text-lg font-semibold text-emerald-600">
-                        {{ stats.approved }}
-                      </div>
-                      <div class="text-xs text-gray-500">
-                        {{ t('Approved') }}
-                      </div>
-                    </div>
-                    <div class="rounded-lg bg-red-50 p-3 text-center">
-                      <div class="text-lg font-semibold text-red-500">
-                        {{ stats.rejected }}
-                      </div>
-                      <div class="text-xs text-gray-500">
-                        {{ t('Rejected') }}
-                      </div>
-                    </div>
-                    <div class="rounded-lg bg-indigo-50 p-3 text-center">
-                      <div class="text-lg font-semibold text-indigo-600">
-                        {{ stats.kb_ingested }}
-                      </div>
-                      <div class="text-xs text-gray-500">
-                        {{ t('KB Ingested') }}
-                      </div>
-                    </div>
-                    <div class="rounded-lg bg-rose-50 p-3 text-center">
-                      <div class="text-lg font-semibold text-rose-500">
-                        {{ stats.kb_failed }}
-                      </div>
-                      <div class="text-xs text-gray-500">
-                        {{ t('KB Failed') }}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="mt-4 space-y-3">
-                    <div class="text-xs font-medium text-gray-600">
-                      {{ t('Annotation Progress') }}
-                    </div>
-                    <div class="h-2 overflow-hidden rounded-full bg-gray-100">
-                      <div class="flex h-full">
-                        <div
-                          class="h-full bg-emerald-500"
-                          :style="{ width: `${progressSegments.approved}%` }"
-                        />
-                        <div
-                          class="h-full bg-emerald-300"
-                          :style="{ width: `${progressSegments.annotated}%` }"
-                        />
-                        <div
-                          class="h-full bg-red-400"
-                          :style="{ width: `${progressSegments.rejected}%` }"
-                        />
-                        <div
-                          class="h-full bg-amber-400"
-                          :style="{ width: `${progressSegments.pending}%` }"
-                        />
-                        <div
-                          class="h-full bg-indigo-400"
-                          :style="{ width: `${progressSegments.kb_ingested}%` }"
-                        />
-                        <div
-                          class="h-full bg-rose-400"
-                          :style="{ width: `${progressSegments.kb_failed}%` }"
-                        />
-                      </div>
-                    </div>
-                    <div class="flex flex-wrap gap-3 text-xs text-gray-500">
-                      <span class="flex items-center gap-1">
-                        <span class="h-2 w-2 rounded-full bg-amber-400" />
-                        {{ t('Pending') }}
-                      </span>
-                      <span class="flex items-center gap-1">
-                        <span class="h-2 w-2 rounded-full bg-emerald-300" />
-                        {{ t('Annotated') }}
-                      </span>
-                      <span class="flex items-center gap-1">
-                        <span class="h-2 w-2 rounded-full bg-emerald-500" />
-                        {{ t('Approved') }}
-                      </span>
-                      <span class="flex items-center gap-1">
-                        <span class="h-2 w-2 rounded-full bg-red-400" />
-                        {{ t('Rejected') }}
-                      </span>
-                      <span class="flex items-center gap-1">
-                        <span class="h-2 w-2 rounded-full bg-indigo-400" />
-                        {{ t('KB Ingested') }}
-                      </span>
-                      <span class="flex items-center gap-1">
-                        <span class="h-2 w-2 rounded-full bg-rose-400" />
-                        {{ t('KB Failed') }}
-                      </span>
-                    </div>
-                  </div>
-                </a-spin>
-              </a-collapse-panel>
-            </a-collapse>
-          </div>
-        </a-card>
-
+      <!-- 左侧筛选条件暂时移除：将 showSidebar 改为 true 可恢复 -->
+      <template v-if="showSidebar">
         <div
-          class="annotation-sidebar-resizer"
-          :class="{ active: sidebarResizing }"
-          @mousedown="startSidebarResize"
-        />
-      </div>
+          class="relative flex-shrink-0"
+          :style="{ width: `${sidebarWidth}px` }"
+        >
+          <a-card
+            class="h-full overflow-hidden"
+            :body-style="{ height: '100%', padding: '16px', display: 'flex', flexDirection: 'column' }"
+          >
+            <div class="flex flex-1 flex-col gap-4 overflow-y-auto pr-1">
+              <a-collapse default-active-key="filter" expand-icon-position="end" ghost>
+                <a-collapse-panel key="filter">
+                  <template #header>
+                    <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <span>🔍</span>
+                      <span>{{ t('Filter Conditions') }}</span>
+                    </div>
+                  </template>
+                  <a-form layout="vertical" class="filter-form">
+                    <a-form-item :label="t('Time Range')">
+                      <a-range-picker
+                        v-model:value="filters.timeRange"
+                        show-time
+                        format="YYYY-MM-DD HH:mm"
+                        class="w-full"
+                      />
+                    </a-form-item>
+                    <a-form-item :label="t('Type & Status')">
+                      <div class="flex flex-col gap-2">
+                        <a-select
+                          v-model:value="filters.dataType"
+                          :options="dataTypeOptions"
+                          @change="applyFilters"
+                        />
+                        <a-select
+                          v-model:value="filters.status"
+                          :options="statusOptions"
+                          @change="applyFilters"
+                        />
+                        <a-select
+                          v-model:value="filters.priority"
+                          :options="priorityOptions"
+                          @change="applyFilters"
+                        />
+                      </div>
+                    </a-form-item>
+                    <a-form-item :label="t('Caller')">
+                      <a-input
+                        v-model:value="filters.caller"
+                        :placeholder="t('Enter Caller...')"
+                      >
+                        <template #suffix>
+                          <search-outlined
+                            class="cursor-pointer text-gray-400 transition hover:text-blue-500"
+                            @click="applyFilters"
+                          />
+                        </template>
+                      </a-input>
+                    </a-form-item>
+                    <a-form-item :label="t('Callee')">
+                      <a-input
+                        v-model:value="filters.callee"
+                        :placeholder="t('Enter Callee...')"
+                      >
+                        <template #suffix>
+                          <search-outlined
+                            class="cursor-pointer text-gray-400 transition hover:text-blue-500"
+                            @click="applyFilters"
+                          />
+                        </template>
+                      </a-input>
+                    </a-form-item>
+                    <a-form-item :label="t('Group ID')">
+                      <a-input
+                        v-model:value="filters.groupId"
+                        :placeholder="t('Enter Group ID...')"
+                      >
+                        <template #suffix>
+                          <search-outlined
+                            class="cursor-pointer text-gray-400 transition hover:text-blue-500"
+                            @click="applyFilters"
+                          />
+                        </template>
+                      </a-input>
+                    </a-form-item>
+                    <a-form-item :label="t('Trace ID')">
+                      <a-input
+                        v-model:value="filters.traceId"
+                        :placeholder="t('Enter Trace ID...')"
+                      >
+                        <template #suffix>
+                          <search-outlined
+                            class="cursor-pointer text-gray-400 transition hover:text-blue-500"
+                            @click="applyFilters"
+                          />
+                        </template>
+                      </a-input>
+                    </a-form-item>
+                    <a-form-item :label="t('Search')">
+                      <a-input
+                        v-model:value="filters.search"
+                        :placeholder="t('Search Question content...')"
+                      >
+                        <template #suffix>
+                          <search-outlined
+                            class="cursor-pointer text-gray-400 transition hover:text-blue-500"
+                            @click="applyFilters"
+                          />
+                        </template>
+                      </a-input>
+                    </a-form-item>
+                    <div class="flex flex-col gap-2">
+                      <a-button type="primary" block @click="applyFilters">
+                        {{ t('Search') }}
+                      </a-button>
+                      <a-button block @click="resetFilters">
+                        {{ t('Reset') }}
+                      </a-button>
+                    </div>
+                  </a-form>
+                </a-collapse-panel>
+              </a-collapse>
+
+              <a-collapse default-active-key="progress" expand-icon-position="end" ghost>
+                <a-collapse-panel key="progress">
+                  <template #header>
+                    <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <span>📊</span>
+                      <span>{{ t('Annotation Progress') }}</span>
+                    </div>
+                  </template>
+                  <a-spin :spinning="statsLoading">
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="rounded-lg bg-amber-50 p-3 text-center">
+                        <div class="text-lg font-semibold text-amber-600">
+                          {{ stats.pending }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                          {{ t('Pending') }}
+                        </div>
+                      </div>
+                      <div class="rounded-lg bg-emerald-50 p-3 text-center">
+                        <div class="text-lg font-semibold text-emerald-600">
+                          {{ stats.annotated }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                          {{ t('Annotated') }}
+                        </div>
+                      </div>
+                      <div class="rounded-lg bg-emerald-500/10 p-3 text-center">
+                        <div class="text-lg font-semibold text-emerald-600">
+                          {{ stats.approved }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                          {{ t('Approved') }}
+                        </div>
+                      </div>
+                      <div class="rounded-lg bg-red-50 p-3 text-center">
+                        <div class="text-lg font-semibold text-red-500">
+                          {{ stats.rejected }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                          {{ t('Rejected') }}
+                        </div>
+                      </div>
+                      <div class="rounded-lg bg-indigo-50 p-3 text-center">
+                        <div class="text-lg font-semibold text-indigo-600">
+                          {{ stats.kb_ingested }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                          {{ t('KB Ingested') }}
+                        </div>
+                      </div>
+                      <div class="rounded-lg bg-rose-50 p-3 text-center">
+                        <div class="text-lg font-semibold text-rose-500">
+                          {{ stats.kb_failed }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                          {{ t('KB Failed') }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="mt-4 space-y-3">
+                      <div class="text-xs font-medium text-gray-600">
+                        {{ t('Annotation Progress') }}
+                      </div>
+                      <div class="h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div class="flex h-full">
+                          <div
+                            class="h-full bg-emerald-500"
+                            :style="{ width: `${progressSegments.approved}%` }"
+                          />
+                          <div
+                            class="h-full bg-emerald-300"
+                            :style="{ width: `${progressSegments.annotated}%` }"
+                          />
+                          <div
+                            class="h-full bg-red-400"
+                            :style="{ width: `${progressSegments.rejected}%` }"
+                          />
+                          <div
+                            class="h-full bg-amber-400"
+                            :style="{ width: `${progressSegments.pending}%` }"
+                          />
+                          <div
+                            class="h-full bg-indigo-400"
+                            :style="{ width: `${progressSegments.kb_ingested}%` }"
+                          />
+                          <div
+                            class="h-full bg-rose-400"
+                            :style="{ width: `${progressSegments.kb_failed}%` }"
+                          />
+                        </div>
+                      </div>
+                      <div class="flex flex-wrap gap-3 text-xs text-gray-500">
+                        <span class="flex items-center gap-1">
+                          <span class="h-2 w-2 rounded-full bg-amber-400" />
+                          {{ t('Pending') }}
+                        </span>
+                        <span class="flex items-center gap-1">
+                          <span class="h-2 w-2 rounded-full bg-emerald-300" />
+                          {{ t('Annotated') }}
+                        </span>
+                        <span class="flex items-center gap-1">
+                          <span class="h-2 w-2 rounded-full bg-emerald-500" />
+                          {{ t('Approved') }}
+                        </span>
+                        <span class="flex items-center gap-1">
+                          <span class="h-2 w-2 rounded-full bg-red-400" />
+                          {{ t('Rejected') }}
+                        </span>
+                        <span class="flex items-center gap-1">
+                          <span class="h-2 w-2 rounded-full bg-indigo-400" />
+                          {{ t('KB Ingested') }}
+                        </span>
+                        <span class="flex items-center gap-1">
+                          <span class="h-2 w-2 rounded-full bg-rose-400" />
+                          {{ t('KB Failed') }}
+                        </span>
+                      </div>
+                    </div>
+                  </a-spin>
+                </a-collapse-panel>
+              </a-collapse>
+            </div>
+          </a-card>
+
+          <div
+            class="annotation-sidebar-resizer"
+            :class="{ active: sidebarResizing }"
+            @mousedown="startSidebarResize"
+          />
+        </div>
+      </template>
 
       <div class="flex min-w-0 flex-1 flex-col">
         <a-card
@@ -599,12 +914,12 @@ onBeforeUnmount(() => {
             :data-source="dataList"
             :loading="loading"
             :pagination="false"
-            :row-key="record => (record as AnnotationItem).data_id"
+            :row-key="record => (record as BankChunkItem).sys_sample_id"
             :row-class-name="rowClassName"
             :custom-row="handleTableRow"
             size="middle"
             table-layout="fixed"
-            :scroll="{ x: 1260 }"
+            :scroll="{ x: 1600 }"
           >
             <template #headerCell="{ column }">
               <div class="flex w-full items-center justify-between gap-2">
@@ -620,108 +935,54 @@ onBeforeUnmount(() => {
 
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'priority'">
-                <a-tag :style="getPriorityStyle(record.priority)" bordered>
-                  P{{ record.priority ?? 4 }}
-                </a-tag>
+                <template v-if="typeof (record as BankChunkItem).sys_priority === 'number'">
+                  <a-tag :style="getPriorityStyle((record as BankChunkItem).sys_priority)" bordered>
+                    P{{ (record as BankChunkItem).sys_priority }}
+                  </a-tag>
+                </template>
+                <span v-else class="text-xs text-gray-600">--</span>
               </template>
               <template v-else-if="column.key === 'status'">
-                <a-tag :style="getStatusStyle(record.status)" bordered>
-                  {{ getStatusLabel(record.status) }}
-                </a-tag>
+                <template v-if="(record as BankChunkItem).sys_status">
+                  <a-tag :style="getStatusStyle((record as BankChunkItem).sys_status)" bordered>
+                    {{ (record as BankChunkItem).sys_status }}
+                  </a-tag>
+                </template>
+                <span v-else class="text-xs text-gray-600">--</span>
               </template>
-              <template v-else-if="column.key === 'type'">
-                <a-tag :style="getDataTypeStyle(record.data_type)" bordered>
-                  {{ getDataTypeLabel(record.data_type) }}
-                </a-tag>
-              </template>
-              <template v-else-if="column.key === 'relation'">
-                <a-tooltip :title="`${getCaller(record)} → ${getCallee(record)}`">
-                  <div class="flex items-center gap-2 text-xs text-gray-600">
-                    <template v-if="record.data_type === 'e2e'">
-                      <span>{{ t('User') }}</span>
-                      <span>→</span>
-                      <a-avatar
-                        size="small"
-                        :style="getAgentAvatarStyle(getCallee(record))"
-                      >
-                        {{ getAvatarInitial(getCallee(record)) }}
-                      </a-avatar>
-                      <span class="truncate">
-                        {{ getCallee(record) }}
-                      </span>
-                    </template>
-                    <template v-else>
-                      <a-avatar
-                        size="small"
-                        :style="getAgentAvatarStyle(getCaller(record))"
-                      >
-                        {{ getAvatarInitial(getCaller(record)) }}
-                      </a-avatar>
-                      <span class="truncate">
-                        {{ getCaller(record) }}
-                      </span>
-                      <span>→</span>
-                      <template v-if="record.data_type === 'tool'">
-                        <span>🔧</span>
-                        <span class="truncate">
-                          {{ getCallee(record) }}
-                        </span>
-                      </template>
-                      <template v-else>
-                        <a-avatar
-                          size="small"
-                          :style="getAgentAvatarStyle(getCallee(record))"
-                        >
-                          {{ getAvatarInitial(getCallee(record)) }}
-                        </a-avatar>
-                        <span class="truncate">
-                          {{ getCallee(record) }}
-                        </span>
-                      </template>
-                    </template>
-                  </div>
-                </a-tooltip>
-              </template>
-              <template v-else-if="column.key === 'question'">
-                <a-tooltip :title="record.question || '-'">
+              <template v-else-if="column.key === 'overview'">
+                <a-tooltip :title="(record as BankChunkItem).sys_overview || '--'">
                   <div class="truncate text-xs text-gray-600">
-                    {{ record.question || '-' }}
+                    {{ (record as BankChunkItem).sys_overview || '--' }}
                   </div>
                 </a-tooltip>
               </template>
-              <template v-else-if="column.key === 'groupTrace'">
-                <a-tooltip
-                  :title="t('Group: {group}\\nTrace: {trace}', { group: record.source_group_id || '-', trace: record.source_trace_id || '-' })"
-                >
-                  <div class="space-y-1 text-xs">
-                    <div class="flex items-center gap-1">
-                      <span class="text-gray-400">{{ t('G:') }}</span>
-                      <span class="truncate text-emerald-600">
-                        {{ record.source_group_id || '-' }}
-                      </span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                      <span class="text-gray-400">{{ t('T:') }}</span>
-                      <span class="truncate text-blue-600">
-                        {{ record.source_trace_id || '-' }}
-                      </span>
-                    </div>
+              <template v-else-if="column.key === 'remarks'">
+                <a-tooltip :title="(record as BankChunkItem).sys_remarks || '--'">
+                  <div class="truncate text-xs text-gray-600">
+                    {{ (record as BankChunkItem).sys_remarks || '--' }}
                   </div>
                 </a-tooltip>
               </template>
-              <template v-else-if="column.key === 'time'">
+              <template v-else-if="column.key === 'createTime'">
                 <span class="text-xs text-gray-500">
-                  {{ formatDateShort(record.created_at) }}
+                  {{ (record as BankChunkItem).sys_create_time || '--' }}
+                </span>
+              </template>
+              <template v-else-if="column.key === 'updateTime'">
+                <span class="text-xs text-gray-500">
+                  {{ (record as BankChunkItem).sys_update_time || '--' }}
                 </span>
               </template>
               <template v-else-if="column.key === 'action'">
-                <a-button
-                  size="small"
-                  type="primary"
-                  @click.stop="openDetail(record.data_id)"
-                >
-                  {{ t('Annotate') }}
+                <a-button type="link" size="small" class="!px-0" @click.stop="openDrawer(record as BankChunkItem)">
+                  {{ t('标注') }}
                 </a-button>
+              </template>
+              <template v-else>
+                <span class="text-xs text-gray-600">
+                  {{ formatCellValue((record as any)[(column.dataIndex as any) as string]) }}
+                </span>
               </template>
             </template>
 
@@ -757,264 +1018,34 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <a-drawer
-      :open="drawerOpen"
-      placement="right"
+    <qa-annotation-drawer
+      v-if="selectedRow && activeTemplate === 'qa'"
+      v-model:open="drawerOpen"
+      v-model:is-satisfied="isSatisfiedModel"
+      v-model:reason="reasonModel"
+      :title="drawerTitle"
       :width="drawerWidth"
-      :destroy-on-close="true"
-      :title="t('Data Annotation')"
-      @close="closeDrawer"
-    >
-      <a-spin :spinning="detailLoading">
-        <div v-if="selectedData" class="space-y-4">
-          <a-card>
-            <a-descriptions bordered size="small" :column="1">
-              <a-descriptions-item :label="t('Label')">
-                <div class="flex flex-wrap gap-2">
-                  <a-tag :style="getPriorityStyle(detailTags.priority)" bordered>
-                    P{{ detailTags.priority }}
-                  </a-tag>
-                  <a-tag :style="getStatusStyle(detailTags.status)" bordered>
-                    {{ getStatusLabel(detailTags.status) }}
-                  </a-tag>
-                  <a-tag :style="getDataTypeStyle(detailTags.dataType)" bordered>
-                    {{ getDataTypeLabel(detailTags.dataType) }}
-                  </a-tag>
-                </div>
-              </a-descriptions-item>
-              <a-descriptions-item :label="t('Group')">
-                <span class="font-mono text-xs text-emerald-600">
-                  {{ selectedData.source_group_id || '-' }}
-                </span>
-              </a-descriptions-item>
-              <a-descriptions-item :label="t('Trace')">
-                <span class="font-mono text-xs text-blue-600">
-                  {{ selectedData.source_trace_id || '-' }}
-                </span>
-              </a-descriptions-item>
-              <a-descriptions-item :label="t('Time')">
-                <span class="font-mono text-xs text-gray-600">
-                  {{ formatDateTimeFull(selectedData.created_at) }}
-                </span>
-              </a-descriptions-item>
-              <a-descriptions-item :label="t('Call Relationship')">
-                <div class="flex items-center gap-2 text-xs text-gray-600">
-                  <a-avatar
-                    size="small"
-                    :style="getAgentAvatarStyle(getCaller(selectedData))"
-                  >
-                    {{ getAvatarInitial(getCaller(selectedData)) }}
-                  </a-avatar>
-                  <span>{{ getCaller(selectedData) }}</span>
-                  <span>→</span>
-                  <a-avatar
-                    v-if="selectedData.data_type !== 'tool'"
-                    size="small"
-                    :style="getAgentAvatarStyle(getCallee(selectedData))"
-                  >
-                    {{ getAvatarInitial(getCallee(selectedData)) }}
-                  </a-avatar>
-                  <span v-else>🔧</span>
-                  <span>{{ getCallee(selectedData) }}</span>
-                </div>
-              </a-descriptions-item>
-            </a-descriptions>
-          </a-card>
+      :submitting="submitting"
+      :query="String(schemaDraft.query ?? getDisplayQuery(selectedRow))"
+      :answer="String(schemaDraft.answer ?? getDisplayAnswer(selectedRow))"
+      @prev="gotoPrev"
+      @next="gotoNext"
+      @submit="submit"
+      @update:open="(val) => { if (!val) closeDrawer() }"
+    />
 
-          <a-card>
-            <template #title>
-              <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <span>💬</span>
-                <span>{{ t('QA Content') }}</span>
-              </div>
-            </template>
-            <div class="space-y-4">
-              <div>
-                <div class="mb-2 text-xs font-semibold text-gray-500">
-                  {{ t('Question') }}
-                </div>
-                <div class="rounded bg-gray-50 p-3 text-xs text-gray-700">
-                  <template v-if="qaContent.question">
-                    <pre class="whitespace-pre-wrap font-mono">{{ qaContent.question }}</pre>
-                  </template>
-                  <template v-else>
-                    <span class="italic text-gray-400">{{ t('No content available') }}</span>
-                  </template>
-                </div>
-              </div>
-              <div>
-                <div class="mb-2 text-xs font-semibold text-gray-500">
-                  {{ t('Answer') }}
-                </div>
-                <div class="rounded bg-gray-50 p-3 text-xs text-gray-700">
-                  <template v-if="qaContent.answer">
-                    <pre class="whitespace-pre-wrap font-mono">{{ qaContent.answer }}</pre>
-                  </template>
-                  <template v-else>
-                    <span class="italic text-gray-400">{{ t('No content available') }}</span>
-                  </template>
-                </div>
-              </div>
-            </div>
-          </a-card>
-
-          <a-card v-if="hasAnnotationResult">
-            <template #title>
-              <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <span>📋</span>
-                <span>{{ t('Annotated Result') }}</span>
-              </div>
-            </template>
-            <a-table
-              :columns="[
-                { title: t('Key'), dataIndex: 'key', key: 'key', width: 140 },
-                { title: t('Value'), dataIndex: 'value', key: 'value' },
-              ]"
-              :data-source="annotationEntries.map(([key, value]) => ({ key, value }))"
-              :pagination="false"
-              size="small"
-              :row-key="record => record.key"
-            />
-          </a-card>
-
-          <a-alert
-            v-if="hasRejectReason"
-            type="error"
-            show-icon
-            :message="t('Reject Reason')"
-            :description="selectedData.reject_reason || '-'"
-          />
-
-          <a-card v-if="showAnnotationForm">
-            <template #title>
-              <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <span>✏️</span>
-                <span>{{ t('Annotation') }}</span>
-              </div>
-            </template>
-            <a-form layout="vertical">
-              <a-form-item :label="t('Corrected Question')">
-                <a-textarea
-                  v-model:value="annotationForm.question"
-                  :rows="3"
-                  :placeholder="t('Optional, enter corrected Question...')"
-                />
-              </a-form-item>
-              <a-form-item :label="t('Corrected Answer')">
-                <a-textarea
-                  v-model:value="annotationForm.answer"
-                  :rows="4"
-                  :placeholder="t('Optional, enter corrected Answer...')"
-                />
-              </a-form-item>
-              <a-form-item>
-                <template #label>
-                  <span class="flex items-center gap-1 text-gray-600">
-                    <span>{{ t('Quality Score') }}</span>
-                    <span class="text-red-500">*</span>
-                  </span>
-                </template>
-                <a-select v-model:value="annotationForm.score" :placeholder="t('Please select')">
-                  <a-select-option value="1">
-                    {{ t('Excellent (1.0)') }}
-                  </a-select-option>
-                  <a-select-option value="0.8">
-                    {{ t('Good (0.8)') }}
-                  </a-select-option>
-                  <a-select-option value="0.6">
-                    {{ t('Fair (0.6)') }}
-                  </a-select-option>
-                  <a-select-option value="0.4">
-                    {{ t('Poor (0.4)') }}
-                  </a-select-option>
-                  <a-select-option value="0.2">
-                    {{ t('Very Poor (0.2)') }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-              <a-form-item :label="t('Annotation Comment')">
-                <a-textarea
-                  v-model:value="annotationForm.comment"
-                  :rows="3"
-                  :placeholder="t('Optional, enter comments...')"
-                />
-              </a-form-item>
-              <a-button type="primary" block @click="submitAnnotation(selectedData.data_id)">
-                💾 {{ t('Submit Annotation') }}
-              </a-button>
-            </a-form>
-          </a-card>
-
-          <a-card v-if="showReviewSection">
-            <template #title>
-              <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <span>👁️</span>
-                <span>{{ selectedData.status === 'approved' ? t('Knowledge Base') : t('Annotation Review') }}</span>
-              </div>
-            </template>
-            <div class="flex flex-col gap-3">
-              <template v-if="selectedData.status === 'annotated'">
-                <a-button type="primary" block @click="approveAnnotation(selectedData.data_id)">
-                  ✅ {{ t('Approve Annotation') }}
-                </a-button>
-                <a-button danger block @click="openRejectModal(selectedData.data_id)">
-                  ❌ {{ t('Reject Annotation') }}
-                </a-button>
-              </template>
-              <template v-else>
-                <a-button type="primary" block @click="ingestToKb(selectedData.data_id)">
-                  📤 {{ t('Approve & Ingest to KB') }}
-                </a-button>
-              </template>
-            </div>
-          </a-card>
-
-          <a-card v-if="showKbSection">
-            <template #title>
-              <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <span>📚</span>
-                <span>{{ t('Knowledge Base') }}</span>
-              </div>
-            </template>
-            <a-alert
-              v-if="selectedData.status === 'kb_ingested'"
-              type="success"
-              show-icon
-              :message="t('Knowledge Base Ingestion Successful')"
-            />
-            <div v-else-if="selectedData.status === 'kb_failed'" class="space-y-3">
-              <a-alert
-                type="error"
-                show-icon
-                :message="t('KB Ingestion Failed, Please Retry')"
-              />
-              <a-button type="primary" block @click="ingestToKb(selectedData.data_id, true)">
-                🔄 {{ t('Retry KB Ingestion') }}
-              </a-button>
-            </div>
-          </a-card>
-        </div>
-      </a-spin>
-    </a-drawer>
-
-    <a-modal
-      v-model:open="rejectModalOpen"
-      :title="t('Reject Annotation')"
-      :ok-text="t('Confirm Reject')"
-      :cancel-text="t('Cancel')"
-      ok-type="danger"
-      @ok="confirmReject"
-    >
-      <a-form layout="vertical">
-        <a-form-item :label="t('Please enter reject reason:')">
-          <a-textarea
-            v-model:value="rejectReason"
-            :rows="4"
-            :placeholder="t('Please enter reject reason...')"
-          />
-        </a-form-item>
-      </a-form>
-    </a-modal>
+    <default-annotation-drawer
+      v-else-if="selectedRow"
+      v-model:open="drawerOpen"
+      v-model:schema="schemaDraft"
+      :title="drawerTitle"
+      :width="drawerWidth"
+      :submitting="submitting"
+      @prev="gotoPrev"
+      @next="gotoNext"
+      @submit="submit"
+      @update:open="(val) => { if (!val) closeDrawer() }"
+    />
   </div>
 </template>
 

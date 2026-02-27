@@ -2333,6 +2333,764 @@
         }
       }
     },
+    "/api/v1/trigger/{kb_name}/": {
+      "post": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Create Trigger",
+        "description": "Create a new trigger for a knowledge base.\n\nArgs:\n    kb_name: Knowledge base name\n    request: Trigger creation request\n\nReturns:\n    APIResponse with created trigger\n\nRaises:\n    HTTPException: If validation fails",
+        "operationId": "create_trigger_api_v1_trigger__kb_name___post",
+        "parameters": [
+          {
+            "name": "kb_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kb Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Get Triggers",
+        "description": "Get all triggers for a knowledge base.\n\nArgs:\n    kb_name: Knowledge base name\n\nReturns:\n    APIResponse with list of triggers",
+        "operationId": "get_triggers_api_v1_trigger__kb_name___get",
+        "parameters": [
+          {
+            "name": "kb_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kb Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trigger/{kb_name}/{trigger_id}": {
+      "get": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Get Trigger",
+        "description": "Get a specific trigger by ID.\n\nArgs:\n    kb_name: Knowledge base name\n    trigger_id: Trigger ID\n\nReturns:\n    APIResponse with trigger details\n\nRaises:\n    HTTPException: If trigger not found",
+        "operationId": "get_trigger_api_v1_trigger__kb_name___trigger_id__get",
+        "parameters": [
+          {
+            "name": "kb_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kb Name"
+            }
+          },
+          {
+            "name": "trigger_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Trigger Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Update Trigger",
+        "description": "Update an existing trigger.\n\nArgs:\n    kb_name: Knowledge base name\n    trigger_id: Trigger ID\n    request: Update request (partial fields)\n\nReturns:\n    APIResponse with updated trigger\n\nRaises:\n    HTTPException: If validation fails",
+        "operationId": "update_trigger_api_v1_trigger__kb_name___trigger_id__put",
+        "parameters": [
+          {
+            "name": "kb_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kb Name"
+            }
+          },
+          {
+            "name": "trigger_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Trigger Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Delete Trigger",
+        "description": "Delete a trigger from a knowledge base.\n\nArgs:\n    kb_name: Knowledge base name\n    trigger_id: Trigger ID\n\nReturns:\n    APIResponse confirming deletion\n\nRaises:\n    HTTPException: If KB not found",
+        "operationId": "delete_trigger_api_v1_trigger__kb_name___trigger_id__delete",
+        "parameters": [
+          {
+            "name": "kb_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kb Name"
+            }
+          },
+          {
+            "name": "trigger_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Trigger Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trigger/{kb_name}/{trigger_id}/enable": {
+      "patch": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Enable Trigger",
+        "description": "Enable a trigger.\n\nArgs:\n    kb_name: Knowledge base name\n    trigger_id: Trigger ID\n\nReturns:\n    APIResponse with updated trigger\n\nRaises:\n    HTTPException: If validation fails",
+        "operationId": "enable_trigger_api_v1_trigger__kb_name___trigger_id__enable_patch",
+        "parameters": [
+          {
+            "name": "kb_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kb Name"
+            }
+          },
+          {
+            "name": "trigger_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Trigger Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trigger/{kb_name}/{trigger_id}/disable": {
+      "patch": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Disable Trigger",
+        "description": "Disable a trigger.\n\nArgs:\n    kb_name: Knowledge base name\n    trigger_id: Trigger ID\n\nReturns:\n    APIResponse with updated trigger\n\nRaises:\n    HTTPException: If validation fails",
+        "operationId": "disable_trigger_api_v1_trigger__kb_name___trigger_id__disable_patch",
+        "parameters": [
+          {
+            "name": "kb_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kb Name"
+            }
+          },
+          {
+            "name": "trigger_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Trigger Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trigger/{kb_name}/{trigger_id}/manual": {
+      "post": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Manual Trigger",
+        "description": "Manually execute a trigger for specific sample IDs.\n\nArgs:\n    kb_name: Knowledge base name\n    trigger_id: Trigger ID to execute\n    request: Manual trigger request with sample_ids and dry_run flag\n\nReturns:\n    APIResponse with execution status\n\nRaises:\n    HTTPException: If validation fails",
+        "operationId": "manual_trigger_api_v1_trigger__kb_name___trigger_id__manual_post",
+        "parameters": [
+          {
+            "name": "kb_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kb Name"
+            }
+          },
+          {
+            "name": "trigger_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Trigger Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualTriggerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trigger/history/{kb_name}": {
+      "get": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Query History By Kb",
+        "description": "Query trigger execution history for a knowledge base.\n\nArgs:\n    kb_name: Knowledge base name\n    trigger_id: Optional filter by trigger ID\n    status: Optional filter by execution status (pending/success/failed)\n    start_date: Optional start date filter\n    end_date: Optional end date filter\n    page: Page number (1-based)\n    page_size: Records per page (max 100)\n\nReturns:\n    APIResponse with execution history",
+        "operationId": "query_history_by_kb_api_v1_trigger_history__kb_name__get",
+        "parameters": [
+          {
+            "name": "kb_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kb Name"
+            }
+          },
+          {
+            "name": "trigger_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by trigger ID",
+              "title": "Trigger Id"
+            },
+            "description": "Filter by trigger ID"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by execution status",
+              "title": "Status"
+            },
+            "description": "Filter by execution status"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Start date (YYYY-MM-DD HH:MM:SS)",
+              "title": "Start Date"
+            },
+            "description": "Start date (YYYY-MM-DD HH:MM:SS)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "End date (YYYY-MM-DD HH:MM:SS)",
+              "title": "End Date"
+            },
+            "description": "End date (YYYY-MM-DD HH:MM:SS)"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Records per page",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Records per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trigger/history/{kb_name}/{trigger_id}": {
+      "get": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Query History By Trigger",
+        "description": "Query execution history for a specific trigger.\n\nArgs:\n    kb_name: Knowledge base name\n    trigger_id: Trigger ID\n    status: Optional filter by execution status\n    start_date: Optional start date filter\n    end_date: Optional end date filter\n    page: Page number (1-based)\n    page_size: Records per page (max 100)\n\nReturns:\n    APIResponse with execution history",
+        "operationId": "query_history_by_trigger_api_v1_trigger_history__kb_name___trigger_id__get",
+        "parameters": [
+          {
+            "name": "kb_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kb Name"
+            }
+          },
+          {
+            "name": "trigger_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Trigger Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by execution status",
+              "title": "Status"
+            },
+            "description": "Filter by execution status"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Start date (YYYY-MM-DD HH:MM:SS)",
+              "title": "Start Date"
+            },
+            "description": "Start date (YYYY-MM-DD HH:MM:SS)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "End date (YYYY-MM-DD HH:MM:SS)",
+              "title": "End Date"
+            },
+            "description": "End date (YYYY-MM-DD HH:MM:SS)"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Records per page",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Records per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trigger/stats/{kb_name}": {
+      "get": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Get Trigger Stats",
+        "description": "Get execution statistics for a knowledge base.\n\nArgs:\n    kb_name: Knowledge base name\n    trigger_id: Optional filter by trigger ID\n\nReturns:\n    APIResponse with execution statistics",
+        "operationId": "get_trigger_stats_api_v1_trigger_stats__kb_name__get",
+        "parameters": [
+          {
+            "name": "kb_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kb Name"
+            }
+          },
+          {
+            "name": "trigger_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by trigger ID",
+              "title": "Trigger Id"
+            },
+            "description": "Filter by trigger ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/log/level": {
       "get": {
         "tags": [
@@ -2404,1875 +3162,40 @@
           }
         }
       }
-    },
-    "/kb/weather/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:weather",
-          "KB:weather"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "天气数据",
-        "operationId": "weather_search_rule_0_kb_weather_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_weather_Rule4847505712"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/weather/deposit": {
-      "post": {
-        "tags": [
-          "KB:weather",
-          "KB:weather"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base weather. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_weather_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_weather",
-                "description": "Data to write (single item). Fields: city_key, date, max_temperature, min_temperature, weather, wind_force_direction, sunshine_duration"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/weather/list_banks": {
-      "get": {
-        "tags": [
-          "KB:weather",
-          "KB:weather"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank weather",
-        "operationId": "list_banks_kb_weather_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/weather-temp/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:weather-temp",
-          "KB:weather-temp"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "**Main Query Strategy**: ES full-text search\n\n**Search Fields**: city_key ()\n\n**Filter Conditions**: date () (exact match)\n\n**Output Fields**: city_key (), date (), max_temperature (), min_temperature (), weather (), wind_force_direction (), sunshine_duration ()",
-        "operationId": "weather_temp_search_rule_0_kb_weather_temp_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_weather-temp_Rule4847754512"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/weather-temp/deposit": {
-      "post": {
-        "tags": [
-          "KB:weather-temp",
-          "KB:weather-temp"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base weather-temp. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_weather_temp_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_weather-temp",
-                "description": "Data to write (single item). Fields: city_key, date, max_temperature, min_temperature, weather, wind_force_direction, sunshine_duration"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/weather-temp/list_banks": {
-      "get": {
-        "tags": [
-          "KB:weather-temp",
-          "KB:weather-temp"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank weather-temp",
-        "operationId": "list_banks_kb_weather_temp_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/unstructure_doc_test/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:unstructure_doc_test",
-          "KB:unstructure_doc_test"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "**Main Query Strategy**: ES full-text search\n\n**Search Fields**: chunk_to_emb ()\n\n**Output Fields**: chunk_to_return ()",
-        "operationId": "unstructure_doc_test_search_rule_0_kb_unstructure_doc_test_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_unstructure_doc_test_Rule4847929936"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/unstructure_doc_test/search/rule_1": {
-      "post": {
-        "tags": [
-          "KB:unstructure_doc_test",
-          "KB:unstructure_doc_test"
-        ],
-        "summary": "Retrieval interface - Rule 1",
-        "description": "**Main Query Strategy**: Vearch vector search\n\n**Search Fields**: chunk_to_emb ()\n\n**Output Fields**: chunk_to_return ()",
-        "operationId": "unstructure_doc_test_search_rule_1_kb_unstructure_doc_test_search_rule_1_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_unstructure_doc_test_Rule4847930256"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/unstructure_doc_test/deposit": {
-      "post": {
-        "tags": [
-          "KB:unstructure_doc_test",
-          "KB:unstructure_doc_test"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base unstructure_doc_test. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_unstructure_doc_test_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_unstructure_doc_test",
-                "description": "Data to write (single item). Fields: chunk_to_return, chunk_to_emb"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/unstructure_doc_test/list_banks": {
-      "get": {
-        "tags": [
-          "KB:unstructure_doc_test",
-          "KB:unstructure_doc_test"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank unstructure_doc_test",
-        "operationId": "list_banks_kb_unstructure_doc_test_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/qa_bank_2/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:qa_bank_2",
-          "KB:qa_bank_2"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "**Main Query Strategy**: ES full-text search\n\n**Search Fields**: question ()\n\n**Filter Conditions**: callee () (exact match)\n\n**Output Fields**: answer ()",
-        "operationId": "qa_bank_2_search_rule_0_kb_qa_bank_2_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_qa_bank_2_Rule4848045104"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/qa_bank_2/deposit": {
-      "post": {
-        "tags": [
-          "KB:qa_bank_2",
-          "KB:qa_bank_2"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base qa_bank_2. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_qa_bank_2_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_qa_bank_2",
-                "description": "Data to write (single item). Fields: question, answer, score, caller, callee, remark, source_trace_id, source_request_id, data_type, priority, category"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/qa_bank_2/list_banks": {
-      "get": {
-        "tags": [
-          "KB:qa_bank_2",
-          "KB:qa_bank_2"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank qa_bank_2",
-        "operationId": "list_banks_kb_qa_bank_2_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/anno_bank/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:anno_bank",
-          "KB:anno_bank"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "**Main Query Strategy**: ES full-text search\n\n**Search Fields**: type ()\n\n**Filter Conditions**: status () (exact match)\n\n**Output Fields**: task_id (), type (), priority (), status (), create_time (), update_time (), query (), answer ()",
-        "operationId": "anno_bank_search_rule_0_kb_anno_bank_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_anno_bank_Rule4848057744"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/anno_bank/deposit": {
-      "post": {
-        "tags": [
-          "KB:anno_bank",
-          "KB:anno_bank"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base anno_bank. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_anno_bank_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_anno_bank",
-                "description": "Data to write (single item). Fields: task_id, type, priority, status, create_time, update_time, query, answer, is_satisfied, reason"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/anno_bank/list_banks": {
-      "get": {
-        "tags": [
-          "KB:anno_bank",
-          "KB:anno_bank"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank anno_bank",
-        "operationId": "list_banks_kb_anno_bank_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/testK/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:testK",
-          "KB:testK"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "**Main Query Strategy**: ES full-text search\n\n**Search Fields**: chunk_to_emb ()\n\n**Output Fields**: chunk_to_return ()",
-        "operationId": "testK_search_rule_0_kb_testK_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_testK_Rule4848249952"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/testK/search/rule_1": {
-      "post": {
-        "tags": [
-          "KB:testK",
-          "KB:testK"
-        ],
-        "summary": "Retrieval interface - Rule 1",
-        "description": "**Main Query Strategy**: Vearch vector search\n\n**Search Fields**: chunk_to_emb ()\n\n**Output Fields**: chunk_to_return ()",
-        "operationId": "testK_search_rule_1_kb_testK_search_rule_1_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_testK_Rule4848250192"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/testK/deposit": {
-      "post": {
-        "tags": [
-          "KB:testK",
-          "KB:testK"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base testK. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_testK_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_testK",
-                "description": "Data to write (single item). Fields: chunk_to_return, chunk_to_emb"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/testK/list_banks": {
-      "get": {
-        "tags": [
-          "KB:testK",
-          "KB:testK"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank testK",
-        "operationId": "list_banks_kb_testK_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyy_new_structure_1/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:hyy_new_structure_1",
-          "KB:hyy_new_structure_1"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "123123",
-        "operationId": "hyy_new_structure_1_search_rule_0_kb_hyy_new_structure_1_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_hyy_new_structure_1_Rule4848478768"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyy_new_structure_1/deposit": {
-      "post": {
-        "tags": [
-          "KB:hyy_new_structure_1",
-          "KB:hyy_new_structure_1"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base hyy_new_structure_1. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_hyy_new_structure_1_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_hyy_new_structure_1",
-                "description": "Data to write (single item). Fields: name, age, score"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyy_new_structure_1/list_banks": {
-      "get": {
-        "tags": [
-          "KB:hyy_new_structure_1",
-          "KB:hyy_new_structure_1"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank hyy_new_structure_1",
-        "operationId": "list_banks_kb_hyy_new_structure_1_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/kb_un/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:kb_un",
-          "KB:kb_un"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "**Main Query Strategy**: ES full-text search\n\n**Search Fields**: chunk_to_emb ()\n\n**Output Fields**: chunk_to_return ()",
-        "operationId": "kb_un_search_rule_0_kb_kb_un_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_kb_un_Rule4949318208"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/kb_un/search/rule_1": {
-      "post": {
-        "tags": [
-          "KB:kb_un",
-          "KB:kb_un"
-        ],
-        "summary": "Retrieval interface - Rule 1",
-        "description": "**Main Query Strategy**: Vearch vector search\n\n**Search Fields**: chunk_to_emb ()\n\n**Output Fields**: chunk_to_return ()",
-        "operationId": "kb_un_search_rule_1_kb_kb_un_search_rule_1_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_kb_un_Rule4949318448"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/kb_un/deposit": {
-      "post": {
-        "tags": [
-          "KB:kb_un",
-          "KB:kb_un"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base kb_un. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_kb_un_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_kb_un",
-                "description": "Data to write (single item). Fields: chunk_to_return, chunk_to_emb"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/kb_un/list_banks": {
-      "get": {
-        "tags": [
-          "KB:kb_un",
-          "KB:kb_un"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank kb_un",
-        "operationId": "list_banks_kb_kb_un_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/test222/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:test222",
-          "KB:test222"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "test222",
-        "operationId": "test222_search_rule_0_kb_test222_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_test222_Rule4949399888"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/test222/deposit": {
-      "post": {
-        "tags": [
-          "KB:test222",
-          "KB:test222"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base test222. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_test222_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_test222",
-                "description": "Data to write (single item). Fields: name, age, score"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/test222/list_banks": {
-      "get": {
-        "tags": [
-          "KB:test222",
-          "KB:test222"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank test222",
-        "operationId": "list_banks_kb_test222_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyy_demo_1/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:hyy_demo_1",
-          "KB:hyy_demo_1"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "这个是知识库的描述",
-        "operationId": "hyy_demo_1_search_rule_0_kb_hyy_demo_1_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_hyy_demo_1_Rule4949575552"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyy_demo_1/deposit": {
-      "post": {
-        "tags": [
-          "KB:hyy_demo_1",
-          "KB:hyy_demo_1"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base hyy_demo_1. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_hyy_demo_1_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_hyy_demo_1",
-                "description": "Data to write (single item). Fields: name, age, score"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyy_demo_1/list_banks": {
-      "get": {
-        "tags": [
-          "KB:hyy_demo_1",
-          "KB:hyy_demo_1"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank hyy_demo_1",
-        "operationId": "list_banks_kb_hyy_demo_1_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyy_test_111/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:hyy_test_111",
-          "KB:hyy_test_111"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "123123",
-        "operationId": "hyy_test_111_search_rule_0_kb_hyy_test_111_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_hyy_test_111_Rule4949588512"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyy_test_111/deposit": {
-      "post": {
-        "tags": [
-          "KB:hyy_test_111",
-          "KB:hyy_test_111"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base hyy_test_111. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_hyy_test_111_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_hyy_test_111",
-                "description": "Data to write (single item). Fields: name, age, score, tag"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyy_test_111/list_banks": {
-      "get": {
-        "tags": [
-          "KB:hyy_test_111",
-          "KB:hyy_test_111"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank hyy_test_111",
-        "operationId": "list_banks_kb_hyy_test_111_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/testK2/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:testK2",
-          "KB:testK2"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "**Main Query Strategy**: ES full-text search\n\n**Search Fields**: chunk_to_emb ()\n\n**Output Fields**: chunk_to_return ()",
-        "operationId": "testK2_search_rule_0_kb_testK2_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_testK2_Rule4949731888"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/testK2/search/rule_1": {
-      "post": {
-        "tags": [
-          "KB:testK2",
-          "KB:testK2"
-        ],
-        "summary": "Retrieval interface - Rule 1",
-        "description": "**Main Query Strategy**: Vearch vector search\n\n**Search Fields**: chunk_to_emb ()\n\n**Output Fields**: chunk_to_return ()",
-        "operationId": "testK2_search_rule_1_kb_testK2_search_rule_1_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_testK2_Rule4949732128"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/testK2/deposit": {
-      "post": {
-        "tags": [
-          "KB:testK2",
-          "KB:testK2"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base testK2. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_testK2_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_testK2",
-                "description": "Data to write (single item). Fields: chunk_to_return, chunk_to_emb"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/testK2/list_banks": {
-      "get": {
-        "tags": [
-          "KB:testK2",
-          "KB:testK2"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank testK2",
-        "operationId": "list_banks_kb_testK2_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/test3/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:test3",
-          "KB:test3"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "**Main Query Strategy**: ES full-text search\n\n**Search Fields**: name ()\n\n**Filter Conditions**: age () (exact match)\n\n**Output Fields**: name (), age (), score ()",
-        "operationId": "test3_search_rule_0_kb_test3_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_test3_Rule4949945120"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/test3/deposit": {
-      "post": {
-        "tags": [
-          "KB:test3",
-          "KB:test3"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base test3. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_test3_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_test3",
-                "description": "Data to write (single item). Fields: name, age, score"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/test3/list_banks": {
-      "get": {
-        "tags": [
-          "KB:test3",
-          "KB:test3"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank test3",
-        "operationId": "list_banks_kb_test3_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyyaaaaaaaaaaa/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:hyyaaaaaaaaaaa",
-          "KB:hyyaaaaaaaaaaa"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "123",
-        "operationId": "hyyaaaaaaaaaaa_search_rule_0_kb_hyyaaaaaaaaaaa_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_hyyaaaaaaaaaaa_Rule4950071712"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyyaaaaaaaaaaa/deposit": {
-      "post": {
-        "tags": [
-          "KB:hyyaaaaaaaaaaa",
-          "KB:hyyaaaaaaaaaaa"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base hyyaaaaaaaaaaa. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_hyyaaaaaaaaaaa_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_hyyaaaaaaaaaaa",
-                "description": "Data to write (single item). Fields: name, age, score"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/hyyaaaaaaaaaaa/list_banks": {
-      "get": {
-        "tags": [
-          "KB:hyyaaaaaaaaaaa",
-          "KB:hyyaaaaaaaaaaa"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank hyyaaaaaaaaaaa",
-        "operationId": "list_banks_kb_hyyaaaaaaaaaaa_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/daefwasfa1111/search/rule_0": {
-      "post": {
-        "tags": [
-          "KB:daefwasfa1111",
-          "KB:daefwasfa1111"
-        ],
-        "summary": "Retrieval interface - Rule 0",
-        "description": "**Main Query Strategy**: ES full-text search\n\n**Search Fields**: chunk_to_emb ()\n\n**Output Fields**: chunk_to_return ()",
-        "operationId": "daefwasfa1111_search_rule_0_kb_daefwasfa1111_search_rule_0_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_daefwasfa1111_Rule4950198464"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/daefwasfa1111/search/rule_1": {
-      "post": {
-        "tags": [
-          "KB:daefwasfa1111",
-          "KB:daefwasfa1111"
-        ],
-        "summary": "Retrieval interface - Rule 1",
-        "description": "**Main Query Strategy**: Vearch vector search\n\n**Search Fields**: chunk_to_emb ()\n\n**Output Fields**: chunk_to_return ()",
-        "operationId": "daefwasfa1111_search_rule_1_kb_daefwasfa1111_search_rule_1_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest_daefwasfa1111_Rule4950198704"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/daefwasfa1111/deposit": {
-      "post": {
-        "tags": [
-          "KB:daefwasfa1111",
-          "KB:daefwasfa1111"
-        ],
-        "summary": "Data write interface",
-        "description": "Write data to knowledge base daefwasfa1111. Accepts a single data item matching the knowledge base schema.",
-        "operationId": "deposit_data_kb_daefwasfa1111_deposit_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DepositDataItem_daefwasfa1111",
-                "description": "Data to write (single item). Fields: chunk_to_return, chunk_to_emb"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/kb/daefwasfa1111/list_banks": {
-      "get": {
-        "tags": [
-          "KB:daefwasfa1111",
-          "KB:daefwasfa1111"
-        ],
-        "summary": "List all bank interface information",
-        "description": "Return all interface information in bank daefwasfa1111",
-        "operationId": "list_banks_kb_daefwasfa1111_list_banks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
     "schemas": {
+      "APIResponse": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "description": "Response status code",
+            "default": 200
+          },
+          "msg": {
+            "type": "string",
+            "title": "Msg",
+            "description": "Response message",
+            "default": "success"
+          },
+          "data": {
+            "anyOf": [
+              {
+
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "Response data"
+          }
+        },
+        "type": "object",
+        "title": "APIResponse"
+      },
       "APIResponse_DataListResponse_QADataItem__": {
         "properties": {
           "code": {
@@ -4957,510 +3880,6 @@
         "title": "DepositBatchResponse",
         "description": "Batch data deposit response"
       },
-      "DepositDataItem_anno_bank": {
-        "properties": {
-          "task_id": {
-            "type": "string",
-            "title": "Task Id",
-            "description": "task_id"
-          },
-          "type": {
-            "type": "string",
-            "title": "Type",
-            "description": "type"
-          },
-          "priority": {
-            "type": "integer",
-            "title": "Priority",
-            "description": "priority"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status",
-            "description": "status"
-          },
-          "create_time": {
-            "type": "string",
-            "title": "Create Time",
-            "description": "create_time"
-          },
-          "update_time": {
-            "type": "string",
-            "title": "Update Time",
-            "description": "update_time"
-          },
-          "query": {
-            "type": "string",
-            "title": "Query",
-            "description": "query"
-          },
-          "answer": {
-            "type": "string",
-            "title": "Answer",
-            "description": "answer"
-          },
-          "is_satisfied": {
-            "type": "string",
-            "title": "Is Satisfied",
-            "description": "is_satisfied"
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason",
-            "description": "reason"
-          }
-        },
-        "type": "object",
-        "required": [
-          "task_id",
-          "type",
-          "priority",
-          "status",
-          "create_time",
-          "update_time",
-          "query",
-          "answer",
-          "is_satisfied",
-          "reason"
-        ],
-        "title": "DepositDataItem_anno_bank"
-      },
-      "DepositDataItem_daefwasfa1111": {
-        "properties": {
-          "chunk_to_return": {
-            "type": "string",
-            "title": "Chunk To Return",
-            "description": "chunk_to_return"
-          },
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": "chunk_to_emb"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_return",
-          "chunk_to_emb"
-        ],
-        "title": "DepositDataItem_daefwasfa1111"
-      },
-      "DepositDataItem_hyy_demo_1": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "name"
-          },
-          "age": {
-            "type": "integer",
-            "title": "Age",
-            "description": "age"
-          },
-          "score": {
-            "type": "number",
-            "title": "Score",
-            "description": "score"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "age",
-          "score"
-        ],
-        "title": "DepositDataItem_hyy_demo_1"
-      },
-      "DepositDataItem_hyy_new_structure_1": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "name"
-          },
-          "age": {
-            "type": "string",
-            "title": "Age",
-            "description": "age"
-          },
-          "score": {
-            "type": "number",
-            "title": "Score",
-            "description": "score"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "age",
-          "score"
-        ],
-        "title": "DepositDataItem_hyy_new_structure_1"
-      },
-      "DepositDataItem_hyy_test_111": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "1"
-          },
-          "age": {
-            "type": "integer",
-            "title": "Age",
-            "description": "2"
-          },
-          "score": {
-            "type": "number",
-            "title": "Score",
-            "description": "3"
-          },
-          "tag": {
-            "type": "string",
-            "title": "Tag",
-            "description": "4"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "age",
-          "score",
-          "tag"
-        ],
-        "title": "DepositDataItem_hyy_test_111"
-      },
-      "DepositDataItem_hyyaaaaaaaaaaa": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "name"
-          },
-          "age": {
-            "type": "integer",
-            "title": "Age",
-            "description": "age"
-          },
-          "score": {
-            "type": "number",
-            "title": "Score",
-            "description": "score"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "age",
-          "score"
-        ],
-        "title": "DepositDataItem_hyyaaaaaaaaaaa"
-      },
-      "DepositDataItem_kb_un": {
-        "properties": {
-          "chunk_to_return": {
-            "type": "string",
-            "title": "Chunk To Return",
-            "description": "chunk_to_return"
-          },
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": "chunk_to_emb"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_return",
-          "chunk_to_emb"
-        ],
-        "title": "DepositDataItem_kb_un"
-      },
-      "DepositDataItem_qa_bank_2": {
-        "properties": {
-          "question": {
-            "type": "string",
-            "title": "Question",
-            "description": "question"
-          },
-          "answer": {
-            "type": "string",
-            "title": "Answer",
-            "description": "answer"
-          },
-          "score": {
-            "type": "number",
-            "title": "Score",
-            "description": "score"
-          },
-          "caller": {
-            "type": "string",
-            "title": "Caller",
-            "description": "caller"
-          },
-          "callee": {
-            "type": "string",
-            "title": "Callee",
-            "description": "callee"
-          },
-          "remark": {
-            "type": "string",
-            "title": "Remark",
-            "description": "remark"
-          },
-          "source_trace_id": {
-            "type": "string",
-            "title": "Source Trace Id",
-            "description": "source_trace_id"
-          },
-          "source_request_id": {
-            "type": "string",
-            "title": "Source Request Id",
-            "description": "source_request_id"
-          },
-          "data_type": {
-            "type": "string",
-            "title": "Data Type",
-            "description": "data_type"
-          },
-          "priority": {
-            "type": "integer",
-            "title": "Priority",
-            "description": "priority"
-          },
-          "category": {
-            "type": "string",
-            "title": "Category",
-            "description": "category"
-          }
-        },
-        "type": "object",
-        "required": [
-          "question",
-          "answer",
-          "score",
-          "caller",
-          "callee",
-          "remark",
-          "source_trace_id",
-          "source_request_id",
-          "data_type",
-          "priority",
-          "category"
-        ],
-        "title": "DepositDataItem_qa_bank_2"
-      },
-      "DepositDataItem_test222": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "name"
-          },
-          "age": {
-            "type": "integer",
-            "title": "Age",
-            "description": "age"
-          },
-          "score": {
-            "type": "number",
-            "title": "Score",
-            "description": "score"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "age",
-          "score"
-        ],
-        "title": "DepositDataItem_test222"
-      },
-      "DepositDataItem_test3": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "name"
-          },
-          "age": {
-            "type": "integer",
-            "title": "Age",
-            "description": "age"
-          },
-          "score": {
-            "type": "number",
-            "title": "Score",
-            "description": "score"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "age",
-          "score"
-        ],
-        "title": "DepositDataItem_test3"
-      },
-      "DepositDataItem_testK": {
-        "properties": {
-          "chunk_to_return": {
-            "type": "string",
-            "title": "Chunk To Return",
-            "description": "chunk_to_return"
-          },
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": "chunk_to_emb"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_return",
-          "chunk_to_emb"
-        ],
-        "title": "DepositDataItem_testK"
-      },
-      "DepositDataItem_testK2": {
-        "properties": {
-          "chunk_to_return": {
-            "type": "string",
-            "title": "Chunk To Return",
-            "description": "chunk_to_return"
-          },
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": "chunk_to_emb"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_return",
-          "chunk_to_emb"
-        ],
-        "title": "DepositDataItem_testK2"
-      },
-      "DepositDataItem_unstructure_doc_test": {
-        "properties": {
-          "chunk_to_return": {
-            "type": "string",
-            "title": "Chunk To Return",
-            "description": "chunk_to_return"
-          },
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": "chunk_to_emb"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_return",
-          "chunk_to_emb"
-        ],
-        "title": "DepositDataItem_unstructure_doc_test"
-      },
-      "DepositDataItem_weather": {
-        "properties": {
-          "city_key": {
-            "type": "string",
-            "title": "City Key",
-            "description": "city_key"
-          },
-          "date": {
-            "type": "string",
-            "title": "Date",
-            "description": "date"
-          },
-          "max_temperature": {
-            "type": "number",
-            "title": "Max Temperature",
-            "description": "max_temperature"
-          },
-          "min_temperature": {
-            "type": "number",
-            "title": "Min Temperature",
-            "description": "min_temperature"
-          },
-          "weather": {
-            "type": "string",
-            "title": "Weather",
-            "description": "weather"
-          },
-          "wind_force_direction": {
-            "type": "string",
-            "title": "Wind Force Direction",
-            "description": "wind_force_direction"
-          },
-          "sunshine_duration": {
-            "type": "number",
-            "title": "Sunshine Duration",
-            "description": "sunshine_duration"
-          }
-        },
-        "type": "object",
-        "required": [
-          "city_key",
-          "date",
-          "max_temperature",
-          "min_temperature",
-          "weather",
-          "wind_force_direction",
-          "sunshine_duration"
-        ],
-        "title": "DepositDataItem_weather"
-      },
-      "DepositDataItem_weather-temp": {
-        "properties": {
-          "city_key": {
-            "type": "string",
-            "title": "City Key",
-            "description": "city_key"
-          },
-          "date": {
-            "type": "string",
-            "title": "Date",
-            "description": "date"
-          },
-          "max_temperature": {
-            "type": "number",
-            "title": "Max Temperature",
-            "description": "max_temperature"
-          },
-          "min_temperature": {
-            "type": "number",
-            "title": "Min Temperature",
-            "description": "min_temperature"
-          },
-          "weather": {
-            "type": "string",
-            "title": "Weather",
-            "description": "weather"
-          },
-          "wind_force_direction": {
-            "type": "string",
-            "title": "Wind Force Direction",
-            "description": "wind_force_direction"
-          },
-          "sunshine_duration": {
-            "type": "number",
-            "title": "Sunshine Duration",
-            "description": "sunshine_duration"
-          }
-        },
-        "type": "object",
-        "required": [
-          "city_key",
-          "date",
-          "max_temperature",
-          "min_temperature",
-          "weather",
-          "wind_force_direction",
-          "sunshine_duration"
-        ],
-        "title": "DepositDataItem_weather-temp"
-      },
       "DepositRequest": {
         "properties": {
           "question": {
@@ -5978,6 +4397,31 @@
         ],
         "title": "KnowledgeFileItem",
         "description": "Knowledge base file item model"
+      },
+      "ManualTriggerRequest": {
+        "properties": {
+          "sample_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Sample Ids",
+            "description": "List of sample IDs to trigger"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "description": "If true, validate without executing HTTP callback",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "sample_ids"
+        ],
+        "title": "ManualTriggerRequest",
+        "description": "Request model for manual trigger execution."
       },
       "MatchRule": {
         "properties": {
@@ -6612,469 +5056,295 @@
         "title": "QADataItem",
         "description": "QA data item model\n\nUsed to display and return complete QA data information"
       },
-      "SearchRequest_anno_bank_Rule4848057744": {
+      "TriggerCondition": {
         "properties": {
-          "type": {
+          "field_name": {
             "type": "string",
-            "title": "Type",
-            "description": ""
+            "title": "Field Name",
+            "description": "Field name to match (e.g., 'sys_status')"
           },
-          "filter_status": {
+          "field_value": {
             "type": "string",
-            "title": "Filter Status",
-            "description": ""
+            "title": "Field Value",
+            "description": "Expected field value"
           },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
+          "operator": {
+            "type": "string",
+            "enum": [
+              "eq",
+              "ne",
+              "contains",
+              "startswith",
+              "endswith"
+            ],
+            "title": "Operator",
+            "description": "Comparison operator: eq=equals, ne=not equals, contains=contains substring",
+            "default": "eq"
           }
         },
         "type": "object",
         "required": [
-          "type",
-          "filter_status",
-          "top_k"
+          "field_name",
+          "field_value"
         ],
-        "title": "SearchRequest_anno_bank_Rule4848057744"
+        "title": "TriggerCondition",
+        "description": "Trigger condition for matching knowledge base data.\n\nConditions use AND logic - all conditions must be satisfied for trigger to fire."
       },
-      "SearchRequest_daefwasfa1111_Rule4950198464": {
+      "TriggerCreateRequest": {
         "properties": {
-          "chunk_to_emb": {
+          "trigger_name": {
             "type": "string",
-            "title": "Chunk To Emb",
-            "description": ""
+            "title": "Trigger Name",
+            "description": "Human-readable trigger name"
           },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_emb",
-          "top_k"
-        ],
-        "title": "SearchRequest_daefwasfa1111_Rule4950198464"
-      },
-      "SearchRequest_daefwasfa1111_Rule4950198704": {
-        "properties": {
-          "chunk_to_emb": {
+          "url": {
             "type": "string",
-            "title": "Chunk To Emb",
-            "description": ""
+            "title": "Url",
+            "description": "Callback URL endpoint"
           },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_emb",
-          "top_k"
-        ],
-        "title": "SearchRequest_daefwasfa1111_Rule4950198704"
-      },
-      "SearchRequest_hyy_demo_1_Rule4949575552": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "name"
-          },
-          "filter_age": {
-            "type": "integer",
-            "title": "Filter Age",
-            "description": "age"
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "filter_age",
-          "top_k"
-        ],
-        "title": "SearchRequest_hyy_demo_1_Rule4949575552"
-      },
-      "SearchRequest_hyy_new_structure_1_Rule4848478768": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "top_k"
-        ],
-        "title": "SearchRequest_hyy_new_structure_1_Rule4848478768"
-      },
-      "SearchRequest_hyy_test_111_Rule4949588512": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "1"
-          },
-          "filter_tag": {
-            "type": "string",
-            "title": "Filter Tag",
-            "description": "4"
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "filter_tag",
-          "top_k"
-        ],
-        "title": "SearchRequest_hyy_test_111_Rule4949588512"
-      },
-      "SearchRequest_hyyaaaaaaaaaaa_Rule4950071712": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "top_k"
-        ],
-        "title": "SearchRequest_hyyaaaaaaaaaaa_Rule4950071712"
-      },
-      "SearchRequest_kb_un_Rule4949318208": {
-        "properties": {
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_emb",
-          "top_k"
-        ],
-        "title": "SearchRequest_kb_un_Rule4949318208"
-      },
-      "SearchRequest_kb_un_Rule4949318448": {
-        "properties": {
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_emb",
-          "top_k"
-        ],
-        "title": "SearchRequest_kb_un_Rule4949318448"
-      },
-      "SearchRequest_qa_bank_2_Rule4848045104": {
-        "properties": {
-          "question": {
-            "type": "string",
-            "title": "Question",
-            "description": ""
-          },
-          "filter_callee": {
-            "type": "string",
-            "title": "Filter Callee",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "question",
-          "filter_callee",
-          "top_k"
-        ],
-        "title": "SearchRequest_qa_bank_2_Rule4848045104"
-      },
-      "SearchRequest_test222_Rule4949399888": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "top_k"
-        ],
-        "title": "SearchRequest_test222_Rule4949399888"
-      },
-      "SearchRequest_test3_Rule4949945120": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": ""
-          },
-          "filter_age": {
-            "type": "integer",
-            "title": "Filter Age",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "filter_age",
-          "top_k"
-        ],
-        "title": "SearchRequest_test3_Rule4949945120"
-      },
-      "SearchRequest_testK2_Rule4949731888": {
-        "properties": {
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_emb",
-          "top_k"
-        ],
-        "title": "SearchRequest_testK2_Rule4949731888"
-      },
-      "SearchRequest_testK2_Rule4949732128": {
-        "properties": {
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_emb",
-          "top_k"
-        ],
-        "title": "SearchRequest_testK2_Rule4949732128"
-      },
-      "SearchRequest_testK_Rule4848249952": {
-        "properties": {
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_emb",
-          "top_k"
-        ],
-        "title": "SearchRequest_testK_Rule4848249952"
-      },
-      "SearchRequest_testK_Rule4848250192": {
-        "properties": {
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_emb",
-          "top_k"
-        ],
-        "title": "SearchRequest_testK_Rule4848250192"
-      },
-      "SearchRequest_unstructure_doc_test_Rule4847929936": {
-        "properties": {
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_emb",
-          "top_k"
-        ],
-        "title": "SearchRequest_unstructure_doc_test_Rule4847929936"
-      },
-      "SearchRequest_unstructure_doc_test_Rule4847930256": {
-        "properties": {
-          "chunk_to_emb": {
-            "type": "string",
-            "title": "Chunk To Emb",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "chunk_to_emb",
-          "top_k"
-        ],
-        "title": "SearchRequest_unstructure_doc_test_Rule4847930256"
-      },
-      "SearchRequest_weather-temp_Rule4847754512": {
-        "properties": {
-          "city_key": {
-            "type": "string",
-            "title": "City Key",
-            "description": ""
-          },
-          "filter_date": {
-            "type": "string",
-            "title": "Filter Date",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "city_key",
-          "filter_date",
-          "top_k"
-        ],
-        "title": "SearchRequest_weather-temp_Rule4847754512"
-      },
-      "SearchRequest_weather_Rule4847505712": {
-        "properties": {
-          "city_key": {
-            "type": "string",
-            "title": "City Key",
-            "description": ""
-          },
-          "top_k": {
-            "type": "integer",
-            "title": "Top K",
-            "description": "Query top k"
-          }
-        },
-        "type": "object",
-        "required": [
-          "city_key",
-          "top_k"
-        ],
-        "title": "SearchRequest_weather_Rule4847505712"
-      },
-      "SearchResult": {
-        "properties": {
-          "items": {
+          "conditions": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/TriggerCondition"
             },
             "type": "array",
-            "title": "Items"
+            "minItems": 1,
+            "title": "Conditions",
+            "description": "List of conditions (AND logic)"
           },
-          "total": {
+          "http_method": {
+            "type": "string",
+            "enum": [
+              "POST",
+              "PUT",
+              "PATCH"
+            ],
+            "title": "Http Method",
+            "default": "POST"
+          },
+          "http_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Http Headers"
+          },
+          "batch_mode": {
+            "type": "boolean",
+            "title": "Batch Mode",
+            "default": false
+          },
+          "batch_size": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000,
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Size",
+            "default": 50
+          },
+          "timeout": {
             "type": "integer",
-            "title": "Total"
+            "maximum": 300,
+            "minimum": 1,
+            "title": "Timeout",
+            "default": 30
           },
-          "took_ms": {
-            "type": "number",
-            "title": "Took Ms"
+          "retry_times": {
+            "type": "integer",
+            "maximum": 10,
+            "minimum": 0,
+            "title": "Retry Times",
+            "default": 3
+          },
+          "retry_interval": {
+            "type": "integer",
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Retry Interval",
+            "default": 5
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          },
+          "update_data_enabled": {
+            "type": "boolean",
+            "title": "Update Data Enabled",
+            "default": true
           }
         },
         "type": "object",
         "required": [
-          "items",
-          "total",
-          "took_ms"
+          "trigger_name",
+          "url",
+          "conditions"
         ],
-        "title": "SearchResult",
-        "description": "Generic search result"
+        "title": "TriggerCreateRequest",
+        "description": "Request model for creating a new trigger."
+      },
+      "TriggerUpdateRequest": {
+        "properties": {
+          "trigger_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Name"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "conditions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TriggerCondition"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditions"
+          },
+          "http_method": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "POST",
+                  "PUT",
+                  "PATCH"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Method"
+          },
+          "http_headers": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Headers"
+          },
+          "batch_mode": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Mode"
+          },
+          "batch_size": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000,
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Size"
+          },
+          "timeout": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 300,
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeout"
+          },
+          "retry_times": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry Times"
+          },
+          "retry_interval": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 60,
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry Interval"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "update_data_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Update Data Enabled"
+          }
+        },
+        "type": "object",
+        "title": "TriggerUpdateRequest",
+        "description": "Request model for updating an existing trigger.\n\nAll fields are optional - only provided fields will be updated."
       },
       "TypeStatsItem": {
         "properties": {

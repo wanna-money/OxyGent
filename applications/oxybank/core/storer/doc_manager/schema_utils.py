@@ -49,71 +49,81 @@ def convert_dataframe_types_by_schema(df: pd.DataFrame, kb_schema: KBSchema) -> 
                 logger.debug(f"Converted field '{field_name}' to string type")
 
             elif field_type == "integer":
-                # Integer type: convert and check for NaN after conversion
-                # First check for existing NaN
-                if df[field_name].isnull().any():
-                    nan_count = df[field_name].isnull().sum()
-                    raise HTTPException(
-                        status_code=400,
-                        detail=(
-                            f"Field '{field_name}' is defined as integer type in schema, "
-                            f"but contains {nan_count} empty/null value(s). "
-                            f"Integer fields cannot have empty values. "
-                            f"Please ensure all rows have valid integer values for field '{field_name}'."
-                        )
-                    )
-
-                # Convert to integer (use Int64 for nullable integer support)
+                # Integer type: convert and check for any invalid values (including NaN)
                 # errors='coerce' will convert invalid values to NaN
                 converted = pd.to_numeric(df[field_name], errors='coerce')
 
-                # Check if conversion produced any NaN (invalid values)
+                # Check if conversion produced any NaN (includes original NaN and conversion failures)
                 if converted.isnull().any():
-                    invalid_count = converted.isnull().sum()
-                    invalid_values = df[field_name][converted.isnull()].unique().tolist()
-                    raise HTTPException(
-                        status_code=400,
-                        detail=(
+                    null_mask = converted.isnull()
+                    invalid_count = null_mask.sum()
+                    # Get original values that failed conversion
+                    invalid_values = df[field_name][null_mask].unique().tolist()
+
+                    # Determine if these are empty/null values or invalid values
+                    original_null_count = df[field_name][null_mask].isnull().sum()
+                    conversion_failure_count = invalid_count - original_null_count
+
+                    if original_null_count > 0 and conversion_failure_count > 0:
+                        error_msg = (
                             f"Field '{field_name}' is defined as integer type in schema, "
-                            f"but contains {invalid_count} invalid value(s) that cannot be converted to integer: {invalid_values}. "
-                            f"Please ensure all values in field '{field_name}' are valid integers."
+                            f"but contains {original_null_count} empty/null value(s) and "
+                            f"{conversion_failure_count} value(s) that cannot be converted to integer: {invalid_values}. "
                         )
-                    )
+                    elif original_null_count > 0:
+                        error_msg = (
+                            f"Field '{field_name}' is defined as integer type in schema, "
+                            f"but contains {original_null_count} empty/null value(s). "
+                            f"Integer fields cannot have empty values. "
+                        )
+                    else:
+                        error_msg = (
+                            f"Field '{field_name}' is defined as integer type in schema, "
+                            f"but contains {conversion_failure_count} invalid value(s) that cannot be converted to integer: {invalid_values}. "
+                        )
+
+                    error_msg += f"Please ensure all rows have valid integer values for field '{field_name}'."
+                    raise HTTPException(status_code=400, detail=error_msg)
 
                 df[field_name] = converted.astype('Int64')
                 logger.debug(f"Converted field '{field_name}' to integer type")
 
             elif field_type == "float":
-                # Float type: convert and check for NaN after conversion
-                # First check for existing NaN
-                if df[field_name].isnull().any():
-                    nan_count = df[field_name].isnull().sum()
-                    raise HTTPException(
-                        status_code=400,
-                        detail=(
-                            f"Field '{field_name}' is defined as float type in schema, "
-                            f"but contains {nan_count} empty/null value(s). "
-                            f"Float fields cannot have empty values. "
-                            f"Please ensure all rows have valid float values for field '{field_name}'."
-                        )
-                    )
-
-                # Convert to float
+                # Float type: convert and check for any invalid values (including NaN)
                 # errors='coerce' will convert invalid values to NaN
                 converted = pd.to_numeric(df[field_name], errors='coerce')
 
-                # Check if conversion produced any NaN (invalid values)
+                # Check if conversion produced any NaN (includes original NaN and conversion failures)
                 if converted.isnull().any():
-                    invalid_count = converted.isnull().sum()
-                    invalid_values = df[field_name][converted.isnull()].unique().tolist()
-                    raise HTTPException(
-                        status_code=400,
-                        detail=(
+                    null_mask = converted.isnull()
+                    invalid_count = null_mask.sum()
+                    # Get original values that failed conversion
+                    invalid_values = df[field_name][null_mask].unique().tolist()
+
+                    # Determine if these are empty/null values or invalid values
+                    original_null_count = df[field_name][null_mask].isnull().sum()
+                    conversion_failure_count = invalid_count - original_null_count
+
+                    if original_null_count > 0 and conversion_failure_count > 0:
+                        error_msg = (
                             f"Field '{field_name}' is defined as float type in schema, "
-                            f"but contains {invalid_count} invalid value(s) that cannot be converted to float: {invalid_values}. "
-                            f"Please ensure all values in field '{field_name}' are valid float numbers."
+                            f"but contains {original_null_count} empty/null value(s) and "
+                            f"{conversion_failure_count} value(s) that cannot be converted to float: {invalid_values}. "
                         )
-                    )
+                    elif original_null_count > 0:
+                        error_msg = (
+                            f"Field '{field_name}' is defined as float type in schema, "
+                            f"but contains {original_null_count} empty/null value(s). "
+                            f"Float fields cannot have empty values. "
+                        )
+                    else:
+                        error_msg = (
+                            f"Field '{field_name}' is defined as float type in schema, "
+                            f"but contains {conversion_failure_count} invalid value(s) that cannot be converted to float: {invalid_values}. "
+                        )
+
+                    error_msg += f"Please ensure all values in field '{field_name}' are valid float numbers."
+                    raise HTTPException(status_code=400, detail=error_msg)
 
                 df[field_name] = converted.astype(float)
                 logger.debug(f"Converted field '{field_name}' to float type")

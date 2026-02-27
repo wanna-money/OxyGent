@@ -449,10 +449,10 @@ class VearchManager:
             logger.warning(f"Space {space_name} structure does not match expectations, will delete and recreate")
             return self.create_space(db_name, space_name, expected_structure)
 
-    def delete_vector(self, db_name: str, space_name: str, kb_id: str, file_ids: List[str]) -> bool:
+    def delete_vector(self, db_name: str, space_name: str, kb_id: str, group_ids: List[str]) -> bool:
         try:
-            if not file_ids:
-                logger.info('No file IDs to delete')
+            if not group_ids:
+                logger.info('No group IDs to delete')
                 return True
 
             # Build Vearch query conditions
@@ -466,8 +466,8 @@ class VearchManager:
                         "operator": "IN"
                     },
                     {
-                        "field": "ori_file_id",
-                        "value": file_ids,  # Vearch supports passing list directly
+                        "field": "sys_group",
+                        "value": group_ids,  # Vearch supports passing list directly
                         "operator": "IN"
                     }
                 ]
@@ -564,6 +564,21 @@ class VearchManager:
 
         Returns:
             bool: Whether addition was successful
+
+        Example:
+            documents = [
+                {
+                    "kb_id": "kb_001",
+                    "sys_group": "file_001",
+                    "sys_sample_id": "file_001_0001",
+                    "chunk_text": "This is document content",
+                    "chunk_extra_info": "{}",
+                    "return_text": "",
+                    "chunk_vector": [0.1, 0.2, ...],  # 1024-dimension vector
+                    "emb_version": "2.0",
+                    "language": "zh"
+                }
+            ]
         """
         try:
             if not documents:
@@ -616,7 +631,7 @@ class VearchManager:
                 logger.warning("Field validation failed, but attempting to continue data insertion")
 
             # Validate data format
-            required_fields = ["kb_id", "ori_file_id", "chunk_id", "chunk_vector"]
+            required_fields = ["kb_id", "sys_group", "sys_sample_id", "chunk_vector"]
             for i, doc in enumerate(documents):
                 for field in required_fields:
                     if field not in doc:
@@ -691,8 +706,8 @@ class VearchManager:
                 # Build Vearch document
                 doc = {
                     "kb_id": metadata.get("kb_id", ""),
-                    "ori_file_id": metadata.get("ori_file_id", ""),
-                    "chunk_id": metadata.get("chunk_id", f"chunk_{hash(node.text) % 1000000}"),
+                    "sys_group": metadata.get("sys_group", ""),
+                    "sys_sample_id": metadata.get("sys_sample_id", f"sample_{hash(node.text) % 1000000}"),
                     "chunk_text": node.text,
                     "chunk_extra_info": str(metadata.get("chunk_extra_info", {})),
                     "return_text": metadata.get("return_text", ""),
@@ -702,8 +717,8 @@ class VearchManager:
                 }
 
                 # Validate required fields
-                if not doc["kb_id"] or not doc["ori_file_id"] or not doc["chunk_vector"]:
-                    logger.warning(f"Node missing required fields, skipping: chunk_id={doc['chunk_id']}")
+                if not doc["kb_id"] or not doc["sys_group"] or not doc["chunk_vector"]:
+                    logger.warning(f"Node missing required fields, skipping: sys_sample_id={doc['sys_sample_id']}")
                     continue
 
                 documents.append(doc)
@@ -942,7 +957,7 @@ class VearchManager:
                 database_name=db_name,
                 space_name=space_name,
                 vector_infos=[vector_info],  # Corrected parameter name
-                fields=["chunk_text", "kb_id", "ori_file_id", "chunk_id",
+                fields=["chunk_text", "kb_id", "sys_group", "sys_sample_id",
                         "emb_version", "language"],  # Fields to return
                 limit=top_k
             )
@@ -955,8 +970,8 @@ class VearchManager:
                         "score": hit.get("_score", 0.0),
                         "chunk_text": hit.get("chunk_text", ""),
                         "kb_id": hit.get("kb_id", ""),
-                        "ori_file_id": hit.get("ori_file_id", ""),
-                        "chunk_id": hit.get("chunk_id", ""),
+                        "sys_group": hit.get("sys_group", ""),
+                        "sys_sample_id": hit.get("sys_sample_id", ""),
                         "emb_version": hit.get("emb_version", ""),
                         "language": hit.get("language", "")
                     }

@@ -268,714 +268,6 @@ export interface DepositBatchRequest {
    */
   batch_id?: string | null;
 }
-export interface SearchRequest_weather_Rule4847505712 {
-  /**
-   * City Key
-   * ---
-   */
-  city_key: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_weather {
-  /**
-   * City Key
-   * ---
-   * city_key
-   */
-  city_key: string;
-  /**
-   * Date
-   * ---
-   * date
-   */
-  date: string;
-  /**
-   * Max Temperature
-   * ---
-   * max_temperature
-   */
-  max_temperature: number;
-  /**
-   * Min Temperature
-   * ---
-   * min_temperature
-   */
-  min_temperature: number;
-  /**
-   * Weather
-   * ---
-   * weather
-   */
-  weather: string;
-  /**
-   * Wind Force Direction
-   * ---
-   * wind_force_direction
-   */
-  wind_force_direction: string;
-  /**
-   * Sunshine Duration
-   * ---
-   * sunshine_duration
-   */
-  sunshine_duration: number;
-}
-export interface Search_request_weather_temp_rule4847754512 {
-  /**
-   * City Key
-   * ---
-   */
-  city_key: string;
-  /**
-   * Filter Date
-   * ---
-   */
-  filter_date: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface Deposit_data_item_weather_temp {
-  /**
-   * City Key
-   * ---
-   * city_key
-   */
-  city_key: string;
-  /**
-   * Date
-   * ---
-   * date
-   */
-  date: string;
-  /**
-   * Max Temperature
-   * ---
-   * max_temperature
-   */
-  max_temperature: number;
-  /**
-   * Min Temperature
-   * ---
-   * min_temperature
-   */
-  min_temperature: number;
-  /**
-   * Weather
-   * ---
-   * weather
-   */
-  weather: string;
-  /**
-   * Wind Force Direction
-   * ---
-   * wind_force_direction
-   */
-  wind_force_direction: string;
-  /**
-   * Sunshine Duration
-   * ---
-   * sunshine_duration
-   */
-  sunshine_duration: number;
-}
-export interface SearchRequest_unstructure_doc_test_Rule4847929936 {
-  /**
-   * Chunk To Emb
-   * ---
-   */
-  chunk_to_emb: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface SearchRequest_unstructure_doc_test_Rule4847930256 {
-  /**
-   * Chunk To Emb
-   * ---
-   */
-  chunk_to_emb: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_unstructure_doc_test {
-  /**
-   * Chunk To Return
-   * ---
-   * chunk_to_return
-   */
-  chunk_to_return: string;
-  /**
-   * Chunk To Emb
-   * ---
-   * chunk_to_emb
-   */
-  chunk_to_emb: string;
-}
-export interface SearchRequest_qa_bank_2_Rule4848045104 {
-  /**
-   * Question
-   * ---
-   */
-  question: string;
-  /**
-   * Filter Callee
-   * ---
-   */
-  filter_callee: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_qa_bank_2 {
-  /**
-   * Question
-   * ---
-   * question
-   */
-  question: string;
-  /**
-   * Answer
-   * ---
-   * answer
-   */
-  answer: string;
-  /**
-   * Score
-   * ---
-   * score
-   */
-  score: number;
-  /**
-   * Caller
-   * ---
-   * caller
-   */
-  caller: string;
-  /**
-   * Callee
-   * ---
-   * callee
-   */
-  callee: string;
-  /**
-   * Remark
-   * ---
-   * remark
-   */
-  remark: string;
-  /**
-   * Source Trace Id
-   * ---
-   * source_trace_id
-   */
-  source_trace_id: string;
-  /**
-   * Source Request Id
-   * ---
-   * source_request_id
-   */
-  source_request_id: string;
-  /**
-   * Data Type
-   * ---
-   * data_type
-   */
-  data_type: string;
-  /**
-   * Priority
-   * ---
-   * priority
-   */
-  priority: number;
-  /**
-   * Category
-   * ---
-   * category
-   */
-  category: string;
-}
-export interface SearchRequest_anno_bank_Rule4848057744 {
-  /**
-   * Type
-   * ---
-   */
-  type: string;
-  /**
-   * Filter Status
-   * ---
-   */
-  filter_status: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_anno_bank {
-  /**
-   * Task Id
-   * ---
-   * task_id
-   */
-  task_id: string;
-  /**
-   * Type
-   * ---
-   * type
-   */
-  type: string;
-  /**
-   * Priority
-   * ---
-   * priority
-   */
-  priority: number;
-  /**
-   * Status
-   * ---
-   * status
-   */
-  status: string;
-  /**
-   * Create Time
-   * ---
-   * create_time
-   */
-  create_time: string;
-  /**
-   * Update Time
-   * ---
-   * update_time
-   */
-  update_time: string;
-  /**
-   * Query
-   * ---
-   * query
-   */
-  query: string;
-  /**
-   * Answer
-   * ---
-   * answer
-   */
-  answer: string;
-  /**
-   * Is Satisfied
-   * ---
-   * is_satisfied
-   */
-  is_satisfied: string;
-  /**
-   * Reason
-   * ---
-   * reason
-   */
-  reason: string;
-}
-export interface SearchRequest_testK_Rule4848249952 {
-  /**
-   * Chunk To Emb
-   * ---
-   */
-  chunk_to_emb: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface SearchRequest_testK_Rule4848250192 {
-  /**
-   * Chunk To Emb
-   * ---
-   */
-  chunk_to_emb: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_testK {
-  /**
-   * Chunk To Return
-   * ---
-   * chunk_to_return
-   */
-  chunk_to_return: string;
-  /**
-   * Chunk To Emb
-   * ---
-   * chunk_to_emb
-   */
-  chunk_to_emb: string;
-}
-export interface SearchRequest_hyy_new_structure_1_Rule4848478768 {
-  /**
-   * Name
-   * ---
-   */
-  name: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_hyy_new_structure_1 {
-  /**
-   * Name
-   * ---
-   * name
-   */
-  name: string;
-  /**
-   * Age
-   * ---
-   * age
-   */
-  age: string;
-  /**
-   * Score
-   * ---
-   * score
-   */
-  score: number;
-}
-export interface SearchRequest_kb_un_Rule4949318208 {
-  /**
-   * Chunk To Emb
-   * ---
-   */
-  chunk_to_emb: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface SearchRequest_kb_un_Rule4949318448 {
-  /**
-   * Chunk To Emb
-   * ---
-   */
-  chunk_to_emb: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_kb_un {
-  /**
-   * Chunk To Return
-   * ---
-   * chunk_to_return
-   */
-  chunk_to_return: string;
-  /**
-   * Chunk To Emb
-   * ---
-   * chunk_to_emb
-   */
-  chunk_to_emb: string;
-}
-export interface SearchRequest_test222_Rule4949399888 {
-  /**
-   * Name
-   * ---
-   */
-  name: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_test222 {
-  /**
-   * Name
-   * ---
-   * name
-   */
-  name: string;
-  /**
-   * Age
-   * ---
-   * age
-   */
-  age: number;
-  /**
-   * Score
-   * ---
-   * score
-   */
-  score: number;
-}
-export interface SearchRequest_hyy_demo_1_Rule4949575552 {
-  /**
-   * Name
-   * ---
-   * name
-   */
-  name: string;
-  /**
-   * Filter Age
-   * ---
-   * age
-   */
-  filter_age: number;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_hyy_demo_1 {
-  /**
-   * Name
-   * ---
-   * name
-   */
-  name: string;
-  /**
-   * Age
-   * ---
-   * age
-   */
-  age: number;
-  /**
-   * Score
-   * ---
-   * score
-   */
-  score: number;
-}
-export interface SearchRequest_hyy_test_111_Rule4949588512 {
-  /**
-   * Name
-   * ---
-   * 1
-   */
-  name: string;
-  /**
-   * Filter Tag
-   * ---
-   * 4
-   */
-  filter_tag: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_hyy_test_111 {
-  /**
-   * Name
-   * ---
-   * 1
-   */
-  name: string;
-  /**
-   * Age
-   * ---
-   * 2
-   */
-  age: number;
-  /**
-   * Score
-   * ---
-   * 3
-   */
-  score: number;
-  /**
-   * Tag
-   * ---
-   * 4
-   */
-  tag: string;
-}
-export interface SearchRequest_testK2_Rule4949731888 {
-  /**
-   * Chunk To Emb
-   * ---
-   */
-  chunk_to_emb: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface SearchRequest_testK2_Rule4949732128 {
-  /**
-   * Chunk To Emb
-   * ---
-   */
-  chunk_to_emb: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_testK2 {
-  /**
-   * Chunk To Return
-   * ---
-   * chunk_to_return
-   */
-  chunk_to_return: string;
-  /**
-   * Chunk To Emb
-   * ---
-   * chunk_to_emb
-   */
-  chunk_to_emb: string;
-}
-export interface SearchRequest_test3_Rule4949945120 {
-  /**
-   * Name
-   * ---
-   */
-  name: string;
-  /**
-   * Filter Age
-   * ---
-   */
-  filter_age: number;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_test3 {
-  /**
-   * Name
-   * ---
-   * name
-   */
-  name: string;
-  /**
-   * Age
-   * ---
-   * age
-   */
-  age: number;
-  /**
-   * Score
-   * ---
-   * score
-   */
-  score: number;
-}
-export interface SearchRequest_hyyaaaaaaaaaaa_Rule4950071712 {
-  /**
-   * Name
-   * ---
-   */
-  name: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_hyyaaaaaaaaaaa {
-  /**
-   * Name
-   * ---
-   * name
-   */
-  name: string;
-  /**
-   * Age
-   * ---
-   * age
-   */
-  age: number;
-  /**
-   * Score
-   * ---
-   * score
-   */
-  score: number;
-}
-export interface SearchRequest_daefwasfa1111_Rule4950198464 {
-  /**
-   * Chunk To Emb
-   * ---
-   */
-  chunk_to_emb: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface SearchRequest_daefwasfa1111_Rule4950198704 {
-  /**
-   * Chunk To Emb
-   * ---
-   */
-  chunk_to_emb: string;
-  /**
-   * Top K
-   * ---
-   * Query top k
-   */
-  top_k: number;
-}
-export interface DepositDataItem_daefwasfa1111 {
-  /**
-   * Chunk To Return
-   * ---
-   * chunk_to_return
-   */
-  chunk_to_return: string;
-  /**
-   * Chunk To Emb
-   * ---
-   * chunk_to_emb
-   */
-  chunk_to_emb: string;
-}
 export interface Core_model_annotation_common_api_response_list {
   /**
    * Code
@@ -1266,6 +558,167 @@ export interface AnnotationUpdateRequest {
    * Other annotation data
    */
   annotation_data?: Record<string, any> | null;
+}
+export interface TriggerCondition {
+  /**
+   * Field Name
+   * ---
+   * Field name to match (e.g., 'sys_status')
+   */
+  field_name: string;
+  /**
+   * Field Value
+   * ---
+   * Expected field value
+   */
+  field_value: string;
+  /**
+   * Operator
+   * ---
+   * Comparison operator: eq=equals, ne=not equals, contains=contains substring
+   */
+  operator?: 'eq' | 'ne' | 'contains' | 'startswith' | 'endswith';
+}
+export interface TriggerCreateRequest {
+  /**
+   * Trigger Name
+   * ---
+   * Human-readable trigger name
+   */
+  trigger_name: string;
+  /**
+   * Url
+   * ---
+   * Callback URL endpoint
+   */
+  url: string;
+  /**
+   * Conditions
+   * ---
+   * List of conditions (AND logic)
+   */
+  conditions: TriggerCondition[];
+  /**
+   * Http Method
+   * ---
+   */
+  http_method?: 'POST' | 'PUT' | 'PATCH';
+  /**
+   * Http Headers
+   * ---
+   */
+  http_headers?: Record<string, string>;
+  /**
+   * Batch Mode
+   * ---
+   */
+  batch_mode?: boolean;
+  /**
+   * Batch Size
+   * ---
+   */
+  batch_size?: number | null;
+  /**
+   * Timeout
+   * ---
+   */
+  timeout?: number;
+  /**
+   * Retry Times
+   * ---
+   */
+  retry_times?: number;
+  /**
+   * Retry Interval
+   * ---
+   */
+  retry_interval?: number;
+  /**
+   * Enabled
+   * ---
+   */
+  enabled?: boolean;
+  /**
+   * Update Data Enabled
+   * ---
+   */
+  update_data_enabled?: boolean;
+}
+export interface TriggerUpdateRequest {
+  /**
+   * Trigger Name
+   * ---
+   */
+  trigger_name?: string | null;
+  /**
+   * Url
+   * ---
+   */
+  url?: string | null;
+  /**
+   * Conditions
+   * ---
+   */
+  conditions?: TriggerCondition[] | null;
+  /**
+   * Http Method
+   * ---
+   */
+  http_method?: ('POST' | 'PUT' | 'PATCH') | null;
+  /**
+   * Http Headers
+   * ---
+   */
+  http_headers?: Record<string, string> | null;
+  /**
+   * Batch Mode
+   * ---
+   */
+  batch_mode?: boolean | null;
+  /**
+   * Batch Size
+   * ---
+   */
+  batch_size?: number | null;
+  /**
+   * Timeout
+   * ---
+   */
+  timeout?: number | null;
+  /**
+   * Retry Times
+   * ---
+   */
+  retry_times?: number | null;
+  /**
+   * Retry Interval
+   * ---
+   */
+  retry_interval?: number | null;
+  /**
+   * Enabled
+   * ---
+   */
+  enabled?: boolean | null;
+  /**
+   * Update Data Enabled
+   * ---
+   */
+  update_data_enabled?: boolean | null;
+}
+export interface ManualTriggerRequest {
+  /**
+   * Sample Ids
+   * ---
+   * List of sample IDs to trigger
+   */
+  sample_ids: string[];
+  /**
+   * Dry Run
+   * ---
+   * If true, validate without executing HTTP callback
+   */
+  dry_run?: boolean;
 }
 export interface PaginatedResponse_KnowledgeBaseItem_ {
   /**
@@ -1923,22 +1376,25 @@ export interface APIResponse_TypeStatsResponse_ {
    */
   data?: TypeStatsResponse | null;
 }
-export interface SearchResult {
+export interface APIResponse {
   /**
-   * Items
+   * Code
    * ---
+   * Response status code
    */
-  items: Array<Record<string, any>>;
+  code?: number;
   /**
-   * Total
+   * Msg
    * ---
+   * Response message
    */
-  total: number;
+  msg?: string;
   /**
-   * Took Ms
+   * Data
    * ---
+   * Response data
    */
-  took_ms: number;
+  data?: null;
 }
 export interface KnowledgeFileItem {
   /**
@@ -5274,6 +4730,838 @@ declare global {
         Config
       >;
     };
+    trigger: {
+      /**
+       * ---
+       *
+       * [POST] Create Trigger
+       *
+       * **path:** /api/v1/trigger/{kb_name}/
+       *
+       * ---
+       *
+       * **Path Parameters**
+       * ```ts
+       * type PathParameters = {
+       *   // [title] Kb Name
+       *   kb_name: string
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **RequestBody**
+       * ```ts
+       * type RequestBody = {
+       *   // [title] Trigger Name
+       *   // Human-readable trigger name
+       *   trigger_name: string
+       *   // [title] Url
+       *   // Callback URL endpoint
+       *   url: string
+       *   // [title] Conditions
+       *   // List of conditions (AND logic)
+       *   // [items] start
+       *   // [title] TriggerCondition
+       *   // Trigger condition for matching knowledge base data.
+       *   // Conditions use AND logic - all conditions must be satisfied for trigger to fire.
+       *   // [items] end
+       *   conditions: Array<{
+       *     // [title] Field Name
+       *     // Field name to match (e.g., 'sys_status')
+       *     field_name: string
+       *     // [title] Field Value
+       *     // Expected field value
+       *     field_value: string
+       *     // [title] Operator
+       *     // Comparison operator: eq=equals, ne=not equals, contains=contains substring
+       *     operator?: 'eq' | 'ne' | 'contains' | 'startswith' | 'endswith'
+       *   }>
+       *   // [title] Http Method
+       *   http_method?: 'POST' | 'PUT' | 'PATCH'
+       *   // [title] Http Headers
+       *   http_headers?: Record<string, string>
+       *   // [title] Batch Mode
+       *   batch_mode?: boolean
+       *   // [title] Batch Size
+       *   batch_size?: number | null
+       *   // [title] Timeout
+       *   timeout?: number
+       *   // [title] Retry Times
+       *   retry_times?: number
+       *   // [title] Retry Interval
+       *   retry_interval?: number
+       *   // [title] Enabled
+       *   enabled?: boolean
+       *   // [title] Update Data Enabled
+       *   update_data_enabled?: boolean
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Response**
+       * ```ts
+       * type Response = {
+       *   // [title] Code
+       *   // Response status code
+       *   code?: number
+       *   // [title] Msg
+       *   // Response message
+       *   msg?: string
+       *   // [title] Data
+       *   // Response data
+       *   data?: null
+       * }
+       * ```
+       */
+      create_trigger_api_v1_trigger__kb_name___post<
+        Config extends Alova2MethodConfig<APIResponse> & {
+          pathParams: {
+            /**
+             * Kb Name
+             * ---
+             */
+            kb_name: string;
+          };
+          data: TriggerCreateRequest;
+        }
+      >(
+        config: Config
+      ): Alova2Method<APIResponse, 'trigger.create_trigger_api_v1_trigger__kb_name___post', Config>;
+      /**
+       * ---
+       *
+       * [GET] Get Triggers
+       *
+       * **path:** /api/v1/trigger/{kb_name}/
+       *
+       * ---
+       *
+       * **Path Parameters**
+       * ```ts
+       * type PathParameters = {
+       *   // [title] Kb Name
+       *   kb_name: string
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Response**
+       * ```ts
+       * type Response = {
+       *   // [title] Code
+       *   // Response status code
+       *   code?: number
+       *   // [title] Msg
+       *   // Response message
+       *   msg?: string
+       *   // [title] Data
+       *   // Response data
+       *   data?: null
+       * }
+       * ```
+       */
+      get_triggers_api_v1_trigger__kb_name___get<
+        Config extends Alova2MethodConfig<APIResponse> & {
+          pathParams: {
+            /**
+             * Kb Name
+             * ---
+             */
+            kb_name: string;
+          };
+        }
+      >(
+        config: Config
+      ): Alova2Method<APIResponse, 'trigger.get_triggers_api_v1_trigger__kb_name___get', Config>;
+      /**
+       * ---
+       *
+       * [GET] Get Trigger
+       *
+       * **path:** /api/v1/trigger/{kb_name}/{trigger_id}
+       *
+       * ---
+       *
+       * **Path Parameters**
+       * ```ts
+       * type PathParameters = {
+       *   // [title] Kb Name
+       *   kb_name: string
+       *   // [title] Trigger Id
+       *   trigger_id: string
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Response**
+       * ```ts
+       * type Response = {
+       *   // [title] Code
+       *   // Response status code
+       *   code?: number
+       *   // [title] Msg
+       *   // Response message
+       *   msg?: string
+       *   // [title] Data
+       *   // Response data
+       *   data?: null
+       * }
+       * ```
+       */
+      get_trigger_api_v1_trigger__kb_name___trigger_id__get<
+        Config extends Alova2MethodConfig<APIResponse> & {
+          pathParams: {
+            /**
+             * Kb Name
+             * ---
+             */
+            kb_name: string;
+            /**
+             * Trigger Id
+             * ---
+             */
+            trigger_id: string;
+          };
+        }
+      >(
+        config: Config
+      ): Alova2Method<APIResponse, 'trigger.get_trigger_api_v1_trigger__kb_name___trigger_id__get', Config>;
+      /**
+       * ---
+       *
+       * [PUT] Update Trigger
+       *
+       * **path:** /api/v1/trigger/{kb_name}/{trigger_id}
+       *
+       * ---
+       *
+       * **Path Parameters**
+       * ```ts
+       * type PathParameters = {
+       *   // [title] Kb Name
+       *   kb_name: string
+       *   // [title] Trigger Id
+       *   trigger_id: string
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **RequestBody**
+       * ```ts
+       * type RequestBody = {
+       *   // [title] Trigger Name
+       *   trigger_name?: string | null
+       *   // [title] Url
+       *   url?: string | null
+       *   // [title] Conditions
+       *   // [params1] start
+       *   // [items] start
+       *   // [title] TriggerCondition
+       *   // Trigger condition for matching knowledge base data.
+       *   // Conditions use AND logic - all conditions must be satisfied for trigger to fire.
+       *   // [items] end
+       *   // [params1] end
+       *   conditions?: Array<{
+       *     // [title] Field Name
+       *     // Field name to match (e.g., 'sys_status')
+       *     field_name: string
+       *     // [title] Field Value
+       *     // Expected field value
+       *     field_value: string
+       *     // [title] Operator
+       *     // Comparison operator: eq=equals, ne=not equals, contains=contains substring
+       *     operator?: 'eq' | 'ne' | 'contains' | 'startswith' | 'endswith'
+       *   }> | null
+       *   // [title] Http Method
+       *   http_method?: ('POST' | 'PUT' | 'PATCH') | null
+       *   // [title] Http Headers
+       *   http_headers?: Record<string, string> | null
+       *   // [title] Batch Mode
+       *   batch_mode?: boolean | null
+       *   // [title] Batch Size
+       *   batch_size?: number | null
+       *   // [title] Timeout
+       *   timeout?: number | null
+       *   // [title] Retry Times
+       *   retry_times?: number | null
+       *   // [title] Retry Interval
+       *   retry_interval?: number | null
+       *   // [title] Enabled
+       *   enabled?: boolean | null
+       *   // [title] Update Data Enabled
+       *   update_data_enabled?: boolean | null
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Response**
+       * ```ts
+       * type Response = {
+       *   // [title] Code
+       *   // Response status code
+       *   code?: number
+       *   // [title] Msg
+       *   // Response message
+       *   msg?: string
+       *   // [title] Data
+       *   // Response data
+       *   data?: null
+       * }
+       * ```
+       */
+      update_trigger_api_v1_trigger__kb_name___trigger_id__put<
+        Config extends Alova2MethodConfig<APIResponse> & {
+          pathParams: {
+            /**
+             * Kb Name
+             * ---
+             */
+            kb_name: string;
+            /**
+             * Trigger Id
+             * ---
+             */
+            trigger_id: string;
+          };
+          data: TriggerUpdateRequest;
+        }
+      >(
+        config: Config
+      ): Alova2Method<APIResponse, 'trigger.update_trigger_api_v1_trigger__kb_name___trigger_id__put', Config>;
+      /**
+       * ---
+       *
+       * [DELETE] Delete Trigger
+       *
+       * **path:** /api/v1/trigger/{kb_name}/{trigger_id}
+       *
+       * ---
+       *
+       * **Path Parameters**
+       * ```ts
+       * type PathParameters = {
+       *   // [title] Kb Name
+       *   kb_name: string
+       *   // [title] Trigger Id
+       *   trigger_id: string
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Response**
+       * ```ts
+       * type Response = {
+       *   // [title] Code
+       *   // Response status code
+       *   code?: number
+       *   // [title] Msg
+       *   // Response message
+       *   msg?: string
+       *   // [title] Data
+       *   // Response data
+       *   data?: null
+       * }
+       * ```
+       */
+      delete_trigger_api_v1_trigger__kb_name___trigger_id__delete<
+        Config extends Alova2MethodConfig<APIResponse> & {
+          pathParams: {
+            /**
+             * Kb Name
+             * ---
+             */
+            kb_name: string;
+            /**
+             * Trigger Id
+             * ---
+             */
+            trigger_id: string;
+          };
+        }
+      >(
+        config: Config
+      ): Alova2Method<APIResponse, 'trigger.delete_trigger_api_v1_trigger__kb_name___trigger_id__delete', Config>;
+      /**
+       * ---
+       *
+       * [PATCH] Enable Trigger
+       *
+       * **path:** /api/v1/trigger/{kb_name}/{trigger_id}/enable
+       *
+       * ---
+       *
+       * **Path Parameters**
+       * ```ts
+       * type PathParameters = {
+       *   // [title] Kb Name
+       *   kb_name: string
+       *   // [title] Trigger Id
+       *   trigger_id: string
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Response**
+       * ```ts
+       * type Response = {
+       *   // [title] Code
+       *   // Response status code
+       *   code?: number
+       *   // [title] Msg
+       *   // Response message
+       *   msg?: string
+       *   // [title] Data
+       *   // Response data
+       *   data?: null
+       * }
+       * ```
+       */
+      enable_trigger_api_v1_trigger__kb_name___trigger_id__enable_patch<
+        Config extends Alova2MethodConfig<APIResponse> & {
+          pathParams: {
+            /**
+             * Kb Name
+             * ---
+             */
+            kb_name: string;
+            /**
+             * Trigger Id
+             * ---
+             */
+            trigger_id: string;
+          };
+        }
+      >(
+        config: Config
+      ): Alova2Method<APIResponse, 'trigger.enable_trigger_api_v1_trigger__kb_name___trigger_id__enable_patch', Config>;
+      /**
+       * ---
+       *
+       * [PATCH] Disable Trigger
+       *
+       * **path:** /api/v1/trigger/{kb_name}/{trigger_id}/disable
+       *
+       * ---
+       *
+       * **Path Parameters**
+       * ```ts
+       * type PathParameters = {
+       *   // [title] Kb Name
+       *   kb_name: string
+       *   // [title] Trigger Id
+       *   trigger_id: string
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Response**
+       * ```ts
+       * type Response = {
+       *   // [title] Code
+       *   // Response status code
+       *   code?: number
+       *   // [title] Msg
+       *   // Response message
+       *   msg?: string
+       *   // [title] Data
+       *   // Response data
+       *   data?: null
+       * }
+       * ```
+       */
+      disable_trigger_api_v1_trigger__kb_name___trigger_id__disable_patch<
+        Config extends Alova2MethodConfig<APIResponse> & {
+          pathParams: {
+            /**
+             * Kb Name
+             * ---
+             */
+            kb_name: string;
+            /**
+             * Trigger Id
+             * ---
+             */
+            trigger_id: string;
+          };
+        }
+      >(
+        config: Config
+      ): Alova2Method<
+        APIResponse,
+        'trigger.disable_trigger_api_v1_trigger__kb_name___trigger_id__disable_patch',
+        Config
+      >;
+      /**
+       * ---
+       *
+       * [POST] Manual Trigger
+       *
+       * **path:** /api/v1/trigger/{kb_name}/{trigger_id}/manual
+       *
+       * ---
+       *
+       * **Path Parameters**
+       * ```ts
+       * type PathParameters = {
+       *   // [title] Kb Name
+       *   kb_name: string
+       *   // [title] Trigger Id
+       *   trigger_id: string
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **RequestBody**
+       * ```ts
+       * type RequestBody = {
+       *   // [title] Sample Ids
+       *   // List of sample IDs to trigger
+       *   // [items] start
+       *   // [items] end
+       *   sample_ids: string[]
+       *   // [title] Dry Run
+       *   // If true, validate without executing HTTP callback
+       *   dry_run?: boolean
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Response**
+       * ```ts
+       * type Response = {
+       *   // [title] Code
+       *   // Response status code
+       *   code?: number
+       *   // [title] Msg
+       *   // Response message
+       *   msg?: string
+       *   // [title] Data
+       *   // Response data
+       *   data?: null
+       * }
+       * ```
+       */
+      manual_trigger_api_v1_trigger__kb_name___trigger_id__manual_post<
+        Config extends Alova2MethodConfig<APIResponse> & {
+          pathParams: {
+            /**
+             * Kb Name
+             * ---
+             */
+            kb_name: string;
+            /**
+             * Trigger Id
+             * ---
+             */
+            trigger_id: string;
+          };
+          data: ManualTriggerRequest;
+        }
+      >(
+        config: Config
+      ): Alova2Method<APIResponse, 'trigger.manual_trigger_api_v1_trigger__kb_name___trigger_id__manual_post', Config>;
+      /**
+       * ---
+       *
+       * [GET] Query History By Kb
+       *
+       * **path:** /api/v1/trigger/history/{kb_name}
+       *
+       * ---
+       *
+       * **Path Parameters**
+       * ```ts
+       * type PathParameters = {
+       *   // [title] Kb Name
+       *   kb_name: string
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Query Parameters**
+       * ```ts
+       * type QueryParameters = {
+       *   // [title] Trigger Id
+       *   // Filter by trigger ID
+       *   trigger_id?: string | null
+       *   // [title] Status
+       *   // Filter by execution status
+       *   status?: string | null
+       *   // [title] Start Date
+       *   // Start date (YYYY-MM-DD HH:MM:SS)
+       *   start_date?: string | null
+       *   // [title] End Date
+       *   // End date (YYYY-MM-DD HH:MM:SS)
+       *   end_date?: string | null
+       *   // [title] Page
+       *   // Page number
+       *   page?: number
+       *   // [title] Page Size
+       *   // Records per page
+       *   page_size?: number
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Response**
+       * ```ts
+       * type Response = {
+       *   // [title] Code
+       *   // Response status code
+       *   code?: number
+       *   // [title] Msg
+       *   // Response message
+       *   msg?: string
+       *   // [title] Data
+       *   // Response data
+       *   data?: null
+       * }
+       * ```
+       */
+      query_history_by_kb_api_v1_trigger_history__kb_name__get<
+        Config extends Alova2MethodConfig<APIResponse> & {
+          pathParams: {
+            /**
+             * Kb Name
+             * ---
+             */
+            kb_name: string;
+          };
+          params: {
+            /**
+             * Trigger Id
+             * ---
+             * Filter by trigger ID
+             */
+            trigger_id?: string | null;
+            /**
+             * Status
+             * ---
+             * Filter by execution status
+             */
+            status?: string | null;
+            /**
+             * Start Date
+             * ---
+             * Start date (YYYY-MM-DD HH:MM:SS)
+             */
+            start_date?: string | null;
+            /**
+             * End Date
+             * ---
+             * End date (YYYY-MM-DD HH:MM:SS)
+             */
+            end_date?: string | null;
+            /**
+             * Page
+             * ---
+             * Page number
+             */
+            page?: number;
+            /**
+             * Page Size
+             * ---
+             * Records per page
+             */
+            page_size?: number;
+          };
+        }
+      >(
+        config: Config
+      ): Alova2Method<APIResponse, 'trigger.query_history_by_kb_api_v1_trigger_history__kb_name__get', Config>;
+      /**
+       * ---
+       *
+       * [GET] Query History By Trigger
+       *
+       * **path:** /api/v1/trigger/history/{kb_name}/{trigger_id}
+       *
+       * ---
+       *
+       * **Path Parameters**
+       * ```ts
+       * type PathParameters = {
+       *   // [title] Kb Name
+       *   kb_name: string
+       *   // [title] Trigger Id
+       *   trigger_id: string
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Query Parameters**
+       * ```ts
+       * type QueryParameters = {
+       *   // [title] Status
+       *   // Filter by execution status
+       *   status?: string | null
+       *   // [title] Start Date
+       *   // Start date (YYYY-MM-DD HH:MM:SS)
+       *   start_date?: string | null
+       *   // [title] End Date
+       *   // End date (YYYY-MM-DD HH:MM:SS)
+       *   end_date?: string | null
+       *   // [title] Page
+       *   // Page number
+       *   page?: number
+       *   // [title] Page Size
+       *   // Records per page
+       *   page_size?: number
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Response**
+       * ```ts
+       * type Response = {
+       *   // [title] Code
+       *   // Response status code
+       *   code?: number
+       *   // [title] Msg
+       *   // Response message
+       *   msg?: string
+       *   // [title] Data
+       *   // Response data
+       *   data?: null
+       * }
+       * ```
+       */
+      query_history_by_trigger_api_v1_trigger_history__kb_name___trigger_id__get<
+        Config extends Alova2MethodConfig<APIResponse> & {
+          pathParams: {
+            /**
+             * Kb Name
+             * ---
+             */
+            kb_name: string;
+            /**
+             * Trigger Id
+             * ---
+             */
+            trigger_id: string;
+          };
+          params: {
+            /**
+             * Status
+             * ---
+             * Filter by execution status
+             */
+            status?: string | null;
+            /**
+             * Start Date
+             * ---
+             * Start date (YYYY-MM-DD HH:MM:SS)
+             */
+            start_date?: string | null;
+            /**
+             * End Date
+             * ---
+             * End date (YYYY-MM-DD HH:MM:SS)
+             */
+            end_date?: string | null;
+            /**
+             * Page
+             * ---
+             * Page number
+             */
+            page?: number;
+            /**
+             * Page Size
+             * ---
+             * Records per page
+             */
+            page_size?: number;
+          };
+        }
+      >(
+        config: Config
+      ): Alova2Method<
+        APIResponse,
+        'trigger.query_history_by_trigger_api_v1_trigger_history__kb_name___trigger_id__get',
+        Config
+      >;
+      /**
+       * ---
+       *
+       * [GET] Get Trigger Stats
+       *
+       * **path:** /api/v1/trigger/stats/{kb_name}
+       *
+       * ---
+       *
+       * **Path Parameters**
+       * ```ts
+       * type PathParameters = {
+       *   // [title] Kb Name
+       *   kb_name: string
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Query Parameters**
+       * ```ts
+       * type QueryParameters = {
+       *   // [title] Trigger Id
+       *   // Filter by trigger ID
+       *   trigger_id?: string | null
+       * }
+       * ```
+       *
+       * ---
+       *
+       * **Response**
+       * ```ts
+       * type Response = {
+       *   // [title] Code
+       *   // Response status code
+       *   code?: number
+       *   // [title] Msg
+       *   // Response message
+       *   msg?: string
+       *   // [title] Data
+       *   // Response data
+       *   data?: null
+       * }
+       * ```
+       */
+      get_trigger_stats_api_v1_trigger_stats__kb_name__get<
+        Config extends Alova2MethodConfig<APIResponse> & {
+          pathParams: {
+            /**
+             * Kb Name
+             * ---
+             */
+            kb_name: string;
+          };
+          params: {
+            /**
+             * Trigger Id
+             * ---
+             * Filter by trigger ID
+             */
+            trigger_id?: string | null;
+          };
+        }
+      >(
+        config: Config
+      ): Alova2Method<APIResponse, 'trigger.get_trigger_stats_api_v1_trigger_stats__kb_name__get', Config>;
+    };
     logConfiguration: {
       /**
        * ---
@@ -5349,3646 +5637,6 @@ declare global {
       >(
         config: Config
       ): Alova2Method<APIResponse_str_, 'logConfiguration.set_log_level_endpoint_api_v1_log_level_post', Config>;
-    };
-    kbWeather: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/weather/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] City Key
-       *   city_key: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      weather_search_rule_0_kb_weather_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_weather_Rule4847505712;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbWeather.weather_search_rule_0_kb_weather_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/weather/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] City Key
-       *   // city_key
-       *   city_key: string
-       *   // [title] Date
-       *   // date
-       *   date: string
-       *   // [title] Max Temperature
-       *   // max_temperature
-       *   max_temperature: number
-       *   // [title] Min Temperature
-       *   // min_temperature
-       *   min_temperature: number
-       *   // [title] Weather
-       *   // weather
-       *   weather: string
-       *   // [title] Wind Force Direction
-       *   // wind_force_direction
-       *   wind_force_direction: string
-       *   // [title] Sunshine Duration
-       *   // sunshine_duration
-       *   sunshine_duration: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_weather_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_weather;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbWeather.deposit_data_kb_weather_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/weather/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_weather_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbWeather.list_banks_kb_weather_list_banks_get', Config>;
-    };
-    kbWeather1: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/weather/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] City Key
-       *   city_key: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      weather_search_rule_0_kb_weather_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_weather_Rule4847505712;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbWeather1.weather_search_rule_0_kb_weather_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/weather/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] City Key
-       *   // city_key
-       *   city_key: string
-       *   // [title] Date
-       *   // date
-       *   date: string
-       *   // [title] Max Temperature
-       *   // max_temperature
-       *   max_temperature: number
-       *   // [title] Min Temperature
-       *   // min_temperature
-       *   min_temperature: number
-       *   // [title] Weather
-       *   // weather
-       *   weather: string
-       *   // [title] Wind Force Direction
-       *   // wind_force_direction
-       *   wind_force_direction: string
-       *   // [title] Sunshine Duration
-       *   // sunshine_duration
-       *   sunshine_duration: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_weather_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_weather;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbWeather1.deposit_data_kb_weather_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/weather/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_weather_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbWeather1.list_banks_kb_weather_list_banks_get', Config>;
-    };
-    kbWeatherTemp: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/weather-temp/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] City Key
-       *   city_key: string
-       *   // [title] Filter Date
-       *   filter_date: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      weather_temp_search_rule_0_kb_weather_temp_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: Search_request_weather_temp_rule4847754512;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbWeatherTemp.weather_temp_search_rule_0_kb_weather_temp_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/weather-temp/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] City Key
-       *   // city_key
-       *   city_key: string
-       *   // [title] Date
-       *   // date
-       *   date: string
-       *   // [title] Max Temperature
-       *   // max_temperature
-       *   max_temperature: number
-       *   // [title] Min Temperature
-       *   // min_temperature
-       *   min_temperature: number
-       *   // [title] Weather
-       *   // weather
-       *   weather: string
-       *   // [title] Wind Force Direction
-       *   // wind_force_direction
-       *   wind_force_direction: string
-       *   // [title] Sunshine Duration
-       *   // sunshine_duration
-       *   sunshine_duration: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_weather_temp_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: Deposit_data_item_weather_temp;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbWeatherTemp.deposit_data_kb_weather_temp_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/weather-temp/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_weather_temp_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbWeatherTemp.list_banks_kb_weather_temp_list_banks_get', Config>;
-    };
-    kbWeatherTemp1: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/weather-temp/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] City Key
-       *   city_key: string
-       *   // [title] Filter Date
-       *   filter_date: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      weather_temp_search_rule_0_kb_weather_temp_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: Search_request_weather_temp_rule4847754512;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbWeatherTemp1.weather_temp_search_rule_0_kb_weather_temp_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/weather-temp/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] City Key
-       *   // city_key
-       *   city_key: string
-       *   // [title] Date
-       *   // date
-       *   date: string
-       *   // [title] Max Temperature
-       *   // max_temperature
-       *   max_temperature: number
-       *   // [title] Min Temperature
-       *   // min_temperature
-       *   min_temperature: number
-       *   // [title] Weather
-       *   // weather
-       *   weather: string
-       *   // [title] Wind Force Direction
-       *   // wind_force_direction
-       *   wind_force_direction: string
-       *   // [title] Sunshine Duration
-       *   // sunshine_duration
-       *   sunshine_duration: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_weather_temp_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: Deposit_data_item_weather_temp;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbWeatherTemp1.deposit_data_kb_weather_temp_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/weather-temp/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_weather_temp_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbWeatherTemp1.list_banks_kb_weather_temp_list_banks_get', Config>;
-    };
-    kbUnstructureDocTest: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/unstructure_doc_test/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      unstructure_doc_test_search_rule_0_kb_unstructure_doc_test_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_unstructure_doc_test_Rule4847929936;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbUnstructureDocTest.unstructure_doc_test_search_rule_0_kb_unstructure_doc_test_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 1
-       *
-       * **path:** /kb/unstructure_doc_test/search/rule_1
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      unstructure_doc_test_search_rule_1_kb_unstructure_doc_test_search_rule_1_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_unstructure_doc_test_Rule4847930256;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbUnstructureDocTest.unstructure_doc_test_search_rule_1_kb_unstructure_doc_test_search_rule_1_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/unstructure_doc_test/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Return
-       *   // chunk_to_return
-       *   chunk_to_return: string
-       *   // [title] Chunk To Emb
-       *   // chunk_to_emb
-       *   chunk_to_emb: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_unstructure_doc_test_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_unstructure_doc_test;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbUnstructureDocTest.deposit_data_kb_unstructure_doc_test_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/unstructure_doc_test/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_unstructure_doc_test_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbUnstructureDocTest.list_banks_kb_unstructure_doc_test_list_banks_get', Config>;
-    };
-    kbUnstructureDocTest1: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/unstructure_doc_test/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      unstructure_doc_test_search_rule_0_kb_unstructure_doc_test_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_unstructure_doc_test_Rule4847929936;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbUnstructureDocTest1.unstructure_doc_test_search_rule_0_kb_unstructure_doc_test_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 1
-       *
-       * **path:** /kb/unstructure_doc_test/search/rule_1
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      unstructure_doc_test_search_rule_1_kb_unstructure_doc_test_search_rule_1_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_unstructure_doc_test_Rule4847930256;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbUnstructureDocTest1.unstructure_doc_test_search_rule_1_kb_unstructure_doc_test_search_rule_1_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/unstructure_doc_test/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Return
-       *   // chunk_to_return
-       *   chunk_to_return: string
-       *   // [title] Chunk To Emb
-       *   // chunk_to_emb
-       *   chunk_to_emb: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_unstructure_doc_test_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_unstructure_doc_test;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbUnstructureDocTest1.deposit_data_kb_unstructure_doc_test_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/unstructure_doc_test/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_unstructure_doc_test_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbUnstructureDocTest1.list_banks_kb_unstructure_doc_test_list_banks_get', Config>;
-    };
-    kbQaBank2: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/qa_bank_2/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Question
-       *   question: string
-       *   // [title] Filter Callee
-       *   filter_callee: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      qa_bank_2_search_rule_0_kb_qa_bank_2_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_qa_bank_2_Rule4848045104;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbQaBank2.qa_bank_2_search_rule_0_kb_qa_bank_2_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/qa_bank_2/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Question
-       *   // question
-       *   question: string
-       *   // [title] Answer
-       *   // answer
-       *   answer: string
-       *   // [title] Score
-       *   // score
-       *   score: number
-       *   // [title] Caller
-       *   // caller
-       *   caller: string
-       *   // [title] Callee
-       *   // callee
-       *   callee: string
-       *   // [title] Remark
-       *   // remark
-       *   remark: string
-       *   // [title] Source Trace Id
-       *   // source_trace_id
-       *   source_trace_id: string
-       *   // [title] Source Request Id
-       *   // source_request_id
-       *   source_request_id: string
-       *   // [title] Data Type
-       *   // data_type
-       *   data_type: string
-       *   // [title] Priority
-       *   // priority
-       *   priority: number
-       *   // [title] Category
-       *   // category
-       *   category: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_qa_bank_2_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_qa_bank_2;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbQaBank2.deposit_data_kb_qa_bank_2_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/qa_bank_2/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_qa_bank_2_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbQaBank2.list_banks_kb_qa_bank_2_list_banks_get', Config>;
-    };
-    kbQaBank21: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/qa_bank_2/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Question
-       *   question: string
-       *   // [title] Filter Callee
-       *   filter_callee: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      qa_bank_2_search_rule_0_kb_qa_bank_2_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_qa_bank_2_Rule4848045104;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbQaBank21.qa_bank_2_search_rule_0_kb_qa_bank_2_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/qa_bank_2/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Question
-       *   // question
-       *   question: string
-       *   // [title] Answer
-       *   // answer
-       *   answer: string
-       *   // [title] Score
-       *   // score
-       *   score: number
-       *   // [title] Caller
-       *   // caller
-       *   caller: string
-       *   // [title] Callee
-       *   // callee
-       *   callee: string
-       *   // [title] Remark
-       *   // remark
-       *   remark: string
-       *   // [title] Source Trace Id
-       *   // source_trace_id
-       *   source_trace_id: string
-       *   // [title] Source Request Id
-       *   // source_request_id
-       *   source_request_id: string
-       *   // [title] Data Type
-       *   // data_type
-       *   data_type: string
-       *   // [title] Priority
-       *   // priority
-       *   priority: number
-       *   // [title] Category
-       *   // category
-       *   category: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_qa_bank_2_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_qa_bank_2;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbQaBank21.deposit_data_kb_qa_bank_2_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/qa_bank_2/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_qa_bank_2_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbQaBank21.list_banks_kb_qa_bank_2_list_banks_get', Config>;
-    };
-    kbAnnoBank: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/anno_bank/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Type
-       *   type: string
-       *   // [title] Filter Status
-       *   filter_status: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      anno_bank_search_rule_0_kb_anno_bank_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_anno_bank_Rule4848057744;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbAnnoBank.anno_bank_search_rule_0_kb_anno_bank_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/anno_bank/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Task Id
-       *   // task_id
-       *   task_id: string
-       *   // [title] Type
-       *   // type
-       *   type: string
-       *   // [title] Priority
-       *   // priority
-       *   priority: number
-       *   // [title] Status
-       *   // status
-       *   status: string
-       *   // [title] Create Time
-       *   // create_time
-       *   create_time: string
-       *   // [title] Update Time
-       *   // update_time
-       *   update_time: string
-       *   // [title] Query
-       *   // query
-       *   query: string
-       *   // [title] Answer
-       *   // answer
-       *   answer: string
-       *   // [title] Is Satisfied
-       *   // is_satisfied
-       *   is_satisfied: string
-       *   // [title] Reason
-       *   // reason
-       *   reason: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_anno_bank_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_anno_bank;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbAnnoBank.deposit_data_kb_anno_bank_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/anno_bank/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_anno_bank_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbAnnoBank.list_banks_kb_anno_bank_list_banks_get', Config>;
-    };
-    kbAnnoBank1: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/anno_bank/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Type
-       *   type: string
-       *   // [title] Filter Status
-       *   filter_status: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      anno_bank_search_rule_0_kb_anno_bank_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_anno_bank_Rule4848057744;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbAnnoBank1.anno_bank_search_rule_0_kb_anno_bank_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/anno_bank/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Task Id
-       *   // task_id
-       *   task_id: string
-       *   // [title] Type
-       *   // type
-       *   type: string
-       *   // [title] Priority
-       *   // priority
-       *   priority: number
-       *   // [title] Status
-       *   // status
-       *   status: string
-       *   // [title] Create Time
-       *   // create_time
-       *   create_time: string
-       *   // [title] Update Time
-       *   // update_time
-       *   update_time: string
-       *   // [title] Query
-       *   // query
-       *   query: string
-       *   // [title] Answer
-       *   // answer
-       *   answer: string
-       *   // [title] Is Satisfied
-       *   // is_satisfied
-       *   is_satisfied: string
-       *   // [title] Reason
-       *   // reason
-       *   reason: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_anno_bank_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_anno_bank;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbAnnoBank1.deposit_data_kb_anno_bank_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/anno_bank/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_anno_bank_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbAnnoBank1.list_banks_kb_anno_bank_list_banks_get', Config>;
-    };
-    kbTestK: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/testK/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      testK_search_rule_0_kb_testK_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_testK_Rule4848249952;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTestK.testK_search_rule_0_kb_testK_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 1
-       *
-       * **path:** /kb/testK/search/rule_1
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      testK_search_rule_1_kb_testK_search_rule_1_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_testK_Rule4848250192;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTestK.testK_search_rule_1_kb_testK_search_rule_1_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/testK/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Return
-       *   // chunk_to_return
-       *   chunk_to_return: string
-       *   // [title] Chunk To Emb
-       *   // chunk_to_emb
-       *   chunk_to_emb: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_testK_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_testK;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbTestK.deposit_data_kb_testK_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/testK/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_testK_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbTestK.list_banks_kb_testK_list_banks_get', Config>;
-    };
-    kbTestK1: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/testK/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      testK_search_rule_0_kb_testK_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_testK_Rule4848249952;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTestK1.testK_search_rule_0_kb_testK_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 1
-       *
-       * **path:** /kb/testK/search/rule_1
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      testK_search_rule_1_kb_testK_search_rule_1_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_testK_Rule4848250192;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTestK1.testK_search_rule_1_kb_testK_search_rule_1_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/testK/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Return
-       *   // chunk_to_return
-       *   chunk_to_return: string
-       *   // [title] Chunk To Emb
-       *   // chunk_to_emb
-       *   chunk_to_emb: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_testK_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_testK;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbTestK1.deposit_data_kb_testK_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/testK/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_testK_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbTestK1.list_banks_kb_testK_list_banks_get', Config>;
-    };
-    kbHyyNewStructure1: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/hyy_new_structure_1/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   name: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      hyy_new_structure_1_search_rule_0_kb_hyy_new_structure_1_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_hyy_new_structure_1_Rule4848478768;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbHyyNewStructure1.hyy_new_structure_1_search_rule_0_kb_hyy_new_structure_1_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/hyy_new_structure_1/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Age
-       *   // age
-       *   age: string
-       *   // [title] Score
-       *   // score
-       *   score: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_hyy_new_structure_1_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_hyy_new_structure_1;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbHyyNewStructure1.deposit_data_kb_hyy_new_structure_1_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/hyy_new_structure_1/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_hyy_new_structure_1_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbHyyNewStructure1.list_banks_kb_hyy_new_structure_1_list_banks_get', Config>;
-    };
-    kbHyyNewStructure11: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/hyy_new_structure_1/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   name: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      hyy_new_structure_1_search_rule_0_kb_hyy_new_structure_1_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_hyy_new_structure_1_Rule4848478768;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbHyyNewStructure11.hyy_new_structure_1_search_rule_0_kb_hyy_new_structure_1_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/hyy_new_structure_1/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Age
-       *   // age
-       *   age: string
-       *   // [title] Score
-       *   // score
-       *   score: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_hyy_new_structure_1_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_hyy_new_structure_1;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbHyyNewStructure11.deposit_data_kb_hyy_new_structure_1_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/hyy_new_structure_1/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_hyy_new_structure_1_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbHyyNewStructure11.list_banks_kb_hyy_new_structure_1_list_banks_get', Config>;
-    };
-    kbKbUn: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/kb_un/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      kb_un_search_rule_0_kb_kb_un_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_kb_un_Rule4949318208;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbKbUn.kb_un_search_rule_0_kb_kb_un_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 1
-       *
-       * **path:** /kb/kb_un/search/rule_1
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      kb_un_search_rule_1_kb_kb_un_search_rule_1_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_kb_un_Rule4949318448;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbKbUn.kb_un_search_rule_1_kb_kb_un_search_rule_1_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/kb_un/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Return
-       *   // chunk_to_return
-       *   chunk_to_return: string
-       *   // [title] Chunk To Emb
-       *   // chunk_to_emb
-       *   chunk_to_emb: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_kb_un_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_kb_un;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbKbUn.deposit_data_kb_kb_un_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/kb_un/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_kb_un_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbKbUn.list_banks_kb_kb_un_list_banks_get', Config>;
-    };
-    kbKbUn1: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/kb_un/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      kb_un_search_rule_0_kb_kb_un_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_kb_un_Rule4949318208;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbKbUn1.kb_un_search_rule_0_kb_kb_un_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 1
-       *
-       * **path:** /kb/kb_un/search/rule_1
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      kb_un_search_rule_1_kb_kb_un_search_rule_1_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_kb_un_Rule4949318448;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbKbUn1.kb_un_search_rule_1_kb_kb_un_search_rule_1_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/kb_un/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Return
-       *   // chunk_to_return
-       *   chunk_to_return: string
-       *   // [title] Chunk To Emb
-       *   // chunk_to_emb
-       *   chunk_to_emb: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_kb_un_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_kb_un;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbKbUn1.deposit_data_kb_kb_un_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/kb_un/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_kb_un_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbKbUn1.list_banks_kb_kb_un_list_banks_get', Config>;
-    };
-    kbTest222: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/test222/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   name: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      test222_search_rule_0_kb_test222_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_test222_Rule4949399888;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTest222.test222_search_rule_0_kb_test222_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/test222/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Age
-       *   // age
-       *   age: number
-       *   // [title] Score
-       *   // score
-       *   score: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_test222_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_test222;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbTest222.deposit_data_kb_test222_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/test222/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_test222_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbTest222.list_banks_kb_test222_list_banks_get', Config>;
-    };
-    kbTest2221: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/test222/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   name: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      test222_search_rule_0_kb_test222_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_test222_Rule4949399888;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTest2221.test222_search_rule_0_kb_test222_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/test222/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Age
-       *   // age
-       *   age: number
-       *   // [title] Score
-       *   // score
-       *   score: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_test222_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_test222;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbTest2221.deposit_data_kb_test222_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/test222/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_test222_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbTest2221.list_banks_kb_test222_list_banks_get', Config>;
-    };
-    kbHyyDemo1: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/hyy_demo_1/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Filter Age
-       *   // age
-       *   filter_age: number
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      hyy_demo_1_search_rule_0_kb_hyy_demo_1_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_hyy_demo_1_Rule4949575552;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbHyyDemo1.hyy_demo_1_search_rule_0_kb_hyy_demo_1_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/hyy_demo_1/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Age
-       *   // age
-       *   age: number
-       *   // [title] Score
-       *   // score
-       *   score: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_hyy_demo_1_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_hyy_demo_1;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbHyyDemo1.deposit_data_kb_hyy_demo_1_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/hyy_demo_1/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_hyy_demo_1_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbHyyDemo1.list_banks_kb_hyy_demo_1_list_banks_get', Config>;
-    };
-    kbHyyDemo11: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/hyy_demo_1/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Filter Age
-       *   // age
-       *   filter_age: number
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      hyy_demo_1_search_rule_0_kb_hyy_demo_1_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_hyy_demo_1_Rule4949575552;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbHyyDemo11.hyy_demo_1_search_rule_0_kb_hyy_demo_1_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/hyy_demo_1/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Age
-       *   // age
-       *   age: number
-       *   // [title] Score
-       *   // score
-       *   score: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_hyy_demo_1_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_hyy_demo_1;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbHyyDemo11.deposit_data_kb_hyy_demo_1_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/hyy_demo_1/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_hyy_demo_1_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbHyyDemo11.list_banks_kb_hyy_demo_1_list_banks_get', Config>;
-    };
-    kbHyyTest111: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/hyy_test_111/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // 1
-       *   name: string
-       *   // [title] Filter Tag
-       *   // 4
-       *   filter_tag: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      hyy_test_111_search_rule_0_kb_hyy_test_111_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_hyy_test_111_Rule4949588512;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbHyyTest111.hyy_test_111_search_rule_0_kb_hyy_test_111_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/hyy_test_111/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // 1
-       *   name: string
-       *   // [title] Age
-       *   // 2
-       *   age: number
-       *   // [title] Score
-       *   // 3
-       *   score: number
-       *   // [title] Tag
-       *   // 4
-       *   tag: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_hyy_test_111_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_hyy_test_111;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbHyyTest111.deposit_data_kb_hyy_test_111_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/hyy_test_111/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_hyy_test_111_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbHyyTest111.list_banks_kb_hyy_test_111_list_banks_get', Config>;
-    };
-    kbHyyTest1111: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/hyy_test_111/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // 1
-       *   name: string
-       *   // [title] Filter Tag
-       *   // 4
-       *   filter_tag: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      hyy_test_111_search_rule_0_kb_hyy_test_111_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_hyy_test_111_Rule4949588512;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbHyyTest1111.hyy_test_111_search_rule_0_kb_hyy_test_111_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/hyy_test_111/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // 1
-       *   name: string
-       *   // [title] Age
-       *   // 2
-       *   age: number
-       *   // [title] Score
-       *   // 3
-       *   score: number
-       *   // [title] Tag
-       *   // 4
-       *   tag: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_hyy_test_111_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_hyy_test_111;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbHyyTest1111.deposit_data_kb_hyy_test_111_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/hyy_test_111/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_hyy_test_111_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbHyyTest1111.list_banks_kb_hyy_test_111_list_banks_get', Config>;
-    };
-    kbTestK2: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/testK2/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      testK2_search_rule_0_kb_testK2_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_testK2_Rule4949731888;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTestK2.testK2_search_rule_0_kb_testK2_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 1
-       *
-       * **path:** /kb/testK2/search/rule_1
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      testK2_search_rule_1_kb_testK2_search_rule_1_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_testK2_Rule4949732128;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTestK2.testK2_search_rule_1_kb_testK2_search_rule_1_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/testK2/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Return
-       *   // chunk_to_return
-       *   chunk_to_return: string
-       *   // [title] Chunk To Emb
-       *   // chunk_to_emb
-       *   chunk_to_emb: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_testK2_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_testK2;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbTestK2.deposit_data_kb_testK2_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/testK2/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_testK2_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbTestK2.list_banks_kb_testK2_list_banks_get', Config>;
-    };
-    kbTestK21: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/testK2/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      testK2_search_rule_0_kb_testK2_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_testK2_Rule4949731888;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTestK21.testK2_search_rule_0_kb_testK2_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 1
-       *
-       * **path:** /kb/testK2/search/rule_1
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      testK2_search_rule_1_kb_testK2_search_rule_1_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_testK2_Rule4949732128;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTestK21.testK2_search_rule_1_kb_testK2_search_rule_1_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/testK2/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Return
-       *   // chunk_to_return
-       *   chunk_to_return: string
-       *   // [title] Chunk To Emb
-       *   // chunk_to_emb
-       *   chunk_to_emb: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_testK2_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_testK2;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbTestK21.deposit_data_kb_testK2_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/testK2/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_testK2_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbTestK21.list_banks_kb_testK2_list_banks_get', Config>;
-    };
-    kbTest3: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/test3/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   name: string
-       *   // [title] Filter Age
-       *   filter_age: number
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      test3_search_rule_0_kb_test3_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_test3_Rule4949945120;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTest3.test3_search_rule_0_kb_test3_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/test3/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Age
-       *   // age
-       *   age: number
-       *   // [title] Score
-       *   // score
-       *   score: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_test3_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_test3;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbTest3.deposit_data_kb_test3_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/test3/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_test3_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbTest3.list_banks_kb_test3_list_banks_get', Config>;
-    };
-    kbTest31: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/test3/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   name: string
-       *   // [title] Filter Age
-       *   filter_age: number
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      test3_search_rule_0_kb_test3_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_test3_Rule4949945120;
-        }
-      >(
-        config: Config
-      ): Alova2Method<SearchResult, 'kbTest31.test3_search_rule_0_kb_test3_search_rule_0_post', Config>;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/test3/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Age
-       *   // age
-       *   age: number
-       *   // [title] Score
-       *   // score
-       *   score: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_test3_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_test3;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbTest31.deposit_data_kb_test3_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/test3/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_test3_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbTest31.list_banks_kb_test3_list_banks_get', Config>;
-    };
-    kbHyyaaaaaaaaaaa: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/hyyaaaaaaaaaaa/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   name: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      hyyaaaaaaaaaaa_search_rule_0_kb_hyyaaaaaaaaaaa_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_hyyaaaaaaaaaaa_Rule4950071712;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbHyyaaaaaaaaaaa.hyyaaaaaaaaaaa_search_rule_0_kb_hyyaaaaaaaaaaa_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/hyyaaaaaaaaaaa/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Age
-       *   // age
-       *   age: number
-       *   // [title] Score
-       *   // score
-       *   score: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_hyyaaaaaaaaaaa_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_hyyaaaaaaaaaaa;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbHyyaaaaaaaaaaa.deposit_data_kb_hyyaaaaaaaaaaa_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/hyyaaaaaaaaaaa/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_hyyaaaaaaaaaaa_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbHyyaaaaaaaaaaa.list_banks_kb_hyyaaaaaaaaaaa_list_banks_get', Config>;
-    };
-    kbHyyaaaaaaaaaaa1: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/hyyaaaaaaaaaaa/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   name: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      hyyaaaaaaaaaaa_search_rule_0_kb_hyyaaaaaaaaaaa_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_hyyaaaaaaaaaaa_Rule4950071712;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbHyyaaaaaaaaaaa1.hyyaaaaaaaaaaa_search_rule_0_kb_hyyaaaaaaaaaaa_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/hyyaaaaaaaaaaa/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Name
-       *   // name
-       *   name: string
-       *   // [title] Age
-       *   // age
-       *   age: number
-       *   // [title] Score
-       *   // score
-       *   score: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_hyyaaaaaaaaaaa_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_hyyaaaaaaaaaaa;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbHyyaaaaaaaaaaa1.deposit_data_kb_hyyaaaaaaaaaaa_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/hyyaaaaaaaaaaa/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_hyyaaaaaaaaaaa_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbHyyaaaaaaaaaaa1.list_banks_kb_hyyaaaaaaaaaaa_list_banks_get', Config>;
-    };
-    kbDaefwasfa1111: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/daefwasfa1111/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      daefwasfa1111_search_rule_0_kb_daefwasfa1111_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_daefwasfa1111_Rule4950198464;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbDaefwasfa1111.daefwasfa1111_search_rule_0_kb_daefwasfa1111_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 1
-       *
-       * **path:** /kb/daefwasfa1111/search/rule_1
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      daefwasfa1111_search_rule_1_kb_daefwasfa1111_search_rule_1_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_daefwasfa1111_Rule4950198704;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbDaefwasfa1111.daefwasfa1111_search_rule_1_kb_daefwasfa1111_search_rule_1_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/daefwasfa1111/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Return
-       *   // chunk_to_return
-       *   chunk_to_return: string
-       *   // [title] Chunk To Emb
-       *   // chunk_to_emb
-       *   chunk_to_emb: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_daefwasfa1111_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_daefwasfa1111;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbDaefwasfa1111.deposit_data_kb_daefwasfa1111_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/daefwasfa1111/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_daefwasfa1111_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbDaefwasfa1111.list_banks_kb_daefwasfa1111_list_banks_get', Config>;
-    };
-    kbDaefwasfa11111: {
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 0
-       *
-       * **path:** /kb/daefwasfa1111/search/rule_0
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      daefwasfa1111_search_rule_0_kb_daefwasfa1111_search_rule_0_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_daefwasfa1111_Rule4950198464;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbDaefwasfa11111.daefwasfa1111_search_rule_0_kb_daefwasfa1111_search_rule_0_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Retrieval interface - Rule 1
-       *
-       * **path:** /kb/daefwasfa1111/search/rule_1
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Emb
-       *   chunk_to_emb: string
-       *   // [title] Top K
-       *   // Query top k
-       *   top_k: number
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = {
-       *   // [title] Items
-       *   // [items] start
-       *   // [items] end
-       *   items: Array<Record<string, any>>
-       *   // [title] Total
-       *   total: number
-       *   // [title] Took Ms
-       *   took_ms: number
-       * }
-       * ```
-       */
-      daefwasfa1111_search_rule_1_kb_daefwasfa1111_search_rule_1_post<
-        Config extends Alova2MethodConfig<SearchResult> & {
-          data: SearchRequest_daefwasfa1111_Rule4950198704;
-        }
-      >(
-        config: Config
-      ): Alova2Method<
-        SearchResult,
-        'kbDaefwasfa11111.daefwasfa1111_search_rule_1_kb_daefwasfa1111_search_rule_1_post',
-        Config
-      >;
-      /**
-       * ---
-       *
-       * [POST] Data write interface
-       *
-       * **path:** /kb/daefwasfa1111/deposit
-       *
-       * ---
-       *
-       * **RequestBody**
-       * ```ts
-       * type RequestBody = {
-       *   // [title] Chunk To Return
-       *   // chunk_to_return
-       *   chunk_to_return: string
-       *   // [title] Chunk To Emb
-       *   // chunk_to_emb
-       *   chunk_to_emb: string
-       * }
-       * ```
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      deposit_data_kb_daefwasfa1111_deposit_post<
-        Config extends Alova2MethodConfig<null> & {
-          data: DepositDataItem_daefwasfa1111;
-        }
-      >(
-        config: Config
-      ): Alova2Method<null, 'kbDaefwasfa11111.deposit_data_kb_daefwasfa1111_deposit_post', Config>;
-      /**
-       * ---
-       *
-       * [GET] List all bank interface information
-       *
-       * **path:** /kb/daefwasfa1111/list_banks
-       *
-       * ---
-       *
-       * **Response**
-       * ```ts
-       * type Response = null
-       * ```
-       */
-      list_banks_kb_daefwasfa1111_list_banks_get<Config extends Alova2MethodConfig<null>>(
-        config?: Config
-      ): Alova2Method<null, 'kbDaefwasfa11111.list_banks_kb_daefwasfa1111_list_banks_get', Config>;
     };
   }
 

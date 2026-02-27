@@ -3,7 +3,7 @@ from typing import Dict, Any
 from fastapi import APIRouter, Path, Depends, HTTPException
 from loguru import logger
 
-from app.api.models import KnowledgeChunkItem, APIResponse, PaginatedResponse, PaginationParams, get_pagination_params
+from app.api.models import APIResponse, PaginatedResponse, PaginationParams, get_pagination_params
 from core.config import settings
 from core.storer.doc_manager.es_index_manager import ElasticsearchIndexManager
 from core.storer.doc_manager.es_kb_base_manager import ElasticsearchKbBaseManager
@@ -34,15 +34,23 @@ def get_kb_file_chunks(
 
     Return all document chunk information for a specific file in the specified knowledge base, including:
     - kb_id: Knowledge base unique identifier
-    - ori_file_id: Original file ID
-    - chunk_id: Document chunk ID
+    - sys_sample_id: Sample ID (chunk identifier)
+    - sys_group: Group identifier (file ID)
+    - sys_template: Template type
+    - sys_priority: Priority level
+    - sys_status: Status
+    - sys_executor: Executor/assignee
+    - sys_overview: Data overview
+    - sys_remarks: Remarks
     - chunk_text: Document chunk text content
     - chunk_extra_data: Document chunk extra data
     - language: Document chunk language
+    - sys_create_time: Creation time
+    - sys_update_time: Update time
 
     Args:
         kb_id: Knowledge base ID
-        file_id: File ID
+        file_id: File ID (will be used to match sys_group field)
         pagination: Pagination parameters
 
     Returns:
@@ -85,7 +93,7 @@ def get_kb_file_chunks(
         from_value = (pagination.page - 1) * pagination.size
 
         query = {
-            "query": {"term": {"ori_file_id": file_id}},  # Query all documents
+            "query": {"term": {"sys_group": file_id}},  # Query all documents by group ID
             "from": from_value,
             "size": pagination.size
         }

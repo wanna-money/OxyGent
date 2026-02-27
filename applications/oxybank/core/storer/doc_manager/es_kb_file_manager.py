@@ -333,6 +333,10 @@ class ElasticsearchKbFileManager:
                 return len(failed) == 0
             except Exception as e:
                 logger.error(f"batch add data into es index {kb_name} exception: {e}")
+                # Log detailed error info if available
+                if hasattr(e, 'errors'):
+                    for error in e.errors:
+                        logger.error(f"Index error detail: {error}")
                 return False
 
         return True

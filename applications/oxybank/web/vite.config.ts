@@ -21,6 +21,11 @@ export default defineConfig(() => {
           changeOrigin: true,
           secure: false,
         },
+        '/kb': {
+          target: 'http://0.0.0.0:8000',
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
     plugins: [

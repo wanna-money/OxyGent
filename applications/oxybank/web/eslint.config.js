@@ -23,6 +23,7 @@ export default antfu({
     '**/*.d.ts',
     '.nuxt/**',
     '.output/**',
+    'Plan/**',
     'src/api/apiDefinitions.ts',
     'src/api/createApis.ts',
     'src/api/globals.d.ts',

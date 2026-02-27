@@ -45,7 +45,7 @@ class KnowledgeBaseItem(BaseModel):
     kb_id: str = Field("", description="Knowledge base ID", example="d1686c75272e7ab78643367eb438751c")
     kb_name: str = Field(..., description="Knowledge base name", example="kb_test1")
     kb_type: str = Field(..., description="Knowledge base type", example="unstructured")
-    kb_description: str = Field("", description="Knowledge base description", example="this is kb kb_test1, file_path is xxx, kb_id is c1caa264-ce70-4544-8ffa-108dac1d6f64")
+    kb_description: str = Field("", description="Knowledge base description", example="this is kb kb_test1, file_path is /Users/yulei116/workspace/OxyGentKnowledgeBank-1/kb_data/kb_test1, kb_id is c1caa264-ce70-4544-8ffa-108dac1d6f64")
     kb_status: str = Field("active", description="Knowledge base status", example="active")
     create_time: str = Field("", description="Knowledge base creation time", example="2025-01-01 10:00:00")
     update_time: str = Field("", description="Knowledge base update time", example="2025-01-01 10:00:00")
@@ -67,18 +67,6 @@ class KnowledgeFileItem(BaseModel):
     file_store_mode: str = Field(..., description="File storage mode", example="unstructured")
     file_extra_info: Dict[str, Any] = Field(default_factory=dict, description="File extra information")
     language: str = Field(..., description="File language", example="zh")
-    create_time: str = Field("", description="Knowledge base creation time", example="2025-01-01 10:00:00")
-    update_time: str = Field("", description="Knowledge base update time", example="2025-01-01 10:00:00")
-
-
-class KnowledgeChunkItem(BaseModel):
-    """Knowledge base document chunk item model"""
-    kb_id: str = Field(..., description="Knowledge base ID", example="d1686c75272e7ab78643367eb438751c")
-    ori_file_id: str = Field(..., description="Original file ID", example="file_123456")
-    chunk_id: str = Field(..., description="Document chunk ID", example="chunk_789abc")
-    chunk_text: str = Field(..., description="Document chunk text content", example="This is a segment of the document...")
-    chunk_extra_data: Dict[str, Any] = Field(default_factory=dict, description="Document chunk extra data")
-    language: str = Field(..., description="Document chunk language", example="zh")
     create_time: str = Field("", description="Knowledge base creation time", example="2025-01-01 10:00:00")
     update_time: str = Field("", description="Knowledge base update time", example="2025-01-01 10:00:00")
 

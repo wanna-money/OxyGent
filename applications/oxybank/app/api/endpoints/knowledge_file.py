@@ -23,7 +23,7 @@ from core.storer.doc_manager.es_kb_file_manager import ElasticsearchKbFileManage
 from core.storer.doc_manager.knowledge_index import FieldInfo, KBSchema, ParserConfig, check_kb_schema
 from core.storer.doc_manager.schema_utils import convert_dataframe_types_by_schema
 from core.storer.vector_manager.vearch_manager import VearchManager
-from utils.files_process import calculate_file_md5, extract_file_type, is_supported_file
+from utils.file_util import calculate_file_md5, extract_file_type, is_supported_file
 from utils.hash_util import str_to_md5
 from utils.type_trans import get_py_type
 
@@ -78,6 +78,58 @@ def create_parser_from_config(parser_config: ParserConfig = None) -> NodeParser 
         return ParserFactory.create_parser("sentence", chunk_size=300, chunk_overlap=20)
 
 
+def validate_dataframe_columns(df: pd.DataFrame, kb_schema: KBSchema, kb_type: str) -> None:
+    """
+    Validate DataFrame columns match schema field definitions.
+
+    For structured knowledge bases, ensures:
+    1. All schema-defined fields exist in the DataFrame
+    2. No extra undefined fields exist in the DataFrame
+
+    For unstructured knowledge bases, skips validation as they use dynamic chunking.
+
+    Args:
+        df: DataFrame to validate
+        kb_schema: Knowledge base schema containing field definitions
+        kb_type: Knowledge base type ("structured" or "unstructured")
+
+    Raises:
+        HTTPException 400: If columns don't match schema
+    """
+    # Skip validation for unstructured knowledge bases
+    if kb_type == "unstructured":
+        logger.debug("Skipping column validation for unstructured knowledge base")
+        return
+
+    # Get schema-defined fields
+    schema_fields = {field.field_name for field in kb_schema.fields}
+
+    # Get DataFrame columns
+    df_columns = set(df.columns)
+
+    # Check for missing required fields
+    missing_fields = schema_fields - df_columns
+    if missing_fields:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File is missing required fields defined in schema: {', '.join(sorted(missing_fields))}. "
+                   f"Schema defines the following fields: {', '.join(sorted(schema_fields))}. "
+                   f"Please ensure the file contains all required columns."
+        )
+
+    # Check for extra undefined fields
+    extra_fields = df_columns - schema_fields
+    if extra_fields:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File contains undefined fields not in schema: {', '.join(sorted(extra_fields))}. "
+                   f"Schema only defines: {', '.join(sorted(schema_fields))}. "
+                   f"Please remove extra columns or update the schema to include them."
+        )
+
+    logger.info(f"Column validation passed: all {len(schema_fields)} schema fields found in file")
+
+
 @router.get(
     "/kb_file",
     response_model=APIResponse[PaginatedResponse[KnowledgeFileItem]],
@@ -129,6 +181,7 @@ def get_kb_files(
     )
 
 
+# TODO This endpoint only uploads the file to the corresponding folder, and later decides whether to store it in the database
 @router.post(
     "/upload_file",
     response_model=APIResponse[FileUploadInfo],
@@ -252,6 +305,7 @@ def get_uploaded_file_info(
         df = pd.read_excel(file_path)
 
     else:
+        # TODO Add support for other structured data types, e.g., excel
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported file type: {file_type}"
@@ -325,6 +379,14 @@ def ingest_kb_file(
         )
 
     file_path = file_upload_info.file_path
+
+    # Check if file exists before processing
+    if not os.path.exists(file_path):
+        raise HTTPException(
+            status_code=400,
+            detail=f"File not found: {file_path}. The file may have been deleted after a previous failed ingestion. Please re-upload the file."
+        )
+
     try:
         if kb_type == "structured":  # Structured data processing method
             # 1. Read file into memory
@@ -380,17 +442,39 @@ def ingest_kb_file(
         elif os.path.exists(file_path):
             logger.info(f"File preserved (not a temporary file): {file_path}")
 
-    # 2. Convert DataFrame column types according to schema
+    # 2. Validate DataFrame columns match schema
+    try:
+        validate_dataframe_columns(df, kb_schema, kb_type)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Column validation failed: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Column validation failed: {str(e)}"
+        )
+
+    # 3. Convert DataFrame column types according to schema
     # Keep NaN values first, convert types, then handle NaN based on field type
     df = convert_dataframe_types_by_schema(df, kb_schema)
-    
-    # 3. Add three fixed columns to each row of data here, which need to be correspondingly added when inferring ES and Vearch schemas
-    df['kb_id'] = kb_id
-    df['ori_file_id'] = file_upload_info.file_id
-    df['chunk_id'] = [str(uuid.uuid4().hex[:16]) for _ in range(len(df))]
 
-    # 2. Write the df data in memory to ES and Vearch
-    # 2.1 Write to ES index based on data in df and inferred schema
+    # 4. Add system fields to each row of data (these fields are automatically added when inferring ES and Vearch schemas)
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    df['kb_id'] = kb_id  # Knowledge base ID (unchanged)
+    df['sys_sample_id'] = [str(uuid.uuid4().hex[:16]) for _ in range(len(df))]  # Sample ID (renamed from chunk_id)
+    df['sys_group'] = file_upload_info.file_id  # Group identifier (renamed from ori_file_id)
+    df['sys_template'] = "default"  # Template type
+    df['sys_priority'] = 3  # Priority (P3 by default)
+    df['sys_status'] = "已入库"  # Status (已入库 by default)
+    df['sys_executor'] = ""  # Executor (empty by default)
+    df['sys_overview'] = ""  # Overview (empty by default)
+    df['sys_remarks'] = ""  # Remarks (empty by default)
+    df['sys_create_time'] = current_time  # Creation time
+    df['sys_update_time'] = current_time  # Update time
+
+    # 5. Write the df data in memory to ES and Vearch
+    # 5.1 Write to ES index based on data in df and inferred schema
     es_add_result = kb_file_client.kb_add_df(kb_name=kb_name, df=df)
     if not es_add_result:
         logger.error("add file data into es failed")
@@ -400,7 +484,7 @@ def ingest_kb_file(
         )
     logger.info(f"add file data into es success")
 
-    # 2.2 First perform embedding processing on some fields based on the inferred schema, save to df, and then write to Vearch space
+    # 5.2 First perform embedding processing on some fields based on the inferred schema, save to df, and then write to Vearch space
     if kb_schema.match_rules:
         from core.storer.doc_manager.knowledge_index import VearchVectorMatchPolicy
 
@@ -464,7 +548,7 @@ def ingest_kb_file(
                     detail=f"Vectorization processing failed: {str(e)}"
                 )
 
-    # 3. Write file information to kb_file
+    # 6. Write file information to kb_file
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     kb_file_item = {
         "kb_id": kb_id,
@@ -542,19 +626,44 @@ def ingest_kb_data(
     except ValueError:
         # If it's a scalar dictionary, wrap it in a list
         df = pd.DataFrame([data])
-    
+
+    # Get kb_type for validation
+    kb_type = search_result[0].get("kb_type", "structured")
+
+    # Validate DataFrame columns match schema
+    try:
+        validate_dataframe_columns(df, kb_schema, kb_type)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Column validation failed: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Column validation failed: {str(e)}"
+        )
+
     # Convert DataFrame column types according to schema
     # Keep NaN values first, convert types, then handle NaN based on field type
     df = convert_dataframe_types_by_schema(df, kb_schema)
     
-    # Add three fixed columns to each row of data here, which need to be correspondingly added when inferring ES and Vearch schemas
-    df['kb_id'] = kb_id
+    # Add system fields to each row of data (these fields are automatically added when inferring ES and Vearch schemas)
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     mock_file_id = f"mock_file_{kb_id}"
-    df['ori_file_id'] = mock_file_id
-    df['chunk_id'] = [str(uuid.uuid4().hex[:16]) for _ in range(len(df))]
 
-    # 2. Write the df data in memory to ES and Vearch
-    # 2.1 Write to ES index based on data in df and inferred schema
+    df['kb_id'] = kb_id  # Knowledge base ID (unchanged)
+    df['sys_sample_id'] = [str(uuid.uuid4().hex[:16]) for _ in range(len(df))]  # Sample ID (renamed from chunk_id)
+    df['sys_group'] = mock_file_id  # Group identifier (renamed from ori_file_id)
+    df['sys_template'] = "default"  # Template type
+    df['sys_priority'] = 3  # Priority (P3 by default)
+    df['sys_status'] = "已入库"  # Status (已入库 by default)
+    df['sys_executor'] = ""  # Executor (empty by default)
+    df['sys_overview'] = ""  # Overview (empty by default)
+    df['sys_remarks'] = ""  # Remarks (empty by default)
+    df['sys_create_time'] = current_time  # Creation time
+    df['sys_update_time'] = current_time  # Update time
+
+    # 5. Write the df data in memory to ES and Vearch
+    # 5.1 Write to ES index based on data in df and inferred schema
     es_add_result = kb_file_client.kb_add_df(kb_name=kb_name, df=df)
     if not es_add_result:
         logger.error("add file data into es failed")
@@ -564,7 +673,7 @@ def ingest_kb_data(
         )
     logger.info(f"add file data into es success")
 
-    # 2.2 First perform embedding processing on some fields based on the inferred schema, save to df, and then write to Vearch space
+    # 5.2 First perform embedding processing on some fields based on the inferred schema, save to df, and then write to Vearch space
     if kb_schema.match_rules:
         from core.storer.doc_manager.knowledge_index import VearchVectorMatchPolicy
 

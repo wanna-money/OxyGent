@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   DeleteOutlined,
+  DownOutlined,
   EditOutlined,
   EyeOutlined,
   FileTextOutlined,
@@ -14,10 +15,12 @@ import { usePagination } from 'alova/client'
 import { KnowledgeTypeEnum } from '@/config/enums'
 import { useI18n } from '@/locales'
 import CreateKbModal from '@/views/knowledge/components/CreateKbModal.vue'
+import CreateKbSchemaModal from '@/views/knowledge/components/CreateKbSchemaModal.vue'
 import Apis from '@/api'
 
 const router = useRouter()
 const createModalRef = ref<InstanceType<typeof CreateKbModal> | null>(null)
+const createSchemaModalRef = ref<InstanceType<typeof CreateKbSchemaModal> | null>(null)
 const { t } = useI18n()
 
 //  获取资产库列表
@@ -66,12 +69,32 @@ function loadMore() {
 }
 
 // 新建资产库
-function handleCreate() {
+function handleCreateRegular() {
   createModalRef.value?.show()
+}
+
+function handleCreate() {
+  handleCreateRegular()
+}
+
+function handleCreateSchema() {
+  createSchemaModalRef.value?.show()
+}
+
+function handleCreateMenuClick({ key }: { key: string | number }) {
+  if (String(key) === 'schema') {
+    handleCreateSchema()
+    return
+  }
+  handleCreateRegular()
 }
 
 function handleCreateSuccess(id: string) {
   router.push({ path: '/knowledge/create', query: { kb_id: id } })
+}
+
+function handleSchemaCreateSuccess() {
+  reload()
 }
 
 // 查看详情
@@ -81,6 +104,16 @@ function handleDetail(record: Record<string, any>) {
     query: {
       kb_type: record.kb_type,
       kb_name: record.kb_name,
+    },
+  })
+}
+
+// 去标注
+function handleAnnotate(record: Record<string, any>) {
+  router.push({
+    path: '/annotation',
+    query: {
+      bank_name: record.kb_name,
     },
   })
 }
@@ -143,12 +176,25 @@ function getTypeColor(type: string) {
         </template>
       </a-input>
       <div>
-        <a-button type="primary" @click="handleCreate">
-          <template #icon>
-            <plus-outlined />
+        <a-dropdown>
+          <a-button type="primary">
+            <template #icon>
+              <plus-outlined />
+            </template>
+            {{ t('新建资产库') }}
+            <down-outlined class="ml-2 text-xs" />
+          </a-button>
+          <template #overlay>
+            <a-menu @click="handleCreateMenuClick">
+              <a-menu-item key="regular">
+                {{ t('通过上传文件') }}
+              </a-menu-item>
+              <a-menu-item key="schema">
+                {{ t('通过填写信息') }}
+              </a-menu-item>
+            </a-menu>
           </template>
-          {{ t('新建资产库') }}
-        </a-button>
+        </a-dropdown>
       </div>
     </div>
 
@@ -188,12 +234,12 @@ function getTypeColor(type: string) {
 
           <!-- 操作栏 -->
           <div class="mt-auto flex items-center justify-between border-t border-gray-50 pt-4" @click.stop>
-            <a-tooltip :title="t('查看详情')">
-              <a-button type="link" size="small" class="!px-0 text-gray-500 hover:text-indigo-600" @click="handleDetail(item)">
+            <a-tooltip :title="t('去标注')">
+              <a-button type="link" size="small" class="!px-0 text-gray-500 hover:text-indigo-600" @click="handleAnnotate(item)">
                 <template #icon>
                   <eye-outlined class="mr-1" />
                 </template>
-                {{ t('查看') }}
+                {{ t('去标注') }}
               </a-button>
             </a-tooltip>
 
@@ -260,6 +306,7 @@ function getTypeColor(type: string) {
     </div>
 
     <create-kb-modal ref="createModalRef" @success="handleCreateSuccess" />
+    <create-kb-schema-modal ref="createSchemaModalRef" @success="handleSchemaCreateSuccess" />
   </div>
 </template>
 

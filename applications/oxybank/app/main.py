@@ -1,6 +1,7 @@
 import sys
 import os
 from pathlib import Path
+from contextlib import asynccontextmanager
 
 # Remove loguru default handler BEFORE importing any other modules
 # This prevents err.log files from being created by modules imported later
@@ -10,6 +11,7 @@ logger.remove()  # Remove default stderr handler
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from core.config import settings
@@ -31,14 +33,62 @@ import app.api.log.log_config as log_config_module
 log_config_module._handler_id = handler_id
 log_config_module._log_level = log_level
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan event handler for startup and shutdown events.
+
+    Replaces deprecated @app.on_event("startup") and @app.on_event("shutdown").
+    """
+    # Startup
+    from core.interface.endpoint_registry import EndpointRegistry
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from core.trigger.manager import TriggerManager
+
+    # Initialize endpoint registry and restore all registered endpoints
+    endpoint_registry = EndpointRegistry(app=app)
+    endpoint_registry.restore_all_endpoints()
+
+    # Initialize trigger system with APScheduler
+    scheduler = AsyncIOScheduler()
+    trigger_manager = TriggerManager()
+
+    # Start trigger detection loop
+    scheduler.add_job(
+        trigger_manager.detect_and_trigger,
+        'interval',
+        seconds=settings.trigger_config.poll_interval,
+        id='trigger_detection_loop',
+        replace_existing=True
+    )
+    scheduler.start()
+    logger.info(
+        f"Trigger detection loop started with {settings.trigger_config.poll_interval}s interval"
+    )
+
+    yield
+
+    # Shutdown
+    scheduler.shutdown()
+    logger.info("Trigger detection loop stopped")
+
+
+# Create FastAPI app with lifespan handler
+app = FastAPI(lifespan=lifespan)
+
+origins = [
+    "http://localhost:5173", # Vue
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(api_router, prefix="/api/v1")
-
-# Initialize endpoint registry (singleton pattern) and restore all registered endpoints
-from core.interface.endpoint_registry import EndpointRegistry
-endpoint_registry = EndpointRegistry(app=app)
-endpoint_registry.restore_all_endpoints()
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
