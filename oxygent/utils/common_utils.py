@@ -388,3 +388,8 @@ def parse_mixed_string0(s):
             results.append({"type": "text", "text": text})
 
     return results
+
+
+def clean_ansi_codes(text):
+    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+    return ansi_escape.sub("", text)
