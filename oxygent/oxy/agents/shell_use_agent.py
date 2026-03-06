@@ -160,7 +160,7 @@ class ShellUseAgent(ReActAgent):
                 )
             elif llm_response.state is LLMState.TOOL_CALL:
                 oxy_response = await oxy_request.call(
-                    callee="shell_tool",
+                    callee="ssh_tool",
                     arguments={"shell_command": llm_response.output},
                 )
                 react_memory.add_message(

@@ -13,6 +13,7 @@ oxy_space = [
     ),
     preset_tools.ssh_tools,
     oxy.ShellUseAgent(
+        name="shell_use_agent",
         auth_info={
             "hostname": "127.0.0.1",
             "port": 22,
