@@ -29,7 +29,6 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import yaml
 from pydantic import Field
 
 from oxygent.schemas.skill_metadata import SkillMetadata
@@ -38,10 +37,38 @@ from .react_agent import ReActAgent
 logger = logging.getLogger(__name__)
 
 
+def _parse_simple_frontmatter(lines: List[str]) -> Dict[str, str]:
+    """Parse simple key-value frontmatter (no nested structures).
+
+    Supports basic 'key: value' format only.
+
+    Args:
+        lines: List of frontmatter lines.
+
+    Returns:
+        Dictionary of key-value pairs.
+    """
+    result = {}
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if ":" in line:
+            key, _, value = line.partition(":")
+            key = key.strip()
+            value = value.strip()
+            # Remove quotes if present
+            if (value.startswith('"') and value.endswith('"')) or \
+               (value.startswith("'") and value.endswith("'")):
+                value = value[1:-1]
+            result[key] = value
+    return result
+
+
 def _load_metadata_from_file(skill_path: Path) -> Optional[SkillMetadata]:
     """Load metadata from a SKILL.md file.
 
-    Parses only the YAML frontmatter to extract name and description.
+    Parses the frontmatter to extract name and description.
     Does not read the full markdown body to minimize I/O.
 
     Args:
@@ -66,11 +93,7 @@ def _load_metadata_from_file(skill_path: Path) -> Optional[SkillMetadata]:
                 logger.warning(f"Invalid SKILL.md frontmatter format: {skill_path}")
                 return None
 
-        try:
-            frontmatter = yaml.safe_load("".join(frontmatter_lines))
-        except yaml.YAMLError as e:
-            logger.warning(f"Failed to parse YAML frontmatter: {skill_path}: {e}")
-            return None
+        frontmatter = _parse_simple_frontmatter(frontmatter_lines)
 
         if not frontmatter:
             logger.warning(f"Empty frontmatter in: {skill_path}")
