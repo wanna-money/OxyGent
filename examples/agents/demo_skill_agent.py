@@ -41,7 +41,7 @@ async def main():
             name="master_agent",
             llm_model="default_llm",
             enable_selector=True,
-            tools=["view_text_file", "run_shell_command"],
+            tools=["view_text_file", "execute_shell_command"],
             # Direct skill paths - each can be a single skill folder or parent directory
             skills=[
                 ".oxygent/skills",
@@ -54,7 +54,7 @@ async def main():
 
     async with MAS(oxy_space=oxy_space) as mas:
         first_query = (
-            "你有哪些skill技能\n"
+            "What skills do you have?\n"
         )
         await mas.start_web_service(first_query=first_query)
 
