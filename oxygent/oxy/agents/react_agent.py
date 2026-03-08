@@ -375,16 +375,14 @@ class ReActAgent(LocalAgent):
                 # When trust_mode == 1, write in short_memory，return observation
                 if isinstance(llm_response.output, dict):
                     if (
-                        isinstance(llm_response.output, dict)
-                        and isinstance(oxy_response.output, dict)
+                        isinstance(oxy_response.output, dict)
                         and "trust_mode" in oxy_response.output
                     ):
                         llm_response.output["trust_mode"] = oxy_response.output[
                             "trust_mode"
                         ]
                     elif (
-                        isinstance(llm_response.output, dict)
-                        and isinstance(oxy_response.output, dict)
+                        isinstance(oxy_response.output, str)
                         and "trust_mode" in oxy_response.output
                     ):
                         try:
