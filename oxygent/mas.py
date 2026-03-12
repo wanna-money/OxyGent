@@ -106,6 +106,7 @@ class MAS(BaseModel):
 
     routers: list = Field(default_factory=list)
     middlewares: list = Field(default_factory=list)
+    mounts: list = Field(default_factory=list)
 
     stream_dict: dict[str, list] = Field(default_factory=dict)
     feedback_dict: dict[str, asyncio.Queue] = Field(default_factory=dict)
@@ -1104,10 +1105,12 @@ class MAS(BaseModel):
         port=None,
         routers=None,
         middlewares=None,
+        mounts=None,
     ):
         """Start the FastAPI + SSE service (see original inline documentation)."""
         self.routers.extend(routers or [])
         self.middlewares.extend(middlewares or [])
+        self.mounts.extend(mounts or [])
 
         if not self.master_agent_name:
             logger.warning("No agent was registered.")
@@ -1205,6 +1208,8 @@ class MAS(BaseModel):
         upload_dir = os.path.join(Config.get_cache_save_dir(), "uploads")
         os.makedirs(upload_dir, exist_ok=True)
         app.mount("/static", StaticFiles(directory=upload_dir), name="static")
+        for mount in self.mounts:
+            app.mount(**mount)
 
         """
         For all of the nodes we fill the following information:
