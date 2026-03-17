@@ -31,7 +31,9 @@ from typing import Dict, List, Optional
 
 from pydantic import Field
 
-from oxygent.schemas.skill_metadata import SkillMetadata
+from ...prompts import SYSTEM_PROMPT_SKILLS
+from ...schemas import OxyRequest
+from ...schemas.skill import SkillMetadata
 from .react_agent import ReActAgent
 
 logger = logging.getLogger(__name__)
@@ -58,8 +60,9 @@ def _parse_simple_frontmatter(lines: List[str]) -> Dict[str, str]:
             key = key.strip()
             value = value.strip()
             # Remove quotes if present
-            if (value.startswith('"') and value.endswith('"')) or \
-               (value.startswith("'") and value.endswith("'")):
+            if (value.startswith('"') and value.endswith('"')) or (
+                value.startswith("'") and value.endswith("'")
+            ):
                 value = value[1:-1]
             result[key] = value
     return result
@@ -142,25 +145,13 @@ class SkillAgent(ReActAgent):
     skills: Optional[List[str]] = Field(
         default=None,
         description="List of skill directory paths to load skills from. "
-                    "Each path can be a skill folder with SKILL.md or a parent "
-                    "directory containing multiple skill subfolders.",
+        "Each path can be a skill folder with SKILL.md or a parent "
+        "directory containing multiple skill subfolders.",
     )
 
-    skill_prompt_template: str = Field(
-        default="""# IMPORTANT
-- Don't make any assumptions. All your knowledge about available capabilities must come from your equipped skills.
-- If the current information is sufficient to answer the question, do NOT invoke any tools or skills.
-- Only use skills when you need specialized knowledge, workflows, or resources that are not in your current context.
-
-# Agent Skills
-The agent skills are a collection of instructions, scripts, and resources that you can load dynamically to improve performance on specialized tasks. Each agent skill has a `SKILL.md` file in its folder that describes how to use the skill. If you want to use a skill, you MUST read its `SKILL.md` file carefully.
-
-{skill_list}
-
----
-""",
-        description="Template for generating skill prompt section. "
-                    "Use {skill_list} as placeholder for skill entries.",
+    prompt: Optional[str] = Field(
+        default=SYSTEM_PROMPT_SKILLS,
+        description="Defaults to 'SYSTEM_PROMPT', the prompt to initialize the agent's behavior.",
     )
 
     # Internal state (private attributes, not Pydantic fields)
@@ -239,10 +230,7 @@ The agent skills are a collection of instructions, scripts, and resources that y
             overwritten by the last path's version.
         """
         if not self.skills:
-            logger.debug(
-                f"[SkillAgent] Agent '{self.name}': "
-                f"No skill paths configured"
-            )
+            logger.debug(f"[SkillAgent] Agent '{self.name}': No skill paths configured")
             return
 
         logger.debug(
@@ -326,7 +314,7 @@ The agent skills are a collection of instructions, scripts, and resources that y
                 logger.error(
                     f"[SkillAgent] Agent '{self.name}': "
                     f"Failed to load skills from '{skill_path_str}': {e}",
-                    exc_info=True
+                    exc_info=True,
                 )
 
         # Summary log
@@ -347,71 +335,29 @@ The agent skills are a collection of instructions, scripts, and resources that y
         Process:
             1. Return early if no skills discovered
             2. Build sorted skill entries with name, description, args, and path
-            3. Format using skill_prompt_template
-            4. Append to additional_prompt (or replace if empty)
 
         Log:
             - DEBUG: Prompt size and skill count
         """
         if not self._skills_metadata:
             logger.debug(
-                f"[SkillAgent] Agent '{self.name}': "
-                f"No skills to add to prompt"
+                f"[SkillAgent] Agent '{self.name}': No skills to add to prompt"
             )
             return
 
         # Build skill list (sorted for consistency)
-        skill_entries = []
+        self._skill_entries = []
         for name, meta in sorted(self._skills_metadata.items()):
             # Build entry with name and description
             entry = f"## {name}\n{meta.description}"
 
             # Add SKILL.md path for reference
-            if hasattr(meta, 'skill_path') and meta.skill_path:
+            if hasattr(meta, "skill_path") and meta.skill_path:
                 entry += f'\nCheck "{meta.skill_path}" for how to use this skill'
 
-            skill_entries.append(entry)
+            self._skill_entries.append(entry)
 
-        skill_list = "\n\n".join(skill_entries)
-
-        # Generate skill prompt
-        skill_prompt = self.skill_prompt_template.format(skill_list=skill_list)
-
-        # Enhance additional_prompt
-        if self.additional_prompt:
-            self.additional_prompt = f"{self.additional_prompt}\n\n{skill_prompt}"
-        else:
-            self.additional_prompt = skill_prompt
-
-        logger.debug(
-            f"[SkillAgent] Agent '{self.name}': "
-            f"Injected skill prompt ({len(skill_prompt)} chars) "
-            f"for {len(skill_entries)} skills"
-        )
-
-    def get_skill_metadata(self, skill_name: str) -> Optional[SkillMetadata]:
-        """Get metadata for a specific skill.
-
-        Args:
-            skill_name: Name of the skill to retrieve.
-
-        Returns:
-            SkillMetadata if found, None otherwise.
-
-        Example:
-            >>> meta = agent.get_skill_metadata("code-review")
-            >>> if meta:
-            ...     print(f"Description: {meta.description}")
-        """
-        return self._skills_metadata.get(skill_name)
-
-    def list_skills(self) -> List[str]:
-        """List all available skill names.
-
-        Returns:
-            Sorted list of skill names.
-
-        Note:
-            This is an alias for the skill_names property.
-        """
-        return self.skill_names
+    async def _before_execute(self, oxy_request: OxyRequest) -> OxyRequest:
+        oxy_request = await super()._before_execute(oxy_request)
+        oxy_request.set_arguments("skill_list", "\n\n".join(self._skill_entries))
+        return oxy_request
