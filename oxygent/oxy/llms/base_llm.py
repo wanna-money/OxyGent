@@ -15,13 +15,14 @@ import aiofiles
 from pydantic import Field
 
 from ...config import Config
-from ...schemas import OxyRequest, OxyResponse
+from ...schemas import OxyRequest, OxyResponse, TokenUsage
 from ...utils.common_utils import (
     extract_first_json,
     image_to_base64,
     parse_mixed_string,
     video_to_base64,
 )
+from ...utils.token_utils import aggregate_token_usage, build_token_usage
 from ..base_oxy import Oxy
 
 logger = logging.getLogger(__name__)
@@ -241,3 +242,18 @@ class BaseLLM(Oxy):
                         "node_id": oxy_request.node_id,
                     },
                 )
+
+    async def _after_execute(self, oxy_response: OxyResponse) -> OxyResponse:
+        """Post-execution hook: aggregate token usage then serialize to dict."""
+        usage = oxy_response.extra.get("usage")
+        if isinstance(usage, TokenUsage):
+            aggregate_token_usage(oxy_response.oxy_request, usage)
+            oxy_response.extra["usage"] = usage.model_dump()
+        return oxy_response
+
+    def _build_token_usage(self, usage_data, messages: list, output: str):
+        """Build TokenUsage with fallback to estimation.
+
+        Delegates to ``token_utils.build_token_usage``.
+        """
+        return build_token_usage(usage_data, messages, output, self.model_name)
