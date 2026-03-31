@@ -63,6 +63,7 @@ class HttpLLM(RemoteLLM):
         # Construct payload for the API request
         if is_gemini:
             raw_msgs = await self._get_messages(oxy_request)
+            messages = raw_msgs
             contents = [
                 {
                     "role": ("user" if m["role"] == "user" else "model"),
@@ -77,10 +78,12 @@ class HttpLLM(RemoteLLM):
                 if k != "messages":
                     payload[k] = v
         else:
+            messages = await self._get_messages(oxy_request)
             payload = {
-                "messages": await self._get_messages(oxy_request),
+                "messages": messages,
                 "model": self.model_name,
                 "stream": True,
+                "stream_options": {"include_usage": True},
             }
             payload.update(Config.get_llm_config(exclude=["semaphore", "timeout"]))
             for k, v in self.llm_params.items():
@@ -92,6 +95,7 @@ class HttpLLM(RemoteLLM):
 
         if payload.get("stream", False) and (use_openai or not is_gemini):
             result_parts: list[str] = []
+            usage_data = None
             async with httpx.AsyncClient(timeout=None) as client:
                 async with client.stream(
                     "POST", url, headers=headers, json=payload
@@ -115,6 +119,10 @@ class HttpLLM(RemoteLLM):
                                     "node_id": oxy_request.node_id,
                                 },
                             )
+                            continue
+                        # Extract usage from final chunk
+                        if chunk.get("usage"):
+                            usage_data = chunk["usage"]
                         if use_openai:
                             if chunk.get("choices"):
                                 delta = chunk["choices"][0]["delta"].get(
@@ -151,7 +159,12 @@ class HttpLLM(RemoteLLM):
                     }
                 )
             result = "".join(result_parts)
-            return OxyResponse(state=OxyState.COMPLETED, output=result)
+            token_usage = self._build_token_usage(usage_data, messages, result)
+            return OxyResponse(
+                state=OxyState.COMPLETED,
+                output=result,
+                extra={"usage": token_usage},
+            )
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             http_response = await client.post(url, headers=headers, json=payload)
@@ -166,12 +179,20 @@ class HttpLLM(RemoteLLM):
                     if data.get("candidates")
                     else ""
                 )
+                usage_data = data.get("usageMetadata")
             elif use_openai:
                 response_message = data["choices"][0]["message"]
                 result = response_message.get("content") or response_message.get(
                     "reasoning_content"
                 )
+                usage_data = data.get("usage")
             else:  # ollama
                 result = data["message"]["content"]
+                usage_data = data.get("usage")
 
-            return OxyResponse(state=OxyState.COMPLETED, output=result)
+            token_usage = self._build_token_usage(usage_data, messages, result)
+            return OxyResponse(
+                state=OxyState.COMPLETED,
+                output=result,
+                extra={"usage": token_usage},
+            )

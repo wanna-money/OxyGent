@@ -1,0 +1,272 @@
+"""Token estimation and usage parsing utilities."""
+
+import logging
+from typing import Dict, List, Optional
+
+from ..config import Config
+from ..schemas.usage import EstimationMethod, TokenUsage
+
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Normalize SDK objects to plain dicts
+# ---------------------------------------------------------------------------
+
+
+def _to_dict(obj) -> dict:
+    """Convert a dict, Pydantic model, or plain object to a flat dict.
+
+    - dict → returned as-is
+    - object with ``model_dump()`` (Pydantic v2) → call it
+    - object with ``to_dict()`` (common SDK pattern) → call it
+    - other objects → collect public non-callable attributes from class + instance
+    """
+    if isinstance(obj, dict):
+        return obj
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump()
+    if hasattr(obj, "to_dict"):
+        return obj.to_dict()
+    # Fallback: class-level + instance-level public non-callable attrs
+    logger.warning(
+        "Falling back to attribute introspection for %s",
+        type(obj).__name__,
+    )
+    result = {}
+    for klass in type(obj).__mro__:
+        for k, v in vars(klass).items():
+            if not k.startswith("_") and not callable(v):
+                result.setdefault(k, v)
+    for k, v in vars(obj).items():
+        if not k.startswith("_"):
+            result[k] = v
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Build TokenUsage from API response
+# ---------------------------------------------------------------------------
+
+
+def build_token_usage(
+    usage_data, messages: list, output: str, model_name: str
+) -> TokenUsage:
+    """Build TokenUsage from API usage data, with fallback to estimation.
+
+    Supports all major providers' response formats:
+
+    - OpenAI / Doubao: ``prompt_tokens``, ``completion_tokens``,
+      ``prompt_tokens_details.cached_tokens``,
+      ``completion_tokens_details.reasoning_tokens``
+    - DeepSeek / GLM: same as OpenAI, with top-level ``reasoning_tokens``
+    - Gemini (OpenAI-compat): ``prompt_tokens``, ``completion_tokens``,
+      top-level ``thoughts_tokens``
+    - Gemini (native): ``promptTokenCount``, ``candidatesTokenCount``,
+      ``thoughtsTokenCount``
+
+    Args:
+        usage_data: Usage dict or object from API response, or None.
+        messages: Input messages (for fallback estimation).
+        output: Output text (for fallback estimation).
+        model_name: Model name tag.
+
+    Returns:
+        TokenUsage instance.
+    """
+    if usage_data is None:
+        return TokenEstimator.estimate_usage(messages, output, model_name)
+
+    u = _to_dict(usage_data)
+
+    # --- input / output tokens ---
+    # OpenAI-family: prompt_tokens; Gemini native: promptTokenCount
+    input_tokens = u.get("prompt_tokens") or u.get("promptTokenCount", 0)
+    output_tokens = u.get("completion_tokens") or u.get("candidatesTokenCount", 0)
+
+    # --- cached tokens ---
+    cached_tokens = 0
+    prompt_details = u.get("prompt_tokens_details")
+    if prompt_details:
+        d = _to_dict(prompt_details)
+        cached_tokens = d.get("cached_tokens") or d.get("cache_read_input_tokens", 0)
+
+    # --- reasoning / thinking tokens ---
+    # Priority: completion_tokens_details.reasoning_tokens (OpenAI/Doubao)
+    #          > top-level reasoning_tokens  (DeepSeek, GLM)
+    #          > top-level thoughts_tokens    (Gemini OpenAI-compat)
+    #          > top-level thoughtsTokenCount (Gemini native)
+    reasoning_tokens = 0
+    completion_details = u.get("completion_tokens_details")
+    if completion_details:
+        reasoning_tokens = _to_dict(completion_details).get("reasoning_tokens") or 0
+    if not reasoning_tokens:
+        reasoning_tokens = u.get("reasoning_tokens") or 0
+    if not reasoning_tokens:
+        reasoning_tokens = u.get("thoughts_tokens") or 0
+    if not reasoning_tokens:
+        reasoning_tokens = u.get("thoughtsTokenCount") or 0
+
+    return TokenUsage(
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        cached_tokens=cached_tokens,
+        reasoning_tokens=reasoning_tokens,
+        model_name=model_name,
+        estimation_method=EstimationMethod.EXACT,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Session-level aggregation
+# ---------------------------------------------------------------------------
+
+
+def aggregate_token_usage(oxy_request, usage: TokenUsage) -> None:
+    """Aggregate token usage to session level in shared_data.
+
+    Args:
+        oxy_request: The current OxyRequest (carries shared_data).
+        usage: TokenUsage from a single LLM call.
+    """
+    if not Config.get_token_tracking_enabled():
+        return
+
+    metrics = oxy_request.shared_data.setdefault("_metrics", {})
+    if "token_usage" not in metrics:
+        metrics["token_usage"] = {
+            "total_tokens": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cached_tokens": 0,
+            "reasoning_tokens": 0,
+            "request_count": 0,
+            "by_model": {},
+        }
+
+    tm = metrics["token_usage"]
+    tm["total_tokens"] += usage.total_tokens
+    tm["input_tokens"] += usage.input_tokens
+    tm["output_tokens"] += usage.output_tokens
+    tm["cached_tokens"] += usage.cached_tokens
+    tm["reasoning_tokens"] += usage.reasoning_tokens
+    tm["request_count"] += 1
+
+    model_name = usage.model_name or "unknown"
+    if model_name not in tm["by_model"]:
+        tm["by_model"][model_name] = {
+            "total_tokens": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cached_tokens": 0,
+            "reasoning_tokens": 0,
+            "request_count": 0,
+        }
+
+    mm = tm["by_model"][model_name]
+    mm["total_tokens"] += usage.total_tokens
+    mm["input_tokens"] += usage.input_tokens
+    mm["output_tokens"] += usage.output_tokens
+    mm["cached_tokens"] += usage.cached_tokens
+    mm["reasoning_tokens"] += usage.reasoning_tokens
+    mm["request_count"] += 1
+
+
+# ---------------------------------------------------------------------------
+# Token estimation (fallback when API doesn't return usage)
+# ---------------------------------------------------------------------------
+
+
+class TokenEstimator:
+    """Utility class for estimating token counts when API doesn't provide usage."""
+
+    _encoder_cache: Dict[str, object] = {}
+
+    @classmethod
+    def get_encoder(cls, model_name: str) -> Optional[object]:
+        """Get tiktoken encoder with caching."""
+        normalized_name = model_name.lower().strip()
+        if normalized_name in cls._encoder_cache:
+            return cls._encoder_cache[normalized_name]
+
+        try:
+            import tiktoken
+
+            encoding_map = Config.get_token_encoding_map()
+            encoding_name = Config.get_token_default_encoding()
+            for key, enc in encoding_map.items():
+                if key in normalized_name:
+                    encoding_name = enc
+                    break
+
+            encoder = tiktoken.get_encoding(encoding_name)
+            cls._encoder_cache[normalized_name] = encoder
+            return encoder
+        except ImportError:
+            logger.debug("tiktoken not installed, using character-based estimation")
+            return None
+        except Exception as e:
+            logger.debug(f"Failed to get tiktoken encoder: {e}")
+            return None
+
+    @classmethod
+    def count_tokens(cls, text: str, model_name: str = "default") -> int:
+        """Count tokens in text."""
+        if not text:
+            return 0
+
+        encoder = cls.get_encoder(model_name)
+        if encoder is not None:
+            return len(encoder.encode(text))
+        # Fallback: ~4 characters per token
+        return len(text) // 4
+
+    @classmethod
+    def estimate_messages_tokens(
+        cls, messages: List[Dict], model_name: str = "default"
+    ) -> int:
+        """Estimate token count for a list of messages.
+
+        Overhead values are rough approximations, not exact:
+        - ~4 tokens per message for role formatting (e.g. <|im_start|>role\\n...<|im_end|>)
+        - ~85 tokens per image in low-detail mode
+        - ~3 tokens for conversation-level priming
+
+        These may vary across models and API versions.
+        For accurate counts, always prefer the usage data returned by the API.
+        """
+        total = 0
+        for msg in messages:
+            # ~4 tokens per message for formatting (<|start|>role\n...<|end|>)
+            total += 4
+            content = msg.get("content", "")
+            if isinstance(content, str):
+                total += cls.count_tokens(content, model_name)
+            elif isinstance(content, list):
+                for part in content:
+                    if isinstance(part, dict) and part.get("type") == "text":
+                        total += cls.count_tokens(part.get("text", ""), model_name)
+                    elif isinstance(part, dict) and part.get("type") == "image_url":
+                        # ~85 tokens for image in low-detail mode
+                        total += 85
+        # ~3 tokens for conversation-level formatting (priming assistant reply)
+        return total + 3
+
+    @classmethod
+    def estimate_usage(
+        cls, messages: List[Dict], output: str, model_name: str
+    ) -> TokenUsage:
+        """Estimate full request token usage."""
+        has_tiktoken = cls.get_encoder(model_name) is not None
+        input_tokens = cls.estimate_messages_tokens(messages, model_name)
+        output_tokens = cls.count_tokens(output, model_name)
+        return TokenUsage(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            model_name=model_name,
+            estimation_method=(
+                EstimationMethod.TIKTOKEN
+                if has_tiktoken
+                else EstimationMethod.APPROXIMATE
+            ),
+        )

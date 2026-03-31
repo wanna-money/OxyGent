@@ -739,3 +739,35 @@ class Config:
     @classmethod
     def get_live_prompt_es_polling_interval(cls):
         return cls.get_module_config("live_prompt", "es_polling_interval")
+
+    # token_tracking
+
+    @classmethod
+    def get_token_tracking_enabled(cls) -> bool:
+        """Whether token tracking is enabled (default: True)."""
+        return cls.get_module_config("token_tracking", "enabled", True)
+
+    @classmethod
+    def set_token_tracking_enabled(cls, enabled: bool):
+        cls.set_module_config("token_tracking", "enabled", enabled)
+
+    @classmethod
+    def get_token_encoding_map(cls) -> dict:
+        """Get model-to-encoding mapping for tiktoken.
+
+        Returns empty dict by default, which means all models use the
+        default encoding returned by ``get_token_default_encoding()``.
+        """
+        return cls.get_module_config("token_tracking", "encoding_map", {})
+
+    @classmethod
+    def set_token_encoding_map(cls, mapping: dict):
+        cls.set_module_config("token_tracking", "encoding_map", mapping)
+
+    @classmethod
+    def get_token_default_encoding(cls) -> str:
+        """Default tiktoken encoding name when no model-specific match.
+
+        Defaults to ``o200k_base`` (used by GPT-4o and later models).
+        """
+        return cls.get_module_config("token_tracking", "default_encoding", "o200k_base")

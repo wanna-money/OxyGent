@@ -4,6 +4,7 @@ from .memory import Memory, Message
 from .message import SSEMessage
 from .observation import ExecResult, Observation
 from .oxy import OxyOutput, OxyRequest, OxyResponse, OxyState
+from .usage import EstimationMethod, TokenUsage
 from .web import WebResponse
 
 __all__ = [
@@ -18,6 +19,8 @@ __all__ = [
     "OxyRequest",
     "OxyResponse",
     "OxyOutput",
+    "TokenUsage",
+    "EstimationMethod",
     "WebResponse",
     "SSEMessage",
 ]
