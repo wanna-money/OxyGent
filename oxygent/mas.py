@@ -880,8 +880,6 @@ class MAS(BaseModel):
             metrics = payload["shared_data"].setdefault("_metrics", {})
             metrics["_query_start_time"] = time.time()
 
-            group_data = payload.get("group_data", {})
-
             if "restart_node_id" in payload and payload.get("restart_node_id"):
                 es_response = await self.es_client.search(
                     Config.get_app_name() + "_node",
@@ -926,10 +924,17 @@ class MAS(BaseModel):
             oxy_request = OxyRequest(mas=self)
             if not send_msg_key:
                 oxy_request.is_send_message = False
-            oxy_request.group_data = group_data
-            if "current_trace_id" in payload and payload["current_trace_id"]:
-                oxy_request.current_trace_id = payload["current_trace_id"]
-            # Set group_id: inherit if from_trace_id is provided, else new
+
+            # Set all fields from payload first，contain current_trace_id and group_data
+            oxy_request_fields = oxy_request.model_fields
+            for k, v in payload.items():
+                if k in oxy_request_fields:
+                    setattr(oxy_request, k, v)
+                else:
+                    oxy_request.arguments[k] = v
+
+            # Special handling: when from_trace_id exists, inherit and merge historical group_data from ES
+            # Note: This logic runs after the loop above to ensure merged result is the final value
             if "from_trace_id" in payload and payload["from_trace_id"]:
                 es_response_group_id = await self.es_client.search(
                     Config.get_app_name() + "_trace",
@@ -971,13 +976,6 @@ class MAS(BaseModel):
                         f"未找到 from_trace_id: {payload['from_trace_id']} 对应的记录，无法继承历史 group_data",
                         extra={"trace_id": oxy_request.current_trace_id},
                     )
-
-            oxy_request_fields = oxy_request.model_fields
-            for k, v in payload.items():
-                if k in oxy_request_fields:
-                    setattr(oxy_request, k, v)
-                else:
-                    oxy_request.arguments[k] = v
 
             if not oxy_request.callee:
                 oxy_request.callee = self.master_agent_name

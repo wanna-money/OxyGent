@@ -42,6 +42,7 @@ class PlanAndSolve(BaseFlow):
     pre_plan_steps: List[str] = Field(None, description="pre plan steps")
 
     enable_replanner: bool = Field(False, description="enable replanner")
+    replanner_agent_name: str = Field("replanner_agent", description="replanner agent name")
 
     executor_agent_name: str = Field(
         "executor_agent", description="executor agent name"
