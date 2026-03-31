@@ -121,6 +121,13 @@ class Config:
             "is_active": False,
             "es_polling_interval": 2,  # ES polling interval in seconds for version sync
         },
+        "token_tracking": {
+            "enabled": True,
+            "encoding_map": {
+                "<Your Model Name>": "<Your Encoding Name>"
+            },
+            "default_encoding": "o200k_base",
+        },
     }
 
     @classmethod

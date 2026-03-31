@@ -85,6 +85,13 @@
         "live_prompt": {
             "is_active": false,
             "es_polling_interval": 2
+        },
+        "token_tracking": {
+            "enabled": true,
+            "encoding_map": {
+                "<Your Model Name>": "<Your Encoding Name>"
+            },
+            "default_encoding": "o200k_base"
         }
     },
     "dev": {
