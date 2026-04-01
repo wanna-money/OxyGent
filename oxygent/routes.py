@@ -19,37 +19,32 @@ Typical usage example::
     curl http://localhost:8000/check_alive  #→ {"alive": 1}
 """
 
-import ast
 import json
 import logging
 import os
 import re
 import traceback
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Any, List, Optional
 
 import aiofiles
-from fastapi import APIRouter, File, UploadFile, HTTPException, Query, Request
+from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from .config import Config
 from .databases.db_es import JesEs, LocalEs
 from .db_factory import DBFactory
-from .oxy_factory import OxyFactory, SecurityError
-from .schemas import OxyRequest, WebResponse
-from .schemas.evaluation import (
-    RatingRequest,
-    RatingResponse,
-    ConversationWithRating,
-    RatingStats
-)
 from .evaluation_manager import EvaluationManager
+from .oxy_factory import OxyFactory
+from .schemas import OxyRequest, WebResponse
+from .schemas.evaluation import ConversationWithRating, RatingRequest
 from .utils.data_utils import add_post_and_child_node_ids
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
 
 async def get_es_client():
     """Get Elasticsearch client based on configuration.
@@ -66,6 +61,7 @@ async def get_es_client():
         return db_factory.get_instance(JesEs, hosts, user, password)
     else:
         return db_factory.get_instance(LocalEs)
+
 
 # Basic route to redirect to the web interface
 @router.get("/")
@@ -226,7 +222,6 @@ async def get_task_info(item_id: str):
         # Input item_id as trace_id
         trace_id = item_id
 
-
     es_response = await es_client.search(
         Config.get_app_name() + "_node",
         {
@@ -357,6 +352,9 @@ def save_script(script: Script):
     Returns:
         dict: ``WebResponse`` with the generated ``script_id`` timestamp.
     """
+    if "/" in script.name or "\\" in script.name or ".." in script.name:
+        return WebResponse(code=400, message="Invalid name").to_dict()
+
     script_save_dir = os.path.join(Config.get_cache_save_dir(), "script")
     with open(os.path.join(script_save_dir, script.name + ".json"), "w") as f:
         f.write(json.dumps(script.contents, ensure_ascii=False))
@@ -374,6 +372,9 @@ def load_script(item_id: str):
         dict: ``WebResponse`` containing the original ``contents`` array or an
         error message when the file is missing.
     """
+    if "/" in item_id or "\\" in item_id or ".." in item_id:
+        return WebResponse(code=400, message="Invalid item_id").to_dict()
+
     script_save_dir = os.path.join(Config.get_cache_save_dir(), "script")
 
     json_path = os.path.join(script_save_dir, item_id + ".json")
@@ -386,6 +387,7 @@ def load_script(item_id: str):
 # =============================================================================
 # Prompt Management API Routes
 # =============================================================================
+
 
 # Prompt management request/response models
 class PromptCreateRequest(BaseModel):
@@ -433,25 +435,21 @@ async def list_prompts(
     category: Optional[str] = Query(None, description="Category filter"),
     agent_type: Optional[str] = Query(None, description="Agent type filter"),
     is_active: Optional[bool] = Query(None, description="Active status filter"),
-    tags: Optional[str] = Query(None, description="Tags filter, comma separated")
+    tags: Optional[str] = Query(None, description="Tags filter, comma separated"),
 ):
     """List prompts"""
     try:
         from .live_prompt import get_prompt_manager
+
         manager = await get_prompt_manager()
         tag_list = tags.split(",") if tags else None
 
         prompts = await manager.list_prompts(
-            category=category,
-            agent_type=agent_type,
-            is_active=is_active,
-            tags=tag_list
+            category=category, agent_type=agent_type, is_active=is_active, tags=tag_list
         )
 
         return PromptApiResponse(
-            success=True,
-            message="Successfully retrieved prompt list",
-            data=prompts
+            success=True, message="Successfully retrieved prompt list", data=prompts
         )
     except Exception as e:
         logger.error(f"Failed to list prompts: {e}")
@@ -463,6 +461,7 @@ async def get_prompt(prompt_key: str):
     """Get single prompt"""
     try:
         from .live_prompt import get_prompt_manager
+
         manager = await get_prompt_manager()
         # Use cache to get latest data (cache is updated immediately on save)
         prompt = await manager.get_prompt(prompt_key, use_cache=True)
@@ -472,9 +471,7 @@ async def get_prompt(prompt_key: str):
 
         prompt["id"] = prompt_key
         return PromptApiResponse(
-            success=True,
-            message="Successfully retrieved prompt",
-            data=prompt
+            success=True, message="Successfully retrieved prompt", data=prompt
         )
     except HTTPException:
         raise
@@ -488,6 +485,7 @@ async def create_prompt(request: PromptCreateRequest):
     """Create prompt"""
     try:
         from .live_prompt import get_prompt_manager
+
         manager = await get_prompt_manager()
 
         # Check if already exists (use cache for consistency)
@@ -503,7 +501,7 @@ async def create_prompt(request: PromptCreateRequest):
             agent_type=request.agent_type,
             is_active=request.is_active,
             tags=request.tags,
-            created_by=request.created_by
+            created_by=request.created_by,
         )
 
         if not success:
@@ -512,7 +510,7 @@ async def create_prompt(request: PromptCreateRequest):
         return PromptApiResponse(
             success=True,
             message="Successfully created prompt",
-            data={"prompt_key": request.prompt_key}
+            data={"prompt_key": request.prompt_key},
         )
     except HTTPException:
         raise
@@ -526,8 +524,9 @@ async def update_prompt(prompt_key: str, request: PromptUpdateRequest):
     """Update prompt"""
     try:
         from .live_prompt import get_prompt_manager, hot_reload_prompt
+
         manager = await get_prompt_manager()
-        
+
         # Get existing prompt (use cache for cache-first strategy)
         existing = await manager.get_prompt(prompt_key, use_cache=True)
         if not existing:
@@ -542,7 +541,7 @@ async def update_prompt(prompt_key: str, request: PromptUpdateRequest):
             return PromptApiResponse(
                 success=False,
                 message="No changes detected; update the prompt before saving.",
-                data={"prompt_key": prompt_key}
+                data={"prompt_key": prompt_key},
             )
 
         # Update fields
@@ -575,8 +574,10 @@ async def update_prompt(prompt_key: str, request: PromptUpdateRequest):
         success = await manager.save_prompt(
             prompt_key=prompt_key,
             **update_data,
-            is_active=request.is_active if request.is_active is not None else existing.get("is_active", True),
-            created_by=existing.get("created_by", "user")
+            is_active=request.is_active
+            if request.is_active is not None
+            else existing.get("is_active", True),
+            created_by=existing.get("created_by", "user"),
         )
 
         if not success:
@@ -585,17 +586,20 @@ async def update_prompt(prompt_key: str, request: PromptUpdateRequest):
         hot_reload_success = False
         if request.prompt_content is not None:
             hot_reload_success = await hot_reload_prompt(prompt_key)
-        
+
         return PromptApiResponse(
             success=True,
-            message="Successfully updated prompt" + (
-                ", auto hot-reloaded to all related agents" if hot_reload_success else ""
+            message="Successfully updated prompt"
+            + (
+                ", auto hot-reloaded to all related agents"
+                if hot_reload_success
+                else ""
             ),
             data={
                 "prompt_key": prompt_key,
                 "hot_reload_success": hot_reload_success,
-                "auto_updated": hot_reload_success
-            }
+                "auto_updated": hot_reload_success,
+            },
         )
     except HTTPException:
         raise
@@ -609,6 +613,7 @@ async def delete_prompt(prompt_key: str):
     """Delete prompt"""
     try:
         from .live_prompt import get_prompt_manager
+
         manager = await get_prompt_manager()
         success = await manager.delete_prompt(prompt_key)
 
@@ -618,7 +623,7 @@ async def delete_prompt(prompt_key: str):
         return PromptApiResponse(
             success=True,
             message="Successfully deleted prompt",
-            data={"prompt_key": prompt_key}
+            data={"prompt_key": prompt_key},
         )
     except HTTPException:
         raise
@@ -630,50 +635,54 @@ async def delete_prompt(prompt_key: str):
 @router.get("/api/prompts/search/", response_model=PromptApiResponse)
 async def search_prompts(
     keyword: str = Query(..., description="Search keyword"),
-    category: Optional[str] = Query(None, description="Category filter")
+    category: Optional[str] = Query(None, description="Category filter"),
 ):
     """Search prompts"""
     try:
         from .live_prompt import get_prompt_manager
+
         manager = await get_prompt_manager()
         results = await manager.search_prompts(keyword, category)
 
         return PromptApiResponse(
-            success=True,
-            message="Successfully searched prompts",
-            data=results
+            success=True, message="Successfully searched prompts", data=results
         )
     except Exception as e:
         logger.error(f"Failed to search prompts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # =============================================================================
 # Prompt Version Management API Routes
 # =============================================================================
+
 
 @router.get("/api/prompts/{prompt_key}/history", response_model=PromptApiResponse)
 async def get_prompt_history(prompt_key: str):
     """Get prompt version history"""
     try:
         from .live_prompt import get_prompt_manager
+
         manager = await get_prompt_manager()
         history = await manager.get_prompt_history(prompt_key)
 
         return PromptApiResponse(
-            success=True,
-            message="Successfully retrieved prompt history",
-            data=history
+            success=True, message="Successfully retrieved prompt history", data=history
         )
     except Exception as e:
         logger.error(f"Failed to get prompt history for {prompt_key}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/prompts/{prompt_key}/revert/{target_version}", response_model=PromptApiResponse)
+@router.post(
+    "/api/prompts/{prompt_key}/revert/{target_version}",
+    response_model=PromptApiResponse,
+)
 async def revert_prompt_to_version(prompt_key: str, target_version: int):
     """Revert prompt to specific version"""
     try:
         from .live_prompt import get_prompt_manager, hot_reload_prompt
+
         manager = await get_prompt_manager()
 
         # Check if prompt exists (without cache to ensure fresh check)
@@ -685,7 +694,9 @@ async def revert_prompt_to_version(prompt_key: str, target_version: int):
         success = await manager.revert_to_version(prompt_key, target_version)
 
         if not success:
-            raise HTTPException(status_code=400, detail=f"Failed to revert to version {target_version}")
+            raise HTTPException(
+                status_code=400, detail=f"Failed to revert to version {target_version}"
+            )
 
         # Auto hot reload after revert
         hot_reload_success = await hot_reload_prompt(prompt_key)
@@ -697,21 +708,26 @@ async def revert_prompt_to_version(prompt_key: str, target_version: int):
                 "prompt_key": prompt_key,
                 "reverted_to_version": target_version,
                 "hot_reload_success": hot_reload_success,
-                "revert_time": datetime.now().isoformat()
-            }
+                "revert_time": datetime.now().isoformat(),
+            },
         )
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to revert prompt {prompt_key} to version {target_version}: {e}")
+        logger.error(
+            f"Failed to revert prompt {prompt_key} to version {target_version}: {e}"
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/api/prompts/{prompt_key}/version/{version}", response_model=PromptApiResponse)
+@router.get(
+    "/api/prompts/{prompt_key}/version/{version}", response_model=PromptApiResponse
+)
 async def get_prompt_version(prompt_key: str, version: int):
     """Get specific version of a prompt"""
     try:
         from .live_prompt import get_prompt_manager
+
         manager = await get_prompt_manager()
 
         # Get version history
@@ -725,12 +741,15 @@ async def get_prompt_version(prompt_key: str, version: int):
                 break
 
         if not target_version:
-            raise HTTPException(status_code=404, detail=f"Version {version} not found for prompt {prompt_key}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Version {version} not found for prompt {prompt_key}",
+            )
 
         return PromptApiResponse(
             success=True,
             message=f"Successfully retrieved version {version} of prompt {prompt_key}",
-            data=target_version
+            data=target_version,
         )
     except HTTPException:
         raise
@@ -746,10 +765,12 @@ async def get_prompt_version(prompt_key: str, version: int):
 # Global MAS instance reference
 _global_mas_instance = None
 
+
 def set_global_mas_instance(mas_instance):
     """Set global MAS instance for API access"""
     global _global_mas_instance
     _global_mas_instance = mas_instance
+
 
 @router.get("/get_agents")
 async def get_agents():
@@ -764,25 +785,26 @@ async def get_agents():
 
         # Get agents from oxy_name_to_oxy registry
         for agent_name, oxy_instance in _global_mas_instance.oxy_name_to_oxy.items():
-            if hasattr(oxy_instance, '__class__') and hasattr(oxy_instance, 'desc'):
+            if hasattr(oxy_instance, "__class__") and hasattr(oxy_instance, "desc"):
                 agent_info = {
                     "name": agent_name,
-                    "desc": getattr(oxy_instance, 'desc', ''),
+                    "desc": getattr(oxy_instance, "desc", ""),
                     "type": "agent",
                     "class_name": oxy_instance.__class__.__name__,
-                    "path": [agent_name]
+                    "path": [agent_name],
                 }
                 agents.append(agent_info)
 
         return WebResponse(
-            code=200,
-            message="Successfully retrieved agents",
-            data={"agents": agents}
+            code=200, message="Successfully retrieved agents", data={"agents": agents}
         ).to_dict()
 
     except Exception as e:
         logger.error(f"Failed to get agents: {e}")
-        return WebResponse(code=500, message=f"Failed to get agents: {str(e)}").to_dict()
+        return WebResponse(
+            code=500, message=f"Failed to get agents: {str(e)}"
+        ).to_dict()
+
 
 # ---------------------------------------------------------------------------
 # Conversation Rating API Endpoints
@@ -812,18 +834,16 @@ async def create_rating(rating_request: RatingRequest, request: Request):
             return WebResponse(
                 data={
                     "rating_id": result.rating_id,
-                    "stats": result.current_stats.dict() if result.current_stats else None
+                    "stats": result.current_stats.dict()
+                    if result.current_stats
+                    else None,
                 },
-                message=result.message
+                message=result.message,
             ).to_dict()
         else:
-            return WebResponse(
-                code=400,
-                message=result.message,
-                data={}
-            ).to_dict()
+            return WebResponse(code=400, message=result.message, data={}).to_dict()
 
-    except Exception as e:
+    except Exception:
         error_msg = traceback.format_exc()
         logger.error(f"Create rating error: {error_msg}")
         return WebResponse(code=500, message="Rating operation failed").to_dict()
@@ -851,15 +871,17 @@ async def get_rating_stats(trace_id: str):
                     "like_count": 0,
                     "dislike_count": 0,
                     "total_ratings": 0,
-                    "satisfaction_rate": 0.0
+                    "satisfaction_rate": 0.0,
                 },
-                message="No rating data available"
+                message="No rating data available",
             ).to_dict()
 
-    except Exception as e:
+    except Exception:
         error_msg = traceback.format_exc()
         logger.error(f"Get rating stats error: {error_msg}")
-        return WebResponse(code=500, message="Failed to get rating statistics").to_dict()
+        return WebResponse(
+            code=500, message="Failed to get rating statistics"
+        ).to_dict()
 
 
 @router.get("/rating/{trace_id}/current")
@@ -881,11 +903,11 @@ async def get_current_rating(trace_id: str, erp: str = None):
         return WebResponse(
             data={
                 "trace_id": trace_id,
-                "current_rating": current_rating.dict() if current_rating else None
+                "current_rating": current_rating.dict() if current_rating else None,
             }
         ).to_dict()
 
-    except Exception as e:
+    except Exception:
         error_msg = traceback.format_exc()
         logger.error(f"Get current rating error: {error_msg}")
         return WebResponse(code=500, message="Failed to get current rating").to_dict()
@@ -915,11 +937,11 @@ async def get_rating_history(trace_id: str, erp: str = None):
                 "trace_id": trace_id,
                 "ratings": ratings_data,
                 "count": len(ratings_data),
-                "erp_filter": erp
+                "erp_filter": erp,
             }
         ).to_dict()
 
-    except Exception as e:
+    except Exception:
         error_msg = traceback.format_exc()
         logger.error(f"Get rating history error: {error_msg}")
         return WebResponse(code=500, message="Failed to get rating history").to_dict()
@@ -930,11 +952,13 @@ async def debug_rating_stats(trace_id: str):
     """Debug endpoint: Check rating statistics storage for specific trace_id."""
     try:
         stats = await evaluation_manager.get_rating_stats(trace_id)
-        return WebResponse(data={
-            "trace_id": trace_id,
-            "stats": stats.dict() if stats else None,
-            "found": stats is not None
-        }).to_dict()
+        return WebResponse(
+            data={
+                "trace_id": trace_id,
+                "stats": stats.dict() if stats else None,
+                "found": stats is not None,
+            }
+        ).to_dict()
     except Exception as e:
         error_msg = traceback.format_exc()
         logger.error(f"Debug rating stats error: {error_msg}")
@@ -950,18 +974,20 @@ async def debug_trace_info(trace_id: str):
         # Query trace information
         trace_response = await es_client.search(
             Config.get_app_name() + "_trace",
-            {"query": {"term": {"trace_id": trace_id}}, "size": 1}
+            {"query": {"term": {"trace_id": trace_id}}, "size": 1},
         )
 
         trace_info = None
         if trace_response["hits"]["hits"]:
             trace_info = trace_response["hits"]["hits"][0]["_source"]
 
-        return WebResponse(data={
-            "trace_id": trace_id,
-            "trace_info": trace_info,
-            "found": trace_info is not None
-        }).to_dict()
+        return WebResponse(
+            data={
+                "trace_id": trace_id,
+                "trace_info": trace_info,
+                "found": trace_info is not None,
+            }
+        ).to_dict()
     except Exception as e:
         error_msg = traceback.format_exc()
         logger.error(f"Debug trace info error: {error_msg}")
@@ -976,18 +1002,20 @@ async def clear_all_rating_data():
         if result["success"]:
             return WebResponse(
                 data=result,
-                message=f"Successfully cleared data: {result['deleted_ratings']} rating records, {result['deleted_stats']} stats records"
+                message=f"Successfully cleared data: {result['deleted_ratings']} rating records, {result['deleted_stats']} stats records",
             ).to_dict()
         else:
             return WebResponse(
                 code=500,
                 data=result,
-                message=f"Partial clearing failed, errors: {', '.join(result['errors'])}"
+                message=f"Partial clearing failed, errors: {', '.join(result['errors'])}",
             ).to_dict()
     except Exception as e:
         error_msg = traceback.format_exc()
         logger.error(f"Clear all rating data error: {error_msg}")
-        return WebResponse(code=500, message=f"Failed to clear rating data: {str(e)}").to_dict()
+        return WebResponse(
+            code=500, message=f"Failed to clear rating data: {str(e)}"
+        ).to_dict()
 
 
 @router.post("/rating/setup_indices")
@@ -1012,12 +1040,14 @@ async def setup_rating_indices():
             return WebResponse(
                 code=500,
                 data=result,
-                message=f"Failed to setup indexes, errors: {', '.join(result['errors'])}"
+                message=f"Failed to setup indexes, errors: {', '.join(result['errors'])}",
             ).to_dict()
     except Exception as e:
         error_msg = traceback.format_exc()
         logger.error(f"Setup rating indices error: {error_msg}")
-        return WebResponse(code=500, message=f"Failed to setup indexes: {str(e)}").to_dict()
+        return WebResponse(
+            code=500, message=f"Failed to setup indexes: {str(e)}"
+        ).to_dict()
 
 
 @router.get("/history_with_ratings")
@@ -1025,7 +1055,7 @@ async def get_history_with_ratings(
     page: int = 1,
     page_size: int = 20,
     rating_filter: str = "all",
-    search_term: str = ""
+    search_term: str = "",
 ):
     """Optimized version: Get conversation history with ratings.
     Args:
@@ -1049,9 +1079,9 @@ async def get_history_with_ratings(
                         {"term": {"trace_id": search_term}},
                         {"match": {"input": search_term}},
                         {"match": {"callee": search_term}},
-                        {"match": {"output": search_term}}
+                        {"match": {"output": search_term}},
                     ],
-                    "minimum_should_match": 1
+                    "minimum_should_match": 1,
                 }
             }
 
@@ -1059,7 +1089,9 @@ async def get_history_with_ratings(
         # Fetch more than page_size to account for grouping
         fetch_size = page_size * 10  # Fetch 10x page size for grouping
 
-        logger.info(f"Fetching history: page={page}, page_size={page_size}, fetch_size={fetch_size}, rating_filter={rating_filter}, search_term={search_term}")
+        logger.info(
+            f"Fetching history: page={page}, page_size={page_size}, fetch_size={fetch_size}, rating_filter={rating_filter}, search_term={search_term}"
+        )
 
         # Fetch traces with minimal fields for grouping
         try:
@@ -1067,16 +1099,19 @@ async def get_history_with_ratings(
                 Config.get_app_name() + "_trace",
                 {
                     "query": search_query,
-                    "_source": ["trace_id", "group_id", "create_time"],  # Only fetch necessary fields
+                    "_source": [
+                        "trace_id",
+                        "group_id",
+                        "create_time",
+                    ],  # Only fetch necessary fields
                     "size": fetch_size,
                     "sort": [{"create_time": {"order": "desc"}}],
-                }
+                },
             )
         except Exception as es_error:
             logger.error(f"Elasticsearch search error: {es_error}")
             return WebResponse(
-                code=500,
-                message=f"Database query failed: {str(es_error)}"
+                code=500, message=f"Database query failed: {str(es_error)}"
             ).to_dict()
 
         # Build groups metadata from traces
@@ -1102,7 +1137,7 @@ async def get_history_with_ratings(
                         "latest_create_time": create_time,
                         "total_likes": 0,
                         "total_dislikes": 0,
-                        "has_rating": False
+                        "has_rating": False,
                     }
 
                 groups_metadata_dict[group_id]["trace_ids"].append(trace_id)
@@ -1167,7 +1202,9 @@ async def get_history_with_ratings(
                 filtered_groups_metadata.append(metadata)
 
         # Sort by latest time
-        filtered_groups_metadata.sort(key=lambda x: x["latest_create_time"], reverse=True)
+        filtered_groups_metadata.sort(
+            key=lambda x: x["latest_create_time"], reverse=True
+        )
 
         # Pagination
         total_groups = len(filtered_groups_metadata)
@@ -1185,7 +1222,15 @@ async def get_history_with_ratings(
             {
                 "query": {"terms": {"trace_id": page_trace_ids}},
                 "size": len(page_trace_ids),
-                "_source": ["trace_id", "input", "callee", "output", "create_time", "from_trace_id", "group_id"]
+                "_source": [
+                    "trace_id",
+                    "input",
+                    "callee",
+                    "output",
+                    "create_time",
+                    "from_trace_id",
+                    "group_id",
+                ],
             },
         )
 
@@ -1195,7 +1240,9 @@ async def get_history_with_ratings(
             trace_id = source.get("trace_id", "")
             trace_details_map[trace_id] = source
 
-        rating_histories_map = await evaluation_manager.get_rating_histories_for_traces(page_trace_ids)
+        rating_histories_map = await evaluation_manager.get_rating_histories_for_traces(
+            page_trace_ids
+        )
 
         # Build response
         conversation_groups = []
@@ -1224,21 +1271,23 @@ async def get_history_with_ratings(
                 conversation_with_rating = ConversationWithRating(
                     **conversation_data,
                     rating_stats=rating_stats,
-                    rating_history=rating_history
+                    rating_history=rating_history,
                 )
                 conversations.append(conversation_with_rating.model_dump())
 
             conversations.sort(key=lambda x: x["create_time"])
 
-            conversation_groups.append({
-                "group_id": group_id,
-                "conversations": conversations,
-                "latest_create_time": metadata["latest_create_time"],
-                "conversation_count": len(conversations),
-                "total_likes": metadata["total_likes"],
-                "total_dislikes": metadata["total_dislikes"],
-                "has_rating": metadata["has_rating"],
-            })
+            conversation_groups.append(
+                {
+                    "group_id": group_id,
+                    "conversations": conversations,
+                    "latest_create_time": metadata["latest_create_time"],
+                    "conversation_count": len(conversations),
+                    "total_likes": metadata["total_likes"],
+                    "total_dislikes": metadata["total_dislikes"],
+                    "has_rating": metadata["has_rating"],
+                }
+            )
 
         return WebResponse(
             data={
@@ -1250,11 +1299,14 @@ async def get_history_with_ratings(
             }
         ).to_dict()
 
-    except Exception as e:
+    except Exception:
         import traceback
+
         error_msg = traceback.format_exc()
         logger.error(f"Get history with ratings error: {error_msg}")
-        return WebResponse(code=500, message="Failed to get conversation history").to_dict()
+        return WebResponse(
+            code=500, message="Failed to get conversation history"
+        ).to_dict()
 
 
 @router.get("/analytics/ratings")
@@ -1271,7 +1323,7 @@ async def get_rating_analytics(days: int = 7):
         stats = await evaluation_manager.get_overall_rating_stats(days)
         return WebResponse(data=stats).to_dict()
 
-    except Exception as e:
+    except Exception:
         error_msg = traceback.format_exc()
         logger.error(f"Get rating analytics error: {error_msg}")
         return WebResponse(code=500, message="Failed to get rating analytics").to_dict()
@@ -1298,11 +1350,11 @@ async def rebuild_rating_stats(trace_id: str):
             data={
                 "trace_id": trace_id,
                 "rebuilt_stats": stats.dict(),
-                "message": "Statistics recalculated"
+                "message": "Statistics recalculated",
             }
         ).to_dict()
 
-    except Exception as e:
+    except Exception:
         error_msg = traceback.format_exc()
         logger.error(f"Rebuild rating stats error: {error_msg}")
         return WebResponse(code=500, message="Failed to rebuild statistics").to_dict()
@@ -1324,15 +1376,12 @@ async def delete_rating(rating_id: str):
         if success:
             return WebResponse(
                 data={"deleted": True, "rating_id": rating_id},
-                message="Rating deleted successfully"
+                message="Rating deleted successfully",
             ).to_dict()
         else:
-            return WebResponse(
-                code=404,
-                message="Rating record not found"
-            ).to_dict()
+            return WebResponse(code=404, message="Rating record not found").to_dict()
 
-    except Exception as e:
+    except Exception:
         error_msg = traceback.format_exc()
         logger.error(f"Delete rating error: {error_msg}")
         return WebResponse(code=500, message="Failed to delete rating").to_dict()
@@ -1342,8 +1391,10 @@ async def delete_rating(rating_id: str):
 # Prompt Optimization API Routes
 # =============================================================================
 
+
 class PromptOptimizeRequest(BaseModel):
     """Request model for prompt optimization."""
+
     prompt_key: str
     agent_type: str = "general"
     optimization_strategy: str = "comprehensive"
@@ -1386,10 +1437,14 @@ async def optimize_prompt(request: PromptOptimizeRequest):
 
         # Get current prompt
         manager = await get_prompt_manager()
-        current_prompt_data = await manager.get_prompt(request.prompt_key, use_cache=True)
+        current_prompt_data = await manager.get_prompt(
+            request.prompt_key, use_cache=True
+        )
 
         if not current_prompt_data:
-            raise HTTPException(status_code=404, detail=f"Prompt '{request.prompt_key}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Prompt '{request.prompt_key}' not found"
+            )
 
         current_prompt_content = current_prompt_data.get("prompt_content", "")
 
@@ -1399,7 +1454,7 @@ async def optimize_prompt(request: PromptOptimizeRequest):
             current_prompt=current_prompt_content,
             agent_type=request.agent_type,
             optimization_strategy=request.optimization_strategy,
-            custom_requirements=request.custom_requirements
+            custom_requirements=request.custom_requirements,
         )
 
         # Check if optimization was successful
@@ -1407,7 +1462,7 @@ async def optimize_prompt(request: PromptOptimizeRequest):
             return PromptApiResponse(
                 success=False,
                 message=f"Optimization failed: {optimization_result['error']}",
-                data=optimization_result
+                data=optimization_result,
             )
 
         # If auto_apply is True, save the optimized prompt
@@ -1424,16 +1479,19 @@ async def optimize_prompt(request: PromptOptimizeRequest):
                 prompt_key=request.prompt_key,
                 is_active=current_prompt_data.get("is_active", True),
                 created_by=current_prompt_data.get("created_by", "user"),
-                **update_data
+                **update_data,
             )
 
             if save_success:
                 # Hot reload the prompt
                 from .live_prompt import hot_reload_prompt
+
                 await hot_reload_prompt(request.prompt_key)
 
                 optimization_result["auto_applied"] = True
-                optimization_result["new_version"] = current_prompt_data.get("version", 1) + 1
+                optimization_result["new_version"] = (
+                    current_prompt_data.get("version", 1) + 1
+                )
             else:
                 optimization_result["auto_applied"] = False
                 optimization_result["save_error"] = "Failed to save optimized prompt"
@@ -1442,14 +1500,13 @@ async def optimize_prompt(request: PromptOptimizeRequest):
 
         return PromptApiResponse(
             success=True,
-            message="Prompt optimized successfully" + (
-                " and applied" if optimization_result.get("auto_applied") else ""
-            ),
+            message="Prompt optimized successfully"
+            + (" and applied" if optimization_result.get("auto_applied") else ""),
             data={
                 "prompt_key": request.prompt_key,
                 "original_prompt": current_prompt_content,
-                **optimization_result
-            }
+                **optimization_result,
+            },
         )
 
     except HTTPException:
