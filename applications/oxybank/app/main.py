@@ -10,7 +10,7 @@ logger.remove()  # Remove default stderr handler
 
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
@@ -106,7 +106,9 @@ def _mount_frontend_dist() -> None:
         if path.startswith(("/api", "/kb", "/docs", "/openapi.json", "/redoc")):
             return await call_next(request)
 
-        file_path = DIST_DIR / path.lstrip("/")
+        file_path = (DIST_DIR / path.lstrip("/")).resolve()
+        if not str(file_path).startswith(str(DIST_DIR.resolve())):
+            return Response(status_code=403)
         if file_path.is_file():
             return FileResponse(file_path)
         if "." in Path(path).name:

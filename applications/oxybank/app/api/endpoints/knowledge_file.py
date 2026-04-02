@@ -295,14 +295,26 @@ def is_temp_file(file_path: str, kb_id: str) -> bool:
     response_model=APIResponse[list[FieldInfo]],
 )
 def get_uploaded_file_info(
-        file_path: str,
-        file_type: str
+        kb_id: str = Path(..., description="Knowledge base ID"),
+        file_path: str = Query(...),
+        file_type: str = Query(...),
 ):
+    # --- CWE-22 path traversal guard ---
+    allowed_dir = Path(tempfile.gettempdir()).resolve()
+    resolved = Path(file_path).resolve()
+    if not str(resolved).startswith(str(allowed_dir)):
+        raise HTTPException(status_code=403, detail="Access denied: invalid file path")
+    if not is_temp_file(file_path, kb_id):
+        raise HTTPException(status_code=403, detail="Access denied: file does not belong to this session")
+    if not resolved.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    # -----------------------------------
+
     # Read file based on file_type and file_path, and return corresponding data
     if file_type == "csv":
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(resolved)
     elif file_type == "xls" or file_type == "xlsx":
-        df = pd.read_excel(file_path)
+        df = pd.read_excel(resolved)
 
     else:
         # TODO Add support for other structured data types, e.g., excel
