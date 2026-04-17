@@ -29,8 +29,11 @@ examples/a2a
 │   ├── demo_agentscope_client_call_oxygent_server.py
 │   └── demo_oxygent_client_call_agentscope_server.py
 ├── google_sdk_interop
+│   ├── demo_google_sdk_a2a_server.py
 │   ├── demo_a2a_sdk_call_oxygent.py
-│   └── demo_a2a_sdk_stream_call_oxygent.py
+│   ├── demo_a2a_sdk_stream_call_oxygent.py
+│   ├── demo_oxygent_client_call_google_sdk_server.py
+│   └── demo_oxygent_stream_client_call_google_sdk_server.py
 ├── langchain_interop
 │   ├── demo_langchain_a2a_server.py
 │   ├── demo_langchain_client_call_oxygent_server.py
@@ -39,8 +42,7 @@ examples/a2a
 │   ├── demo_langgraph_a2a_server.py
 │   ├── demo_langgraph_client_call_oxygent_server.py
 │   └── demo_oxygent_client_call_langgraph_server.py
-├── other
-└── DEMO_STRUCTURE.md
+└── other
 ```
 
 ## Quick Start
@@ -65,8 +67,11 @@ PYTHONPATH=. python examples/a2a/demo_a2a_oxygent_client.py
    - `demo_a2a_oxygent_stream_client.py`
    - `demo_a2a_oxygent_task_followup_client.py`
 2. SDK interop:
+   - `google_sdk_interop/demo_google_sdk_a2a_server.py`
    - `google_sdk_interop/demo_a2a_sdk_call_oxygent.py`
    - `google_sdk_interop/demo_a2a_sdk_stream_call_oxygent.py`
+   - `google_sdk_interop/demo_oxygent_client_call_google_sdk_server.py`
+   - `google_sdk_interop/demo_oxygent_stream_client_call_google_sdk_server.py`
 3. Cross-framework interop:
    - `agentscope_interop/*`
    - `langchain_interop/*`
