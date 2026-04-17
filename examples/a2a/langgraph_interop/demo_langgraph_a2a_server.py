@@ -5,11 +5,13 @@ Run:
 """
 
 import asyncio
+import json
 from typing import Any, TypedDict
 from uuid import uuid4
 
 import uvicorn
 from fastapi import FastAPI, Request
+from sse_starlette.sse import EventSourceResponse
 
 try:
     from langgraph.graph import END, StateGraph
@@ -90,7 +92,7 @@ async def card():
         "version": "0.1.0",
         "url": f"http://{APP_HOST}:{APP_PORT}{BASE_PATH}",
         "capabilities": {
-            "streaming": False,
+            "streaming": True,
             "task_control": True,
             "pushNotifications": False,
         },
@@ -134,6 +136,38 @@ async def unified(request: Request):
         TASKS[task_id] = task
         return {"jsonrpc": "2.0", "id": req_id, "result": task}
 
+    if method == "message/stream":
+        task_id = (
+            params.get("message", {}).get("taskId")
+            or params.get("message", {}).get("task_id")
+            or str(uuid4())
+        )
+        context_id = (
+            params.get("message", {}).get("contextId")
+            or params.get("message", {}).get("context_id")
+            or str(uuid4())
+        )
+        text = extract_text(params)
+        answer = graph.invoke({"query": text, "answer": ""}).get("answer", "")
+
+        async def stream_gen():
+            emitted = ""
+            for i in range(1, len(answer) + 1):
+                emitted = answer[:i]
+                event = build_message(emitted, task_id, context_id)
+                yield {
+                    "data": json.dumps(
+                        {"jsonrpc": "2.0", "id": req_id, "result": event},
+                        ensure_ascii=False,
+                    )
+                }
+                await asyncio.sleep(0.1)
+
+            task = build_task(answer, task_id, context_id)
+            TASKS[task_id] = task
+
+        return EventSourceResponse(stream_gen())
+
     if method == "tasks/get":
         tid = params.get("id") or params.get("taskId")
         task = TASKS.get(str(tid))
@@ -172,4 +206,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

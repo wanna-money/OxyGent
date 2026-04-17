@@ -99,6 +99,7 @@ class A2AClientAgent(RemoteAgent):
         card_url: str | None = None,
         metadata: dict[str, Any] | None = None,
         streaming: bool = False,
+        append_stream_suffix_to_url: bool = False,
         timeout: float = 120.0,
         enable_task_polling: bool = False,
         task_poll_interval_seconds: float = 3.0,
@@ -112,6 +113,7 @@ class A2AClientAgent(RemoteAgent):
             agent_card_url=agent_card_url or card_url,
             metadata=metadata or {},
             streaming=streaming,
+            append_stream_suffix_to_url=append_stream_suffix_to_url,
             timeout=timeout,
             enable_task_polling=enable_task_polling,
             task_poll_interval_seconds=task_poll_interval_seconds,
@@ -126,6 +128,15 @@ class A2AClientAgent(RemoteAgent):
         if marker in path:
             path = path.split(marker, 1)[0] + "/"
         return urlunsplit((parsed.scheme, parsed.netloc, path, parsed.query, ""))
+
+    @staticmethod
+    def _append_stream_suffix(url: str) -> str:
+        """Append '/stream' to URL path while preserving query string."""
+        parsed = urlsplit(url)
+        path = parsed.path.rstrip("/")
+        if not path.endswith("/stream"):
+            path = f"{path}/stream"
+        return urlunsplit((parsed.scheme, parsed.netloc, path, parsed.query, parsed.fragment))
 
     def _resolve_card_endpoint(self) -> tuple[str, str]:
         """Resolve card endpoint from either server_url or full card URL."""
@@ -183,9 +194,8 @@ class A2AClientAgent(RemoteAgent):
             self.streaming
             and self.append_stream_suffix_to_url
             and getattr(card, "url", None)
-            and not card.url.endswith("/stream")
         ):
-            card.url = card.url.rstrip("/") + "/stream"
+            card.url = self._append_stream_suffix(card.url)
 
         self._card = card
         self._client = A2ASDKClient(httpx_client=self._http_client, agent_card=card)
@@ -404,7 +414,22 @@ class A2AClientAgent(RemoteAgent):
 
         while True:
             rounds += 1
-            final_task = await self._get_task(task_id, metadata=metadata or None)
+            try:
+                final_task = await self._get_task(task_id, metadata=metadata or None)
+            except Exception as e:
+                poll_info = {
+                    "poll_rounds": rounds,
+                    "poll_state": "poll_error",
+                    "poll_wait_seconds": round(time.time() - start, 3),
+                    "poll_error": str(e),
+                }
+                logger.warning(
+                    "Task polling failed agent=%s task_id=%s error=%s",
+                    self.name,
+                    task_id,
+                    e,
+                )
+                break
             if final_task:
                 context_id = getattr(final_task, "context_id", context_id)
                 text = self._extract_text_from_task(final_task)

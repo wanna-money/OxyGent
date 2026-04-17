@@ -37,11 +37,13 @@ examples/a2a
 ├── langchain_interop
 │   ├── demo_langchain_a2a_server.py
 │   ├── demo_langchain_client_call_oxygent_server.py
-│   └── demo_oxygent_client_call_langchain_server.py
+│   ├── demo_oxygent_client_call_langchain_server.py
+│   └── demo_oxygent_stream_client_call_langchain_server.py
 ├── langgraph_interop
 │   ├── demo_langgraph_a2a_server.py
 │   ├── demo_langgraph_client_call_oxygent_server.py
-│   └── demo_oxygent_client_call_langgraph_server.py
+│   ├── demo_oxygent_client_call_langgraph_server.py
+│   └── demo_oxygent_stream_client_call_langgraph_server.py
 └── other
 ```
 
