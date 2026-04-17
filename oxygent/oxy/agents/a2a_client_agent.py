@@ -40,6 +40,24 @@ from a2a.utils.parts import get_text_parts
 
 logger = logging.getLogger(__name__)
 
+EXCLUDED_HEADERS = {
+    "host",
+    "connection",
+    "sec-ch-ua",
+    "sec-ch-ua-mobile",
+    "sec-ch-ua-platform",
+    "user-agent",
+    "referer",
+    "accept-encoding",
+    "accept-language",
+    "cache-control",
+    "sec-fetch-site",
+    "sec-fetch-mode",
+    "sec-fetch-dest",
+    "accept",
+    "content-length",
+}
+
 
 class A2AClientAgent(RemoteAgent):
     """Remote agent adapter for A2A-compatible servers.
@@ -270,6 +288,20 @@ class A2AClientAgent(RemoteAgent):
             merged.update(runtime_metadata)
         return merged
 
+    def _build_http_kwargs(self, oxy_request: OxyRequest) -> dict[str, Any] | None:
+        """Build per-request http kwargs with safe inherited headers."""
+        raw_headers = oxy_request.get_shared_data("_headers", {})
+        if not isinstance(raw_headers, dict):
+            return None
+        inherited = {
+            k: v
+            for k, v in raw_headers.items()
+            if k and k.lower() not in EXCLUDED_HEADERS
+        }
+        if not inherited:
+            return None
+        return {"headers": inherited}
+
     def _load_session_ids(
         self, oxy_request: OxyRequest
     ) -> tuple[str | None, str | None, list[str], str]:
@@ -312,13 +344,14 @@ class A2AClientAgent(RemoteAgent):
         metadata: dict[str, Any],
         context_id: str | None,
         task_id: str | None,
+        http_kwargs: dict[str, Any] | None = None,
     ) -> tuple[str, str | None, str | None, list[str]]:
         """Execute `message/send` once and extract text result."""
         req = SendMessageRequest(
             id=str(uuid4()),
             params=MessageSendParams(message=message, metadata=metadata or None),
         )
-        resp = await self._client.send_message(req)
+        resp = await self._client.send_message(req, http_kwargs=http_kwargs)
         result = getattr(resp.root, "result", None)
 
         if isinstance(result, Message):
@@ -338,6 +371,7 @@ class A2AClientAgent(RemoteAgent):
         metadata: dict[str, Any],
         context_id: str | None,
         task_id: str | None,
+        http_kwargs: dict[str, Any] | None = None,
     ) -> tuple[str, str | None, str | None, list[str]]:
         """Execute `message/stream`, print deltas, and accumulate final text."""
         req = SendStreamingMessageRequest(
@@ -348,7 +382,9 @@ class A2AClientAgent(RemoteAgent):
         emitted = ""
         stream_deltas: list[str] = []
 
-        async for chunk in self._client.send_message_streaming(req):
+        async for chunk in self._client.send_message_streaming(
+            req, http_kwargs=http_kwargs
+        ):
             root = getattr(chunk, "root", None)
             if root is None:
                 continue
@@ -401,6 +437,7 @@ class A2AClientAgent(RemoteAgent):
         metadata: dict[str, Any],
         answer: str,
         context_id: str | None,
+        http_kwargs: dict[str, Any] | None = None,
     ) -> tuple[str, str | None, dict[str, Any], Task | None]:
         """Poll tasks/get until terminal state or timeout."""
         if not (self.enable_task_polling and task_id):
@@ -415,7 +452,9 @@ class A2AClientAgent(RemoteAgent):
         while True:
             rounds += 1
             try:
-                final_task = await self._get_task(task_id, metadata=metadata or None)
+                final_task = await self._get_task(
+                    task_id, metadata=metadata or None, http_kwargs=http_kwargs
+                )
             except Exception as e:
                 poll_info = {
                     "poll_rounds": rounds,
@@ -467,26 +506,40 @@ class A2AClientAgent(RemoteAgent):
         return answer, context_id, poll_info, final_task
 
     async def _get_task(
-        self, task_id: str, metadata: dict[str, Any] | None = None
+        self,
+        task_id: str,
+        metadata: dict[str, Any] | None = None,
+        http_kwargs: dict[str, Any] | None = None,
     ) -> Task | None:
         request = GetTaskRequest(
             id=str(uuid4()),
             params=TaskQueryParams(id=task_id, metadata=metadata or None),
         )
-        response = await self._client.get_task(request)
+        response = await self._client.get_task(request, http_kwargs=http_kwargs)
         return getattr(response.root, "result", None)
 
     async def get_task(
-        self, task_id: str, metadata: dict[str, Any] | None = None
+        self,
+        task_id: str,
+        metadata: dict[str, Any] | None = None,
+        oxy_request: OxyRequest | None = None,
     ) -> dict[str, Any]:
-        task = await self._get_task(task_id, metadata=metadata)
+        http_kwargs = (
+            self._build_http_kwargs(oxy_request) if oxy_request is not None else None
+        )
+        task = await self._get_task(task_id, metadata=metadata, http_kwargs=http_kwargs)
         return (
             task.model_dump(mode="json", by_alias=True, exclude_none=True) if task else {}
         )
 
-    async def cancel_task(self, task_id: str) -> dict[str, Any]:
+    async def cancel_task(
+        self, task_id: str, oxy_request: OxyRequest | None = None
+    ) -> dict[str, Any]:
         request = CancelTaskRequest(id=str(uuid4()), params=TaskIdParams(id=task_id))
-        response = await self._client.cancel_task(request)
+        http_kwargs = (
+            self._build_http_kwargs(oxy_request) if oxy_request is not None else None
+        )
+        response = await self._client.cancel_task(request, http_kwargs=http_kwargs)
         result = getattr(response.root, "result", None)
         return (
             result.model_dump(mode="json", by_alias=True, exclude_none=True)
@@ -494,12 +547,17 @@ class A2AClientAgent(RemoteAgent):
             else {}
         )
 
-    async def resubscribe(self, task_id: str) -> list[dict[str, Any]]:
+    async def resubscribe(
+        self, task_id: str, oxy_request: OxyRequest | None = None
+    ) -> list[dict[str, Any]]:
         request = TaskResubscriptionRequest(
             id=str(uuid4()), params=TaskIdParams(id=task_id)
         )
+        http_kwargs = (
+            self._build_http_kwargs(oxy_request) if oxy_request is not None else None
+        )
         events = []
-        async for event in self._client.resubscribe(request):
+        async for event in self._client.resubscribe(request, http_kwargs=http_kwargs):
             result = getattr(event.root, "result", None)
             if hasattr(result, "model_dump"):
                 events.append(
@@ -515,6 +573,7 @@ class A2AClientAgent(RemoteAgent):
 
         message = create_text_message_object(content=query)
         merged_metadata = self._build_metadata(oxy_request)
+        http_kwargs = self._build_http_kwargs(oxy_request)
         if merged_metadata:
             message.metadata = merged_metadata
 
@@ -550,6 +609,7 @@ class A2AClientAgent(RemoteAgent):
                 metadata=merged_metadata,
                 context_id=context_id,
                 task_id=task_id,
+                http_kwargs=http_kwargs,
             )
         else:
             answer, context_id, task_id, stream_deltas = await self._send_non_stream(
@@ -557,6 +617,7 @@ class A2AClientAgent(RemoteAgent):
                 metadata=merged_metadata,
                 context_id=context_id,
                 task_id=task_id,
+                http_kwargs=http_kwargs,
             )
 
         answer, context_id, poll_info, final_task = await self._poll_task_if_needed(
@@ -564,6 +625,7 @@ class A2AClientAgent(RemoteAgent):
             metadata=merged_metadata,
             answer=answer,
             context_id=context_id,
+            http_kwargs=http_kwargs,
         )
 
         oxy_request.shared_data[shared_key] = {

@@ -8,17 +8,23 @@ Run:
 """
 
 import asyncio
+import os
 
 from oxygent import Config, MAS, OxyRequest, oxy
 
 SERVER_URL = "http://127.0.0.1:8011"
 CLIENT_NAME = "google_sdk_server_client"
+DEMO_HEADERS = {
+    "x-demo-client": "oxygent-a2a",
+    "x-demo-token": os.getenv("GOOGLE_A2A_DEMO_TOKEN", "demo-token"),
+}
 
 
 async def call_once(mas: MAS, query: str):
     req = OxyRequest(
         callee=CLIENT_NAME,
         arguments={"query": query},
+        shared_data={"_headers": DEMO_HEADERS},
         is_send_message=False,
         is_save_history=False,
     )
@@ -39,6 +45,7 @@ async def main():
     ]
 
     async with MAS(oxy_space=oxy_space) as mas:
+        print("request headers:", DEMO_HEADERS)
         response = await call_once(mas, "Please introduce yourself in one short sentence.")
         print(response.output)
         print("session:", response.extra.get("context_id"), response.extra.get("task_id"))
