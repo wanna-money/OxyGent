@@ -132,16 +132,16 @@
                         </div>
                     </div>
                 </div> -->
-                <div class="chat-agent-list" id="chatAgentList"></div>
+                <div class="chat-agent-list" id="chatAgentList" style="display:none;"></div>
+
+                <!-- agentlist popup -->
+                <div id="chat-at-list-container-id" class="chat-at-list-container">
+                    <div class="chat-at-list-title">Agents</div>
+                    <ul id="chatAtListId" class="chat-at-list"></ul>
+                </div>
 
                 <div id="message_input_wrap">
-                    <!-- agentlist -->
-                    <div id="chat-at-list-container-id" class="chat-at-list-container">
-                        <ul id="chatAtListId" class="chat-at-list"></ul>
-                    </div>
-
-
-                    <input type="text" id="message_input" placeholder="Ask me anything here.">
+                    <textarea id="message_input" rows="1" placeholder="Ask me anything here."></textarea>
                 </div>
                 <button class="file-upload-area" id="message_addtional">
                     <input
@@ -379,28 +379,32 @@
             }
         })
         $("#message_input").keydown(function (event) {
-            if (event.keyCode === 13) {
+            if (event.keyCode === 13 && !event.shiftKey) {
+                event.preventDefault();
                 send_message();
             }
         });
 
         $('#message_input').on('input', function () {
+            // Auto-resize textarea height
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+
             const val = $(this).val();
             if (val) {
                 $("#message_send").addClass('message_send_active'); // 有值时背景色为蓝色
                 if (val.indexOf('@') > -1) {
-                    // console.log('@val', val)
                     // 把当前的输入@删除保留其他的输入项，只删除@这个字符
                     const inputVal = val.replace('@', '');
                     $('#message_input').val(inputVal);
 
-                    var $element = $('#message_input'); //
-                    var distanceFromBottom = $(window).height() - ($element.offset().top + $element.outerHeight());
+                    var $element = $('#message_input');
+                    var elTop = $element.offset().top;
                     var distanceFromLeft = $element.offset().left;
                     const marginLeftValue = getTextWidth(inputVal);
-                    // 显示chat list
+                    // 显示chat list — 定位到输入框正上方
                     $('#chat-at-list-container-id').css({
-                        bottom: (distanceFromBottom + 70) + 'px',
+                        bottom: ($(window).height() - elTop + 8) + 'px',
                         left: (distanceFromLeft + marginLeftValue) + 'px',
                     });
                     $('#chat-at-list-container-id').show();
@@ -1200,6 +1204,7 @@
             });
             // ws.send(JSON.stringify(payload));  // 发送消息
             input.value = '';
+            input.style.height = 'auto';
             var msg = {"role": "user", "content": message};
             chats.push(msg);
             let history = JSON.parse(JSON.stringify(historys[historys.length - 1]));
@@ -1972,17 +1977,19 @@
     renderCharlist();
     function renderCharlist() {
         if (argentName) {
+            chatAgentList.style.display = 'flex';
             chatAgentList.innerHTML= `
                 <div class="chat-agent-item">
                     <div class="chat-agent-info">
                         <div class="chat-agent-name"><span>@</span>${argentName}</div>
                     </div>
-                    <div class="chat-agent-close" onclick="chatAgentClose('${argentName}')" data-id="Group-favicon.png">
+                    <div class="chat-agent-close" onclick="chatAgentClose('${argentName}')">
                         <img src="./image/group_close.svg" alt="#">
                     </div>
                 </div>
             `;
         }else{
+            chatAgentList.style.display = 'none';
             chatAgentList.innerHTML = '';
         }
     }

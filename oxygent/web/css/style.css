@@ -202,24 +202,29 @@ button {
     position: relative;
     height: auto;
     border-radius: 4px;
-    padding: 20px 14px;
+    padding: 14px 14px 56px 14px;
     border: 1px solid #E0E0E0;
 }
 #message_input_wrap {
     width: 100%;
-    min-height: 100px;
-    /*padding: 10px 0;*/
     position: relative;
 }
 #message_input {
     width: 100%;
-    height: 70px;
+    min-height: 24px;
+    max-height: 200px;
     border: none;
+    resize: none;
+    overflow-y: auto;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 0;
 }
 #message_input:focus {
     outline: none;
 }
-input::placeholder {
+input::placeholder, textarea::placeholder {
   color: #B3B3B3; /* 设置为红色，可自定义 */
   opacity: 1; /* 确保颜色清晰，部分浏览器可能需要 */
 }

@@ -66,7 +66,8 @@ function renderSwimlane(nodesDatas, containerId) {
                 to: node.caller,
                 label: outText,
                 dashed: true,
-                nodeId: null
+                nodeId: node.node_id,
+                isReturn: true
             });
         }
     }
@@ -140,8 +141,11 @@ function renderSwimlane(nodesDatas, containerId) {
         var msgEl = document.createElement('div');
         msgEl.className = 'seq-msg';
         if (msg.nodeId) {
-            msgEl.id = msg.nodeId;
+            msgEl.setAttribute('data-node-id', msg.nodeId);
             msgEl.classList.add('seq-msg-clickable');
+            if (!msg.isReturn) {
+                msgEl.id = msg.nodeId;
+            }
         }
         msgEl.style.top = y + 'px';
 

@@ -196,6 +196,7 @@
     }
 
     function get_plan(plan_id) {
+        // View 1 (flowchart) — toggle 'checked'
         $('.view1-node').each((i, ele) => {
             $(ele).removeClass('checked');
         });
@@ -203,6 +204,26 @@
             $(ele).removeClass('checked');
         });
         $(`#${plan_id}`).addClass('checked');
+
+        // View 2 (Gantt) — toggle 'mermaid-selected' / 'mermaid-selected-text'
+        document.querySelectorAll('#flowchart-container-gantt .task').forEach(node => {
+            if (node.id === plan_id) {
+                node.classList.add('mermaid-selected');
+            } else {
+                node.classList.remove('mermaid-selected');
+            }
+        });
+        document.querySelectorAll('#flowchart-container-gantt .taskText').forEach(node => {
+            if (node.id === `${plan_id}-text`) {
+                node.classList.add('mermaid-selected-text');
+            } else {
+                node.classList.remove('mermaid-selected-text');
+            }
+        });
+
+        // View 3 (Swimlane) — toggle 'checked' on all matching arrows (forward + return)
+        $('#swimlane-container .seq-msg').removeClass('checked');
+        $('#swimlane-container .seq-msg[data-node-id="' + plan_id + '"]').addClass('checked');
 
         $.ajax({
             type: "GET",
@@ -638,12 +659,12 @@
     })
 
     $('#swimlane-container').on('click', '.seq-msg-clickable', function () {
-        var id = $(this).attr('id');
-        if (id) {
+        var nodeId = $(this).attr('data-node-id');
+        if (nodeId) {
             $('#swimlane-container .seq-msg').removeClass('checked');
-            $(this).addClass('checked');
+            $('#swimlane-container .seq-msg[data-node-id="' + nodeId + '"]').addClass('checked');
             resetHtmlEmpty();
-            get_plan(id);
+            get_plan(nodeId);
         }
     });
 
