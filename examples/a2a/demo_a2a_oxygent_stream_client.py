@@ -8,6 +8,7 @@ Run:
 """
 
 import asyncio
+import json
 
 from oxygent import Config, MAS, OxyRequest, oxy
 
@@ -37,9 +38,16 @@ async def main():
     ]
 
     async with MAS(oxy_space=oxy_space) as mas:
-        response = await call_once(mas, "讲一个超长的故事。")
+        response = await call_once(mas, "讲一个100字的故事。")
+        task_id = response.extra.get("task_id")
         print("\n[final]", response.output)
-        print("session:", response.extra.get("context_id"), response.extra.get("task_id"))
+        print("session:", response.extra.get("context_id"), task_id)
+
+        if task_id:
+            client = mas.oxy_name_to_oxy["stream_client"]
+            task = await client.get_task(task_id=task_id)
+            print("[tasks/get]")
+            print(json.dumps(task, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
