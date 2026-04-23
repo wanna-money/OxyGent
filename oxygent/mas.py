@@ -1184,6 +1184,15 @@ class MAS(BaseModel):
             allow_headers=["*"],
         )
 
+        @app.middleware("http")
+        async def no_cache_static(request: Request, call_next):
+            response = await call_next(request)
+            if request.url.path.startswith("/web/"):
+                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+                response.headers["Pragma"] = "no-cache"
+                response.headers["Expires"] = "0"
+            return response
+
         for app_middleware in self.middlewares:
             app.add_middleware(app_middleware)
 
