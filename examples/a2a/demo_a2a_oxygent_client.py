@@ -1,13 +1,14 @@
 """Call local OxyGent A2A server with OxyGent A2A client.
 
 Prerequisite:
-    PYTHONPATH=. python examples/a2a/demo_a2a_mas_server.py
+    PYTHONPATH=. python examples/a2a/demo_a2a_oxygent_server.py
 
 Run:
     PYTHONPATH=. python examples/a2a/demo_a2a_oxygent_client.py
 """
 
 import asyncio
+import json
 
 from oxygent import Config, MAS, OxyRequest, oxy
 
@@ -46,15 +47,21 @@ async def main():
             server_url=SERVER_URL,
             timeout=60,
             streaming=False,
-            enable_task_polling=True,
+            enable_task_polling=False,
         )
     ]
 
     async with (MAS(oxy_space=oxy_space) as mas):
         response = await call_once(mas, "1+1等于几")
-
+        task_id = response.extra.get("task_id")
         print(response.output)
-        print("session:", response.extra.get("context_id"), response.extra.get("task_id"))
+        print("session:", response.extra.get("context_id"), task_id)
+
+        if task_id:
+            client = mas.oxy_name_to_oxy["a2a_client"]
+            task = await client.get_task(task_id=task_id)
+            print("[tasks/get]")
+            print(json.dumps(task, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

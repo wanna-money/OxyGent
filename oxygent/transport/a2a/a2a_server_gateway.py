@@ -5,8 +5,10 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from typing import Any
 
+from a2a.types import TaskState
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
@@ -55,6 +57,20 @@ class A2AServerGateway(BaseModel):
         description=(
             "Whether to parse OxyGent SSE stream payload and extract content.delta. "
             "If False, keep raw stream payload text."
+        ),
+    )
+    stream_task_update_char_interval: int = Field(
+        128,
+        description=(
+            "Minimum emitted character delta before refreshing in-memory task snapshot "
+            "during streaming."
+        ),
+    )
+    stream_task_update_time_interval_seconds: float = Field(
+        1.0,
+        description=(
+            "Maximum interval in seconds between in-memory task snapshot refreshes "
+            "during streaming."
         ),
     )
     skills: list[dict[str, Any]] = Field(
@@ -168,7 +184,8 @@ class A2AServerGateway(BaseModel):
         answer: str,
         trace_id: str,
         group_id: str,
-        state: str = "completed",
+        state: TaskState | str = TaskState.completed,
+        error: str | None = None,
     ) -> dict[str, Any]:
         return self._store.build_task(
             task_id=task_id,
@@ -177,6 +194,7 @@ class A2AServerGateway(BaseModel):
             trace_id=trace_id,
             group_id=group_id,
             state=state,
+            error=error,
         )
 
     async def _invoke_mas_chat(
@@ -250,10 +268,18 @@ class A2AServerGateway(BaseModel):
                     answer="Task is running.",
                     trace_id=task_id,
                     group_id=context_id,
-                    state="working",
+                    state=TaskState.working,
                 )
                 return task, "", task_id, context_id
 
+            self._build_task(
+                task_id=task_id,
+                context_id=context_id,
+                answer="Task is pending.",
+                trace_id=task_id,
+                group_id=context_id,
+                state=TaskState.submitted,
+            )
             self._store.mark_running(task_id)
             self._build_task(
                 task_id=task_id,
@@ -261,7 +287,7 @@ class A2AServerGateway(BaseModel):
                 answer="Task is running.",
                 trace_id=task_id,
                 group_id=context_id,
-                state="working",
+                state=TaskState.working,
             )
             try:
                 answer, trace_id, group_id = await self._invoke_mas_chat(
@@ -272,6 +298,15 @@ class A2AServerGateway(BaseModel):
                     metadata=metadata,
                 )
             except Exception as e:
+                self._build_task(
+                    task_id=task_id,
+                    context_id=context_id,
+                    answer=f"Task failed: {e}",
+                    trace_id=task_id,
+                    group_id=context_id,
+                    state=TaskState.failed,
+                    error=str(e),
+                )
                 logger.exception(
                     "A2A message/send failed",
                     extra={"task_id": task_id, "context_id": context_id},
@@ -338,9 +373,25 @@ class A2AServerGateway(BaseModel):
                 metadata=metadata,
             )
             if payload_for_mas is None:
+                self._build_task(
+                    task_id=task_id,
+                    context_id=context_id,
+                    answer=text,
+                    trace_id=task_id,
+                    group_id=context_id,
+                    state=TaskState.completed,
+                )
                 yield self._build_message_event(text, task_id, context_id)
                 return
 
+            self._build_task(
+                task_id=task_id,
+                context_id=context_id,
+                answer="Task is pending.",
+                trace_id=task_id,
+                group_id=context_id,
+                state=TaskState.submitted,
+            )
             self._store.mark_running(task_id)
             self._build_task(
                 task_id=task_id,
@@ -348,7 +399,7 @@ class A2AServerGateway(BaseModel):
                 answer="Task is running.",
                 trace_id=task_id,
                 group_id=context_id,
-                state="working",
+                state=TaskState.working,
             )
 
             redis_key = f"{self.mas.message_prefix}:{self.mas.name}:{task_id}"
@@ -357,6 +408,8 @@ class A2AServerGateway(BaseModel):
             )
             emitted = ""
             final_answer = ""
+            last_snapshot_chars = 0
+            last_snapshot_time = time.monotonic()
             try:
                 async for sse_msg in self.mas._process_redis_messages(redis_key, task_id):
                     if sse_msg.get("event", "message") == "close":
@@ -369,6 +422,30 @@ class A2AServerGateway(BaseModel):
                         continue
                     emitted += delta
                     final_answer = emitted
+                    should_refresh = False
+                    if (
+                        self.stream_task_update_char_interval > 0
+                        and (len(emitted) - last_snapshot_chars)
+                        >= self.stream_task_update_char_interval
+                    ):
+                        should_refresh = True
+                    if (
+                        self.stream_task_update_time_interval_seconds > 0
+                        and (time.monotonic() - last_snapshot_time)
+                        >= self.stream_task_update_time_interval_seconds
+                    ):
+                        should_refresh = True
+                    if should_refresh:
+                        self._build_task(
+                            task_id=task_id,
+                            context_id=context_id,
+                            answer=emitted,
+                            trace_id=task_id,
+                            group_id=context_id,
+                            state=TaskState.working,
+                        )
+                        last_snapshot_chars = len(emitted)
+                        last_snapshot_time = time.monotonic()
                     yield self._build_message_event(emitted, task_id, context_id)
 
                 oxy_response = await mas_task
@@ -384,7 +461,7 @@ class A2AServerGateway(BaseModel):
                     answer=final_answer,
                     trace_id=trace_id,
                     group_id=group_id,
-                    state="completed",
+                    state=TaskState.completed,
                 )
                 self._store.save_context(
                     context_id=context_id,
@@ -401,6 +478,31 @@ class A2AServerGateway(BaseModel):
                         "group_id": group_id,
                     },
                 )
+            except asyncio.CancelledError:
+                self._build_task(
+                    task_id=task_id,
+                    context_id=context_id,
+                    answer=final_answer or "Task canceled.",
+                    trace_id=task_id,
+                    group_id=context_id,
+                    state=TaskState.canceled,
+                )
+                raise
+            except Exception as e:
+                self._build_task(
+                    task_id=task_id,
+                    context_id=context_id,
+                    answer=f"Task failed: {e}",
+                    trace_id=task_id,
+                    group_id=context_id,
+                    state=TaskState.failed,
+                    error=str(e),
+                )
+                logger.exception(
+                    "A2A message/stream failed",
+                    extra={"task_id": task_id, "context_id": context_id},
+                )
+                raise RuntimeError(str(e))
             finally:
                 self._store.unmark_running(task_id)
 
@@ -415,7 +517,12 @@ class A2AServerGateway(BaseModel):
 
         async def run_cancel_task(task_id: str):
             task = await run_get_task(task_id)
-            task["status"] = {"state": "canceled"}
+            status = task.get("status", {}) if isinstance(task, dict) else {}
+            message = status.get("message") if isinstance(status, dict) else None
+            task["status"] = {"state": TaskState.canceled.value}
+            if message:
+                task["status"]["message"] = message
+            self._store.unmark_running(task_id)
             logger.info("A2A task canceled", extra={"task_id": task_id})
             return task
 
@@ -611,5 +718,3 @@ class A2AServerGateway(BaseModel):
             return await handle_unified_post(payload)
 
         return router
-
-

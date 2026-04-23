@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from a2a.types import TaskState
+
 from .a2a_protocol import build_agent_message, build_final_artifact
 
 
@@ -47,26 +49,41 @@ class A2AInMemoryStore:
         answer: str,
         trace_id: str,
         group_id: str,
-        state: str = "completed",
+        state: TaskState | str = TaskState.completed,
+        error: str | None = None,
     ) -> dict[str, Any]:
         """Build and cache task snapshot in memory."""
+        state_value = (
+            state.value if isinstance(state, TaskState) else str(state or TaskState.unknown.value)
+        )
+        if state_value == "pending":
+            state_value = TaskState.submitted.value
+
         task = {
             "kind": "task",
             "id": task_id,
             "contextId": context_id,
             "metadata": {"traceId": trace_id, "groupId": group_id},
         }
-        if state == "completed":
+        if state_value == TaskState.completed.value:
             task["status"] = {
-                "state": "completed",
+                "state": state_value,
                 "message": build_agent_message(answer, task_id, context_id),
             }
             task["artifacts"] = [build_final_artifact(answer)]
+            task["result"] = {"output": answer}
+        elif state_value == TaskState.failed.value:
+            msg = error or answer or "Task failed."
+            task["status"] = {
+                "state": state_value,
+                "message": build_agent_message(msg, task_id, context_id),
+            }
+            task["error"] = {"message": msg}
         else:
             task["status"] = {
-                "state": state,
+                "state": state_value,
                 "message": build_agent_message(
-                    answer or "Task is running.", task_id, context_id
+                    answer or "Task is processing.", task_id, context_id
                 ),
             }
         self.task_store[task_id] = task
