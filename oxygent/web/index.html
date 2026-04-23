@@ -88,7 +88,20 @@
     </div>
 </div>
 <div class="container">
-    <div class="center xMind">
+    <div class="center">
+        <div class="center-scroll xMind">
+            <div id="org-zoom-wrapper"></div>
+        </div>
+        <div id="org-minimap">
+            <canvas id="org-minimap-canvas" width="150" height="100"></canvas>
+            <div id="org-minimap-viewport"></div>
+        </div>
+        <div id="org-zoom-controls">
+            <button id="org-zoom-out" title="Zoom out">&minus;</button>
+            <span id="org-zoom-level">100%</span>
+            <button id="org-zoom-in" title="Zoom in">+</button>
+            <button id="org-zoom-reset" title="Reset zoom">&#x27F2;</button>
+        </div>
     </div>
     <div class="left">
         <div class="left_bottom">
@@ -164,6 +177,7 @@
         </div>
     </div>
 
+    <div class="resize-handle" id="rightResizeHandle"></div>
     <div class="right" id="rightId">
         <div class="right-container">
             <div id="agent_log">
@@ -202,7 +216,7 @@
     var div_right = $("#agent_log");
     var div_chat_history = $("#chat_history");
     var div_chatbox = $("#chatbox");
-    var div_org = $(".center");
+    var div_org = $("#org-zoom-wrapper");
     var interval_id = null;
     var no_change_history = true;
     var now_script_id = '';
@@ -766,6 +780,191 @@
             }
         });
     }
+
+    // ── Zoom & Minimap ──
+    var orgZoomLevel = 1.0;
+    var orgContainer = document.querySelector('.center-scroll');
+    var orgWrapper = document.getElementById('org-zoom-wrapper');
+    var orgMinimapCanvas = document.getElementById('org-minimap-canvas');
+    var orgMinimapViewport = document.getElementById('org-minimap-viewport');
+    var orgZoomLevelSpan = document.getElementById('org-zoom-level');
+
+    function updateOrgZoom() {
+        orgWrapper.style.transform = 'scale(' + orgZoomLevel + ')';
+        orgZoomLevelSpan.textContent = Math.round(orgZoomLevel * 100) + '%';
+        // After scale changes, scroll dimensions change — update minimap after a short delay
+        setTimeout(updateMinimap, 150);
+    }
+
+    function orgZoomIn() {
+        orgZoomLevel = Math.min(1.5, Math.round((orgZoomLevel + 0.1) * 10) / 10);
+        updateOrgZoom();
+    }
+    function orgZoomOut() {
+        orgZoomLevel = Math.max(0.3, Math.round((orgZoomLevel - 0.1) * 10) / 10);
+        updateOrgZoom();
+    }
+    function orgZoomReset() {
+        orgZoomLevel = 1.0;
+        updateOrgZoom();
+    }
+
+    document.getElementById('org-zoom-in').addEventListener('click', orgZoomIn);
+    document.getElementById('org-zoom-out').addEventListener('click', orgZoomOut);
+    document.getElementById('org-zoom-reset').addEventListener('click', orgZoomReset);
+
+    // Ctrl/Cmd + wheel to zoom
+    orgContainer.addEventListener('wheel', function (e) {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            if (e.deltaY < 0) orgZoomIn(); else orgZoomOut();
+        }
+    }, { passive: false });
+
+    // ── Minimap rendering ──
+    function updateMinimap() {
+        var canvas = orgMinimapCanvas;
+        var ctx = canvas.getContext('2d');
+        var cw = canvas.width, ch = canvas.height;
+        ctx.clearRect(0, 0, cw, ch);
+
+        // Content size = wrapper's scrollable extent (unscaled)
+        var contentW = orgWrapper.scrollWidth;
+        var contentH = orgWrapper.scrollHeight;
+        if (contentW === 0 || contentH === 0) return;
+
+        // Scale factor to fit content into minimap
+        var scaleX = cw / contentW;
+        var scaleY = ch / contentH;
+        var scale = Math.min(scaleX, scaleY);
+
+        // Offset to center the drawing in minimap
+        var offX = (cw - contentW * scale) / 2;
+        var offY = (ch - contentH * scale) / 2;
+
+        // Draw each node as a small rectangle
+        var nodes = orgWrapper.querySelectorAll('.item-template');
+        ctx.fillStyle = '#C5D3E8';
+        ctx.strokeStyle = '#93A8C9';
+        ctx.lineWidth = 0.5;
+        nodes.forEach(function (node) {
+            // Get position relative to wrapper (since wrapper is the offset parent via inline-block)
+            var r = node.getBoundingClientRect();
+            var wr = orgWrapper.getBoundingClientRect();
+            var nx = (r.left - wr.left) / orgZoomLevel;
+            var ny = (r.top - wr.top) / orgZoomLevel;
+            var nw = r.width / orgZoomLevel;
+            var nh = r.height / orgZoomLevel;
+
+            var x = offX + nx * scale;
+            var y = offY + ny * scale;
+            var w = nw * scale;
+            var h = nh * scale;
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeRect(x, y, w, h);
+        });
+
+        // Draw selected node highlight
+        var selected = orgWrapper.querySelector('.item-template.select');
+        if (selected) {
+            var sr = selected.getBoundingClientRect();
+            var swr = orgWrapper.getBoundingClientRect();
+            var sx = offX + ((sr.left - swr.left) / orgZoomLevel) * scale;
+            var sy = offY + ((sr.top - swr.top) / orgZoomLevel) * scale;
+            var sw = (sr.width / orgZoomLevel) * scale;
+            var sh = (sr.height / orgZoomLevel) * scale;
+            ctx.fillStyle = '#155EEE';
+            ctx.fillRect(sx, sy, sw, sh);
+        }
+
+        // Update viewport rectangle
+        // Visible area in content coordinates (unscaled)
+        var visW = orgContainer.clientWidth / orgZoomLevel;
+        var visH = orgContainer.clientHeight / orgZoomLevel;
+        var scrollL = orgContainer.scrollLeft / orgZoomLevel;
+        var scrollT = orgContainer.scrollTop / orgZoomLevel;
+
+        var vpLeft = offX + scrollL * scale;
+        var vpTop = offY + scrollT * scale;
+        var vpW = visW * scale;
+        var vpH = visH * scale;
+
+        orgMinimapViewport.style.left = vpLeft + 'px';
+        orgMinimapViewport.style.top = vpTop + 'px';
+        orgMinimapViewport.style.width = vpW + 'px';
+        orgMinimapViewport.style.height = vpH + 'px';
+    }
+
+    // Sync minimap on scroll
+    orgContainer.addEventListener('scroll', updateMinimap);
+
+    // Drag viewport on minimap to scroll
+    (function () {
+        var dragging = false;
+        var startX, startY, startScrollL, startScrollT;
+
+        var minimap = document.getElementById('org-minimap');
+
+        function getMinimapScale() {
+            var contentW = orgWrapper.scrollWidth;
+            var contentH = orgWrapper.scrollHeight;
+            var cw = orgMinimapCanvas.width, ch = orgMinimapCanvas.height;
+            var scaleX = cw / contentW;
+            var scaleY = ch / contentH;
+            return Math.min(scaleX, scaleY);
+        }
+
+        minimap.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            dragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startScrollL = orgContainer.scrollLeft;
+            startScrollT = orgContainer.scrollTop;
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!dragging) return;
+            var scale = getMinimapScale();
+            if (scale === 0) return;
+            var dx = (e.clientX - startX) / scale * orgZoomLevel;
+            var dy = (e.clientY - startY) / scale * orgZoomLevel;
+            orgContainer.scrollLeft = startScrollL + dx;
+            orgContainer.scrollTop = startScrollT + dy;
+        });
+
+        document.addEventListener('mouseup', function () {
+            dragging = false;
+        });
+
+        // Click on minimap to jump
+        minimap.addEventListener('click', function (e) {
+            if (e.target === orgMinimapViewport) return;
+            var rect = minimap.getBoundingClientRect();
+            var mx = e.clientX - rect.left;
+            var my = e.clientY - rect.top;
+
+            var contentW = orgWrapper.scrollWidth;
+            var contentH = orgWrapper.scrollHeight;
+            var cw = orgMinimapCanvas.width, ch = orgMinimapCanvas.height;
+            var scale = getMinimapScale();
+            var offX = (cw - contentW * scale) / 2;
+            var offY = (ch - contentH * scale) / 2;
+
+            var contentX = (mx - offX) / scale;
+            var contentY = (my - offY) / scale;
+
+            orgContainer.scrollLeft = contentX * orgZoomLevel - orgContainer.clientWidth / 2;
+            orgContainer.scrollTop = contentY * orgZoomLevel - orgContainer.clientHeight / 2;
+        });
+    })();
+
+    // Refresh minimap after tree renders
+    var _origInitOrg = init_organization;
+    init_organization = function () {
+        _origInitOrg();
+        setTimeout(updateMinimap, 200);
+    };
 
     function init_chat_box() {
         historys = [];
@@ -1358,6 +1557,7 @@
                 }
             });
             node_state = JSON.parse(JSON.stringify(new_node_state));
+            if (typeof updateMinimap === 'function') updateMinimap();
         }
     }
 
@@ -1468,7 +1668,7 @@
 
     function focus_agent(eid) {
         var target_div = $("#" + eid);
-        var window_div = div_org;
+        var window_div = $(".center-scroll");
 
         // 1. 计算target_div相对于window_div的坐标
         var td_offset = target_div.offset() || {};
@@ -1619,15 +1819,55 @@
     // 关闭最右侧对话框
     function closeRight() {
         $('#rightId').css('display', 'none');
+        $('#rightResizeHandle').css('display', 'none');
         $('#message_group').html('<img src="./image/group-vector-active.svg" alt=""/>')
     }
 
     function openRight() {
         if ($('#rightId').css('display') == 'none') {
             $('#message_group').html('<img src="./image/group-vector-default.svg" alt=""/>')
-            $('#rightId').css('display', 'block');    
+            $('#rightId').css('display', 'block');
+            $('#rightResizeHandle').css('display', 'block');
         }
     }
+
+    // ── Right panel resize handle ──
+    (function () {
+        var handle = document.getElementById('rightResizeHandle');
+        var rightPanel = document.getElementById('rightId');
+        var dragging = false;
+        var startX, startWidth;
+
+        handle.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            dragging = true;
+            startX = e.clientX;
+            startWidth = rightPanel.offsetWidth;
+            handle.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!dragging) return;
+            // Use mouse position relative to container's right edge to compute max width.
+            // This guarantees the right panel can never extend past the viewport.
+            var containerRect = rightPanel.parentElement.getBoundingClientRect();
+            var rightMargin = 20;
+            var maxFromEdge = containerRect.right - e.clientX - handle.offsetWidth - rightMargin;
+            var newWidth = startWidth - (e.clientX - startX);
+            newWidth = Math.max(200, Math.min(newWidth, maxFromEdge));
+            rightPanel.style.flex = '0 0 ' + newWidth + 'px';
+        });
+
+        document.addEventListener('mouseup', function () {
+            if (!dragging) return;
+            dragging = false;
+            handle.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        });
+    })();
 
 
     var _cascaderOptions = [
