@@ -76,7 +76,7 @@ class MAS(BaseModel):
 
     welcome_message: str = Field(default_factory=Config.get_agent_welcome_message)
 
-    agent_organization: dict = Field(default_factory=list)
+    agent_organization: dict = Field(default_factory=dict)
 
     vearch_client: Optional[VearchDB] = Field(None)
     es_client: Optional[AsyncElasticsearch] = Field(None)
@@ -150,8 +150,10 @@ class MAS(BaseModel):
         logger.info("=" * 64)
         logger.info("🪂 OxyGent MAS Application Exit")
         logger.info("=" * 64)
-        await self.es_client.close()
-        await self.redis_client.close()
+        if self.es_client:
+            await self.es_client.close()
+        if self.redis_client:
+            await self.redis_client.close()
         await self.cleanup_servers()
 
     @classmethod
@@ -871,6 +873,7 @@ class MAS(BaseModel):
         Returns:
             OxyResponse: Fully populated response object.
         """
+        oxy_request = None
         try:
             if "shared_data" not in payload:
                 payload["shared_data"] = dict()
@@ -993,7 +996,8 @@ class MAS(BaseModel):
             logger.error(traceback.format_exc())
             raise
         finally:
-            self.clear_queues(oxy_request.current_trace_id)
+            if oxy_request:
+                self.clear_queues(oxy_request.current_trace_id)
 
     # ------------------------------------------------------------------
     # Interactive CLI helper
@@ -1460,7 +1464,7 @@ class MAS(BaseModel):
                 port=port,
                 log_level=Config.get_server_log_level().lower(),
                 log_config=None,
-                workers=Config.set_server_workers(),
+                workers=Config.get_server_workers(),
             )
             server = uvicorn.Server(config)
             asyncio.create_task(log_and_open())

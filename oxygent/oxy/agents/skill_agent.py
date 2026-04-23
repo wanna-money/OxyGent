@@ -200,6 +200,7 @@ class SkillAgent(ReActAgent):
         await self._discover_skills()
 
         # Phase 2: Build skill prompt and enhance system prompt
+        self._skill_entries = []
         await self._build_skill_prompt()
 
         # Phase 3: Call parent init

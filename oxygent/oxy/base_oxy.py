@@ -226,11 +226,11 @@ class Oxy(BaseModel, ABC):
                 args_desc.append(arg_desc)
 
         self.desc_for_llm = f"""
-            Tool: {self.name}
-            Description: {self.desc}
-            Arguments:
-            {chr(10).join(args_desc)}
-            """
+Tool: {self.name}
+Description: {self.desc}
+Arguments:
+{chr(10).join(args_desc)}
+"""
 
     async def init(self):
         self._set_desc_for_llm()
@@ -287,7 +287,7 @@ class Oxy(BaseModel, ABC):
                     "size": 1,
                 },
             )
-            logging.info(f"ES search returned {len(es_response['hits']['hits'])} hits")
+            logger.info(f"ES search returned {len(es_response['hits']['hits'])} hits")
             if es_response["hits"]["hits"]:
                 current_node_order = es_response["hits"]["hits"][0]["_source"][
                     "update_time"

@@ -164,8 +164,8 @@ async def get_node_info(item_id: str):
                 if "input" in node_data:
                     node_data["input"] = json.loads(node_data["input"])
 
-                if "prompt" in node_data["input"]["class_attr"]:
-                    del node_data["input"]["class_attr"]["prompt"]
+                    if "prompt" in node_data["input"]["class_attr"]:
+                        del node_data["input"]["class_attr"]["prompt"]
                 env_value_to_key = {v: k for k, v in os.environ.items()}
 
                 # Generate the maximum and minimum values for the data range

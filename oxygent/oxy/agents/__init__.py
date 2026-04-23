@@ -4,6 +4,7 @@ from .plan_and_solve_agent import PlanAndSolveAgent
 from .rag_agent import RAGAgent
 from .react_agent import ReActAgent
 from .shell_use_agent import ShellUseAgent
+from .skill_agent import SkillAgent
 from .sse_oxy_agent import SSEOxyGent
 from .workflow_agent import WorkflowAgent
 
@@ -16,4 +17,5 @@ __all__ = [
     "SSEOxyGent",
     "PlanAndSolveAgent",
     "ShellUseAgent",
+    "SkillAgent",
 ]

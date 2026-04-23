@@ -233,7 +233,7 @@ class LocalEs(BaseEs):
                     filtered_docs = self._filter_docs(filtered_docs, condition)
                 return filtered_docs
 
-            if "should" in bool_query:
+            elif "should" in bool_query:
                 should_conditions = bool_query["should"]
                 filtered_docs = []
                 for doc in docs:
@@ -243,7 +243,7 @@ class LocalEs(BaseEs):
                             break
                 return filtered_docs
 
-            if "must_not" in bool_query:
+            elif "must_not" in bool_query:
                 must_not_conditions = bool_query["must_not"]
                 filtered_docs = []
                 for doc in docs:

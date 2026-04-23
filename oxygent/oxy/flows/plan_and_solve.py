@@ -42,7 +42,9 @@ class PlanAndSolve(BaseFlow):
     pre_plan_steps: List[str] = Field(None, description="pre plan steps")
 
     enable_replanner: bool = Field(False, description="enable replanner")
-    replanner_agent_name: str = Field("replanner_agent", description="replanner agent name")
+    replanner_agent_name: str = Field(
+        "replanner_agent", description="replanner agent name"
+    )
 
     executor_agent_name: str = Field(
         "executor_agent", description="executor agent name"
@@ -83,12 +85,13 @@ class PlanAndSolve(BaseFlow):
         past_steps = ""
         original_query = oxy_request.get_query()
         plan_steps = self.pre_plan_steps
+        plan_response = None
         for current_round in range(self.max_replan_rounds + 1):
             if (current_round == 0) and (self.pre_plan_steps is None):
                 if self.pydantic_parser_planner:
                     query = self.pydantic_parser_planner.format(original_query)
                 else:
-                    query = original_query.copy()
+                    query = original_query
 
                 oxy_response = await oxy_request.call(
                     callee=self.planner_agent_name,
@@ -191,5 +194,5 @@ class PlanAndSolve(BaseFlow):
         )
         return OxyResponse(
             state=OxyState.COMPLETED,
-            output=oxy_response.response,
+            output=oxy_response.output,
         )
