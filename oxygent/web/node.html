@@ -14,6 +14,7 @@
     <link href="./css/main.css" rel="stylesheet">
     <link href="./css/gantt.css" rel="stylesheet">
     <link href="./css/flowchart_view1.css" rel="stylesheet">
+    <link href="./css/swimlane.css" rel="stylesheet">
 
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
     <script src="./js/marked.min.js"></script>
@@ -23,6 +24,7 @@
     <script src="./js/utils.js"></script>
     <script src='./js/autosize.js'></script>
     <script src="./js/flowchart.js"></script>
+    <script src="./js/swimlane.js"></script>
 </head>
 <body>
 
@@ -43,6 +45,9 @@
                         <div class="tab-item" data-id="gantt-container-section">
                             <span class="tab-text ">View 2</span>
                         </div>
+                        <div class="tab-item" data-id="swimlane-container-section">
+                            <span class="tab-text ">View 3</span>
+                        </div>
                     </div>
                 </div>
                 <div class="node-node-map-row-col">
@@ -57,6 +62,7 @@
                 <div id="flowchartId">
                     <div id="flowchart-container" class="view1-flowchart"></div>
                     <div id="flowchart-container-gantt"></div>
+                    <div id="swimlane-container" style="display:none;"></div>
                 </div>
             </div>
             <div class="resize-handle" id="resizeHandle"></div>
@@ -631,6 +637,16 @@
         renderGanttClickHighlight(id, tagName);
     })
 
+    $('#swimlane-container').on('click', '.seq-msg-clickable', function () {
+        var id = $(this).attr('id');
+        if (id) {
+            $('#swimlane-container .seq-msg').removeClass('checked');
+            $(this).addClass('checked');
+            resetHtmlEmpty();
+            get_plan(id);
+        }
+    });
+
 
 
     $(".tabs .tab-item").click(function () {
@@ -643,15 +659,22 @@
             renderFlowchart(ViewsDatas, 'flowchart-container');
             $('#flowchart-container').css('display', 'flex');
             $('#flowchart-container-gantt').css('display', 'none');
+            $('#swimlane-container').css('display', 'none');
 
         } else if (index === 'gantt-container-section') {
             renderGantt(ViewsDatas, 'flowchart-container-gantt');
             $('#flowchart-container').css('display', 'none');
             $('#flowchart-container-gantt').css('display', 'block');
-        
+            $('#swimlane-container').css('display', 'none');
+
             setTimeout(() => {
-                renderGanttClickHighlight(param_id, 'rect');    
+                renderGanttClickHighlight(param_id, 'rect');
             }, 100);
+        } else if (index === 'swimlane-container-section') {
+            renderSwimlane(ViewsDatas, 'swimlane-container');
+            $('#flowchart-container').css('display', 'none');
+            $('#flowchart-container-gantt').css('display', 'none');
+            $('#swimlane-container').css('display', 'block');
         }
         // 3.让下部里面相应索引号的item显示，其余的item隐藏
     });

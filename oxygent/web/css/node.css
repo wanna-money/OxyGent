@@ -544,7 +544,7 @@ li {
     display: flex;
     gap: 4px;
     box-sizing: border-box;
-    width: 109px;
+    width: auto;
     height: 27px;
     padding-top: 3px;
     padding-left: 3px;
