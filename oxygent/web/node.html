@@ -59,6 +59,7 @@
                     <div id="flowchart-container-gantt"></div>
                 </div>
             </div>
+            <div class="resize-handle" id="resizeHandle"></div>
         </div>
         <!--        <div id="chart_log_close">-->
         <!--            <button id="chart_log_close_id">-->
@@ -705,5 +706,41 @@
         modLeftClassAttrId.style.height = availableHeight + 'px';
         modLeftClassAttrId.style.overflow = 'auto';
     }
+    // Resize handle for the top visualization panel
+    (function () {
+        const resizeHandle = document.getElementById('resizeHandle');
+        const flowchartId = document.getElementById('flowchartId');
+        let isResizing = false;
+        let startY = 0;
+        let startHeight = 0;
+
+        resizeHandle.addEventListener('mousedown', function (e) {
+            isResizing = true;
+            startY = e.clientY;
+            startHeight = flowchartId.offsetHeight;
+            resizeHandle.classList.add('active');
+            document.body.style.cursor = 'ns-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!isResizing) return;
+            var newHeight = startHeight + (e.clientY - startY);
+            if (newHeight < 80) newHeight = 80;
+            if (newHeight > window.innerHeight * 0.8) newHeight = window.innerHeight * 0.8;
+            flowchartId.style.height = newHeight + 'px';
+        });
+
+        document.addEventListener('mouseup', function () {
+            if (!isResizing) return;
+            isResizing = false;
+            resizeHandle.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            adjustModLeftHeight('modLeftClassAttrId');
+            adjustModLeftHeight('rightArgumentsId');
+        });
+    })();
 </script>
 </html>
