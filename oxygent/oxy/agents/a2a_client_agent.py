@@ -116,6 +116,7 @@ class A2AClientAgent(RemoteAgent):
         agent_card_url: str | None = None,
         card_url: str | None = None,
         metadata: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
         streaming: bool = False,
         append_stream_suffix_to_url: bool = False,
         timeout: float = 120.0,
@@ -130,6 +131,7 @@ class A2AClientAgent(RemoteAgent):
             server_url=server_url,
             agent_card_url=agent_card_url or card_url,
             metadata=metadata or {},
+            headers=headers or {},
             streaming=streaming,
             append_stream_suffix_to_url=append_stream_suffix_to_url,
             timeout=timeout,
@@ -137,6 +139,17 @@ class A2AClientAgent(RemoteAgent):
             task_poll_interval_seconds=task_poll_interval_seconds,
             task_poll_max_wait_seconds=task_poll_max_wait_seconds,
         )
+
+    @staticmethod
+    def _sanitize_headers(raw_headers: dict[str, Any] | None) -> dict[str, str]:
+        """Drop unsafe headers and normalize values to strings."""
+        if not isinstance(raw_headers, dict):
+            return {}
+        return {
+            str(k): str(v)
+            for k, v in raw_headers.items()
+            if k and v is not None and str(k).lower() not in EXCLUDED_HEADERS
+        }
 
     @staticmethod
     def _derive_rpc_url_from_card_url(card_url: str) -> str:
@@ -196,8 +209,9 @@ class A2AClientAgent(RemoteAgent):
             },
         )
 
+        static_headers = self._sanitize_headers(self.headers)
         self._http_client = httpx.AsyncClient(
-            headers=self.headers or None, timeout=self.timeout
+            headers=static_headers or None, timeout=self.timeout
         )
         resolver = A2ACardResolver(
             httpx_client=self._http_client,
@@ -291,13 +305,7 @@ class A2AClientAgent(RemoteAgent):
     def _build_http_kwargs(self, oxy_request: OxyRequest) -> dict[str, Any] | None:
         """Build per-request http kwargs with safe inherited headers."""
         raw_headers = oxy_request.get_shared_data("_headers", {})
-        if not isinstance(raw_headers, dict):
-            return None
-        inherited = {
-            k: v
-            for k, v in raw_headers.items()
-            if k and k.lower() not in EXCLUDED_HEADERS
-        }
+        inherited = self._sanitize_headers(raw_headers)
         if not inherited:
             return None
         return {"headers": inherited}

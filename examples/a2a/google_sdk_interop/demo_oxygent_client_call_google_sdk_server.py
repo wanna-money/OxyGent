@@ -41,6 +41,7 @@ async def main():
             streaming=False,
             timeout=60,
             enable_task_polling=False,
+            headers=DEMO_HEADERS
         )
     ]
 
