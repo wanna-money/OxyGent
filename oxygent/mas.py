@@ -867,7 +867,9 @@ class MAS(BaseModel):
         them to the browser.
 
         Args:
-            payload: Mapping that **must** contain the key ``query``.
+            payload: Mapping that contains the key ``query`` (optional when
+                ``restart_node_id`` is provided — the original query is
+                auto‑retrieved from the database).
             send_msg_key: Optional Redis key for SSE streaming.
 
         Returns:
@@ -877,7 +879,6 @@ class MAS(BaseModel):
         try:
             if "shared_data" not in payload:
                 payload["shared_data"] = dict()
-            payload["shared_data"]["query"] = payload["query"]
 
             # Initialize metrics dict and record query start time
             metrics = payload["shared_data"].setdefault("_metrics", {})
@@ -919,10 +920,63 @@ class MAS(BaseModel):
                         logger.info(
                             f"Found restart node {payload['restart_node_id']}, auto-set trace_id to {restart_node_data['trace_id']}"
                         )
+
+                    # Auto-retrieve original query (and from_trace_id) from trace record
+                    # when caller did not supply them, so that restart only needs restart_node_id.
+                    if not payload.get("query") or not payload.get("from_trace_id"):
+                        trace_id_for_lookup = restart_node_data["trace_id"]
+                        try:
+                            trace_response = await self.es_client.search(
+                                Config.get_app_name() + "_trace",
+                                {
+                                    "query": {"term": {"_id": trace_id_for_lookup}},
+                                    "size": 1,
+                                },
+                            )
+                            trace_hits = trace_response.get("hits", {}).get("hits", [])
+                            if trace_hits:
+                                trace_source = trace_hits[0]["_source"]
+                                if not payload.get("query"):
+                                    raw_input = trace_source.get("input", "")
+                                    try:
+                                        parsed_input = (
+                                            json.loads(raw_input)
+                                            if isinstance(raw_input, str)
+                                            else raw_input
+                                        )
+                                    except json.JSONDecodeError:
+                                        parsed_input = {}
+                                    if isinstance(parsed_input, dict):
+                                        original_query = parsed_input.get("query", "")
+                                        if original_query:
+                                            payload["query"] = original_query
+                                            logger.info(
+                                                f"Auto-retrieved query from trace {trace_id_for_lookup} for restart"
+                                            )
+                                if not payload.get("from_trace_id"):
+                                    historical_from_trace = trace_source.get(
+                                        "from_trace_id", ""
+                                    )
+                                    if historical_from_trace:
+                                        payload["from_trace_id"] = historical_from_trace
+                            else:
+                                logger.warning(
+                                    f"Trace {trace_id_for_lookup} not found when auto-retrieving query for restart"
+                                )
+                        except Exception as e:
+                            logger.warning(
+                                f"Failed to auto-retrieve query from trace {trace_id_for_lookup}: {e}"
+                            )
                 else:
                     logger.warning(
                         f"Restart node {payload['restart_node_id']} not found in ES"
                     )
+
+            # Ensure query default and sync into shared_data AFTER restart auto-fill,
+            # so that auto-retrieved query can propagate correctly.
+            if "query" not in payload:
+                payload["query"] = ""
+            payload["shared_data"]["query"] = payload["query"]
 
             oxy_request = OxyRequest(mas=self)
             if not send_msg_key:
@@ -1188,7 +1242,9 @@ class MAS(BaseModel):
         async def no_cache_static(request: Request, call_next):
             response = await call_next(request)
             if request.url.path.startswith("/web/"):
-                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+                response.headers["Cache-Control"] = (
+                    "no-cache, no-store, must-revalidate"
+                )
                 response.headers["Pragma"] = "no-cache"
                 response.headers["Expires"] = "0"
             return response

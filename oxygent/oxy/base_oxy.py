@@ -268,7 +268,7 @@ Arguments:
         if (
             oxy_request.reference_trace_id
             and oxy_request.restart_node_id
-            and oxy_request.is_load_data_for_restart
+            and oxy_request.get_shared_data("_is_read_cache_for_restart", True)
             and self.mas
             and self.mas.es_client
             and self.category in ["llm", "tool"]
@@ -320,7 +320,7 @@ Arguments:
                     oxy_request.restart_node_output
                     and current_node_order == oxy_request.restart_node_order
                 ):
-                    oxy_request.is_load_data_for_restart = False
+                    oxy_request.set_shared_data("_is_read_cache_for_restart", False)
                     restart_node_output = oxy_request.restart_node_output
                     logger.info(
                         f"{' <<< '.join(oxy_request.call_stack)}  Wrote by user: {restart_node_output}",
@@ -342,7 +342,7 @@ Arguments:
                     oxy_response.oxy_request = oxy_request
                     return await self._format_output(oxy_response)
                 else:
-                    oxy_request.is_load_data_for_restart = False
+                    oxy_request.set_shared_data("_is_read_cache_for_restart", False)
             else:
                 logger.warning(
                     f"{' === '.join(oxy_request.call_stack)}  : load null from ES.",
@@ -387,7 +387,7 @@ Arguments:
                     "node_id_stack": oxy_request.node_id_stack,
                     "pre_node_ids": oxy_request.pre_node_ids,
                     "shared_data": to_save_shared_data,
-                    "create_time": get_format_time(),
+                    "create_time": oxy_request.create_time,
                 },
             )
         else:
@@ -505,7 +505,7 @@ Arguments:
                     "output": to_json(oxy_response.output),
                     "state": oxy_response.state.value,
                     "extra": to_json(oxy_response.extra),
-                    "update_time": get_format_time(),
+                    "update_time": oxy_request.update_time,
                 },
             )
         else:
@@ -589,6 +589,7 @@ Arguments:
 
             event = asyncio.Event()
             if self.mas:
+                oxy_request.create_time = get_format_time()
 
                 def pre_done_callback(task):
                     self.mas.background_tasks.discard(task)
@@ -688,6 +689,7 @@ Arguments:
             await self._post_log(oxy_response)
 
             if self.mas:
+                oxy_request.update_time = get_format_time()
 
                 async def _post_save_data_task(oxy_response):
                     await event.wait()

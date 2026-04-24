@@ -74,9 +74,6 @@ class OxyRequest(BaseModel):
     restart_node_id: Optional[str] = Field("", description="")
     restart_node_output: Optional[str] = Field("", description="")
     restart_node_order: Optional[str] = Field("", description="")
-    is_load_data_for_restart: bool = Field(
-        True, description="wehether to load data from database"
-    )
     input_md5: Optional[str] = Field("", description="")
     root_trace_ids: list = Field(default_factory=list, description="")
     mas: Optional[Any] = Field(None, description="", repr=False)
@@ -113,6 +110,9 @@ class OxyRequest(BaseModel):
     group_data: dict = Field(
         default_factory=dict, description="public data in the scope of a session group"
     )
+
+    create_time: Optional[str] = Field(None, description="create_time")
+    update_time: Optional[str] = Field(None, description="update_time")
 
     @property
     def session_name(self) -> str:  # We use a easy method to create session name
