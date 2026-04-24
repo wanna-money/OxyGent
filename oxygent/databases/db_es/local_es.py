@@ -220,6 +220,9 @@ class LocalEs(BaseEs):
         if not query:
             return docs
 
+        if "match_all" in query:
+            return docs
+
         if "term" in query:
             k, v = next(iter(query["term"].items()))
             if k == "_id":
@@ -230,39 +233,69 @@ class LocalEs(BaseEs):
             k, vlist = next(iter(query["terms"].items()))
             return [d for d in docs if d["_source"].get(k) in vlist]
 
+        if "match" in query:
+            k, v = next(iter(query["match"].items()))
+            v_lower = str(v).lower()
+            if k == "_id":
+                return [d for d in docs if v_lower in str(d["_id"]).lower()]
+            return [
+                d for d in docs if v_lower in str(d["_source"].get(k, "")).lower()
+            ]
+
+        if "range" in query:
+            k, bounds = next(iter(query["range"].items()))
+            filtered = []
+            for d in docs:
+                val = d["_source"].get(k)
+                if val is None:
+                    continue
+                if "gte" in bounds and val < bounds["gte"]:
+                    continue
+                if "gt" in bounds and val <= bounds["gt"]:
+                    continue
+                if "lte" in bounds and val > bounds["lte"]:
+                    continue
+                if "lt" in bounds and val >= bounds["lt"]:
+                    continue
+                filtered.append(d)
+            return filtered
+
         if "bool" in query:
             bool_query = query["bool"]
+            filtered_docs = docs
 
-            if "must" in bool_query:
-                must_conditions = bool_query["must"]
-                filtered_docs = docs.copy()
+            # must: all conditions must match (AND)
+            for condition in bool_query.get("must", []):
+                filtered_docs = self._filter_docs(filtered_docs, condition)
 
-                for condition in must_conditions:
-                    filtered_docs = self._filter_docs(filtered_docs, condition)
-                return filtered_docs
+            # filter: same semantics as must for our purposes (AND, no scoring)
+            for condition in bool_query.get("filter", []):
+                filtered_docs = self._filter_docs(filtered_docs, condition)
 
-            elif "should" in bool_query:
-                should_conditions = bool_query["should"]
-                filtered_docs = []
-                for doc in docs:
-                    for cond in should_conditions:
-                        if self._match_single_condition(doc, cond):
-                            filtered_docs.append(doc)
-                            break
-                return filtered_docs
+            # must_not: exclude docs matching any condition
+            for cond in bool_query.get("must_not", []):
+                filtered_docs = [
+                    d for d in filtered_docs
+                    if not self._match_single_condition(d, cond)
+                ]
 
-            elif "must_not" in bool_query:
-                must_not_conditions = bool_query["must_not"]
-                filtered_docs = []
-                for doc in docs:
-                    exclude = False
-                    for cond in must_not_conditions:
-                        if self._match_single_condition(doc, cond):
-                            exclude = True
-                            break
-                    if not exclude:
-                        filtered_docs.append(doc)
-                return filtered_docs
+            # should: at least one condition must match (OR)
+            should_conditions = bool_query.get("should", [])
+            if should_conditions:
+                # When must/filter are absent, should acts as OR filter.
+                # When must/filter are present, should is optional (boost only)
+                # — we skip it here since we don't score.
+                has_required = bool_query.get("must") or bool_query.get("filter")
+                if not has_required:
+                    filtered_docs = [
+                        d for d in filtered_docs
+                        if any(
+                            self._match_single_condition(d, cond)
+                            for cond in should_conditions
+                        )
+                    ]
+
+            return filtered_docs
 
         return docs
 
@@ -311,7 +344,22 @@ class LocalEs(BaseEs):
                 field_value = str(doc["_id"])
             else:
                 field_value = str(doc["_source"].get(k, ""))
-            return v.lower() in field_value.lower()
+            return str(v).lower() in field_value.lower()
+
+        if "range" in condition:
+            k, bounds = next(iter(condition["range"].items()))
+            val = doc["_source"].get(k)
+            if val is None:
+                return False
+            if "gte" in bounds and val < bounds["gte"]:
+                return False
+            if "gt" in bounds and val <= bounds["gt"]:
+                return False
+            if "lte" in bounds and val > bounds["lte"]:
+                return False
+            if "lt" in bounds and val >= bounds["lt"]:
+                return False
+            return True
 
         return False
 
@@ -320,7 +368,13 @@ class LocalEs(BaseEs):
         for s in reversed(spec):
             for field, order in s.items():
                 reverse = order.get("order", "asc") == "desc"
-                docs.sort(key=lambda d: d["_source"].get(field), reverse=reverse)
+                docs.sort(
+                    key=lambda d, f=field: (
+                        d["_source"].get(f) is None,
+                        d["_source"].get(f),
+                    ),
+                    reverse=reverse,
+                )
         return docs
 
     async def get_by_node_id(
