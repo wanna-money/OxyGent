@@ -585,6 +585,8 @@ Arguments:
             oxy_request.input_md5 = get_md5(to_json(key_to_md5))
             result = await self._request_interceptor(oxy_request)
             if isinstance(result, OxyResponse):
+                await self._post_log(result)
+                await self._post_send_message(result)
                 return result
 
             event = asyncio.Event()

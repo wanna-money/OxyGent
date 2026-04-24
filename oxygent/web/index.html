@@ -192,6 +192,27 @@
 
     </div>
 </div>
+
+<!-- 编辑并重跑 模态框 -->
+<div id="restart-modal" class="restart-modal-overlay" style="display:none;">
+    <div class="restart-modal">
+        <div class="restart-modal-header">
+            <span>Edit Node Output & Restart</span>
+            <button type="button" class="restart-modal-close">&times;</button>
+        </div>
+        <div class="restart-modal-body">
+            <div class="restart-modal-hint">
+                Modify the output below, then restart inference from this node:
+            </div>
+            <textarea id="restart-output-editor" rows="12" spellcheck="false"></textarea>
+        </div>
+        <div class="restart-modal-footer">
+            <button type="button" id="restart-modal-cancel">Cancel</button>
+            <button type="button" id="restart-modal-confirm">Confirm & Restart</button>
+        </div>
+    </div>
+</div>
+
 </body>
 <script>
     var ws = null;
@@ -203,6 +224,7 @@
     var llm_is_work = false;
     var chats = [];
     var plan_dict = {};
+    var nodeContentMap = {};
     var historys = [];
     var tool_calls = [];
     var show_id = 0;
@@ -542,7 +564,7 @@
         return result;
     }
 
-    function push_plan(caller, type, content, node_id = '', callee) {
+    function push_plan(caller, type, content, node_id = '', callee, callee_category = '') {
         if (!plan_dict.hasOwnProperty(caller)) {
             plan_dict[caller] = {
                 "agent_name": caller,
@@ -557,7 +579,8 @@
                 "callee": callee,
                 "type": type,
                 "content": content,
-                "node_id": node_id
+                "node_id": node_id,
+                "callee_category": callee_category
             });
         } else {
             plan_dict[caller][type] = content;
@@ -669,7 +692,7 @@
                 // 清理所有流式输出元素
                 streaming_elements_map = {};
             } else if (jm["content"]["caller_category"] === 'agent' && jm["content"]["callee_category"] === 'agent') {
-                push_plan(jm["content"]["caller"], "observation", jm["content"].output, jm["content"].node_id, jm["content"]["callee"]);
+                push_plan(jm["content"]["caller"], "observation", jm["content"].output, jm["content"].node_id, jm["content"]["callee"], jm["content"]["callee_category"]);
                 history["agent_log"] = JSON.parse(JSON.stringify(plan_dict[jm["content"]["caller"]]));
 
                 var msg = {
@@ -680,7 +703,7 @@
                 chats.push(msg);
                 history["answer"] = JSON.parse(JSON.stringify(chats));
             } else if (jm["content"]["caller_category"] === 'agent' && jm["content"]["callee_category"] === 'llm') {
-                push_plan(jm["content"]["caller"], "plan", jm["content"].output, jm["content"].node_id, jm["content"]["callee"]);
+                push_plan(jm["content"]["caller"], "plan", jm["content"].output, jm["content"].node_id, jm["content"]["callee"], jm["content"]["callee_category"]);
                 history["agent_log"] = JSON.parse(JSON.stringify(plan_dict[jm["content"]["caller"]]));
                 // 流式输出完成，移除streaming-content类
                 // 注意：planning内容不保存到chats，只保存到plan_dict
@@ -698,7 +721,7 @@
                 }
                 current_streaming_agent = null;
             } else if (jm["content"]["caller_category"] === 'agent' && ['tool', 'bank', 'memory_bank'].includes(jm["content"]["callee_category"])) {
-                push_plan(jm["content"]["caller"], "observation", jm["content"].output, jm["content"].node_id, jm["content"]["callee"]);
+                push_plan(jm["content"]["caller"], "observation", jm["content"].output, jm["content"].node_id, jm["content"]["callee"], jm["content"]["callee_category"]);
                 history["agent_log"] = JSON.parse(JSON.stringify(plan_dict[jm["content"]["caller"]]));
             }
 
@@ -1426,6 +1449,53 @@
         }
     }
 
+    // 从中间节点重跑推理（利用 restart_node_id 后端能力）
+    function restart_from_node(nodeId, editedOutput) {
+        if (llm_is_work) return;
+        end();
+        plan_dict = {};
+        nodeContentMap = {};
+
+        var payload = {
+            "restart_node_id": nodeId,
+            "shared_data": {"extra": "extra argument"},
+        };
+        if (editedOutput !== undefined && editedOutput !== null) {
+            payload["restart_node_output"] = editedOutput;
+        }
+
+        // 使用与 send_message 相同的 EventSource GET 模式
+        eventSource = new EventSource('../sse/chat?payload=' + encodeURIComponent(JSON.stringify(payload)));
+        eventSource.onmessage = (event) => {
+            message_handler(event.data);
+        };
+        eventSource.onerror = (e) => {
+            console.log('SSE restart connection error', e);
+            $("#message_send").html('<img src="./image/up_arrow.svg" alt="" />');
+            eventSource.close();
+            llm_is_work = false;
+        };
+        eventSource.addEventListener("close", (event) => {
+            console.log("Restart complete, closing SSE:", event.data);
+            $("#message_send").html('<img src="./image/up_arrow.svg" alt="" />');
+            eventSource.close();
+            llm_is_work = false;
+        });
+
+        var hint = (editedOutput !== undefined && editedOutput !== null)
+            ? "[Restart with edited output] node_id: " + nodeId
+            : "[Restart from node] node_id: " + nodeId;
+        chats.push({"role": "user", "content": hint});
+        let history = JSON.parse(JSON.stringify(historys[historys.length - 1] || {}));
+        history["answer"] = JSON.parse(JSON.stringify(chats));
+        historys.push(history);
+        show_id += 1;
+        show_step();
+        send_msg_to_chatbox(hint);
+        llm_is_work = true;
+        $("#message_send").html('<img src="./image/stop-circle.svg" alt="" />');
+    }
+
     function show(jm) {
         // 渲染
         if (jm["type"] == "answer" || jm["type"] == "agent_call") {
@@ -1526,6 +1596,24 @@
                         temp_div.html(marked.marked(markdownInput));
                         a_tag.append(temp_div);
                         div_right.append(a_tag);
+
+                        // 节点操作按钮：仅 tool 和 llm 类型支持重跑
+                        var curNodeId = agent_log["plannings"][i].node_id;
+                        var curCalleeCategory = agent_log["plannings"][i].callee_category || "";
+                        nodeContentMap[curNodeId] = markdownInput;
+                        if (curCalleeCategory === "llm" || curCalleeCategory === "tool") {
+                            var node_actions = $("<div class='node-actions'>")
+                                .attr("data-node-id", curNodeId);
+                            node_actions.append(
+                                $("<button type='button' class='btn-restart' title='Restart from this node'>")
+                                    .html("<span class='node-action-icon'>&#9654;</span> ReRun")
+                            );
+                            node_actions.append(
+                                $("<button type='button' class='btn-edit-restart' title='Edit output and restart'>")
+                                    .html("<span class='node-action-icon'>&#9998;</span> Edit & ReRun")
+                            );
+                            div_right.append(node_actions);
+                        }
                     // }
                 }
             }
@@ -1574,6 +1662,8 @@
             }
         }
 
+        if (aimDom === null) return;
+
         if (aimDom.hasClass("collapse")) {
             aimDom.removeClass("collapse");
             aimDom.next().css({
@@ -1584,6 +1674,45 @@
             aimDom.next().css({
                 display: "none",
             })
+        }
+    });
+
+    // "从此重跑" 按钮事件
+    $("#agent_log").on("click", ".btn-restart", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var nodeId = $(this).closest(".node-actions").attr("data-node-id");
+        restart_from_node(nodeId, undefined);
+    });
+
+    // "编辑并重跑" 按钮事件 — 打开模态框
+    $("#agent_log").on("click", ".btn-edit-restart", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var actions = $(this).closest(".node-actions");
+        var nodeId = actions.attr("data-node-id");
+        var content = nodeContentMap[nodeId] || "";
+        $("#restart-output-editor").val(content);
+        $("#restart-modal").data("node-id", nodeId).show();
+    });
+
+    // 模态框确认
+    $(document).on("click", "#restart-modal-confirm", function () {
+        var nodeId = $("#restart-modal").data("node-id");
+        var edited = $("#restart-output-editor").val();
+        $("#restart-modal").hide();
+        restart_from_node(nodeId, edited);
+    });
+
+    // 模态框关闭 / 取消
+    $(document).on("click", "#restart-modal-cancel, .restart-modal-close", function () {
+        $("#restart-modal").hide();
+    });
+
+    // 点击模态框遮罩层关闭
+    $(document).on("click", ".restart-modal-overlay", function (e) {
+        if ($(e.target).hasClass("restart-modal-overlay")) {
+            $(this).hide();
         }
     });
 
