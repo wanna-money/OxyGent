@@ -156,10 +156,18 @@ class LocalEs(BaseEs):
             else:
                 data[doc_id] = body
 
-            # --- backup & persist ---
-            if await aiofiles.os.path.exists(data_path):
-                await aiofiles.os.replace(data_path, backup_path)
+            # --- persist & backup ---
+            # Write new data atomically first.  _write_json_atomic uses a temp
+            # file + os.replace, so data_path is *never* absent — the old file
+            # is atomically overwritten.  We create the backup *afterwards* so
+            # that concurrent lock-free readers (search) never see a missing
+            # data_path.
             await self._write_json_atomic(data_path, data)
+            try:
+                # Best-effort backup: copy the newly-persisted state.
+                await self._write_json_atomic(backup_path, data)
+            except Exception:  # noqa: BLE001 – backup is non-critical
+                pass
 
         return {"_id": doc_id, "result": "updated" if update_mode else "created"}
 
@@ -350,9 +358,11 @@ class LocalEs(BaseEs):
 
             data[target_doc_id].update(updates)
 
-            if await aiofiles.os.path.exists(data_path):
-                await aiofiles.os.replace(data_path, backup_path)
             await self._write_json_atomic(data_path, data)
+            try:
+                await self._write_json_atomic(backup_path, data)
+            except Exception:  # noqa: BLE001 – backup is non-critical
+                pass
 
             return {"_id": target_doc_id, "result": "updated"}
 
@@ -378,9 +388,11 @@ class LocalEs(BaseEs):
 
             del data[doc_id]
 
-            if await aiofiles.os.path.exists(data_path):
-                await aiofiles.os.replace(data_path, backup_path)
             await self._write_json_atomic(data_path, data)
+            try:
+                await self._write_json_atomic(backup_path, data)
+            except Exception:  # noqa: BLE001 – backup is non-critical
+                pass
 
             return {"_id": doc_id, "result": "deleted"}
 
