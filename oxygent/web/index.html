@@ -22,7 +22,7 @@
     <script src="./js/upload.js"></script>
     <script src="./js/message.js"></script>
 </head>
-<body>
+<body class="timeline-hidden">
 <div class="header">
     <div class="header-left">
         <img class="header-left-img" src="./image/group-favicon.png" alt="">
@@ -76,6 +76,9 @@
             </button>
             <div id="step"></div>
         </div>
+        <button class="btn-timeline-toggle" id="btn-timeline-toggle" onclick="toggleTimeline()" title="Toggle Timeline">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,9 7,5 11,9"/></svg>
+        </button>
         <!--        todo  中英文  主题-->
         <!--                <div class="global-buttons">-->
         <!--                    <button class="btn-theme">-->
@@ -85,6 +88,14 @@
         <!--                        <img src="./image/global-theme.svg" alt="">-->
         <!--                    </button>  -->
         <!--                </div>-->
+    </div>
+</div>
+<!-- Timeline Section -->
+<div class="timeline-section collapsed" id="timeline-section">
+    <div id="timeline-bar" class="timeline-bar">
+        <div class="timeline-track-wrapper" id="timeline-track-wrapper">
+            <div class="timeline-track" id="timeline-track"></div>
+        </div>
     </div>
 </div>
 <div class="container">
@@ -735,6 +746,7 @@
         historys.push(history);
         show_id += 1;
         show_step();
+        appendTimelineFrame(history, historys.length - 1);
     }
 
     function init_ws() {
@@ -867,9 +879,6 @@
 
         // Draw each node as a small rectangle
         var nodes = orgWrapper.querySelectorAll('.item-template');
-        ctx.fillStyle = '#C5D3E8';
-        ctx.strokeStyle = '#93A8C9';
-        ctx.lineWidth = 0.5;
         nodes.forEach(function (node) {
             // Get position relative to wrapper (since wrapper is the offset parent via inline-block)
             var r = node.getBoundingClientRect();
@@ -883,22 +892,23 @@
             var y = offY + ny * scale;
             var w = nw * scale;
             var h = nh * scale;
+
+            if (node.classList.contains('select')) {
+                ctx.fillStyle = '#155EEE';
+                ctx.strokeStyle = '#155EEE';
+                ctx.lineWidth = 0.5;
+            } else if (node.classList.contains('pre-select')) {
+                ctx.fillStyle = '#C5D3E8';
+                ctx.strokeStyle = '#155EEE';
+                ctx.lineWidth = 1.5;
+            } else {
+                ctx.fillStyle = '#C5D3E8';
+                ctx.strokeStyle = '#93A8C9';
+                ctx.lineWidth = 0.5;
+            }
             ctx.fillRect(x, y, w, h);
             ctx.strokeRect(x, y, w, h);
         });
-
-        // Draw selected node highlight
-        var selected = orgWrapper.querySelector('.item-template.select');
-        if (selected) {
-            var sr = selected.getBoundingClientRect();
-            var swr = orgWrapper.getBoundingClientRect();
-            var sx = offX + ((sr.left - swr.left) / orgZoomLevel) * scale;
-            var sy = offY + ((sr.top - swr.top) / orgZoomLevel) * scale;
-            var sw = (sr.width / orgZoomLevel) * scale;
-            var sh = (sr.height / orgZoomLevel) * scale;
-            ctx.fillStyle = '#155EEE';
-            ctx.fillRect(sx, sy, sw, sh);
-        }
 
         // Update viewport rectangle
         // Visible area in content coordinates (unscaled)
@@ -986,7 +996,10 @@
     var _origInitOrg = init_organization;
     init_organization = function () {
         _origInitOrg();
-        setTimeout(updateMinimap, 200);
+        setTimeout(function() {
+            updateMinimap();
+            renderTimeline();
+        }, 200);
     };
 
     function init_chat_box() {
@@ -1002,6 +1015,7 @@
             "tool_call": []
         });
         begin();
+        renderTimeline();
     }
 
     // 创建流式输出的消息元素
@@ -1434,6 +1448,7 @@
             historys.push(history);
             show_id += 1;
             show_step();
+            appendTimelineFrame(history, historys.length - 1);
             send_msg_to_chatbox(message);
             llm_is_work = true;
             $("#message_send").html(`
@@ -1491,6 +1506,7 @@
         historys.push(history);
         show_id += 1;
         show_step();
+        appendTimelineFrame(history, historys.length - 1);
         send_msg_to_chatbox(hint);
         llm_is_work = true;
         $("#message_send").html('<img src="./image/stop-circle.svg" alt="" />');
@@ -1900,6 +1916,7 @@
 
                 init_organization();
                 begin();
+                renderTimeline();
                 no_change_history = false;
                 now_script_id = script_id;
                 renderHeaderTitle(now_script_id)
@@ -1943,6 +1960,242 @@
 
     function show_step() {
         $("#step").text((show_id + 1) + " / " + historys.length);
+        updateTimelineActive();
+    }
+
+    // ========== Timeline Functions ==========
+
+    function extractFrameInfo(history, index) {
+        var info = { index: index, actionType: '', label: '', detail: '', agentName: '' };
+        var agentLog = history.agent_log || {};
+        var answer = history.answer || [];
+        info.agentName = agentLog.agent_name || '';
+
+        if (index === 0) {
+            info.actionType = 'init';
+            info.label = 'Start';
+            info.detail = 'Initial state';
+        } else if (answer.length > 0 && answer[answer.length - 1].role === 'user') {
+            info.actionType = 'user';
+            info.label = 'User';
+            var msg = answer[answer.length - 1].content || '';
+            info.detail = msg.length > 30 ? msg.substring(0, 28) + '...' : msg;
+        } else if (agentLog.plannings && agentLog.plannings.length > 0) {
+            var last = agentLog.plannings[agentLog.plannings.length - 1];
+            if (last.type === 'observation') {
+                info.actionType = 'observation';
+                info.label = last.callee || info.agentName || 'Tool';
+            } else {
+                info.actionType = 'llm';
+                info.label = info.agentName || 'LLM';
+            }
+            info.detail = agentLog.job_desc || '';
+            if (info.detail.length > 30) info.detail = info.detail.substring(0, 28) + '...';
+        } else {
+            info.actionType = 'agent';
+            info.label = info.agentName || ('Frame ' + (index + 1));
+            info.detail = agentLog.job_desc || '';
+            if (info.detail.length > 30) info.detail = info.detail.substring(0, 28) + '...';
+        }
+        return info;
+    }
+
+    function captureTreeThumbnail(toolCallState) {
+        var wrapper = document.getElementById('org-zoom-wrapper');
+        if (!wrapper) return '';
+        var nodes = wrapper.querySelectorAll('.item-template');
+        if (nodes.length === 0) return '';
+
+        // Apply highlights for this frame
+        nodes.forEach(function(node) {
+            node.classList.remove('select', 'pre-select');
+        });
+        if (toolCallState && typeof toolCallState === 'object') {
+            Object.entries(toolCallState).forEach(function(entry) {
+                var el = document.getElementById(entry[0]);
+                if (el) {
+                    if (entry[1] === 'red') el.classList.add('select');
+                    else if (entry[1] === 'yellow') el.classList.add('pre-select');
+                }
+            });
+        }
+
+        // Draw nodes on a small canvas
+        var canvas = document.createElement('canvas');
+        var cw = 120, ch = 80;
+        canvas.width = cw;
+        canvas.height = ch;
+        var ctx = canvas.getContext('2d');
+
+        var wr = wrapper.getBoundingClientRect();
+        var contentW = wrapper.scrollWidth;
+        var contentH = wrapper.scrollHeight;
+        if (contentW === 0 || contentH === 0) return '';
+
+        var scaleX = cw / contentW;
+        var scaleY = ch / contentH;
+        var scale = Math.min(scaleX, scaleY) * 0.9;
+        var offX = (cw - contentW * scale) / 2;
+        var offY = (ch - contentH * scale) / 2;
+
+        nodes.forEach(function(node) {
+            var r = node.getBoundingClientRect();
+            var nx = (r.left - wr.left) / orgZoomLevel;
+            var ny = (r.top - wr.top) / orgZoomLevel;
+            var nw = r.width / orgZoomLevel;
+            var nh = r.height / orgZoomLevel;
+
+            var x = offX + nx * scale;
+            var y = offY + ny * scale;
+            var w = nw * scale;
+            var h = nh * scale;
+
+            if (node.classList.contains('select')) {
+                ctx.fillStyle = '#155EEF';
+                ctx.strokeStyle = '#0E47C0';
+                ctx.lineWidth = 0.5;
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeRect(x, y, w, h);
+            } else if (node.classList.contains('pre-select')) {
+                ctx.fillStyle = '#C5D3E8';
+                ctx.strokeStyle = '#155EEF';
+                ctx.lineWidth = 1.5;
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeRect(x, y, w, h);
+            } else {
+                ctx.fillStyle = '#C5D3E8';
+                ctx.strokeStyle = '#93A8C9';
+                ctx.lineWidth = 0.5;
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeRect(x, y, w, h);
+            }
+        });
+
+        return canvas.toDataURL('image/png');
+    }
+
+    function createTimelineFrameEl(info, index) {
+        var frame = document.createElement('div');
+        frame.className = 'timeline-frame';
+        frame.setAttribute('data-frame-index', index);
+        if (index === show_id) frame.classList.add('active');
+        else if (index < show_id) frame.classList.add('visited');
+
+        if (info.thumbnail) {
+            var thumb = document.createElement('img');
+            thumb.className = 'timeline-thumb-img';
+            thumb.src = info.thumbnail;
+            thumb.draggable = false;
+            frame.appendChild(thumb);
+        }
+
+        var badge = document.createElement('div');
+        badge.className = 'timeline-thumb-badge';
+        badge.textContent = '#' + (index + 1);
+        frame.appendChild(badge);
+
+        frame.addEventListener('click', function() { jumpToFrame(index); });
+        return frame;
+    }
+
+    function renderTimeline() {
+        var track = document.getElementById('timeline-track');
+        if (!track) return;
+        track.innerHTML = '';
+
+        var wrapper = document.getElementById('org-zoom-wrapper');
+        var nodes = wrapper ? wrapper.querySelectorAll('.item-template') : [];
+        var canCapture = nodes.length > 0;
+
+        if (canCapture) {
+            // Save current highlight state
+            var savedState = {};
+            nodes.forEach(function(node) {
+                if (node.id) {
+                    if (node.classList.contains('select')) savedState[node.id] = 'select';
+                    else if (node.classList.contains('pre-select')) savedState[node.id] = 'pre-select';
+                }
+            });
+
+            for (var i = 0; i < historys.length; i++) {
+                var info = extractFrameInfo(historys[i], i);
+                info.thumbnail = captureTreeThumbnail(historys[i].tool_call);
+                track.appendChild(createTimelineFrameEl(info, i));
+            }
+
+            // Restore original highlight state
+            nodes.forEach(function(node) {
+                node.classList.remove('select', 'pre-select');
+                if (node.id && savedState[node.id]) {
+                    node.classList.add(savedState[node.id]);
+                }
+            });
+            if (typeof updateMinimap === 'function') updateMinimap();
+        } else {
+            for (var i = 0; i < historys.length; i++) {
+                var info = extractFrameInfo(historys[i], i);
+                track.appendChild(createTimelineFrameEl(info, i));
+            }
+        }
+
+        scrollTimelineToActive();
+    }
+
+    function updateTimelineActive() {
+        var track = document.getElementById('timeline-track');
+        if (!track) return;
+        var frames = track.querySelectorAll('.timeline-frame');
+        for (var i = 0; i < frames.length; i++) {
+            frames[i].classList.remove('active', 'visited');
+            if (i === show_id) frames[i].classList.add('active');
+            else if (i < show_id) frames[i].classList.add('visited');
+        }
+        scrollTimelineToActive();
+    }
+
+    function appendTimelineFrame(history, index) {
+        var track = document.getElementById('timeline-track');
+        if (!track) return;
+        var info = extractFrameInfo(history, index);
+
+        // Capture current minimap canvas as thumbnail (tree is already in correct state)
+        if (typeof updateMinimap === 'function') updateMinimap();
+        var srcCanvas = document.getElementById('org-minimap-canvas');
+        if (srcCanvas && srcCanvas.width > 0) {
+            try { info.thumbnail = srcCanvas.toDataURL('image/png'); } catch(e) {}
+        }
+
+        track.appendChild(createTimelineFrameEl(info, index));
+        updateTimelineActive();
+    }
+
+    function jumpToFrame(index) {
+        if (index < 0 || index >= historys.length) return;
+        show_id = index;
+        show_step();
+        show_by_history(historys[show_id]);
+    }
+
+    function scrollTimelineToActive() {
+        var wrapper = document.getElementById('timeline-track-wrapper');
+        if (!wrapper) return;
+        var active = wrapper.querySelector('.timeline-frame.active');
+        if (!active) return;
+        var fl = active.offsetLeft;
+        var fw = active.offsetWidth;
+        var ww = wrapper.clientWidth;
+        var sl = wrapper.scrollLeft;
+        if (fl < sl || fl + fw > sl + ww) {
+            wrapper.scrollLeft = fl - (ww / 2) + (fw / 2);
+        }
+    }
+
+    function toggleTimeline() {
+        var section = document.getElementById('timeline-section');
+        if (!section) return;
+        section.classList.toggle('collapsed');
+        var isCollapsed = section.classList.contains('collapsed');
+        document.body.classList.toggle('timeline-hidden', isCollapsed);
     }
 
     // 关闭最右侧对话框
@@ -2105,6 +2358,7 @@
 
                         init_organization();
                         begin();
+                        renderTimeline();
                         no_change_history = false;
                         // now_script_id = script_id;
 

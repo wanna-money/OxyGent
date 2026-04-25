@@ -150,17 +150,156 @@ button {
     font-weight: 400;
 }
 
+/* ========== Timeline Section ========== */
+.timeline-section {
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+    background-color: #fff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.timeline-section.collapsed {
+    border-bottom: none;
+}
+
+.timeline-section.collapsed .timeline-bar {
+    height: 0;
+    padding: 0;
+    opacity: 0;
+}
+
+.btn-timeline-toggle {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: #9ca3af;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    transition: background-color 0.2s, color 0.2s, transform 0.3s;
+    flex-shrink: 0;
+}
+
+.btn-timeline-toggle:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+body.timeline-hidden .btn-timeline-toggle {
+    transform: rotate(180deg);
+}
+
+.timeline-bar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0px 12px 8px;
+    height: 80px;
+    flex-shrink: 0;
+    transition: height 0.25s ease, padding 0.25s ease, opacity 0.25s ease;
+    overflow: hidden;
+}
+
+.timeline-track-wrapper {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.timeline-track-wrapper::-webkit-scrollbar {
+    height: 3px;
+}
+.timeline-track-wrapper::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+}
+
+.timeline-track {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    padding: 0 4px;
+    height: 100%;
+}
+
+.timeline-frame {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1;
+    width: 90px;
+    height: 60px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    transition: all 0.2s ease;
+    padding: 3px;
+    overflow: hidden;
+}
+
+.timeline-frame:hover {
+    border-color: #93b4f5;
+    box-shadow: 0 2px 8px rgba(21, 94, 239, 0.1);
+}
+
+.timeline-frame.active {
+    border-color: #155EEF;
+    box-shadow: 0 0 0 2px rgba(21, 94, 239, 0.18);
+}
+
+.timeline-frame.visited {
+    border-color: #c7d8f5;
+}
+
+.timeline-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.timeline-thumb-badge {
+    position: absolute;
+    bottom: 1px;
+    right: 3px;
+    font-size: 8px;
+    color: #9ca3af;
+    font-weight: 600;
+    line-height: 1;
+    background: rgba(255,255,255,0.8);
+    padding: 1px 2px;
+    border-radius: 2px;
+}
+
+.timeline-frame.active .timeline-thumb-badge {
+    color: #155EEF;
+}
+
 .container {
     display: flex;
     flex-direction: row;
     width: 100vw;
     overflow: hidden;
     padding-top: 15px;
+    flex: 1;
+    min-height: 0;
     background: #F3F3F5 url('../image/bg-img.svg') repeat left top;
 }
 
 .left {
-    height: calc(100vh - 100px);
+    height: calc(100% - 20px);
     overflow: hidden;
     flex:1 1 625px;
     background-color: #fff;
@@ -278,7 +417,7 @@ td {
 
 .center {
     flex:1 1 788px;
-    height: calc(100vh - 100px);
+    height: 100%;
     position: relative;
 }
 .center-scroll {
@@ -406,7 +545,7 @@ td {
 
 .right {
     background-color: #fff;
-    height: calc(100vh - 100px);
+    height: 100%;
     flex: 0 0 465px;
     /*margin-left: 20px;*/
     margin-right: 20px;
