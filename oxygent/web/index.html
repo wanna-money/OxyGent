@@ -24,7 +24,7 @@
     <script src="./js/message.js"></script>
     <script src="./js/timeline.js"></script>
 </head>
-<body class="timeline-hidden tracechain-hidden">
+<body class="timeline-hidden tracegraph-hidden">
 <div class="header">
     <div class="header-left">
         <img class="header-left-img" src="./image/group-favicon.png" alt="">
@@ -82,9 +82,9 @@
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,9 7,5 11,9"/></svg>
             <span class="btn-toggle-label">Steps</span>
         </button>
-        <button class="btn-tracechain-toggle" id="btn-tracechain-toggle" onclick="toggleTraceChain()" title="Toggle Trace Chain">
+        <button class="btn-tracegraph-toggle" id="btn-tracegraph-toggle" onclick="toggleTraceGraph()" title="Toggle Trace Graph">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,9 7,5 11,9"/></svg>
-            <span class="btn-toggle-label">Trace Chain</span>
+            <span class="btn-toggle-label">Trace Graph</span>
         </button>
         <!--        todo  中英文  主题-->
         <!--                <div class="global-buttons">-->
@@ -100,16 +100,17 @@
 <!-- Timeline Section -->
 <div class="timeline-section collapsed" id="timeline-section">
     <div id="timeline-bar" class="timeline-bar">
+        <div class="branch-selector" id="branch-selector"></div>
         <div class="timeline-track-wrapper" id="timeline-track-wrapper">
             <div class="timeline-track" id="timeline-track"></div>
         </div>
     </div>
 </div>
-<!-- Trace Chain Section (LLM/tool call chain for the latest trace) -->
-<div class="tracechain-section collapsed" id="tracechain-section">
-    <div class="tracechain-bar">
-        <div class="tracechain-body" id="tracechain-body">
-            <div class="view4-empty" id="tracechain-placeholder">No trace yet — send a message to populate the chain.</div>
+<!-- Trace Graph Section (branch tree visualization) -->
+<div class="tracegraph-section collapsed" id="tracegraph-section">
+    <div class="tracegraph-bar">
+        <div class="tracegraph-body" id="tracegraph-body">
+            <div class="tg-empty">No branches yet.</div>
         </div>
     </div>
 </div>
@@ -251,9 +252,68 @@
     var chats = [];
     var plan_dict = {};
     var nodeContentMap = {};
-    var historys = [];
     var tool_calls = [];
     var show_id = 0;
+
+    // ── Branching history system ──
+    var branches = [];
+    var activeBranchId = null;
+    var branchCounter = 0;
+
+    function getActiveBranch() {
+        return branches.find(function(b) { return b.id === activeBranchId; });
+    }
+    function getActiveFrames() {
+        var b = getActiveBranch();
+        return b ? b.frames : [];
+    }
+
+    function createBranch(parentBranchId, forkFrameIndex) {
+        branchCounter++;
+        var b = {
+            id: "branch_" + branchCounter,
+            label: "Branch " + branchCounter,
+            parentBranchId: parentBranchId,
+            forkFrameIndex: forkFrameIndex,
+            traceId: "",
+            frames: []
+        };
+        branches.push(b);
+        activeBranchId = b.id;
+        show_id = 0;
+        return b;
+    }
+
+    function switchBranch(branchId) {
+        if (llm_is_work) return;
+        var b = branches.find(function(x) { return x.id === branchId; });
+        if (!b) return;
+        activeBranchId = b.id;
+        show_id = Math.max(0, b.frames.length - 1);
+        from_trace_id = b.traceId || "";
+        renderTraceGraph();
+        renderTimeline();
+        show_step();
+        if (b.frames.length > 0) {
+            show_by_history(b.frames[show_id]);
+        }
+    }
+
+    function renderBranchSelector() {
+        var container = document.getElementById('branch-selector');
+        if (!container) return;
+        container.innerHTML = '';
+        if (branches.length <= 1) return; // hide selector when only 1 branch
+        branches.forEach(function(b) {
+            var pill = document.createElement('button');
+            pill.className = 'branch-pill' + (b.id === activeBranchId ? ' active' : '')
+                + (llm_is_work ? ' disabled' : '');
+            pill.textContent = b.label;
+            pill.title = b.traceId ? ('trace: ' + b.traceId) : b.label;
+            pill.addEventListener('click', function() { switchBranch(b.id); });
+            container.appendChild(pill);
+        });
+    }
     var agent_id_dict = {};
     var agent_organization = {};
     var current_streaming_agent = null; // 当前正在流式输出的agent名称（向后兼容）
@@ -632,28 +692,29 @@
             return;
         }
 
-        console.log(historys.length + 1, JSON.parse(JSON.stringify(jm)));
+        console.log(getActiveFrames().length + 1, JSON.parse(JSON.stringify(jm)));
 
+        var frames = getActiveFrames();
         var history = {};
-        if (historys[historys.length - 1] !== undefined) {
-            history = JSON.parse(JSON.stringify(historys[historys.length - 1]));
+        if (frames.length > 0) {
+            history = JSON.parse(JSON.stringify(frames[frames.length - 1]));
         }
 
         if (jm["type"] == "tool_call") {
-            // Build the trace chain dynamically from the stream — push every
-            // llm/tool invocation in order of arrival.
             var _cc = jm["content"];
+            // Feed LLM/tool nodes into the Trace Graph tree.
             if (_cc && (_cc["callee_category"] === 'llm' || _cc["callee_category"] === 'tool')) {
-                traceChainAddNode({
+                traceGraphAddNode({
                     node_id: _cc["node_id"],
                     node_type: _cc["callee_category"],
-                    caller: _cc["caller"] || "",
-                    callee: _cc["callee"] || "",
-                    create_time: _cc["create_time"] || ""
+                    caller: _cc["caller"] || '',
+                    callee: _cc["callee"] || '',
+                    trace_id: _cc["current_trace_id"] || _cc["trace_id"] || ''
                 });
-                if (_cc["current_trace_id"] || _cc["trace_id"]) {
-                    traceChainSetTrace(_cc["current_trace_id"] || _cc["trace_id"]);
-                }
+            }
+            // Set traceId on the active branch.
+            if (_cc && (_cc["current_trace_id"] || _cc["trace_id"])) {
+                traceGraphSetTrace(_cc["current_trace_id"] || _cc["trace_id"]);
             }
 
             if (jm["content"]["callee_category"] === 'agent') {
@@ -688,6 +749,11 @@
             if (jm["content"]["caller"] === 'user') {
                 // answer
                 from_trace_id = jm["content"]["current_trace_id"];
+                var activeBranch = getActiveBranch();
+                if (activeBranch) {
+                    activeBranch.traceId = from_trace_id;
+                    renderTraceGraph();
+                }
                 var trace_id = jm["content"]["current_trace_id"] || jm["content"]["trace_id"];
                 var markdownInput = jm["content"]["output"];
                 if (typeof markdownInput !== 'string') {
@@ -776,10 +842,10 @@
         }
 
         show_by_history(history);
-        historys.push(history);
-        show_id += 1;
+        frames.push(history);
+        show_id = frames.length - 1;
         show_step();
-        appendTimelineFrame(history, historys.length - 1);
+        appendTimelineFrame(history, frames.length - 1);
     }
 
     function init_ws() {
@@ -800,8 +866,8 @@
     }
 
     function init_organization() {
-        agent_id_dict = historys[0].agent_id_dict;
-        var agent_org = historys[0].agent_organization;
+        agent_id_dict = getActiveFrames()[0].agent_id_dict;
+        var agent_org = getActiveFrames()[0].agent_organization;
 
         div_org.empty();
         div_org.HOkrTree({
@@ -1036,11 +1102,16 @@
     };
 
     function init_chat_box() {
-        historys = [];
+        branches = [];
+        branchCounter = 0;
+        activeBranchId = null;
+        traceGraphReset();
         chats = [];
+        from_trace_id = "";
         var msg = {"role": master_agent_name, "content": first_chat};
         chats.push(msg);
-        historys.push({
+        var rootBranch = createBranch(null, null);
+        rootBranch.frames.push({
             "agent_id_dict": agent_id_dict,
             "agent_organization": agent_organization,
             "answer": JSON.parse(JSON.stringify(chats)),
@@ -1049,6 +1120,7 @@
         });
         begin();
         renderTimeline();
+        renderTraceGraph();
     }
 
     // 创建流式输出的消息元素
@@ -1317,57 +1389,205 @@
         li.append(create_rating_container(trace_id));
     }
 
-    // ── Trace Chain (built dynamically from chat stream messages) ──
-    // We collect llm/tool calls as `tool_call` SSE events arrive and
-    // render the panel incrementally. No `/view` API call is involved.
-    var traceChainState = {
-        traceId: "",
-        nodes: [],     // { node_id, node_type, caller, callee, create_time }
-        seen: {}       // node_id → true (dedup)
-    };
+    // ── Trace Graph (LLM/tool node tree across all branches) ──
+    // Each branch stores its own ordered list of LLM/tool nodes.
+    // The tree is built from the branch hierarchy (parentBranchId) and
+    // fork-point detection (matching shared node_id prefixes between
+    // parent and child, with forkFrameIndex as fallback).
+    // Renders incrementally — every traceGraphAddNode triggers a re-render.
 
-    function traceChainReset() {
-        traceChainState = { traceId: "", nodes: [], seen: {} };
-        var $body = $('#tracechain-body');
-        $body.empty().append(
-            '<div class="view4-empty">No trace yet — send a message to populate the chain.</div>'
-        );
+    var traceGraphData = {};  // branch_id → [{ node_id, node_type, caller, callee, trace_id, frameIndex }]
+
+    function traceGraphReset() {
+        traceGraphData = {};
     }
 
-    function traceChainSetTrace(trace_id) {
-        if (!trace_id) return;
-        traceChainState.traceId = trace_id;
-        $('#tracechain-subtitle').text('trace: ' + trace_id);
-    }
-
-    function traceChainAddNode(node) {
-        if (!node || !node.node_id) return;
-        if (traceChainState.seen[node.node_id]) return;
-        traceChainState.seen[node.node_id] = true;
-        traceChainState.nodes.push(node);
-        // Auto-expand on first node so the user sees the chain growing.
-        if (traceChainState.nodes.length === 1) {
-            $('#tracechain-section').removeClass('collapsed');
-            document.body.classList.remove('tracechain-hidden');
+    function traceGraphAddNode(node) {
+        var ab = getActiveBranch();
+        if (!ab || !node || !node.node_id) return;
+        if (!traceGraphData[ab.id]) traceGraphData[ab.id] = [];
+        traceGraphData[ab.id].push({
+            node_id: node.node_id,
+            node_type: node.node_type,
+            caller: node.caller || '',
+            callee: node.callee || '',
+            trace_id: node.trace_id || '',
+            frameIndex: getActiveFrames().length
+        });
+        // Auto-expand on very first node across all branches
+        var total = 0;
+        for (var k in traceGraphData) total += traceGraphData[k].length;
+        if (total === 1) {
+            $('#tracegraph-section').removeClass('collapsed');
+            document.body.classList.remove('tracegraph-hidden');
         }
-        traceChainRender();
+        renderTraceGraph();
     }
 
-    function traceChainRender() {
-        var $body = $('#tracechain-body');
-        if (!traceChainState.nodes.length) {
-            $body.empty().append(
-                '<div class="view4-empty">No LLM or tool calls yet.</div>'
-            );
+    function renderTraceGraph() {
+        var $body = $('#tracegraph-body');
+        var hasData = false;
+        for (var k in traceGraphData) {
+            if (traceGraphData[k] && traceGraphData[k].length) { hasData = true; break; }
+        }
+        if (!hasData) {
+            $body.html('<div class="tg-empty">No LLM/tool nodes yet.</div>');
             return;
         }
-        renderTraceChain(traceChainState.nodes, $body[0]);
+        var roots = branches.filter(function(b) { return !b.parentBranchId; });
+        if (!roots.length) return;
+        var html = '<div class="tg-tree">';
+        roots.forEach(function(rb) { html += renderBranchSubtree(rb, 0); });
+        html += '</div>';
+        $body.html(html);
     }
 
-    // Backwards-compat shim: old call sites pass (li, trace_id). We just
-    // record the trace id; nodes are added by message_handler hooks.
+    // Render nodes of `branch` from index `startIdx` onward, inserting
+    // child-branch forks at the correct positions.
+    function renderBranchSubtree(branch, startIdx, showArrowPrefix) {
+        var nodes = traceGraphData[branch.id] || [];
+        var childBranches = branches.filter(function(b) { return b.parentBranchId === branch.id; });
+
+        // Determine fork point for each child branch.
+        // Prefer the pre-computed forkNodeIdx stored on the branch object.
+        // Fall back to frameIndex matching if forkNodeIdx is not set.
+        var forkAt = {};  // nodeIdx → [ { branch, skipCount } , … ]
+        childBranches.forEach(function(cb) {
+            var forkIdx;
+            if (cb.forkNodeIdx != null && cb.forkNodeIdx >= 0) {
+                // Pre-computed at branch-creation time
+                forkIdx = cb.forkNodeIdx;
+            } else if (cb.forkNodeIdx === -1) {
+                // Fork is before the first parent node → attach at node 0
+                // (the child will appear alongside the parent's first node)
+                forkIdx = 0;
+            } else {
+                // Legacy / fallback: use forkFrameIndex to find the position
+                forkIdx = -1;
+                if (cb.forkFrameIndex != null) {
+                    for (var j = nodes.length - 1; j >= 0; j--) {
+                        if (nodes[j].frameIndex <= cb.forkFrameIndex) {
+                            forkIdx = j; break;
+                        }
+                    }
+                }
+                if (forkIdx === -1) forkIdx = Math.max(0, nodes.length - 1);
+            }
+            console.log('[TraceGraph] render fork:', cb.id,
+                'forkNodeIdx:', cb.forkNodeIdx,
+                'resolved forkIdx:', forkIdx,
+                'parentNodes:', nodes.length,
+                'childNodes:', (traceGraphData[cb.id] || []).length);
+            if (!forkAt[forkIdx]) forkAt[forkIdx] = [];
+            forkAt[forkIdx].push({ branch: cb, skipCount: 0 });
+        });
+
+        return buildNodeChain(branch, nodes, startIdx, forkAt, showArrowPrefix);
+    }
+
+    var ARROW = '<span class="tg-arrow">\u2192</span>';
+
+    function buildNodeChain(branch, nodes, idx, forkAt, showArrowPrefix) {
+        if (idx >= nodes.length) {
+            // No more parent nodes, but there might be child forks at this index
+            var trailingForks = forkAt[idx] || [];
+            if (trailingForks.length === 0) return '';
+            var html = '';
+            trailingForks.forEach(function(item) {
+                html += renderBranchSubtree(item.branch, item.skipCount, true);
+            });
+            return html;
+        }
+
+        // Render a flat horizontal chain of nodes that have no forks.
+        // When we hit a fork point (or the end), split into .tg-children.
+        var html = '<div class="tg-branch">';
+        var i = idx;
+        var first = true;
+        while (i < nodes.length) {
+            var forksHere = forkAt[i] || [];
+            // Arrow before node (between consecutive nodes, or at branch start)
+            if (first && showArrowPrefix) {
+                html += ARROW;
+            } else if (!first) {
+                html += ARROW;
+            }
+            first = false;
+            html += renderNodeEl(nodes[i], branch);
+
+            var hasMore = i + 1 < nodes.length;
+            if (forksHere.length > 0) {
+                // Fork point: collect children content, each prefixed with arrow
+                var childrenHtml = '';
+                if (hasMore) {
+                    childrenHtml += buildNodeChain(branch, nodes, i + 1, forkAt, true);
+                }
+                forksHere.forEach(function(item) {
+                    childrenHtml += renderBranchSubtree(item.branch, item.skipCount, true);
+                });
+                if (childrenHtml) {
+                    html += '<div class="tg-children">' + childrenHtml + '</div>';
+                }
+                break; // rest of chain is handled recursively inside .tg-children
+            }
+            if (!hasMore) break;
+            // No fork here and more nodes follow: continue flat chain
+            i++;
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function renderNodeEl(n, branch) {
+        var ab = getActiveBranch();
+        var isActive = ab && ab.id === branch.id;
+        var isDisabled = llm_is_work && !isActive;
+        var iconSrc = (n.node_type === 'llm' || n.node_type === 'model')
+            ? './image/org_model.svg' : './image/org_tool.svg';
+        return '<div class="tg-node' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '') + '"'
+            + ' data-trace-id="' + escapeHtml(n.trace_id) + '"'
+            + ' title="' + escapeHtml(n.callee) + ' (' + escapeHtml(n.node_id) + ')">'
+            + (n.caller ? '<div class="tg-node-caller">' + escapeHtml(n.caller) + '</div>' : '')
+            + '<div class="tg-node-main">'
+            + '<img class="tg-node-icon" src="' + iconSrc + '" alt="" />'
+            + '<span class="tg-node-callee">' + escapeHtml(n.callee) + '</span>'
+            + '</div></div>';
+    }
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    // Click a Trace Graph node → find the branch with that trace_id → switch.
+    $('#tracegraph-body').on('click', '.tg-node', function () {
+        var tid = $(this).attr('data-trace-id');
+        if (!tid) return;
+        var branch = branches.find(function(b) { return b.traceId === tid; });
+        if (branch) switchBranch(branch.id);
+    });
+
+    // Set traceId on active branch and re-render the graph.
+    function traceGraphSetTrace(trace_id) {
+        if (!trace_id) return;
+        var ab = getActiveBranch();
+        if (ab) {
+            var isFirst = !ab.traceId;
+            ab.traceId = trace_id;
+            renderTraceGraph();
+            if (isFirst) {
+                $('#tracegraph-section').removeClass('collapsed');
+                document.body.classList.remove('tracegraph-hidden');
+            }
+        }
+    }
+
+    // Backwards-compat shim kept for old call sites.
     function attach_trace_chain(li, trace_id) {
-        traceChainSetTrace(trace_id);
+        traceGraphSetTrace(trace_id);
     }
 
     function send_msg_to_chatbox(msg, name = "user", at = "", scroll_top = true, trace_id = "") {
@@ -1463,9 +1683,8 @@
             if (!message) {
                 return
             }
-            // Reset the trace-chain panel for a fresh query — it will be
-            // rebuilt from the streaming tool_call/observation events.
-            traceChainReset();
+            // Re-render the trace graph (traceId will be set when SSE events arrive).
+            renderTraceGraph();
             let query_val = message;
             try {
                 const parsed = JSON.parse(message.trim());
@@ -1533,12 +1752,13 @@
             input.style.height = 'auto';
             var msg = {"role": "user", "content": message};
             chats.push(msg);
-            let history = JSON.parse(JSON.stringify(historys[historys.length - 1]));
+            var frames = getActiveFrames();
+            let history = JSON.parse(JSON.stringify(frames[frames.length - 1] || {}));
             history["answer"] = JSON.parse(JSON.stringify(chats));
-            historys.push(history);
-            show_id += 1;
+            frames.push(history);
+            show_id = frames.length - 1;
             show_step();
-            appendTimelineFrame(history, historys.length - 1);
+            appendTimelineFrame(history, frames.length - 1);
             send_msg_to_chatbox(message);
             llm_is_work = true;
             $("#message_send").html(`
@@ -1555,11 +1775,53 @@
     }
 
     // 从中间节点重跑推理（利用 restart_node_id 后端能力）
+    // Creates a new branch forking from the current branch at the current show_id.
     function restart_from_node(nodeId, editedOutput) {
         if (llm_is_work) return;
-        end();
+
+        var parentBranch = getActiveBranch();
+        var forkIndex = show_id;
+
+        // Restore chat state from the fork point
+        var forkFrame = parentBranch ? parentBranch.frames[forkIndex] : null;
+        if (forkFrame) {
+            chats = JSON.parse(JSON.stringify(forkFrame.answer || []));
+        }
         plan_dict = {};
         nodeContentMap = {};
+
+        // Create a new branch
+        var newBranch = createBranch(parentBranch ? parentBranch.id : null, forkIndex);
+
+        // Compute fork-node index: find the restart nodeId in the parent's
+        // traceGraphData, then fork at the node BEFORE it.
+        // E.g. parent chain A→B→C→D→E→F, ReRun from D → fork at C (index 2),
+        //   so new branch D'→E'→F' connects after C.
+        var parentNodes = parentBranch ? (traceGraphData[parentBranch.id] || []) : [];
+        var restartIdx = -1;
+        for (var _k = 0; _k < parentNodes.length; _k++) {
+            if (parentNodes[_k].node_id === nodeId) { restartIdx = _k; break; }
+        }
+        var fni;
+        if (restartIdx > 0) {
+            // Fork at the node BEFORE the restart node
+            fni = restartIdx - 1;
+        } else if (restartIdx === 0) {
+            // Restarting from the very first node → fork before all nodes
+            fni = 0;
+        } else {
+            // nodeId not found in traceGraphData — fallback to last node
+            fni = Math.max(0, parentNodes.length - 1);
+        }
+        newBranch.forkNodeIdx = fni;
+        console.log('[TraceGraph] fork:', newBranch.id,
+            'parent:', parentBranch ? parentBranch.id : null,
+            'restartNodeId:', nodeId,
+            'restartIdx:', restartIdx,
+            'forkNodeIdx:', fni);
+
+        // Re-render trace graph to show the new branch
+        renderTraceGraph();
 
         var payload = {
             "restart_node_id": nodeId,
@@ -1591,12 +1853,17 @@
             ? "[Restart with edited output] node_id: " + nodeId
             : "[Restart from node] node_id: " + nodeId;
         chats.push({"role": "user", "content": hint});
-        let history = JSON.parse(JSON.stringify(historys[historys.length - 1] || {}));
-        history["answer"] = JSON.parse(JSON.stringify(chats));
-        historys.push(history);
-        show_id += 1;
+        var frames = getActiveFrames();
+        // Seed the new branch with a hint frame
+        var seedFrame = forkFrame
+            ? JSON.parse(JSON.stringify(forkFrame))
+            : {};
+        seedFrame["answer"] = JSON.parse(JSON.stringify(chats));
+        frames.push(seedFrame);
+        show_id = frames.length - 1;
         show_step();
-        appendTimelineFrame(history, historys.length - 1);
+        renderTimeline(); // full rebuild to show the new branch in the selector
+        appendTimelineFrame(seedFrame, frames.length - 1);
         send_msg_to_chatbox(hint);
         llm_is_work = true;
         $("#message_send").html('<img src="./image/stop-circle.svg" alt="" />');
@@ -1837,14 +2104,15 @@
             </div>
         `);
         show_step();
-        show_by_history(historys[show_id]);
+        var f = getActiveFrames();
+        if (f.length > 0) show_by_history(f[show_id]);
     }
 
     function back() {
         if (show_id > 0) {
             show_id -= 1;
             show_step();
-            show_by_history(historys[show_id]);
+            show_by_history(getActiveFrames()[show_id]);
         }
     }
 
@@ -1852,17 +2120,19 @@
         let status = $("#play")[0].dataset.status;
 
         if (status == "play") {
-            if (show_id < historys.length - 1) {
+            var f = getActiveFrames();
+            if (show_id < f.length - 1) {
                 $("#play").html(`
                         <img src="./image/pause.svg" alt="" />
                     `);
                 $("#play")[0].setAttribute('data-status', 'pause');
 
                 interval_id = setInterval(function () {
-                    if (show_id < historys.length - 1) {
+                    var f = getActiveFrames();
+                    if (show_id < f.length - 1) {
                         show_id += 1;
                         show_step();
-                        show_by_history(historys[show_id]);
+                        show_by_history(f[show_id]);
                     } else {
                         clearInterval(interval_id);
                         $("#play").html(`
@@ -1882,17 +2152,19 @@
     }
 
     function next() {
-        if (show_id < historys.length - 1) {
+        var f = getActiveFrames();
+        if (show_id < f.length - 1) {
             show_id += 1;
             show_step();
-            show_by_history(historys[show_id]);
+            show_by_history(f[show_id]);
         }
     }
 
     function end() {
-        show_id = historys.length - 1;
+        var f = getActiveFrames();
+        show_id = Math.max(0, f.length - 1);
         show_step();
-        show_by_history(historys[show_id]);
+        if (f.length > 0) show_by_history(f[show_id]);
     }
 
     window.onbeforeunload = function () {
@@ -1960,7 +2232,7 @@
             type: "POST",
             url: "../save_script",
             data: JSON.stringify({
-                contents: historys,
+                contents: getActiveFrames(),
                 name: now_script_id.replace('.json', '')
             }),
             contentType: "application/json; charset=utf-8",
@@ -1996,7 +2268,13 @@
                 item_id: script_id
             },
             success: function (response) {
-                historys = response.data.contents
+                // Wrap loaded flat list into a single root branch
+                branches = [];
+                branchCounter = 0;
+                activeBranchId = null;
+                traceGraphReset();
+                var rootBranch = createBranch(null, null);
+                rootBranch.frames = response.data.contents;
                 clearInterval(interval_id);
 
                 $("#play").html(`
@@ -2007,6 +2285,7 @@
                 init_organization();
                 begin();
                 renderTimeline();
+                renderTraceGraph();
                 no_change_history = false;
                 now_script_id = script_id;
                 renderHeaderTitle(now_script_id)
@@ -2049,7 +2328,7 @@
     }
 
     function show_step() {
-        $("#step").text((show_id + 1) + " / " + historys.length);
+        $("#step").text((show_id + 1) + " / " + getActiveFrames().length);
         updateTimelineActive();
     }
 
@@ -2207,9 +2486,10 @@
                 }
             });
 
-            for (var i = 0; i < historys.length; i++) {
-                var info = extractFrameInfo(historys[i], i);
-                info.thumbnail = captureTreeThumbnail(historys[i].tool_call);
+            var af = getActiveFrames();
+            for (var i = 0; i < af.length; i++) {
+                var info = extractFrameInfo(af[i], i);
+                info.thumbnail = captureTreeThumbnail(af[i].tool_call);
                 track.appendChild(createTimelineFrameEl(info, i));
             }
 
@@ -2222,12 +2502,14 @@
             });
             if (typeof updateMinimap === 'function') updateMinimap();
         } else {
-            for (var i = 0; i < historys.length; i++) {
-                var info = extractFrameInfo(historys[i], i);
+            var af = getActiveFrames();
+            for (var i = 0; i < af.length; i++) {
+                var info = extractFrameInfo(af[i], i);
                 track.appendChild(createTimelineFrameEl(info, i));
             }
         }
 
+        renderBranchSelector();
         scrollTimelineToActive();
     }
 
@@ -2244,6 +2526,12 @@
     }
 
     function appendTimelineFrame(history, index) {
+        // Auto-unfold the Steps panel when a new frame arrives
+        var section = document.getElementById('timeline-section');
+        if (section && section.classList.contains('collapsed')) {
+            section.classList.remove('collapsed');
+            document.body.classList.remove('timeline-hidden');
+        }
         var track = document.getElementById('timeline-track');
         if (!track) return;
         var info = extractFrameInfo(history, index);
@@ -2260,10 +2548,11 @@
     }
 
     function jumpToFrame(index) {
-        if (index < 0 || index >= historys.length) return;
+        var f = getActiveFrames();
+        if (index < 0 || index >= f.length) return;
         show_id = index;
         show_step();
-        show_by_history(historys[show_id]);
+        show_by_history(f[show_id]);
     }
 
     function scrollTimelineToActive() {
@@ -2288,12 +2577,12 @@
         document.body.classList.toggle('timeline-hidden', isCollapsed);
     }
 
-    function toggleTraceChain() {
-        var section = document.getElementById('tracechain-section');
+    function toggleTraceGraph() {
+        var section = document.getElementById('tracegraph-section');
         if (!section) return;
         section.classList.toggle('collapsed');
         var isCollapsed = section.classList.contains('collapsed');
-        document.body.classList.toggle('tracechain-hidden', isCollapsed);
+        document.body.classList.toggle('tracegraph-hidden', isCollapsed);
     }
 
     // 关闭最右侧对话框
@@ -2395,7 +2684,9 @@
 
                 if (selectedValues[0] === 'New') {
                     // 清空选项
-                    historys = [];
+                    branches = [];
+                    branchCounter = 0;
+                    activeBranchId = null;
                     now_script_id = '';
                     window.location.reload();
                 }
@@ -2405,10 +2696,11 @@
                 }
 
                 if (selectedValues[0] === 'Export') {
-                    if (!historys.length) {
+                    var _exportFrames = getActiveFrames();
+                    if (!_exportFrames.length) {
                         return
                     }
-                    var jsonData = JSON.stringify(historys, null, 2);
+                    var jsonData = JSON.stringify(_exportFrames, null, 2);
                     // 创建下载链接
                     var blob = new Blob([jsonData], {type: 'application/json'});
                     var url = URL.createObjectURL(blob);
@@ -2446,7 +2738,13 @@
                 try {
                     var _options = JSON.parse(e.target.result);
                     if (Array.isArray(_options)) {
-                        historys = _options;
+                        // Wrap imported flat list into a single root branch
+                        branches = [];
+                        branchCounter = 0;
+                        activeBranchId = null;
+                        traceGraphReset();
+                        var rootBranch = createBranch(null, null);
+                        rootBranch.frames = _options;
                         clearInterval(interval_id);
 
                         $("#play").html(`
@@ -2457,6 +2755,7 @@
                         init_organization();
                         begin();
                         renderTimeline();
+                        renderTraceGraph();
                         no_change_history = false;
                         // now_script_id = script_id;
 

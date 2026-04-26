@@ -51,6 +51,9 @@ function renderTraceChain(nodesDatas, containerId) {
         nodeEl.className = 'view4-node';
         nodeEl.id = n.node_id;
         nodeEl.setAttribute('data-node-id', n.node_id);
+        if (n.frameIndex != null) {
+            nodeEl.setAttribute('data-frame-index', n.frameIndex);
+        }
 
         var iconSrc = (_typeMap && _typeMap[n.node_type]) || '';
         var iconHtml = iconSrc

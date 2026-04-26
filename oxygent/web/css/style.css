@@ -165,12 +165,13 @@ button {
 
 .timeline-section.collapsed .timeline-bar {
     height: 0;
+    min-height: 0;
     padding: 0;
     opacity: 0;
 }
 
 .btn-timeline-toggle,
-.btn-tracechain-toggle {
+.btn-tracegraph-toggle {
     height: 44px;
     display: inline-flex;
     align-items: center;
@@ -187,12 +188,12 @@ button {
 }
 
 .btn-timeline-toggle svg,
-.btn-tracechain-toggle svg {
+.btn-tracegraph-toggle svg {
     transition: transform 0.3s;
 }
 
 .btn-timeline-toggle:hover,
-.btn-tracechain-toggle:hover {
+.btn-tracegraph-toggle:hover {
     background-color: #E7E7EB;
     color: #374151;
 }
@@ -201,7 +202,7 @@ body.timeline-hidden .btn-timeline-toggle svg {
     transform: rotate(180deg);
 }
 
-body.tracechain-hidden .btn-tracechain-toggle svg {
+body.tracegraph-hidden .btn-tracegraph-toggle svg {
     transform: rotate(180deg);
 }
 
@@ -214,22 +215,71 @@ body.tracechain-hidden .btn-tracechain-toggle svg {
 .timeline-bar {
     width: 100%;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     padding: 0px 12px 8px;
-    height: 80px;
+    min-height: 80px;
     flex-shrink: 0;
     transition: height 0.25s ease, padding 0.25s ease, opacity 0.25s ease;
     overflow: hidden;
 }
 
+/* ── Branch Selector ── */
+.branch-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    flex-shrink: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.branch-selector:empty {
+    display: none;
+}
+
+.branch-pill {
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 4px;
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    color: #6B7280;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+}
+
+.branch-pill:hover {
+    border-color: #93b4f5;
+    color: #374151;
+}
+
+.branch-pill.active {
+    border-color: #155EEF;
+    color: #155EEF;
+    background: #EFF4FF;
+    font-weight: 600;
+}
+
+.branch-pill.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .timeline-track-wrapper {
-    flex: 1;
+    width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-behavior: smooth;
-    height: 100%;
+    height: 68px;
     display: flex;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .timeline-track-wrapper::-webkit-scrollbar {
