@@ -1,0 +1,98 @@
+// View 4 — Timeline Chain
+// Renders all llm/tool nodes for the current trace_id, sorted by create_time
+// ascending, connected as a horizontal chain. Reuses globals defined in
+// node.html: `typeMap` for icon paths.
+//
+// Exposed as both `renderTraceChain` and (legacy alias) `renderTimeline`.
+
+function renderTraceChain(nodesDatas, containerId) {
+    var container = (typeof containerId === 'string')
+        ? document.getElementById(containerId) : containerId;
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Fallback icon map when `typeMap` is not globally available (e.g. index.html).
+    var _typeMap = (typeof typeMap !== 'undefined') ? typeMap : {
+        llm: './image/org_model.svg',
+        tool: './image/org_tool.svg',
+        model: './image/org_model.svg',
+    };
+
+    if (!nodesDatas || !nodesDatas.length) {
+        container.innerHTML = '<div class="view4-empty">No nodes for this trace.</div>';
+        return;
+    }
+
+    // Filter to llm/tool only.
+    var filtered = nodesDatas.filter(function (n) {
+        return n && (n.node_type === 'llm' || n.node_type === 'tool');
+    });
+
+    if (!filtered.length) {
+        container.innerHTML = '<div class="view4-empty">No LLM or tool calls in this trace.</div>';
+        return;
+    }
+
+    // Sort by create_time ascending. ISO-ish strings sort correctly
+    // lexicographically; fall back to Date.parse for safety.
+    filtered.sort(function (a, b) {
+        var at = a.create_time || '';
+        var bt = b.create_time || '';
+        if (at === bt) return 0;
+        if (at < bt) return -1;
+        return 1;
+    });
+
+    var chain = document.createElement('div');
+    chain.className = 'view4-chain';
+
+    filtered.forEach(function (n, i) {
+        var nodeEl = document.createElement('div');
+        nodeEl.className = 'view4-node';
+        nodeEl.id = n.node_id;
+        nodeEl.setAttribute('data-node-id', n.node_id);
+
+        var iconSrc = (_typeMap && _typeMap[n.node_type]) || '';
+        var iconHtml = iconSrc
+            ? '<img class="view4-icon" alt="" src="' + iconSrc + '" />'
+            : '';
+
+        var caller = n.caller || '';
+
+        nodeEl.innerHTML =
+            (caller
+                ? '<div class="view4-caller-row">' +
+                  '<span class="view4-caller" title="' + escapeAttr(caller) + '">' +
+                  escapeHtml(caller) +
+                  '</span>' +
+                  '</div>'
+                : '<div class="view4-caller-row"></div>') +
+            '<div class="view4-main-row">' +
+            iconHtml +
+            '<span class="view4-callee" title="' + escapeAttr(n.callee || '') + '">' +
+            escapeHtml(n.callee || '') +
+            '</span>' +
+            '</div>';
+
+        chain.appendChild(nodeEl);
+
+        if (i < filtered.length - 1) {
+            var arrow = document.createElement('div');
+            arrow.className = 'view4-arrow';
+            arrow.textContent = '→';
+            chain.appendChild(arrow);
+        }
+    });
+
+    container.appendChild(chain);
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+    function escapeAttr(s) {
+        return escapeHtml(s).replace(/"/g, '&quot;');
+    }
+}

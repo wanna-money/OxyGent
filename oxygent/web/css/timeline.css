@@ -1,0 +1,145 @@
+/* View 4 — Timeline Chain (style follows View 1's view1-node) */
+
+#timeline-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.view4-chain {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    padding: 10px;
+}
+
+.view4-node {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    border: 1px solid #E1E1E1;
+    border-radius: 6px;
+    padding: 8px 14px;
+    background-color: #ffffff;
+    color: #000;
+    cursor: pointer;
+    min-width: 140px;
+    min-height: 64px;
+    position: relative;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.view4-node.checked {
+    background-color: #5048E5;
+    color: #fff;
+    border-color: #5048E5;
+}
+
+.view4-node.checked .view4-callee {
+    color: #fff;
+}
+
+.view4-node.checked .view4-caller {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.view4-caller-row {
+    display: flex;
+    align-items: center;
+    min-height: 18px;
+    margin-bottom: 6px;
+}
+
+.view4-main-row {
+    display: flex;
+    align-items: center;
+}
+
+.view4-main-row > .view4-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 24px;
+    background-color: #E1EFFD;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.view4-callee {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1F2433;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.view4-caller {
+    font-size: 11px;
+    color: #6B7280;
+    background-color: #F1F2F6;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 1px 8px;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+.view4-arrow {
+    font-size: 14px;
+    color: #B0B5C2;
+    user-select: none;
+    padding: 0 2px;
+}
+
+.view4-empty {
+    padding: 20px;
+    text-align: center;
+    color: #7A7F8C;
+    font-size: 13px;
+}
+
+/* ========== Trace Chain Section (top bar in index.html) ========== */
+.tracechain-section {
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+    background-color: #fff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.tracechain-section.collapsed {
+    border-bottom: none;
+}
+
+.tracechain-section.collapsed .tracechain-body {
+    height: 0;
+    padding: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.tracechain-bar {
+    width: 100%;
+}
+
+.tracechain-body {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    transition: height 0.25s ease, padding 0.25s ease, opacity 0.25s ease;
+    padding: 6px 12px 8px;
+}
+
+.tracechain-body .view4-chain {
+    padding: 4px 0;
+}

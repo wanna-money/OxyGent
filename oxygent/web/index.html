@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="./css/cascader.css"/>
     <link rel="stylesheet" href="./css/file.css"/>
     <link rel="stylesheet" href="./css/agent-list.css"/>
+    <link rel="stylesheet" href="./css/timeline.css"/>
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
     <script src="./js/utils.js"></script>
     <script src="./js/marked.min.js"></script>
@@ -21,8 +22,9 @@
     <script src="./js/cascader.js"></script>
     <script src="./js/upload.js"></script>
     <script src="./js/message.js"></script>
+    <script src="./js/timeline.js"></script>
 </head>
-<body class="timeline-hidden">
+<body class="timeline-hidden tracechain-hidden">
 <div class="header">
     <div class="header-left">
         <img class="header-left-img" src="./image/group-favicon.png" alt="">
@@ -76,8 +78,13 @@
             </button>
             <div id="step"></div>
         </div>
-        <button class="btn-timeline-toggle" id="btn-timeline-toggle" onclick="toggleTimeline()" title="Toggle Timeline">
+        <button class="btn-timeline-toggle" id="btn-timeline-toggle" onclick="toggleTimeline()" title="Toggle Steps">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,9 7,5 11,9"/></svg>
+            <span class="btn-toggle-label">Steps</span>
+        </button>
+        <button class="btn-tracechain-toggle" id="btn-tracechain-toggle" onclick="toggleTraceChain()" title="Toggle Trace Chain">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,9 7,5 11,9"/></svg>
+            <span class="btn-toggle-label">Trace Chain</span>
         </button>
         <!--        todo  中英文  主题-->
         <!--                <div class="global-buttons">-->
@@ -95,6 +102,14 @@
     <div id="timeline-bar" class="timeline-bar">
         <div class="timeline-track-wrapper" id="timeline-track-wrapper">
             <div class="timeline-track" id="timeline-track"></div>
+        </div>
+    </div>
+</div>
+<!-- Trace Chain Section (LLM/tool call chain for the latest trace) -->
+<div class="tracechain-section collapsed" id="tracechain-section">
+    <div class="tracechain-bar">
+        <div class="tracechain-body" id="tracechain-body">
+            <div class="view4-empty" id="tracechain-placeholder">No trace yet — send a message to populate the chain.</div>
         </div>
     </div>
 </div>
@@ -625,6 +640,22 @@
         }
 
         if (jm["type"] == "tool_call") {
+            // Build the trace chain dynamically from the stream — push every
+            // llm/tool invocation in order of arrival.
+            var _cc = jm["content"];
+            if (_cc && (_cc["callee_category"] === 'llm' || _cc["callee_category"] === 'tool')) {
+                traceChainAddNode({
+                    node_id: _cc["node_id"],
+                    node_type: _cc["callee_category"],
+                    caller: _cc["caller"] || "",
+                    callee: _cc["callee"] || "",
+                    create_time: _cc["create_time"] || ""
+                });
+                if (_cc["current_trace_id"] || _cc["trace_id"]) {
+                    traceChainSetTrace(_cc["current_trace_id"] || _cc["trace_id"]);
+                }
+            }
+
             if (jm["content"]["callee_category"] === 'agent') {
                 push_plan(jm["content"]["callee"], "job_desc", jm["content"].arguments.query, jm["content"].node_id);
                 history["agent_log"] = JSON.parse(JSON.stringify(plan_dict[jm["content"]["callee"]]));
@@ -677,6 +708,7 @@
                     // 移除streaming-content类并清理
                     streaming_info.element.removeClass("streaming-content");
                     attach_rating_ui(streaming_info.element.closest("li"), trace_id);
+                    attach_trace_chain(streaming_info.element.closest("li"), trace_id);
                     delete streaming_elements_map[key];
                 } else if (current_streaming_element && current_streaming_agent) {
                     // 向后兼容
@@ -685,6 +717,7 @@
                         markdownInput = finalContent;
                     }
                     attach_rating_ui(current_streaming_element.closest("li"), trace_id);
+                    attach_trace_chain(current_streaming_element.closest("li"), trace_id);
                 }
                 
                 var msg = {"role": jm["content"].callee, "content": markdownInput, "trace_id": trace_id};
@@ -1284,6 +1317,59 @@
         li.append(create_rating_container(trace_id));
     }
 
+    // ── Trace Chain (built dynamically from chat stream messages) ──
+    // We collect llm/tool calls as `tool_call` SSE events arrive and
+    // render the panel incrementally. No `/view` API call is involved.
+    var traceChainState = {
+        traceId: "",
+        nodes: [],     // { node_id, node_type, caller, callee, create_time }
+        seen: {}       // node_id → true (dedup)
+    };
+
+    function traceChainReset() {
+        traceChainState = { traceId: "", nodes: [], seen: {} };
+        var $body = $('#tracechain-body');
+        $body.empty().append(
+            '<div class="view4-empty">No trace yet — send a message to populate the chain.</div>'
+        );
+    }
+
+    function traceChainSetTrace(trace_id) {
+        if (!trace_id) return;
+        traceChainState.traceId = trace_id;
+        $('#tracechain-subtitle').text('trace: ' + trace_id);
+    }
+
+    function traceChainAddNode(node) {
+        if (!node || !node.node_id) return;
+        if (traceChainState.seen[node.node_id]) return;
+        traceChainState.seen[node.node_id] = true;
+        traceChainState.nodes.push(node);
+        // Auto-expand on first node so the user sees the chain growing.
+        if (traceChainState.nodes.length === 1) {
+            $('#tracechain-section').removeClass('collapsed');
+            document.body.classList.remove('tracechain-hidden');
+        }
+        traceChainRender();
+    }
+
+    function traceChainRender() {
+        var $body = $('#tracechain-body');
+        if (!traceChainState.nodes.length) {
+            $body.empty().append(
+                '<div class="view4-empty">No LLM or tool calls yet.</div>'
+            );
+            return;
+        }
+        renderTraceChain(traceChainState.nodes, $body[0]);
+    }
+
+    // Backwards-compat shim: old call sites pass (li, trace_id). We just
+    // record the trace id; nodes are added by message_handler hooks.
+    function attach_trace_chain(li, trace_id) {
+        traceChainSetTrace(trace_id);
+    }
+
     function send_msg_to_chatbox(msg, name = "user", at = "", scroll_top = true, trace_id = "") {
         var li = $("<li>");
         if (name === "user") {
@@ -1323,6 +1409,7 @@
 
         if (name === master_agent_name && at === "") {
             attach_rating_ui(li, trace_id);
+            attach_trace_chain(li, trace_id);
         }
 
         if (name === "user" && filesToUpload.length > 0) {
@@ -1376,6 +1463,9 @@
             if (!message) {
                 return
             }
+            // Reset the trace-chain panel for a fresh query — it will be
+            // rebuilt from the streaming tool_call/observation events.
+            traceChainReset();
             let query_val = message;
             try {
                 const parsed = JSON.parse(message.trim());
@@ -2196,6 +2286,14 @@
         section.classList.toggle('collapsed');
         var isCollapsed = section.classList.contains('collapsed');
         document.body.classList.toggle('timeline-hidden', isCollapsed);
+    }
+
+    function toggleTraceChain() {
+        var section = document.getElementById('tracechain-section');
+        if (!section) return;
+        section.classList.toggle('collapsed');
+        var isCollapsed = section.classList.contains('collapsed');
+        document.body.classList.toggle('tracechain-hidden', isCollapsed);
     }
 
     // 关闭最右侧对话框

@@ -169,28 +169,46 @@ button {
     opacity: 0;
 }
 
-.btn-timeline-toggle {
-    width: 28px;
-    height: 28px;
+.btn-timeline-toggle,
+.btn-tracechain-toggle {
+    height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
+    padding: 0 12px;
     border-radius: 4px;
-    color: #9ca3af;
+    color: #6B7280;
     cursor: pointer;
-    background: transparent;
+    background-color: #F3F3F5;
     border: none;
-    transition: background-color 0.2s, color 0.2s, transform 0.3s;
+    transition: background-color 0.2s, color 0.2s;
     flex-shrink: 0;
 }
 
-.btn-timeline-toggle:hover {
-    background-color: #f3f4f6;
+.btn-timeline-toggle svg,
+.btn-tracechain-toggle svg {
+    transition: transform 0.3s;
+}
+
+.btn-timeline-toggle:hover,
+.btn-tracechain-toggle:hover {
+    background-color: #E7E7EB;
     color: #374151;
 }
 
-body.timeline-hidden .btn-timeline-toggle {
+body.timeline-hidden .btn-timeline-toggle svg {
     transform: rotate(180deg);
+}
+
+body.tracechain-hidden .btn-tracechain-toggle svg {
+    transform: rotate(180deg);
+}
+
+.btn-toggle-label {
+    font-size: 14px;
+    font-weight: 400;
+    white-space: nowrap;
 }
 
 .timeline-bar {
