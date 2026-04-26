@@ -1485,7 +1485,7 @@
         return buildNodeChain(branch, nodes, startIdx, forkAt, showArrowPrefix);
     }
 
-    var ARROW = '<span class="tg-arrow">\u2192</span>';
+    var ARROW = '<span class="tg-arrow"><svg width="28" height="14" viewBox="0 0 28 14"><path d="M2 7h20m0 0l-5-4m5 4l-5 4" fill="none" stroke="#B0B5C2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
 
     function buildNodeChain(branch, nodes, idx, forkAt, showArrowPrefix) {
         if (idx >= nodes.length) {
@@ -1494,7 +1494,7 @@
             if (trailingForks.length === 0) return '';
             var html = '';
             trailingForks.forEach(function(item) {
-                html += renderBranchSubtree(item.branch, item.skipCount, true);
+                html += renderBranchSubtree(item.branch, item.skipCount, false);
             });
             return html;
         }
@@ -1517,15 +1517,17 @@
 
             var hasMore = i + 1 < nodes.length;
             if (forksHere.length > 0) {
-                // Fork point: collect children content, each prefixed with arrow
+                // Fork point: CSS tree connectors handle the visual connection
+                // from this node to each child branch.
                 var childrenHtml = '';
                 if (hasMore) {
-                    childrenHtml += buildNodeChain(branch, nodes, i + 1, forkAt, true);
+                    childrenHtml += buildNodeChain(branch, nodes, i + 1, forkAt, false);
                 }
                 forksHere.forEach(function(item) {
-                    childrenHtml += renderBranchSubtree(item.branch, item.skipCount, true);
+                    childrenHtml += renderBranchSubtree(item.branch, item.skipCount, false);
                 });
                 if (childrenHtml) {
+                    html += '<span class="tg-fork-line"></span>';
                     html += '<div class="tg-children">' + childrenHtml + '</div>';
                 }
                 break; // rest of chain is handled recursively inside .tg-children

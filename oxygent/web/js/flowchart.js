@@ -83,6 +83,7 @@ function renderFlowchart(agentNodes, containerId) {
     function createArrow() {
         const arrow = document.createElement('div');
         arrow.className = 'arrow';
+        arrow.innerHTML = '<svg width="28" height="14" viewBox="0 0 28 14"><path d="M2 7h20m0 0l-5-4m5 4l-5 4" fill="none" stroke="#286DFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         return arrow;
     }
 

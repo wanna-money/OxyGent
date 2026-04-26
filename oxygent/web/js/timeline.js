@@ -82,7 +82,7 @@ function renderTraceChain(nodesDatas, containerId) {
         if (i < filtered.length - 1) {
             var arrow = document.createElement('div');
             arrow.className = 'view4-arrow';
-            arrow.textContent = '→';
+            arrow.innerHTML = '<svg width="28" height="14" viewBox="0 0 28 14"><path d="M2 7h20m0 0l-5-4m5 4l-5 4" fill="none" stroke="#B0B5C2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
             chain.appendChild(arrow);
         }
     });

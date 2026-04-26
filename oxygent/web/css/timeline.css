@@ -94,10 +94,15 @@
 }
 
 .view4-arrow {
-    font-size: 14px;
-    color: #B0B5C2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     user-select: none;
     padding: 0 2px;
+}
+
+.view4-arrow svg {
+    display: block;
 }
 
 .view4-empty {
@@ -163,11 +168,77 @@
 
 /* Inline arrow element between connected nodes */
 .tg-arrow {
-    font-size: 14px;
-    color: #B0B5C2;
-    user-select: none;
-    padding: 0 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
+    user-select: none;
+    padding: 0 2px;
+}
+
+.tg-arrow svg {
+    display: block;
+}
+
+/* Horizontal line from fork node to vertical spine */
+.tg-fork-line {
+    width: 14px;
+    height: 0;
+    border-top: 1.5px solid #B0B5C2;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+/* ── Children layout at fork points ── */
+.tg-children {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding-left: 20px;
+}
+
+.tg-children > .tg-branch {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    position: relative;
+}
+
+/* Horizontal stub with arrowhead from vertical spine to child node */
+.tg-children > .tg-branch::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 12px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='12' viewBox='0 0 20 12'%3E%3Cpath d='M0 6h16M13 2.5l3 3.5-3 3.5' fill='none' stroke='%23B0B5C2' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center center;
+}
+
+/* Vertical line segment connecting sibling branches */
+.tg-children > .tg-branch::after {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1.5px solid #B0B5C2;
+}
+
+/* First child: vertical line from center downward only */
+.tg-children > .tg-branch:first-child::after {
+    top: 50%;
+}
+
+/* Last child: vertical line from top to center only */
+.tg-children > .tg-branch:last-child::after {
+    bottom: 50%;
+}
+
+/* Only child: no vertical line, just horizontal stub */
+.tg-children > .tg-branch:only-child::after {
+    display: none;
 }
 
 .tg-node {
@@ -250,13 +321,4 @@
     white-space: nowrap;
 }
 
-/* ── Children layout at fork points ── */
-.tg-children {
-    display: flex;
-    flex-direction: column;
-}
 
-.tg-children > .tg-branch {
-    padding-top: 4px;
-    padding-bottom: 4px;
-}
