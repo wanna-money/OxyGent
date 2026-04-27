@@ -322,6 +322,37 @@
     white-space: nowrap;
 }
 
+/* Inline ReRun button inside tg-node */
+.tg-node-rerun {
+    display: none;              /* hidden by default, shown on hover */
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-left: 4px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: #9CA3AF;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+}
+
+.tg-node:hover .tg-node-rerun {
+    display: inline-flex;
+}
+
+.tg-node-rerun:hover {
+    background: rgba(21, 94, 239, 0.12);
+    color: #155EEF;
+}
+
+.tg-node.disabled .tg-node-rerun {
+    display: none !important;
+}
+
 /* ── Start / End sentinel nodes ── */
 .tg-node-start,
 .tg-node-end {

@@ -1426,13 +1426,6 @@
             trace_id: node.trace_id || '',
             frameIndex: getActiveFrames().length
         });
-        // Auto-expand on very first node across all branches
-        var total = 0;
-        for (var k in traceGraphData) total += traceGraphData[k].length;
-        if (total === 1) {
-            $('#tracegraph-section').removeClass('collapsed');
-            document.body.classList.remove('tracegraph-hidden');
-        }
         renderTraceGraph();
     }
 
@@ -1707,6 +1700,12 @@
         var isDisabled = llm_is_work && !isActive;
         var iconSrc = (n.node_type === 'llm' || n.node_type === 'model')
             ? './image/org_model.svg' : './image/org_tool.svg';
+        var rerunBtn = (!llm_is_work && (n.node_type === 'llm' || n.node_type === 'model' || n.node_type === 'tool'))
+            ? '<button type="button" class="tg-node-rerun" title="ReRun from this node"'
+                + ' data-node-id="' + escapeHtml(n.node_id) + '">'
+                + '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">'
+                + '<polygon points="2,1 9,5 2,9" fill="currentColor"/></svg></button>'
+            : '';
         return '<div class="tg-node' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '') + '"'
             + ' data-trace-id="' + escapeHtml(n.trace_id) + '"'
             + ' title="' + escapeHtml(n.callee) + ' (' + escapeHtml(n.node_id) + ')">'
@@ -1714,6 +1713,7 @@
             + '<div class="tg-node-main">'
             + '<img class="tg-node-icon" src="' + iconSrc + '" alt="" />'
             + '<span class="tg-node-callee">' + escapeHtml(n.callee) + '</span>'
+            + rerunBtn
             + '</div></div>';
     }
 
@@ -1726,11 +1726,22 @@
     }
 
     // Click a Trace Graph node → find the branch with that trace_id → switch.
-    $('#tracegraph-body').on('click', '.tg-node', function () {
+    $('#tracegraph-body').on('click', '.tg-node', function (e) {
+        // Ignore clicks on the ReRun button (handled separately)
+        if ($(e.target).closest('.tg-node-rerun').length) return;
         var tid = $(this).attr('data-trace-id');
         if (!tid) return;
         var branch = branches.find(function(b) { return b.traceId === tid; });
         if (branch) switchBranch(branch.id);
+    });
+
+    // Click the ReRun button inside a Trace Graph node → restart from that node.
+    $('#tracegraph-body').on('click', '.tg-node-rerun', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var nodeId = $(this).attr('data-node-id');
+        if (!nodeId || llm_is_work) return;
+        restart_from_node(nodeId, undefined);
     });
 
     // Set traceId on active branch and re-render the graph.
@@ -1738,13 +1749,8 @@
         if (!trace_id) return;
         var ab = getActiveBranch();
         if (ab) {
-            var isFirst = !ab.traceId;
             ab.traceId = trace_id;
             renderTraceGraph();
-            if (isFirst) {
-                $('#tracegraph-section').removeClass('collapsed');
-                document.body.classList.remove('tracegraph-hidden');
-            }
         }
     }
 
@@ -2780,12 +2786,6 @@
     }
 
     function appendTimelineFrame(history, index) {
-        // Auto-unfold the Steps panel when a new frame arrives
-        var section = document.getElementById('timeline-section');
-        if (section && section.classList.contains('collapsed')) {
-            section.classList.remove('collapsed');
-            document.body.classList.remove('timeline-hidden');
-        }
         var track = document.getElementById('timeline-track');
         if (!track) return;
         var info = extractFrameInfo(history, index);
