@@ -1942,7 +1942,6 @@
         show_id = frames.length - 1;
         show_step();
         renderTimeline(); // full rebuild to show the new branch in the selector
-        appendTimelineFrame(seedFrame, frames.length - 1);
         send_msg_to_chatbox(hint);
         llm_is_work = true;
         $("#message_send").html('<img src="./image/stop-circle.svg" alt="" />');
