@@ -139,8 +139,9 @@
 
 .tracegraph-body {
     width: 100%;
+    max-height: 20vh;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: auto;
     transition: height 0.25s ease, padding 0.25s ease, opacity 0.25s ease;
     padding: 6px 12px 8px;
 }
@@ -149,7 +150,7 @@
 .tg-tree {
     display: inline-flex;
     align-items: flex-start;
-    padding: 8px 4px;
+    padding: 4px 4px;
     white-space: nowrap;
 }
 
@@ -198,8 +199,8 @@
 }
 
 .tg-children > .tg-branch {
-    padding-top: 6px;
-    padding-bottom: 6px;
+    padding-top: 4px;
+    padding-bottom: 4px;
     position: relative;
 }
 
@@ -247,11 +248,11 @@
     align-items: stretch;
     justify-content: center;
     border: 1.5px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 8px 14px;
+    border-radius: 6px;
+    padding: 4px 10px;
     background: #fff;
     cursor: pointer;
-    min-width: 100px;
+    min-width: 60px;
     flex-shrink: 0;
     transition: all 0.2s;
     white-space: nowrap;
@@ -284,14 +285,14 @@
 }
 
 .tg-node-caller {
-    font-size: 11px;
+    font-size: 10px;
     color: #6B7280;
     background-color: #F1F2F6;
     border: 1px solid #E5E7EB;
-    border-radius: 10px;
-    padding: 1px 8px;
-    margin-bottom: 4px;
-    max-width: 160px;
+    border-radius: 8px;
+    padding: 0px 6px;
+    margin-bottom: 2px;
+    max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -305,16 +306,16 @@
 }
 
 .tg-node-icon {
-    width: 22px;
-    height: 22px;
-    border-radius: 22px;
+    width: 18px;
+    height: 18px;
+    border-radius: 18px;
     background-color: #E1EFFD;
-    margin-right: 6px;
+    margin-right: 5px;
     flex-shrink: 0;
 }
 
 .tg-node-callee {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: #1F2433;
     line-height: 1.2;
