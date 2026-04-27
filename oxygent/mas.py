@@ -345,6 +345,7 @@ class MAS(BaseModel):
                 "mappings": {
                     "properties": {
                         "node_id": {"type": "keyword"},
+                        "copied_node_id": {"type": "keyword"},
                         "node_type": {"type": "keyword"},
                         "group_id": {"type": "keyword"},
                         "trace_id": {"type": "keyword"},

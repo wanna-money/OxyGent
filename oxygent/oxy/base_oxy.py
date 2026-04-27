@@ -297,6 +297,15 @@ Arguments:
                         "output"
                     ]
 
+                    copied_node_id = es_response["hits"]["hits"][0]["_source"][
+                        "copied_node_id"
+                    ]
+                    oxy_request.copied_node_id = (
+                        copied_node_id
+                        if copied_node_id
+                        else es_response["hits"]["hits"][0]["_source"]["node_id"]
+                    )
+
                     logger.info(
                         f"{' <<< '.join(oxy_request.call_stack)}  Load from ES: {restart_node_output}",
                         extra={
@@ -375,6 +384,7 @@ Arguments:
                 doc_id=oxy_request.node_id,
                 body={
                     "node_id": oxy_request.node_id,
+                    "copied_node_id": oxy_request.copied_node_id,
                     "node_type": callee_cat,
                     "trace_id": oxy_request.current_trace_id,
                     "group_id": oxy_request.group_id,
@@ -412,6 +422,7 @@ Arguments:
                     "type": "tool_call",
                     "content": {
                         "node_id": oxy_request.node_id,
+                        "copied_node_id": oxy_request.copied_node_id,
                         "caller": oxy_request.caller,
                         "callee": oxy_request.callee,
                         "caller_category": oxy_request.caller_category,
@@ -493,6 +504,7 @@ Arguments:
                 doc_id=oxy_request.node_id,
                 body={
                     "node_id": oxy_request.node_id,
+                    "copied_node_id": oxy_request.copied_node_id,
                     "node_type": callee_cat,
                     "trace_id": oxy_request.current_trace_id,
                     "group_id": oxy_request.group_id,
@@ -528,6 +540,7 @@ Arguments:
                     "type": "observation",
                     "content": {
                         "node_id": oxy_request.node_id,
+                        "copied_node_id": oxy_request.copied_node_id,
                         "caller": oxy_request.caller,
                         "callee": oxy_request.callee,
                         "caller_category": oxy_request.caller_category,

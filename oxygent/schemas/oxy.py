@@ -93,6 +93,7 @@ class OxyRequest(BaseModel):
     callee_category: Optional[str] = Field("", description="")
 
     node_id: Optional[str] = Field("", description="")
+    copied_node_id: Optional[str] = Field("", description="")
 
     is_save_history: bool = Field(True, description="whether history is saved")
     is_send_message: bool = Field(True, description="whether message is send")

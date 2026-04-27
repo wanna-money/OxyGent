@@ -706,6 +706,7 @@
             if (_cc && (_cc["callee_category"] === 'llm' || _cc["callee_category"] === 'tool')) {
                 traceGraphAddNode({
                     node_id: _cc["node_id"],
+                    copied_node_id: _cc["copied_node_id"] || '',
                     node_type: _cc["callee_category"],
                     caller: _cc["caller"] || '',
                     callee: _cc["callee"] || '',
@@ -746,6 +747,13 @@
         }
 
         if (jm["type"] == "observation") {
+            // Track copied_node_id from ALL observations (including cached/replayed nodes
+            // that don't get a tool_call message and thus aren't in traceGraphData).
+            var _oc = jm["content"];
+            if (_oc && _oc["node_id"] && _oc["copied_node_id"]) {
+                nodeCopiedIdMap[_oc["node_id"]] = _oc["copied_node_id"];
+            }
+
             if (jm["content"]["caller"] === 'user') {
                 // answer
                 from_trace_id = jm["content"]["current_trace_id"];
@@ -1396,10 +1404,12 @@
     // parent and child, with forkFrameIndex as fallback).
     // Renders incrementally — every traceGraphAddNode triggers a re-render.
 
-    var traceGraphData = {};  // branch_id → [{ node_id, node_type, caller, callee, trace_id, frameIndex }]
+    var traceGraphData = {};  // branch_id → [{ node_id, copied_node_id, node_type, caller, callee, trace_id, frameIndex }]
+    var nodeCopiedIdMap = {};  // node_id → copied_node_id (populated from ALL observation messages, including cached nodes)
 
     function traceGraphReset() {
         traceGraphData = {};
+        nodeCopiedIdMap = {};
     }
 
     function traceGraphAddNode(node) {
@@ -1408,6 +1418,7 @@
         if (!traceGraphData[ab.id]) traceGraphData[ab.id] = [];
         traceGraphData[ab.id].push({
             node_id: node.node_id,
+            copied_node_id: node.copied_node_id || '',
             node_type: node.node_type,
             caller: node.caller || '',
             callee: node.callee || '',
@@ -1795,30 +1806,96 @@
         // Create a new branch
         var newBranch = createBranch(parentBranch ? parentBranch.id : null, forkIndex);
 
-        // Compute fork-node index: find the restart nodeId in the parent's
-        // traceGraphData, then fork at the node BEFORE it.
-        // E.g. parent chain A→B→C→D→E→F, ReRun from D → fork at C (index 2),
-        //   so new branch D'→E'→F' connects after C.
-        var parentNodes = parentBranch ? (traceGraphData[parentBranch.id] || []) : [];
+        // Compute fork-node index for the Trace Graph.
+        //
+        // Goal: always fork from the ORIGINAL node's predecessor, so that
+        // repeated ReRuns from the same logical node (D, D', D'', …) all
+        // appear as siblings under the same fork point.
+        //
+        // Three sources for finding the original node:
+        //   a) copied_node_id from traceGraphData (fresh nodes with copy info)
+        //   b) copied_node_id from nodeCopiedIdMap (cached nodes via observation)
+        //   c) Branch structure mapping: a fresh node at index i in a child
+        //      branch corresponds to forkNodeIdx+1+i in the parent branch.
+        //      This handles nodes like D' that have no copied_node_id because
+        //      they were freshly executed (not cached).
+
+        // Step 1: resolve the original node id
+        var originalNodeId = nodeId;
+
+        // (a) Check traceGraphData for copied_node_id
+        var curBranchNodes = parentBranch ? (traceGraphData[parentBranch.id] || []) : [];
+        for (var _k = 0; _k < curBranchNodes.length; _k++) {
+            if (curBranchNodes[_k].node_id === nodeId && curBranchNodes[_k].copied_node_id) {
+                originalNodeId = curBranchNodes[_k].copied_node_id;
+                break;
+            }
+        }
+        // (b) Check nodeCopiedIdMap (cached nodes that only got observation)
+        if (originalNodeId === nodeId && nodeCopiedIdMap[nodeId]) {
+            originalNodeId = nodeCopiedIdMap[nodeId];
+        }
+        // (c) No copied_node_id at all — map through branch structure.
+        //     The node at index i in this branch's traceGraphData corresponds
+        //     to forkNodeIdx + 1 + i in the parent branch's traceGraphData.
+        if (originalNodeId === nodeId && parentBranch && parentBranch.parentBranchId != null) {
+            var nodeIdxInBranch = -1;
+            for (var _m = 0; _m < curBranchNodes.length; _m++) {
+                if (curBranchNodes[_m].node_id === nodeId) { nodeIdxInBranch = _m; break; }
+            }
+            if (nodeIdxInBranch >= 0) {
+                // Walk up the branch chain until we find the node in an ancestor
+                var walkBranch = parentBranch;
+                var walkIdx = nodeIdxInBranch;
+                while (walkBranch && walkBranch.parentBranchId != null) {
+                    var ancestorNodes = traceGraphData[walkBranch.parentBranchId] || [];
+                    var mappedIdx = (walkBranch.forkNodeIdx != null ? walkBranch.forkNodeIdx : 0) + 1 + walkIdx;
+                    if (mappedIdx < ancestorNodes.length) {
+                        // Found the corresponding node in this ancestor
+                        var ancestorNode = ancestorNodes[mappedIdx];
+                        // If it also has a copied_node_id, follow it
+                        originalNodeId = ancestorNode.copied_node_id || ancestorNode.node_id;
+                        break;
+                    }
+                    // mappedIdx beyond this ancestor's data — keep walking up
+                    walkIdx = mappedIdx;
+                    walkBranch = branches.find(function(b) { return b.id === walkBranch.parentBranchId; });
+                }
+            }
+        }
+
+        // Step 2: find the original node in any branch's traceGraphData
+        var targetBranchId = null;
         var restartIdx = -1;
-        for (var _k = 0; _k < parentNodes.length; _k++) {
-            if (parentNodes[_k].node_id === nodeId) { restartIdx = _k; break; }
+        for (var _bi = 0; _bi < branches.length; _bi++) {
+            var bNodes = traceGraphData[branches[_bi].id] || [];
+            for (var _ni = 0; _ni < bNodes.length; _ni++) {
+                if (bNodes[_ni].node_id === originalNodeId) {
+                    targetBranchId = branches[_bi].id;
+                    restartIdx = _ni;
+                    break;
+                }
+            }
+            if (targetBranchId) break;
+        }
+
+        // Step 3: set parent and fork index
+        if (targetBranchId) {
+            newBranch.parentBranchId = targetBranchId;
         }
         var fni;
         if (restartIdx > 0) {
-            // Fork at the node BEFORE the restart node
             fni = restartIdx - 1;
         } else if (restartIdx === 0) {
-            // Restarting from the very first node → fork before all nodes
             fni = 0;
         } else {
-            // nodeId not found in traceGraphData — fallback to last node
-            fni = Math.max(0, parentNodes.length - 1);
+            fni = Math.max(0, (traceGraphData[newBranch.parentBranchId] || []).length - 1);
         }
         newBranch.forkNodeIdx = fni;
         console.log('[TraceGraph] fork:', newBranch.id,
-            'parent:', parentBranch ? parentBranch.id : null,
+            'parent:', newBranch.parentBranchId,
             'restartNodeId:', nodeId,
+            'originalNodeId:', originalNodeId,
             'restartIdx:', restartIdx,
             'forkNodeIdx:', fni);
 
