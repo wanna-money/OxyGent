@@ -752,6 +752,10 @@
             var _oc = jm["content"];
             if (_oc && _oc["node_id"] && _oc["copied_node_id"]) {
                 nodeCopiedIdMap[_oc["node_id"]] = _oc["copied_node_id"];
+                // During a ReRun, highlight the original node being replayed
+                if (llm_is_work) {
+                    traceGraphHighlightReplay(_oc["copied_node_id"]);
+                }
             }
 
             if (jm["content"]["caller"] === 'user') {
@@ -798,6 +802,7 @@
                 chats.push(msg);
                 history["answer"] = JSON.parse(JSON.stringify(chats));
                 llm_is_work = false;
+                traceGraphClearReplayHighlights();
                 renderTraceGraph();
                 // $("#message_send").text("Send");
                 // 重置react_memory
@@ -1407,10 +1412,30 @@
 
     var traceGraphData = {};  // branch_id → [{ node_id, copied_node_id, node_type, caller, callee, trace_id, frameIndex }]
     var nodeCopiedIdMap = {};  // node_id → copied_node_id (populated from ALL observation messages, including cached nodes)
+    var replayHighlightIds = new Set();  // Set of node_ids to highlight as "replaying" during a ReRun
 
     function traceGraphReset() {
         traceGraphData = {};
         nodeCopiedIdMap = {};
+        replayHighlightIds = new Set();
+    }
+
+    // Mark a node as "replaying" in the trace graph (highlight without full re-render).
+    function traceGraphHighlightReplay(copiedNodeId) {
+        if (!copiedNodeId) return;
+        replayHighlightIds.add(copiedNodeId);
+        // Use lightweight DOM update instead of full re-render
+        $('#tracegraph-body .tg-node[data-node-id]').each(function () {
+            if ($(this).attr('data-node-id') === copiedNodeId) {
+                $(this).addClass('replaying');
+            }
+        });
+    }
+
+    // Clear all replay highlights.
+    function traceGraphClearReplayHighlights() {
+        replayHighlightIds = new Set();
+        $('#tracegraph-body .tg-node.replaying').removeClass('replaying');
     }
 
     function traceGraphAddNode(node) {
@@ -1698,6 +1723,7 @@
         var ab = getActiveBranch();
         var isActive = ab && ab.id === branch.id;
         var isDisabled = llm_is_work && !isActive;
+        var isReplaying = replayHighlightIds.has(n.node_id);
         var iconSrc = (n.node_type === 'llm' || n.node_type === 'model')
             ? './image/org_model.svg' : './image/org_tool.svg';
         var rerunBtn = (!llm_is_work && (n.node_type === 'llm' || n.node_type === 'model' || n.node_type === 'tool'))
@@ -1706,8 +1732,10 @@
                 + '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">'
                 + '<polygon points="2,1 9,5 2,9" fill="currentColor"/></svg></button>'
             : '';
-        return '<div class="tg-node' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '') + '"'
+        var cls = 'tg-node' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '') + (isReplaying ? ' replaying' : '');
+        return '<div class="' + cls + '"'
             + ' data-trace-id="' + escapeHtml(n.trace_id) + '"'
+            + ' data-node-id="' + escapeHtml(n.node_id) + '"'
             + ' title="' + escapeHtml(n.callee) + ' (' + escapeHtml(n.node_id) + ')">'
             + (n.caller ? '<div class="tg-node-caller">' + escapeHtml(n.caller) + '</div>' : '')
             + '<div class="tg-node-main">'
@@ -1936,6 +1964,7 @@
         } else {
             eventSource.close();
             llm_is_work = false;
+            traceGraphClearReplayHighlights();
             renderTraceGraph();
             plan_dict = {};
             $("#message_send").html(`
@@ -1948,6 +1977,9 @@
     // Creates a new branch forking from the current branch at the current show_id.
     function restart_from_node(nodeId, editedOutput) {
         if (llm_is_work) return;
+
+        // Clear any leftover replay highlights from a prior ReRun
+        traceGraphClearReplayHighlights();
 
         var parentBranch = getActiveBranch();
         var forkIndex = show_id;
@@ -2100,6 +2132,7 @@
             $("#message_send").html('<img src="./image/up_arrow.svg" alt="" />');
             eventSource.close();
             llm_is_work = false;
+            traceGraphClearReplayHighlights();
             renderTraceGraph();
         };
         eventSource.addEventListener("close", (event) => {
@@ -2107,6 +2140,7 @@
             $("#message_send").html('<img src="./image/up_arrow.svg" alt="" />');
             eventSource.close();
             llm_is_work = false;
+            traceGraphClearReplayHighlights();
             renderTraceGraph();
         });
 
