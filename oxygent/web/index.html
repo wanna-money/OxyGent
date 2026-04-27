@@ -1807,81 +1807,14 @@
         var newBranch = createBranch(parentBranch ? parentBranch.id : null, forkIndex);
 
         // Compute fork-node index for the Trace Graph.
-        //
-        // Goal: always fork from the ORIGINAL node's predecessor, so that
-        // repeated ReRuns from the same logical node (D, D', D'', …) all
-        // appear as siblings under the same fork point.
-        //
-        // Three sources for finding the original node:
-        //   a) copied_node_id from traceGraphData (fresh nodes with copy info)
-        //   b) copied_node_id from nodeCopiedIdMap (cached nodes via observation)
-        //   c) Branch structure mapping: a fresh node at index i in a child
-        //      branch corresponds to forkNodeIdx+1+i in the parent branch.
-        //      This handles nodes like D' that have no copied_node_id because
-        //      they were freshly executed (not cached).
-
-        // Step 1: resolve the original node id
-        var originalNodeId = nodeId;
-
-        // (a) Check traceGraphData for copied_node_id
+        // Fork from the ACTIVE branch where the user clicked, not the root ancestor.
         var curBranchNodes = parentBranch ? (traceGraphData[parentBranch.id] || []) : [];
+        var restartIdx = -1;
         for (var _k = 0; _k < curBranchNodes.length; _k++) {
-            if (curBranchNodes[_k].node_id === nodeId && curBranchNodes[_k].copied_node_id) {
-                originalNodeId = curBranchNodes[_k].copied_node_id;
+            if (curBranchNodes[_k].node_id === nodeId) {
+                restartIdx = _k;
                 break;
             }
-        }
-        // (b) Check nodeCopiedIdMap (cached nodes that only got observation)
-        if (originalNodeId === nodeId && nodeCopiedIdMap[nodeId]) {
-            originalNodeId = nodeCopiedIdMap[nodeId];
-        }
-        // (c) No copied_node_id at all — map through branch structure.
-        //     The node at index i in this branch's traceGraphData corresponds
-        //     to forkNodeIdx + 1 + i in the parent branch's traceGraphData.
-        if (originalNodeId === nodeId && parentBranch && parentBranch.parentBranchId != null) {
-            var nodeIdxInBranch = -1;
-            for (var _m = 0; _m < curBranchNodes.length; _m++) {
-                if (curBranchNodes[_m].node_id === nodeId) { nodeIdxInBranch = _m; break; }
-            }
-            if (nodeIdxInBranch >= 0) {
-                // Walk up the branch chain until we find the node in an ancestor
-                var walkBranch = parentBranch;
-                var walkIdx = nodeIdxInBranch;
-                while (walkBranch && walkBranch.parentBranchId != null) {
-                    var ancestorNodes = traceGraphData[walkBranch.parentBranchId] || [];
-                    var mappedIdx = (walkBranch.forkNodeIdx != null ? walkBranch.forkNodeIdx : 0) + 1 + walkIdx;
-                    if (mappedIdx < ancestorNodes.length) {
-                        // Found the corresponding node in this ancestor
-                        var ancestorNode = ancestorNodes[mappedIdx];
-                        // If it also has a copied_node_id, follow it
-                        originalNodeId = ancestorNode.copied_node_id || ancestorNode.node_id;
-                        break;
-                    }
-                    // mappedIdx beyond this ancestor's data — keep walking up
-                    walkIdx = mappedIdx;
-                    walkBranch = branches.find(function(b) { return b.id === walkBranch.parentBranchId; });
-                }
-            }
-        }
-
-        // Step 2: find the original node in any branch's traceGraphData
-        var targetBranchId = null;
-        var restartIdx = -1;
-        for (var _bi = 0; _bi < branches.length; _bi++) {
-            var bNodes = traceGraphData[branches[_bi].id] || [];
-            for (var _ni = 0; _ni < bNodes.length; _ni++) {
-                if (bNodes[_ni].node_id === originalNodeId) {
-                    targetBranchId = branches[_bi].id;
-                    restartIdx = _ni;
-                    break;
-                }
-            }
-            if (targetBranchId) break;
-        }
-
-        // Step 3: set parent and fork index
-        if (targetBranchId) {
-            newBranch.parentBranchId = targetBranchId;
         }
         var fni;
         if (restartIdx > 0) {
@@ -1889,13 +1822,12 @@
         } else if (restartIdx === 0) {
             fni = 0;
         } else {
-            fni = Math.max(0, (traceGraphData[newBranch.parentBranchId] || []).length - 1);
+            fni = Math.max(0, curBranchNodes.length - 1);
         }
         newBranch.forkNodeIdx = fni;
         console.log('[TraceGraph] fork:', newBranch.id,
             'parent:', newBranch.parentBranchId,
             'restartNodeId:', nodeId,
-            'originalNodeId:', originalNodeId,
             'restartIdx:', restartIdx,
             'forkNodeIdx:', fni);
 
