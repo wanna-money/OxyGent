@@ -322,4 +322,51 @@
     white-space: nowrap;
 }
 
+/* ── Start / End sentinel nodes ── */
+.tg-node-start,
+.tg-node-end {
+    border-style: dashed;
+    cursor: default;
+    min-width: auto;
+    padding: 4px 8px;
+}
+
+.tg-node-start {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.tg-node-start .tg-node-callee {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.tg-node-end {
+    border-color: #fca5a5;
+    background: #fef2f2;
+}
+
+.tg-node-end .tg-node-callee {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.tg-node-start:hover,
+.tg-node-end:hover {
+    box-shadow: none;
+    border-color: inherit;
+}
+
+.tg-node-start:hover {
+    border-color: #86efac;
+}
+
+.tg-node-end:hover {
+    border-color: #fca5a5;
+}
+
+.tg-node-icon-svg {
+    flex-shrink: 0;
+    margin-right: 5px;
+}
 
