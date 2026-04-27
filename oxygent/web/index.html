@@ -798,6 +798,7 @@
                 chats.push(msg);
                 history["answer"] = JSON.parse(JSON.stringify(chats));
                 llm_is_work = false;
+                renderTraceGraph();
                 // $("#message_send").text("Send");
                 // 重置react_memory
                 plan_dict = {};
@@ -1447,6 +1448,20 @@
         + '<span class="tg-node-callee">End</span>'
         + '</div></div>';
 
+    var RUNNING_NODE = '<div class="tg-node tg-node-running" title="Running">'
+        + '<div class="tg-node-main">'
+        + '<svg class="tg-node-icon-svg tg-spin" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="6.5" fill="none" stroke="#e5e7eb" stroke-width="2"/><path d="M9 2.5 a6.5 6.5 0 0 1 6.5 6.5" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/></svg>'
+        + '<span class="tg-node-callee">Running</span>'
+        + '</div></div>';
+
+    // Return End for completed branches, Running for the active branch while
+    // the LLM is still working. Non-active branches are always finished.
+    function terminalNodeFor(branch) {
+        var ab = getActiveBranch();
+        var isActive = ab && branch && ab.id === branch.id;
+        return (llm_is_work && isActive) ? RUNNING_NODE : END_NODE;
+    }
+
     function renderTraceGraph() {
         var $body = $('#tracegraph-body');
         var hasData = false;
@@ -1482,7 +1497,7 @@
                 if (i > 0) html += ARROW;
                 html += renderNodeEl(nodes[i], virtualRoots[0]);
             }
-            html += ARROW + END_NODE + '</div>';
+            html += ARROW + terminalNodeFor(virtualRoots[0]) + '</div>';
         } else {
             // Multiple virtual roots OR forks within a chain: Start → fork → branches → End
             html += '<div class="tg-branch">' + START_NODE;
@@ -1634,7 +1649,7 @@
             var trailingForks = forkAt[idx] || [];
             if (trailingForks.length === 0) {
                 // Empty branch with no forks → just an End node alone
-                return '<div class="tg-branch">' + (showArrowPrefix ? ARROW : '') + END_NODE + '</div>';
+                return '<div class="tg-branch">' + (showArrowPrefix ? ARROW : '') + terminalNodeFor(branch) + '</div>';
             }
             var html = '';
             trailingForks.forEach(function(item) {
@@ -1664,7 +1679,7 @@
                 } else {
                     // This branch's chain ends here but it has child forks → terminate this
                     // branch's own line with an End node alongside the child branches
-                    childrenHtml += '<div class="tg-branch">' + ARROW + END_NODE + '</div>';
+                    childrenHtml += '<div class="tg-branch">' + ARROW + terminalNodeFor(branch) + '</div>';
                 }
                 forksHere.forEach(function(item) {
                     childrenHtml += renderBranchSubtreeWithEnd(item.branch, item.skipCount, false);
@@ -1677,7 +1692,7 @@
             }
             if (!hasMore) {
                 // Leaf: append End node
-                html += ARROW + END_NODE;
+                html += ARROW + terminalNodeFor(branch);
                 break;
             }
             i++;
@@ -1915,6 +1930,7 @@
         } else {
             eventSource.close();
             llm_is_work = false;
+            renderTraceGraph();
             plan_dict = {};
             $("#message_send").html(`
                 <img src="./image/up_arrow.svg" alt="" />
@@ -1942,30 +1958,118 @@
         var newBranch = createBranch(parentBranch ? parentBranch.id : null, forkIndex);
 
         // Compute fork-node index for the Trace Graph.
-        // Fork from the ACTIVE branch where the user clicked, not the root ancestor.
-        var curBranchNodes = parentBranch ? (traceGraphData[parentBranch.id] || []) : [];
-        var restartIdx = -1;
-        for (var _k = 0; _k < curBranchNodes.length; _k++) {
-            if (curBranchNodes[_k].node_id === nodeId) {
-                restartIdx = _k;
-                break;
+        //
+        // We need to find which branch OWNS the node being rerun, so the
+        // new branch forks from the correct level.  The nodeId from the
+        // ReRun button may be a replayed/cached copy with a different ID
+        // than the original.  We resolve it via nodeCopiedIdMap and also
+        // match against copied_node_id fields stored in traceGraphData.
+        //
+        // Strategy: build the full ancestor chain from root → current
+        // branch, then search top-down (root first).  Finding the match
+        // in the HIGHEST ancestor ensures the fork is placed at the
+        // correct level.  If the ancestor chain has no match, fall back
+        // to searching ALL branches.
+
+        // 1. Resolve nodeId via copied-id chain
+        var resolvedId = nodeId;
+        var _seen = {};
+        while (nodeCopiedIdMap[resolvedId] && !_seen[resolvedId]) {
+            _seen[resolvedId] = true;
+            resolvedId = nodeCopiedIdMap[resolvedId];
+        }
+        var searchIds = [nodeId];
+        if (resolvedId !== nodeId) searchIds.push(resolvedId);
+        // Also add reverse lookups: find any traceGraphData node whose
+        // copied_node_id === nodeId, and include its node_id as a search
+        // candidate (handles the case where the button ID is an original
+        // but the traceGraphData stores the copy, or vice versa).
+        for (var _bid in traceGraphData) {
+            var _arr = traceGraphData[_bid];
+            for (var _j = 0; _j < _arr.length; _j++) {
+                if (_arr[_j].copied_node_id) {
+                    if (searchIds.indexOf(_arr[_j].node_id) === -1
+                        && searchIds.indexOf(_arr[_j].copied_node_id) !== -1) {
+                        searchIds.push(_arr[_j].node_id);
+                    }
+                    if (searchIds.indexOf(_arr[_j].copied_node_id) === -1
+                        && searchIds.indexOf(_arr[_j].node_id) !== -1) {
+                        searchIds.push(_arr[_j].copied_node_id);
+                    }
+                }
             }
+        }
+
+        // 2. Build ancestor chain from root → parentBranch
+        var ancestorChain = [];
+        var cur = parentBranch;
+        while (cur) {
+            ancestorChain.unshift(cur);  // prepend → root first
+            cur = cur.parentBranchId
+                ? branches.find(function(b) { return b.id === cur.parentBranchId; })
+                : null;
+        }
+
+        // Helper: search a branch's nodes for any of the searchIds
+        function findNodeInBranch(branch) {
+            var nodes = traceGraphData[branch.id] || [];
+            for (var k = 0; k < nodes.length; k++) {
+                var nd = nodes[k];
+                for (var s = 0; s < searchIds.length; s++) {
+                    if (nd.node_id === searchIds[s] || nd.copied_node_id === searchIds[s]) {
+                        return k;
+                    }
+                }
+            }
+            return -1;
+        }
+
+        // 3. Search ancestor chain top-down (root first)
+        var ownerBranch = null;
+        var restartIdx = -1;
+        for (var _a = 0; _a < ancestorChain.length; _a++) {
+            var idx = findNodeInBranch(ancestorChain[_a]);
+            if (idx !== -1) {
+                ownerBranch = ancestorChain[_a];
+                restartIdx = idx;
+                break;              // found in the highest ancestor – stop
+            }
+        }
+
+        // 4. Fallback: search ALL branches (handles non-ancestor owners)
+        if (restartIdx === -1) {
+            for (var _b = 0; _b < branches.length; _b++) {
+                var idx2 = findNodeInBranch(branches[_b]);
+                if (idx2 !== -1) {
+                    ownerBranch = branches[_b];
+                    restartIdx = idx2;
+                    break;
+                }
+            }
+        }
+
+        // 5. Re-parent the new branch onto the owner of the rerun node
+        if (ownerBranch) {
+            newBranch.parentBranchId = ownerBranch.id;
         }
         var fni;
         if (restartIdx > 0) {
             fni = restartIdx - 1;
         } else if (restartIdx === 0) {
-            // Rerunning the very first node: fork BEFORE it, so the rerun branch
-            // is promoted to a virtual root in renderTraceGraph (sibling of the
-            // original under Start, not appended after the original first node).
+            // Rerunning the very first node of the owner branch: fork BEFORE
+            // it so the rerun branch becomes a sibling under Start.
             fni = -1;
         } else {
-            fni = Math.max(0, curBranchNodes.length - 1);
+            // Node not found anywhere — attach at end of parent as fallback
+            var fallbackNodes = parentBranch ? (traceGraphData[parentBranch.id] || []) : [];
+            fni = Math.max(0, fallbackNodes.length - 1);
         }
         newBranch.forkNodeIdx = fni;
         console.log('[TraceGraph] fork:', newBranch.id,
             'parent:', newBranch.parentBranchId,
             'restartNodeId:', nodeId,
+            'searchIds:', searchIds,
+            'ownerBranch:', ownerBranch ? ownerBranch.id : null,
             'restartIdx:', restartIdx,
             'forkNodeIdx:', fni);
 
@@ -1990,12 +2094,14 @@
             $("#message_send").html('<img src="./image/up_arrow.svg" alt="" />');
             eventSource.close();
             llm_is_work = false;
+            renderTraceGraph();
         };
         eventSource.addEventListener("close", (event) => {
             console.log("Restart complete, closing SSE:", event.data);
             $("#message_send").html('<img src="./image/up_arrow.svg" alt="" />');
             eventSource.close();
             llm_is_work = false;
+            renderTraceGraph();
         });
 
         var hint = (editedOutput !== undefined && editedOutput !== null)

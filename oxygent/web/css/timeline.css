@@ -370,3 +370,33 @@
     margin-right: 5px;
 }
 
+/* Running (intermediate) terminal node */
+.tg-node-running {
+    border-style: dashed;
+    cursor: default;
+    min-width: auto;
+    padding: 4px 8px;
+    border-color: #93c5fd;
+    background: #eff6ff;
+}
+
+.tg-node-running .tg-node-callee {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.tg-node-running:hover {
+    box-shadow: none;
+    border-color: #93c5fd;
+}
+
+.tg-spin {
+    animation: tg-spin 1s linear infinite;
+    transform-origin: 50% 50%;
+}
+
+@keyframes tg-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
