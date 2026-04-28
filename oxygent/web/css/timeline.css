@@ -473,6 +473,26 @@
     border-color: #93c5fd;
 }
 
+/* Turn separator between multi-turn conversations */
+.tg-node-turn {
+    border-style: dashed;
+    border-color: #c4b5fd;
+    background: #f5f3ff;
+    cursor: default;
+    min-width: auto;
+    padding: 4px 8px;
+}
+
+.tg-node-turn .tg-node-callee {
+    color: #7c3aed;
+    font-weight: 600;
+}
+
+.tg-node-turn:hover {
+    box-shadow: none;
+    border-color: #c4b5fd;
+}
+
 .tg-spin {
     animation: tg-spin 1s linear infinite;
     transform-origin: 50% 50%;

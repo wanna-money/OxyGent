@@ -255,6 +255,7 @@
     var nodeContentMap = {};
     var tool_calls = [];
     var show_id = 0;
+    var traceGraphTurnIndex = 0;  // incremented on each new question
 
     // ── Branching history system ──
     var branches = [];
@@ -1433,6 +1434,7 @@
         traceGraphData = {};
         nodeCopiedIdMap = {};
         replayHighlightIds = new Set();
+        traceGraphTurnIndex = 0;
     }
 
     // Mark a node as "replaying" in the trace graph (highlight without full re-render).
@@ -1464,7 +1466,8 @@
             caller: node.caller || '',
             callee: node.callee || '',
             trace_id: node.trace_id || '',
-            frameIndex: getActiveFrames().length
+            frameIndex: getActiveFrames().length,
+            turnIndex: traceGraphTurnIndex
         });
         renderTraceGraph();
     }
@@ -1486,6 +1489,17 @@
         + '<svg class="tg-node-icon-svg tg-spin" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="6.5" fill="none" stroke="#e5e7eb" stroke-width="2"/><path d="M9 2.5 a6.5 6.5 0 0 1 6.5 6.5" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/></svg>'
         + '<span class="tg-node-callee">Running</span>'
         + '</div></div>';
+
+    var TURN_SEPARATOR = '<div class="tg-node tg-node-turn" title="New Turn">'
+        + '<div class="tg-node-main">'
+        + '<svg class="tg-node-icon-svg" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7" fill="#8b5cf6" stroke="#7c3aed" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>'
+        + '<span class="tg-node-callee">New Turn</span>'
+        + '</div></div>';
+
+    // Check if a turn separator should be inserted between nodes[i-1] and nodes[i].
+    function needsTurnSeparator(nodes, i) {
+        return i > 0 && nodes[i].turnIndex !== nodes[i - 1].turnIndex;
+    }
 
     // Return End for completed branches, Running for the active branch while
     // the LLM is still working. Non-active branches are always finished.
@@ -1527,7 +1541,12 @@
             html += '<div class="tg-branch">' + START_NODE + ARROW;
             var nodes = traceGraphData[virtualRoots[0].id] || [];
             for (var i = 0; i < nodes.length; i++) {
-                if (i > 0) html += ARROW;
+                if (i > 0) {
+                    if (needsTurnSeparator(nodes, i)) {
+                        html += ARROW + TURN_SEPARATOR;
+                    }
+                    html += ARROW;
+                }
                 html += renderNodeEl(nodes[i], virtualRoots[0]);
             }
             html += ARROW + terminalNodeFor(virtualRoots[0]) + '</div>';
@@ -1646,6 +1665,9 @@
             if (first && showArrowPrefix) {
                 html += ARROW;
             } else if (!first) {
+                if (needsTurnSeparator(nodes, i)) {
+                    html += ARROW + TURN_SEPARATOR;
+                }
                 html += ARROW;
             }
             first = false;
@@ -1655,6 +1677,11 @@
             if (forksHere.length > 0) {
                 // Fork point: CSS tree connectors handle the visual connection
                 // from this node to each child branch.
+                // If the continuation crosses a turn boundary, render the
+                // separator BEFORE the fork so it is shared by all branches.
+                if (hasMore && needsTurnSeparator(nodes, i + 1)) {
+                    html += ARROW + TURN_SEPARATOR;
+                }
                 var childrenHtml = '';
                 if (hasMore) {
                     childrenHtml += buildNodeChain(branch, nodes, i + 1, forkAt, false);
@@ -1699,6 +1726,9 @@
             if (first && showArrowPrefix) {
                 html += ARROW;
             } else if (!first) {
+                if (needsTurnSeparator(nodes, i)) {
+                    html += ARROW + TURN_SEPARATOR;
+                }
                 html += ARROW;
             }
             first = false;
@@ -1706,6 +1736,11 @@
 
             var hasMore = i + 1 < nodes.length;
             if (forksHere.length > 0) {
+                // If the continuation crosses a turn boundary, render the
+                // separator BEFORE the fork so it is shared by all branches.
+                if (hasMore && needsTurnSeparator(nodes, i + 1)) {
+                    html += ARROW + TURN_SEPARATOR;
+                }
                 var childrenHtml = '';
                 if (hasMore) {
                     childrenHtml += buildNodeChainWithEnd(branch, nodes, i + 1, forkAt, false);
@@ -1897,6 +1932,7 @@
                 return
             }
             // Re-render the trace graph (traceId will be set when SSE events arrive).
+            traceGraphTurnIndex++;
             renderTraceGraph();
             let query_val = message;
             try {
