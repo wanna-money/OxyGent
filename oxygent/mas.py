@@ -1243,11 +1243,14 @@ class MAS(BaseModel):
         async def no_cache_static(request: Request, call_next):
             response = await call_next(request)
             if request.url.path.startswith("/web/"):
-                response.headers["Cache-Control"] = (
-                    "no-cache, no-store, must-revalidate"
+                response.headers["Cache-Control"] = "no-cache"
+            # Prevent uploaded files from being rendered as HTML by the browser
+            if request.url.path.startswith("/static/"):
+                response.headers["Content-Disposition"] = "attachment"
+                response.headers["X-Content-Type-Options"] = "nosniff"
+                response.headers["Content-Security-Policy"] = (
+                    "default-src 'none'"
                 )
-                response.headers["Pragma"] = "no-cache"
-                response.headers["Expires"] = "0"
             return response
 
         for app_middleware in self.middlewares:

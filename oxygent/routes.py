@@ -86,12 +86,31 @@ def check_alive():
     return {"alive": 1}
 
 
+ALLOWED_UPLOAD_EXTENSIONS = {
+    ".txt", ".jpg", ".jpeg", ".png", ".mp4",
+    ".xlsx", ".xls", ".doc", ".docx", ".pdf",
+    ".csv", ".tsv", ".ods", ".py", ".md", ".json",
+}
+
+
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     upload_dir = os.path.join(Config.get_cache_save_dir(), "uploads")
     os.makedirs(upload_dir, exist_ok=True)
 
-    file_name = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
+    # Sanitize filename: strip path components, keep only the base name
+    original_name = os.path.basename(file.filename or "upload")
+    # Extract extension and validate against whitelist
+    _, ext = os.path.splitext(original_name)
+    ext = ext.lower()
+    if ext not in ALLOWED_UPLOAD_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type '{ext}' is not allowed.",
+        )
+    # Remove any characters that are not alphanumeric, hyphen, underscore, or dot
+    safe_stem = re.sub(r"[^\w\-.]", "_", os.path.splitext(original_name)[0])
+    file_name = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{safe_stem}{ext}"
     file_path = os.path.join(upload_dir, file_name)
     pic_url = f"../static/{file_name}"
 

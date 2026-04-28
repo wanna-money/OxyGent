@@ -478,7 +478,7 @@ input:disabled + .slider:before {
 }
 
 #flowchartId {
-    height: 240px;
+    height: 200px;
     overflow: scroll;
     position: relative;
 }

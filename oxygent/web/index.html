@@ -1885,15 +1885,20 @@
             fileList.className = 'file-list-chat';
             filesToUpload.forEach(_file => {
                 var fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                fileItem.innerHTML = `
+                if (_file.objectUrl) {
+                    fileItem.className = 'file-item-image-chat';
+                    fileItem.innerHTML = `<img class="file-thumb" src="${_file.objectUrl}" alt="${_file.name}" />`;
+                } else {
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
                             <div class="file-icon">
-                                <img src="./image/video.svg" alt=""></img>
+                                <img src="./image/video.svg" alt="" />
                             </div>
                             <div class="file-info">
                                 <div class="file-name">${_file.name}</div>
-                                <div class="file-size">${_file.size}KB</div>
-                            </div>`
+                                <div class="file-size">${_file.size}</div>
+                            </div>`;
+                }
                 fileList.append(fileItem);
             })
             li.append(fileList);
@@ -3237,32 +3242,32 @@
     // 处理选择的文件
     function handleFiles(files) {
         for (var i = 0; i < files.length; i++) {
-            var file = files[i];
+            (function (file) {
+                // 检查文件类型
+                var fileType = getFileType(file.name);
+                if (!fileType) {
+                    showStatus('不支持的文件类型: ' + file.name, false);
+                    return;
+                }
 
-            // 检查文件类型
-            var fileType = getFileType(file.name);
-            if (!fileType) {
-                showStatus('不支持的文件类型: ' + file.name, false);
-                continue;
-            }
+                // 先上传，成功以后再放入缓存中
+                var isImage = ['jpg', 'png'].indexOf(fileType) !== -1;
 
-            // 先上传，成功以后再放入缓存中
-
-            uploadFile(file, (res) => {
-                // console.log('file', res);
-
-                // 添加到上传列表
-                filesToUpload.push({
-                    serverName: res.data.file_name,
-                    file: file,
-                    name: file.name,
-                    size: formatFileSize(file.size),
-                    type: fileType,
-                    progress: 0,
-                    status: 'pending' // pending, uploading, success, error
-                });
-                renderFileList();
-            })
+                uploadFile(file, (res) => {
+                    // 添加到上传列表
+                    filesToUpload.push({
+                        serverName: res.data.file_name,
+                        file: file,
+                        name: file.name,
+                        size: formatFileSize(file.size),
+                        type: fileType,
+                        objectUrl: isImage ? URL.createObjectURL(file) : null,
+                        progress: 0,
+                        status: 'pending' // pending, uploading, success, error
+                    });
+                    renderFileList();
+                })
+            })(files[i]);
         }
 
 
@@ -3306,6 +3311,10 @@
 
     function fileDelete(v) {
         // console.log('fileDelete', v);
+        var removed = filesToUpload.filter(item => item.name === v);
+        removed.forEach(function (item) {
+            if (item.objectUrl) URL.revokeObjectURL(item.objectUrl);
+        });
         filesToUpload = filesToUpload.filter(item => item.name !== v);
         renderFileList()
     }
@@ -3313,6 +3322,9 @@
     renderFileList()
 
     function fileReset() {
+        filesToUpload.forEach(function (item) {
+            if (item.objectUrl) URL.revokeObjectURL(item.objectUrl);
+        });
         filesToUpload = [];
         renderFileList();
     }
@@ -3332,25 +3344,32 @@
         $("#message_send").addClass('message_send_active'); // 有值时背景色为蓝色
         filesToUpload.forEach(function (file, index) {
             var fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
 
-            var statusClass = '';
-            if (file.status === 'success') statusClass = 'status-success';
-            if (file.status === 'error') statusClass = 'status-error';
+            if (file.objectUrl) {
+                // Image file — render as thumbnail card
+                fileItem.className = 'file-item-image';
+                fileItem.innerHTML = `
+                    <img class="file-thumb" src="${file.objectUrl}" alt="${file.name}" />
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-close" data-id="${file.name}">
+                        <img src="./image/group_close.svg" alt="#">
+                    </div>`;
+            } else {
+                // Non-image file — render as icon + name bar
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="file-icon">
+                        <img src="./image/video.svg" alt="" />
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${file.size}</div>
+                    </div>
+                    <div class="file-close" data-id="${file.name}">
+                        <img src="./image/group_close.svg" alt="#">
+                    </div>`;
+            }
 
-            fileItem.innerHTML = `
-                        <div class="file-icon">
-                            <img src="./image/video.svg" alt=""></img>
-                        </div>
-                        <div class="file-info">
-                            <div class="file-name">${file.name}</div>
-                            <div class="file-size">${file.size}KB</div>
-                        </div>
-                        <div class="file-close" data-id="${file.name}">
-                            <img src="./image/group_close.svg" alt="#">
-                        </div>
-
-                    `;
             fileList.appendChild(fileItem);
         });
         $('.file-close').on('click', function (event) {
