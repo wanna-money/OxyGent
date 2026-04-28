@@ -38,7 +38,8 @@ function renderFlowchart(agentNodes, containerId) {
         } else if (nodeType === 'bank') {
             preImg = `<img style="padding: 5px;" src="${typeMap.bank}" alt="">`;
         } else {
-            const idx = agent_id_dict[callee] % 16;
+            const rawIdx = agent_id_dict ? agent_id_dict[callee] : undefined;
+            const idx = (rawIdx != null ? rawIdx : 0) % 16;
             const cur = agentImgMap[idx];
 
             preImg = `<img style="background-color: ${cur?.bgColor}; border-radius: 4px;" src="${cur?.imgUrl}" alt="">`;

@@ -197,6 +197,7 @@
             success: function (response) {
                 response = response.data;
                 agent_id_dict = response.id_dict;
+                getViews();
             }
         })
     }
@@ -260,7 +261,8 @@
                 // 展示图像
                 let img = '';
                 if (plan_data.node_type === 'agent' || plan_data.node_type === 'flow') {
-                    const idx = agent_id_dict[plan_data.callee] % 16;
+                    const rawIdx = agent_id_dict ? agent_id_dict[plan_data.callee] : undefined;
+                    const idx = (rawIdx != null ? rawIdx : 0) % 16;
                     const cur = agentImgMap[idx];
                     img = `<img alt="" src="${cur.imgUrl}" style="background-color: ${cur.bgColor}" />`;
                 } else {
@@ -539,7 +541,8 @@
 
         let img = '';
         if (data.node_type === 'agent' || data.node_type === 'flow') {
-            const idx = agent_id_dict[data.callee] % 16;
+            const rawIdx = agent_id_dict ? agent_id_dict[data.callee] : undefined;
+            const idx = (rawIdx != null ? rawIdx : 0) % 16;
             const cur = agentImgMap[idx];
             img = `<img alt="" src="${cur.imgUrl}" style="background-color: ${cur.bgColor}" />`;
         } else {
@@ -582,7 +585,6 @@
         }
     });
 
-    getViews()
     var ViewsDatas = []
 
     //  获取全局节点
