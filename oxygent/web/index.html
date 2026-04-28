@@ -112,6 +112,7 @@
         <div class="tracegraph-body" id="tracegraph-body">
             <div class="tg-empty">No branches yet.</div>
         </div>
+        <div class="tracegraph-resize-handle" id="tracegraph-resize-handle"></div>
     </div>
 </div>
 <div class="container">
@@ -2895,7 +2896,44 @@
         section.classList.toggle('collapsed');
         var isCollapsed = section.classList.contains('collapsed');
         document.body.classList.toggle('tracegraph-hidden', isCollapsed);
+        // Clear inline height set by drag resize so CSS collapse rules take effect
+        if (isCollapsed) {
+            var body = document.getElementById('tracegraph-body');
+            if (body) body.style.height = '';
+        }
     }
+
+    // ── Trace Graph resize handle ──
+    (function () {
+        var handle = document.getElementById('tracegraph-resize-handle');
+        var body = document.getElementById('tracegraph-body');
+        if (!handle || !body) return;
+        var dragging = false;
+        var startY, startH;
+
+        handle.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            dragging = true;
+            startY = e.clientY;
+            startH = body.offsetHeight;
+            document.body.style.cursor = 'ns-resize';
+            document.body.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!dragging) return;
+            var maxH = window.innerHeight * 0.5;
+            var newH = Math.max(40, Math.min(maxH, startH + (e.clientY - startY)));
+            body.style.height = newH + 'px';
+        });
+
+        document.addEventListener('mouseup', function () {
+            if (!dragging) return;
+            dragging = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        });
+    })();
 
     // 关闭最右侧对话框
     function closeRight() {
