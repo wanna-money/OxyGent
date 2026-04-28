@@ -125,7 +125,6 @@ function renderFlowchart(agentNodes, containerId) {
                     const branch = document.createElement('div');
                     branch.className = 'view1-parallel-branch';
 
-                    const flow = buildFlow(node.child_node_ids, node.node_id);
                     const nodeElement = createNodeElement(node);
                     // Since buildFlow is recursive, we need to handle child flows within parallel branches
                     if (nodeElement.classList.contains('view1-container')) {

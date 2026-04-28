@@ -1,13 +1,13 @@
 .view1-flowchart {
     display: flex;
     align-items: center;
-    padding: 20px;
+    padding: 10px 12px;
 }
 
 .view1-node {
     border: 1px solid #E1E1E1;
     border-radius: 4px;
-    padding: 10px 20px;
+    padding: 6px 12px;
     background-color: white;
     text-align: center;
     min-width: 80px;
@@ -17,7 +17,7 @@
 .view1-container {
     border: 1px solid #E1E1E1;
     border-radius: 4px;
-    padding: 10px;
+    padding: 6px 8px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -41,11 +41,11 @@
 
 .view1-label > img,
 .view1-node > img {
-    width: 30px;
-    height: 30px;
-    border-radius: 30px;
+    width: 24px;
+    height: 24px;
+    border-radius: 24px;
     background-color: #E1EFFD;
-    margin-right: 8px;
+    margin-right: 6px;
 }
 
 .view1-container>.view1-label {
@@ -84,12 +84,13 @@
 .view1-content {
     display: flex;
     align-items: center;
-    margin-top: 15px;
+    margin-top: 8px;
 }
 
 .view1-parallel-container {
     display: flex;
     flex-direction: column;
+    gap: 6px;
 }
 
 .view1-parallel-branch {
@@ -98,7 +99,7 @@
 }
 
 .arrow {
-    margin: 0 10px;
+    margin: 0 4px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -110,7 +111,7 @@
 
 .view1-connector {
     position: relative;
-    width: 40px;
+    width: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
