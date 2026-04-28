@@ -702,6 +702,20 @@
 
         if (jm["type"] == "tool_call") {
             var _cc = jm["content"];
+            var isCachedReplay = _cc && _cc["copied_node_id"];
+
+            if (isCachedReplay) {
+                // Cached/replayed node during ReRun: track the copied_node_id
+                // mapping and highlight the original node in the parent branch.
+                // Do NOT add to traceGraphData (the parent branch already has it)
+                // or create streaming elements (no streaming data will follow).
+                nodeCopiedIdMap[_cc["node_id"]] = _cc["copied_node_id"];
+                if (llm_is_work) {
+                    traceGraphHighlightReplay(_cc["copied_node_id"]);
+                }
+                return;
+            }
+
             // Feed LLM/tool nodes into the Trace Graph tree.
             if (_cc && (_cc["callee_category"] === 'llm' || _cc["callee_category"] === 'tool')) {
                 traceGraphAddNode({
@@ -2094,9 +2108,18 @@
         if (restartIdx > 0) {
             fni = restartIdx - 1;
         } else if (restartIdx === 0) {
-            // Rerunning the very first node of the owner branch: fork BEFORE
-            // it so the rerun branch becomes a sibling under Start.
-            fni = -1;
+            // Rerunning the very first node of the owner branch: bubble up
+            // to the owner's parent and fork from the same point, so the new
+            // branch becomes a sibling of the owner rather than a virtual root.
+            // e.g. owner forks from grandparent at node C → new branch also
+            // forks from grandparent at node C → they appear as siblings.
+            if (ownerBranch && ownerBranch.parentBranchId != null && ownerBranch.forkNodeIdx != null) {
+                newBranch.parentBranchId = ownerBranch.parentBranchId;
+                fni = ownerBranch.forkNodeIdx;
+            } else {
+                // Owner is a root branch — fork before Start
+                fni = -1;
+            }
         } else {
             // Node not found anywhere — attach at end of parent as fallback
             var fallbackNodes = parentBranch ? (traceGraphData[parentBranch.id] || []) : [];

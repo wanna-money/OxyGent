@@ -598,12 +598,14 @@ Arguments:
             oxy_request.input_md5 = get_md5(to_json(key_to_md5))
             result = await self._request_interceptor(oxy_request)
             if isinstance(result, OxyResponse):
-                await self._post_log(result)
+                await self._pre_send_message(oxy_request)
                 # Persist the replayed node under the new trace_id so restart
                 # chains (T1 -> T2 -> T3) keep a complete node tree.
                 if self.mas and self.mas.es_client:
                     oxy_request.create_time = get_format_time()
                     await self._pre_save_data(oxy_request)
+
+                    await self._post_log(result)
                     oxy_request.update_time = get_format_time()
                     await self._post_save_data(result)
                 await self._post_send_message(result)
