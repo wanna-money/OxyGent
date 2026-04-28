@@ -1750,6 +1750,7 @@
         return '<div class="' + cls + '"'
             + ' data-trace-id="' + escapeHtml(n.trace_id) + '"'
             + ' data-node-id="' + escapeHtml(n.node_id) + '"'
+            + ' data-branch-id="' + escapeHtml(branch.id) + '"'
             + ' title="' + escapeHtml(n.callee) + ' (' + escapeHtml(n.node_id) + ')">'
             + (n.caller ? '<div class="tg-node-caller">' + escapeHtml(n.caller) + '</div>' : '')
             + '<div class="tg-node-main">'
@@ -1767,14 +1768,14 @@
             .replace(/"/g, '&quot;');
     }
 
-    // Click a Trace Graph node → find the branch with that trace_id → switch.
+    // Click a Trace Graph node → switch to the branch that owns it.
     $('#tracegraph-body').on('click', '.tg-node', function (e) {
         // Ignore clicks on the ReRun button (handled separately)
         if ($(e.target).closest('.tg-node-rerun').length) return;
-        var tid = $(this).attr('data-trace-id');
-        if (!tid) return;
-        var branch = branches.find(function(b) { return b.traceId === tid; });
-        if (branch) switchBranch(branch.id);
+        var bid = $(this).attr('data-branch-id');
+        if (bid) {
+            switchBranch(bid);
+        }
     });
 
     // Click the ReRun button inside a Trace Graph node → restart from that node.
