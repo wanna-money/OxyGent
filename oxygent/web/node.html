@@ -80,20 +80,15 @@
         <!--        </div>-->
     </div>
     <div class="agentCard">
-        <div class="avatarContainer">
-            <div id="avatarEmojiId" class="avatarEmoji"></div>
+        <div id="avatarEmojiId" class="avatarEmoji"></div>
+        <span id="node_callee" class="agentName"></span>
+        <div class="tagContainer">
+            <span id="node_type" class="tagspan"></span>
         </div>
-        <div class="contentWrapper">
-            <div class="titleContainer">
-                <span id="node_callee" class="agentName"></span>
-                <div class="tagContainer">
-                    <span id="node_type" class="tagspan"></span>
-                </div>
-            </div>
-            <!-- <span class="metaInfo">create_time: <span id="node_create_time"></span></span> -->
-            <span id="trace_id" class="metaInfo"></span>
-            <span class="metaInfo">caller: <span id="node_caller" class="ellipsisspan metaInfo"></span></span>
-        </div>
+        <span class="agentCard-separator"></span>
+        <span id="trace_id" class="metaInfo"></span>
+        <span class="agentCard-separator"></span>
+        <span class="metaInfo">caller: <span id="node_caller" class="ellipsisspan metaInfo"></span></span>
     </div>
     </div>
     <div class="node-container">
