@@ -714,11 +714,43 @@
 
 
 
+    // Helper: get the currently-selected node_id from the URL query string.
+    function getCurrentNodeId() {
+        return new URLSearchParams(window.location.search).get('id') || '';
+    }
+
+    // Helper: re-apply selection highlight to a specific view after it is
+    // (re-)rendered.  Called by the tab-switch handler below so every view
+    // shows the same active node.
+    function highlightNodeInView(viewName, nodeId) {
+        if (!nodeId) return;
+        switch (viewName) {
+            case 'view1':
+                $('.view1-node').removeClass('checked');
+                $('.view1-container').removeClass('checked');
+                // view1 nodes use their node_id as the element id
+                $('#' + CSS.escape(nodeId)).addClass('checked');
+                break;
+            case 'view2':
+                renderGanttClickHighlight(nodeId, 'rect');
+                break;
+            case 'view3':
+                $('#swimlane-container .seq-msg').removeClass('checked');
+                $('#swimlane-container .seq-msg[data-node-id="' + nodeId + '"]').addClass('checked');
+                break;
+            case 'view4':
+                $('#timeline-container .view4-node').removeClass('checked');
+                $('#timeline-container .view4-node[data-node-id="' + nodeId + '"]').addClass('checked');
+                break;
+        }
+    }
+
     $(".tabs .tab-item").click(function () {
         // 链式编程操作
         // 2.点击的同时，得到当前li 的索引号
         var index = $(this).attr('data-id');
         $(this).addClass("tab-text-active").siblings().removeClass("tab-text-active");
+        var currentId = getCurrentNodeId();
 
         if (index === 'flowchart-container') {
             renderFlowchart(ViewsDatas, 'flowchart-container');
@@ -726,6 +758,7 @@
             $('#flowchart-container-gantt').css('display', 'none');
             $('#swimlane-container').css('display', 'none');
             $('#timeline-container').css('display', 'none');
+            highlightNodeInView('view1', currentId);
 
         } else if (index === 'gantt-container-section') {
             renderGantt(ViewsDatas, 'flowchart-container-gantt');
@@ -735,7 +768,7 @@
             $('#timeline-container').css('display', 'none');
 
             setTimeout(() => {
-                renderGanttClickHighlight(param_id, 'rect');
+                highlightNodeInView('view2', currentId);
             }, 100);
         } else if (index === 'swimlane-container-section') {
             renderSwimlane(ViewsDatas, 'swimlane-container');
@@ -743,18 +776,14 @@
             $('#flowchart-container-gantt').css('display', 'none');
             $('#swimlane-container').css('display', 'block');
             $('#timeline-container').css('display', 'none');
+            highlightNodeInView('view3', currentId);
         } else if (index === 'timeline-container-section') {
             renderTraceChain(ViewsDatas, 'timeline-container');
             $('#flowchart-container').css('display', 'none');
             $('#flowchart-container-gantt').css('display', 'none');
             $('#swimlane-container').css('display', 'none');
-            $('#timeline-container').css('display', 'block');
-            // Re-apply selection on the currently active node, if any.
-            var currentId = new URLSearchParams(window.location.search).get('id');
-            if (currentId) {
-                $('#timeline-container .view4-node').removeClass('checked');
-                $('#timeline-container .view4-node[data-node-id="' + currentId + '"]').addClass('checked');
-            }
+            $('#timeline-container').css('display', 'flex');
+            highlightNodeInView('view4', currentId);
         }
         // 3.让下部里面相应索引号的item显示，其余的item隐藏
     });

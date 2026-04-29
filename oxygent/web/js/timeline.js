@@ -46,6 +46,10 @@ function renderTraceChain(nodesDatas, containerId) {
     var chain = document.createElement('div');
     chain.className = 'view4-chain';
 
+    // ── Start sentinel node ──
+    chain.appendChild(makeSentinel('start'));
+    chain.appendChild(makeArrow());
+
     filtered.forEach(function (n, i) {
         var nodeEl = document.createElement('div');
         nodeEl.className = 'view4-node';
@@ -80,14 +84,52 @@ function renderTraceChain(nodesDatas, containerId) {
         chain.appendChild(nodeEl);
 
         if (i < filtered.length - 1) {
-            var arrow = document.createElement('div');
-            arrow.className = 'view4-arrow';
-            arrow.innerHTML = '<svg width="28" height="14" viewBox="0 0 28 14"><path d="M2 7h20m0 0l-5-4m5 4l-5 4" fill="none" stroke="#B0B5C2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-            chain.appendChild(arrow);
+            chain.appendChild(makeArrow());
         }
     });
 
+    // ── End sentinel node ──
+    chain.appendChild(makeArrow());
+    chain.appendChild(makeSentinel('end'));
+
     container.appendChild(chain);
+
+    function makeArrow() {
+        var arrow = document.createElement('div');
+        arrow.className = 'view4-arrow';
+        arrow.innerHTML = '<svg width="28" height="14" viewBox="0 0 28 14"><path d="M2 7h20m0 0l-5-4m5 4l-5 4" fill="none" stroke="#B0B5C2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        return arrow;
+    }
+
+    // Build a Start or End sentinel node, styled to match the same Start/End
+    // boxes used by the Trace Graph in index.html.
+    function makeSentinel(kind) {
+        var el = document.createElement('div');
+        if (kind === 'start') {
+            el.className = 'view4-node view4-node-start';
+            el.title = 'Start';
+            el.innerHTML =
+                '<div class="view4-main-row">' +
+                '<svg class="view4-icon-svg" width="20" height="20" viewBox="0 0 18 18">' +
+                '<circle cx="9" cy="9" r="7" fill="#22c55e" stroke="#16a34a" stroke-width="1.5"/>' +
+                '<polygon points="7.5,5.5 13,9 7.5,12.5" fill="#fff"/>' +
+                '</svg>' +
+                '<span class="view4-callee">Start</span>' +
+                '</div>';
+        } else {
+            el.className = 'view4-node view4-node-end';
+            el.title = 'End';
+            el.innerHTML =
+                '<div class="view4-main-row">' +
+                '<svg class="view4-icon-svg" width="20" height="20" viewBox="0 0 18 18">' +
+                '<circle cx="9" cy="9" r="7" fill="#ef4444" stroke="#dc2626" stroke-width="1.5"/>' +
+                '<rect x="6.5" y="6.5" width="5" height="5" rx="0.5" fill="#fff"/>' +
+                '</svg>' +
+                '<span class="view4-callee">End</span>' +
+                '</div>';
+        }
+        return el;
+    }
 
     function escapeHtml(s) {
         return String(s)

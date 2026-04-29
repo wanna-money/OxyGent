@@ -2,10 +2,13 @@
 
 #timeline-container {
     width: 100%;
+    height: 100%;
     overflow-x: auto;
     overflow-y: hidden;
     box-sizing: border-box;
     white-space: nowrap;
+    display: flex;
+    flex-direction: column;
 }
 
 .view4-chain {
@@ -14,6 +17,7 @@
     align-items: center;
     gap: 6px;
     padding: 10px;
+    flex-shrink: 0;
 }
 
 .view4-node {
@@ -110,6 +114,54 @@
     text-align: center;
     color: #7A7F8C;
     font-size: 13px;
+}
+
+/* ── Start / End sentinel nodes ── */
+.view4-node-start,
+.view4-node-end {
+    border-style: dashed;
+    cursor: default;
+    min-width: auto;
+    min-height: auto;
+    padding: 4px 8px;
+}
+
+.view4-node-start {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.view4-node-start .view4-callee {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.view4-node-end {
+    border-color: #fca5a5;
+    background: #fef2f2;
+}
+
+.view4-node-end .view4-callee {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.view4-node-start:hover,
+.view4-node-end:hover {
+    box-shadow: none;
+}
+
+.view4-node-start:hover {
+    border-color: #86efac;
+}
+
+.view4-node-end:hover {
+    border-color: #fca5a5;
+}
+
+.view4-icon-svg {
+    flex-shrink: 0;
+    margin-right: 8px;
 }
 
 /* ========== Trace Graph Section (branch tree in index.html) ========== */
