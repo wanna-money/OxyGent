@@ -220,7 +220,7 @@
                 node.classList.remove('mermaid-selected');
             }
         });
-        document.querySelectorAll('#flowchart-container-gantt .taskText').forEach(node => {
+        document.querySelectorAll('#flowchart-container-gantt .taskText, #flowchart-container-gantt .taskTextOutsideRight, #flowchart-container-gantt .taskTextOutsideLeft').forEach(node => {
             if (node.id === `${plan_id}-text`) {
                 node.classList.add('mermaid-selected-text');
             } else {
@@ -582,6 +582,8 @@
             axisFormat: "%M:%S:%L",
             tickInterval: "millisecond",
             topAxis: false,
+            leftPadding: 150,
+            rightPadding: 20,
         }
     });
 
@@ -617,6 +619,8 @@
 
     function renderGanttClickHighlight(id, tagName = 'rect') {
         let server_id = null;
+        // Selector covering all task-text variants (inside bar, outside-right, outside-left)
+        const taskTextSel = '.taskText, .taskTextOutsideRight, .taskTextOutsideLeft';
         if (tagName === 'rect') {
             // 移除所有节点的选中样式
             document.querySelectorAll('.task').forEach(node => {
@@ -628,7 +632,7 @@
             });
 
             // 移除所有节点的选中文本样式
-            document.querySelectorAll('.taskText').forEach(node => {
+            document.querySelectorAll(taskTextSel).forEach(node => {
                 if (node.id === `${id}-text`) {
                     node.classList.add('mermaid-selected-text');
                 } else {
@@ -646,7 +650,7 @@
                 }
             });
             // 移除所有节点的选中文本样式
-            document.querySelectorAll('.taskText').forEach(node => {
+            document.querySelectorAll(taskTextSel).forEach(node => {
                 if (node.id === id) {
                     node.classList.add('mermaid-selected-text');
                 } else {
@@ -663,8 +667,27 @@
     $('#flowchart-container-gantt').on('click', function (event) {
         const state = event.target;
         const id = state.id;
-        const tagName = state.tagName
+        const tagName = state.tagName;
         if (!id) {
+            return;
+        }
+        // Only react to real task bars (rect.task) or task labels — including
+        // taskTextOutsideRight/Left, which mermaid uses when the bar is too
+        // narrow (very short-running tools) to fit its label inside.
+        // Mermaid generates other id-bearing elements like `exclude-YYYY-MM-DD`
+        // for axis exclude-range rects, which are NOT valid node_ids and would
+        // crash get_plan() when looked up on the server.
+        const cls = (state.getAttribute && state.getAttribute('class')) || '';
+        const isTaskRect = tagName === 'rect' && /\btask\b/.test(cls);
+        const isTaskText = tagName === 'text' && /\b(taskText|taskTextOutsideRight|taskTextOutsideLeft)\b/.test(cls);
+        if (!isTaskRect && !isTaskText) {
+            return;
+        }
+        // Extra safety: the node_id we feed back must exist in ViewsDatas.
+        const candidateId = tagName === 'text' ? id.replace(/-text$/, '') : id;
+        const exists = Array.isArray(ViewsDatas) &&
+            ViewsDatas.some(function (n) { return n && n.node_id === candidateId; });
+        if (!exists) {
             return;
         }
         renderGanttClickHighlight(id, tagName);

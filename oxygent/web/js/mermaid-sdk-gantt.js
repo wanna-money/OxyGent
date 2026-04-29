@@ -89,6 +89,62 @@ function renderGantt(nodesDatas, containerId) {
     container.innerHTML = code;
     mermaid.run({
         querySelector: `#${containerId}`
+    }).then(function () {
+        truncateSectionTitles(containerId);
+    });
+}
+
+
+/**
+ * After mermaid renders the gantt SVG, section-title <text> elements on the
+ * left can be arbitrarily wide and spill over the bars.  This helper
+ * measures each title's rendered width against the available space (the x
+ * coordinate of the first grid column) and truncates with "..." when needed.
+ */
+function truncateSectionTitles(containerId) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    var svg = container.querySelector('svg');
+    if (!svg) return;
+
+    // The bars live inside a <g> whose first <rect.task> tells us the left
+    // edge of the chart area.  Fall back to a generous 160px if nothing found.
+    var firstTask = svg.querySelector('rect.task');
+    var maxRight = firstTask ? firstTask.getBBox().x - 8 : 160;
+
+    var titles = svg.querySelectorAll('text[class*="sectionTitle"]');
+    titles.forEach(function (txt) {
+        var original = txt.getAttribute('data-original-text') || txt.textContent;
+        txt.setAttribute('data-original-text', original);
+
+        // Always (re)attach a <title> child so the full caller name is shown
+        // as a native tooltip on hover, even when truncated.
+        var existingTitle = txt.querySelector('title');
+        if (existingTitle) existingTitle.remove();
+        var titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        titleEl.textContent = original;
+
+        // Reset to full text so we can measure from scratch
+        txt.textContent = original;
+        var bbox = txt.getBBox();
+        var textLeft = bbox.x;
+        if (textLeft + bbox.width <= maxRight) {
+            txt.appendChild(titleEl);
+            return;  // fits — nothing to truncate
+        }
+
+        // Trim characters until the text + "..." fits.
+        var s = original;
+        while (s.length > 1) {
+            s = s.slice(0, -1);
+            txt.textContent = s + '...';
+            if (txt.getBBox().width + textLeft <= maxRight) {
+                txt.appendChild(titleEl);
+                return;
+            }
+        }
+        txt.textContent = '...';
+        txt.appendChild(titleEl);
     });
 }
 
