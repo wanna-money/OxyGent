@@ -1,10 +1,12 @@
+"""Shell command execution tools for OxyGent agents."""
+
+import asyncio
 import logging
 import subprocess
 from typing import List, Optional
 
 from pydantic import Field
-import asyncio
-import logging
+
 from oxygent.oxy import FunctionHub
 
 logger = logging.getLogger(__name__)
@@ -39,11 +41,11 @@ def run_shell_command(
 
 @shell_tools.tool(
     description="Execute a shell command asynchronously and return the return code, "
-                "standard output and standard error. Supports timeout for long-running commands."
+    "standard output and standard error. Supports timeout for long-running commands."
 )
 async def execute_shell_command(
-        command: str,
-        timeout: int = 300,
+    command: str,
+    timeout: int = 300,
 ) -> str:
     """Execute given shell command and return the result.
 

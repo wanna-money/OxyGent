@@ -45,6 +45,7 @@ def build_tree(input_data):
 
 
 def _build_children_map(node_dict):
+    """Build a mapping from parent node_id to its list of child nodes."""
     children_map = defaultdict(list)
     for node in node_dict.values():
         if node["from_node_id"]:
@@ -53,6 +54,7 @@ def _build_children_map(node_dict):
 
 
 def _build_node_entry(node, children_map):
+    """Create a tree-entry dict for a single node with its subtree."""
     return {
         "node_id": node["node_id"],
         "node_name": node["node_name"],
@@ -62,6 +64,7 @@ def _build_node_entry(node, children_map):
 
 
 def _build_subtree(parent, children_map):
+    """Recursively build the subtree nodes list for a parent node."""
     children = children_map.get(parent["node_id"], [])
     non_parallel, parallel_groups = _group_children(children)
     parallel_list = _process_parallel_groups(parallel_groups)
@@ -78,6 +81,7 @@ def _build_subtree(parent, children_map):
 
 
 def _group_children(children):
+    """Separate children into non-parallel nodes and parallel groups."""
     parallel_groups = defaultdict(list)
     non_parallel = []
     for child in children:
@@ -89,6 +93,7 @@ def _group_children(children):
 
 
 def _process_parallel_groups(parallel_groups):
+    """Sort each parallel group by order and return (min_order, group) tuples."""
     parallel_list = []
     for group in parallel_groups.values():
         group_sorted = sorted(group, key=lambda x: x["order"])
@@ -98,6 +103,7 @@ def _process_parallel_groups(parallel_groups):
 
 
 def _merge_and_sort_children(non_parallel, parallel_list):
+    """Merge non-parallel and parallel children, then sort by execution order."""
     all_children = [(child["order"], child) for child in non_parallel] + parallel_list
     all_children.sort(key=lambda x: x[0])
     return all_children

@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class JesEs(BaseEs):
+    """Elasticsearch client using the JES (JD Elasticsearch Service) backend."""
+
     def __init__(self, hosts, user, password, maxsize=200, timeout=60):
         try:
             self.client = Elasticsearch(
@@ -40,7 +42,7 @@ class JesEs(BaseEs):
         if not index_name or not index_name.strip():
             raise ValueError("The name of the index can not be empty")
         if not body:
-            raise ValueError("The config of the index ca not be empty")
+            raise ValueError("The config of the index cannot be empty")
 
         # await self._run_sync(
         #     self.client.indices.delete, index=index_name
@@ -78,25 +80,31 @@ class JesEs(BaseEs):
         )
 
     async def index(self, index_name, doc_id, body):
+        """Index a document into the specified table."""
         return await self._run_sync(
             self.client.index, index=index_name, id=doc_id, body=body
         )
 
     async def update(self, index_name, doc_id, body):
+        """Update a document by ID."""
         return await self._run_sync(
             self.client.update, index=index_name, id=doc_id, body={"doc": body}
         )
 
     async def search(self, index_name, body):
+        """Search for documents matching the query."""
         return await self._run_sync(self.client.search, index=index_name, body=body)
 
     async def exists(self, index_name, doc_id):
+        """Check whether a document ID exists."""
         return await self._run_sync(self.client.exists, index=index_name, id=doc_id)
 
     async def delete(self, index_name, doc_id):
+        """Delete a document by ID."""
         return await self._run_sync(self.client.delete, index=index_name, id=doc_id)
 
     async def close(self):
+        """Close the Elasticsearch connection."""
         return await self._run_sync(self.client.close)
 
 

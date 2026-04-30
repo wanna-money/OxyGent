@@ -7,7 +7,7 @@ from typing import List, Type, Union
 
 
 def get_env(key, default_val=None):
-    """Get environment variables, return default value if not exsit :param key:
+    """Get environment variables, return default value if not exist :param key:
 
     :param default_val:
     :return:
@@ -70,7 +70,7 @@ def get_env_for_log_path():
 
 
 def get_env_for_cpu_count():
-    """Get value of avaliable cpu cores :return:"""
+    """Get value of available cpu cores :return:"""
     return int(get_env(key="AVAILABLE_CORES", default_val=2))
 
 
@@ -110,6 +110,7 @@ def get_env_for_deployment_stage():
 
 
 def is_prod_env():
+    """Return True when the application is running in a production environment."""
     deployment_stage = get_env(key="DEPLOYMENT_STAGE", default_val="local")
     if deployment_stage == "prod":
         return True

@@ -31,7 +31,10 @@ class HttpTool(BaseTool):
     )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Execute the HTTP request."""
+        """Execute the HTTP request.
+
+        Note: currently always issues a GET, regardless of the configured `method` field.
+        """
         # Merge default parameters with request arguments
         params = self.default_params.copy()
         params.update(oxy_request.arguments)

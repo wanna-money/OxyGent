@@ -1,6 +1,6 @@
 """llm.py LLM status module.
 
-The module difines the status and the output of the LLM.
+The module defines the status and the output of the LLM.
 """
 
 from enum import Enum
@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field
 
 
 class LLMState(Enum):
+    """Enumeration of possible LLM response states."""
+
     TOOL_CALL = "tool_call"
     ANSWER = "answer"
     ERROR_PARSE = "error_parse"
@@ -17,6 +19,10 @@ class LLMState(Enum):
 
 
 class LLMResponse(BaseModel):
+    """Container for the parsed response from an LLM call."""
+
     state: LLMState
     output: Union[str, list, dict]
-    ori_response: str = Field(default="")
+    ori_response: str = Field(
+        default="", description="Original raw LLM response text before parsing"
+    )

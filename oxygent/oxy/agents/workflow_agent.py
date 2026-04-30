@@ -24,9 +24,12 @@ class WorkflowAgent(LocalAgent):
             This function should accept an OxyRequest and return the result.
     """
 
-    func_workflow: Optional[Callable] = Field(None, exclude=True, description="")
+    func_workflow: Optional[Callable] = Field(
+        None, exclude=True, description="Custom workflow function to execute"
+    )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Execute the user-defined workflow function."""
         return OxyResponse(
             state=OxyState.COMPLETED, output=await self.func_workflow(oxy_request)
         )

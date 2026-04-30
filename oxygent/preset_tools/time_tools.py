@@ -1,3 +1,5 @@
+"""Time utility tools for OxyGent agents."""
+
 from pydantic import Field
 
 from oxygent.oxy import FunctionHub
@@ -15,7 +17,7 @@ def get_current_time(
 
     from pytz import timezone as pytimezone
 
-    # 系统级修复后，这里的检查可以简化
+    # After system-level fix, this check can be simplified
     if timezone is None:
         timezone = "Asia/Shanghai"
 
@@ -38,7 +40,7 @@ def convert_time(
 
     import pytz
 
-    # 系统级修复后，处理可能的 None 值
+    # After system-level fix, handle possible None values
     if source_timezone is None:
         source_timezone = "Asia/Shanghai"
     if time is None:

@@ -82,7 +82,10 @@ class Oxy(BaseModel, ABC):
     input_schema: dict[str, Any] = Field(
         default_factory=dict, description="Input schema definition"
     )
-    system_args: list = Field(default_factory=list, description="")
+    system_args: list = Field(
+        default_factory=list,
+        description="System-level arguments extracted from input_schema",
+    )
     desc_for_llm: str = Field("", description="Description shown to LLM")
 
     is_entrance: bool = Field(False, description="Whether this is a MAS entry point")
@@ -154,14 +157,23 @@ class Oxy(BaseModel, ABC):
     timeout: float = Field(
         default_factory=Config.get_oxy_timeout, description="Timeout in seconds."
     )
-    retries: int = Field(default_factory=Config.get_oxy_retries)
-    delay: float = Field(default_factory=Config.get_oxy_delay)
+    retries: int = Field(
+        default_factory=Config.get_oxy_retries,
+        description="Number of retry attempts on failure",
+    )
+    delay: float = Field(
+        default_factory=Config.get_oxy_delay,
+        description="Delay in seconds between retries",
+    )
 
     preceding_oxy: Optional[list] = Field(
         default_factory=list,
         description="A list of oxy names that must be called before the current oxy.",
     )
-    preceding_placeholder: str = Field("preceding_text")
+    preceding_placeholder: str = Field(
+        "preceding_text",
+        description="Key name in arguments for injecting preceding Oxy outputs",
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -172,7 +184,6 @@ class Oxy(BaseModel, ABC):
 
     def _ensure_async_functions(self):
         """Ensure all function fields are async. Convert sync functions to async if needed."""
-        # List of function field names to check and convert
         func_fields = [
             "func_process_input",
             "func_process_output",
@@ -189,10 +200,12 @@ class Oxy(BaseModel, ABC):
                 object.__setattr__(self, field_name, async_func)
 
     def model_post_init(self, __context):
+        """Auto-populate class_name from the actual class if not explicitly set."""
         if self.class_name is None:
             object.__setattr__(self, "class_name", self.__class__.__name__)
 
     def set_mas(self, mas):
+        """Bind this Oxy instance to a MAS runtime container."""
         self.mas = mas
 
     def add_permitted_tool(self, tool_name: str):
@@ -233,11 +246,11 @@ Arguments:
 """
 
     async def init(self):
+        """Perform async initialization. Rebuilds the LLM-facing description."""
         self._set_desc_for_llm()
 
     async def _pre_process(self, oxy_request: OxyRequest) -> OxyRequest:
         """Pre-process the request before execution."""
-        # Initialize the parameters
         if not oxy_request.node_id:
             oxy_request.node_id = generate_uuid()
         oxy_request.callee = self.name
@@ -265,6 +278,13 @@ Arguments:
         )
 
     async def _request_interceptor(self, oxy_request: OxyRequest):
+        """Intercept the request for restart/replay scenarios.
+
+        When a reference_trace_id and restart_node_id are present, queries ES
+        for cached outputs from a prior trace. Returns an OxyResponse built
+        from the cached data if found, allowing execution to be skipped.
+        Returns None when no cache hit occurs, so normal execution continues.
+        """
         if (
             oxy_request.reference_trace_id
             and oxy_request.restart_node_id
@@ -362,6 +382,7 @@ Arguments:
                 )
 
     async def _pre_save_data(self, oxy_request: OxyRequest):
+        """Persist the initial node record to ES before execution starts."""
         if not self.is_save_data:
             return
         if self.mas and self.mas.es_client:
@@ -435,6 +456,7 @@ Arguments:
             )
 
     async def _before_execute(self, oxy_request: OxyRequest) -> OxyRequest:
+        """Run preceding Oxy instances and merge their outputs into the request."""
         if self.preceding_oxy:
             arguments = {k: v for k, v in oxy_request.arguments.items()}
             tasks = [
@@ -449,15 +471,19 @@ Arguments:
 
     @abstractmethod
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Core execution logic. Subclasses must implement this method."""
         pass
 
     async def _handle_exception(self, e):
+        """Hook for subclass-specific exception handling during retries."""
         pass
 
     async def _after_execute(self, oxy_response: OxyResponse) -> OxyResponse:
+        """Post-execution hook for modifying the response before post-processing."""
         return oxy_response
 
     async def _post_process(self, oxy_response: OxyResponse) -> OxyResponse:
+        """Apply the output processing function to the response."""
         return await self.func_process_output(oxy_response)
 
     async def _post_log(self, oxy_response: OxyResponse):
@@ -524,6 +550,7 @@ Arguments:
             logger.warning(f"Node {oxy_request.callee} data unsaved.")
 
     async def _format_output(self, oxy_response: OxyResponse) -> OxyResponse:
+        """Format the output for the caller and substitute friendly error text on failure."""
         oxy_response = await self.func_format_output(oxy_response)
         if oxy_response.state is OxyState.FAILED and self.friendly_error_text:
             oxy_response.output = self.friendly_error_text
@@ -568,25 +595,16 @@ Arguments:
         """Execute the complete lifecycle of an Oxy operation.
 
         This method orchestrates the entire execution pipeline including:
-        - Pre-processing
-        - logging and data saving
-        - Input formatting
-        - Pre-send message handling
-
-        - validation and permission checks
-
-        - Before execution hooks
-        - Execution with retry logic
-        - After execution hooks
-
-
-        - Post-processing
-        - Logging and data saving
-        - Output formatting
-        - Post-send message handling
+        - Pre-processing, logging, and data saving
+        - Input formatting and pre-send message handling
+        - Request interception (restart/replay cache)
+        - Before-execute hooks (preceding Oxy calls)
+        - Core execution with retry logic
+        - After-execute hooks
+        - Post-processing, logging, and data saving
+        - Output formatting and post-send message handling
         """
         async with self._semaphore:
-            # Pre-process
             oxy_request = await self._pre_process(oxy_request)
             await self._pre_log(oxy_request)
 
@@ -638,7 +656,6 @@ Arguments:
 
             oxy_request = await self._before_execute(oxy_request)
 
-            # Execute the request with retry logic
             attempt = 0
             while attempt < self.retries:
                 try:
@@ -707,8 +724,6 @@ Arguments:
 
             oxy_response.oxy_request = oxy_request
             oxy_response = await self._after_execute(oxy_response)
-
-            # Post-process
             oxy_response = await self._post_process(oxy_response)
             await self._post_log(oxy_response)
 

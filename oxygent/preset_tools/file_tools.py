@@ -1,3 +1,5 @@
+"""File operation tools for OxyGent agents."""
+
 import os
 import shutil
 from typing import List, Optional
@@ -17,7 +19,8 @@ allowed_dir = os.getcwd()
     description="Create a new file or completely overwrite an existing file with new content. Use with caution as it will overwrite existing files without warning. Handles text content with proper encoding. Only works within allowed directories."
 )
 def write_file(
-    path: str = Field(description=""), content: str = Field(description="")
+    path: str = Field(description="Path to the file to write"),
+    content: str = Field(description="Content to write to the file"),
 ) -> str:
     if not os.path.abspath(path).startswith(allowed_dir):
         raise ValueError("Path is outside of the current working directory")

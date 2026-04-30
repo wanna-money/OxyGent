@@ -49,7 +49,7 @@ class Message(BaseModel):
             )
 
     def __radd__(self, other) -> List["Message"]:
-        """支持 list + Message 的操作."""
+        """Support list concatenation with Message objects."""
         if isinstance(other, list):
             return other + [self]
         else:
@@ -79,7 +79,7 @@ class Message(BaseModel):
     # ----------------------------------------------------------------
     # Factory constructors
     # ----------------------------------------------------------------
-    """Shortcut of messages"""
+    # --- Message shortcuts ---
 
     @classmethod
     def user_message(cls, content: Union[str, list]) -> "Message":

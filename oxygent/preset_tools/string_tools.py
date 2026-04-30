@@ -1,3 +1,5 @@
+"""String utility tools for OxyGent agents."""
+
 import asyncio
 import json
 import re
@@ -13,9 +15,7 @@ string_tools = FunctionHub(name="string_tools")
 async def extract_emails(
     text: str = Field(description="Text to extract email addresses from"),
 ) -> str:
-    """
-    从文本中提取邮箱地址
-    """
+    """Extract email addresses from text."""
     email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
     emails = re.findall(email_pattern, text)
     return json.dumps(list(set(emails)), ensure_ascii=False)
@@ -25,9 +25,7 @@ async def extract_emails(
 async def extract_urls(
     text: str = Field(description="Text to extract URLs from"),
 ) -> str:
-    """
-    从文本中提取URL
-    """
+    """Extract URLs from text."""
     url_pattern = r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
     urls = re.findall(url_pattern, text)
     return json.dumps(list(set(urls)), ensure_ascii=False)
@@ -37,41 +35,39 @@ async def extract_urls(
 async def validate_email(
     email: str = Field(description="Email address to validate"),
 ) -> str:
-    """
-    验证邮箱地址格式
-    """
+    """Validate email address format."""
     email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     is_valid = bool(re.match(email_pattern, email))
     return json.dumps({"email": email, "is_valid": is_valid}, ensure_ascii=False)
 
 
-# 异步主函数
+# Async main function
 async def main():
-    # 测试文本数据
+    # Test text data
     test_text = """
-    这是一些包含邮箱和URL的示例文本。
-    联系我们：support@example.com 或者 visit our website at https://www.example.com
-    更多信息请访问 http://info.example.org 或发送邮件到 info@example.org
-    无效的邮箱: invalid.email@ 或 missing@domain
-    另一个有效的邮箱: user.name+tag@domain.co.uk
+    This is some example text containing emails and URLs.
+    Contact us: support@example.com or visit our website at https://www.example.com
+    More info at http://info.example.org or send email to info@example.org
+    Invalid email: invalid.email@ or missing@domain
+    Another valid email: user.name+tag@domain.co.uk
     """
 
-    print("=== String Tools 测试示例 ===\n")
+    print("=== String Tools Test Examples ===\n")
 
-    # 测试邮箱提取功能
-    print("1. 提取邮箱地址:")
+    # Test email extraction
+    print("1. Extract email addresses:")
     emails_result = await extract_emails(text=test_text)
-    print(f"   输入文本: {test_text[:50]}...")
-    print(f"   提取结果: {emails_result}\n")
+    print(f"   Input text: {test_text[:50]}...")
+    print(f"   Extraction result: {emails_result}\n")
 
-    # 测试URL提取功能
-    print("2. 提取URL:")
+    # Test URL extraction
+    print("2. Extract URLs:")
     urls_result = await extract_urls(text=test_text)
-    print(f"   输入文本: {test_text[:50]}...")
-    print(f"   提取结果: {urls_result}\n")
+    print(f"   Input text: {test_text[:50]}...")
+    print(f"   Extraction result: {urls_result}\n")
 
-    # 测试邮箱验证功能
-    print("3. 邮箱地址验证:")
+    # Test email validation
+    print("3. Email address validation:")
     test_emails = [
         "support@example.com",
         "user.name+tag@domain.co.uk",
@@ -86,5 +82,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    # 使用 asyncio.run() 来运行异步主函数
+    # Use asyncio.run() to run the async main function
     asyncio.run(main())

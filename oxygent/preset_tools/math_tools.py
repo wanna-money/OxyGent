@@ -1,3 +1,5 @@
+"""Math utility tools for OxyGent agents."""
+
 from pydantic import Field
 
 from oxygent.oxy import FunctionHub
@@ -51,7 +53,7 @@ def list_operation(
             f"Lists must have the same length. Got {len(list1)} and {len(list2)}"
         )
 
-    # 操作符映射
+    # Operator mapping
     operations = {
         "add": operator.add,
         "subtract": operator.sub,

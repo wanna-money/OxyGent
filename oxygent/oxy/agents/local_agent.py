@@ -51,7 +51,6 @@ class LocalAgent(BaseAgent):
         team_size (int): Number of parallel instances for team execution.
         is_retain_master_short_memory (bool): Whether to retain user history.
         is_multimodal_supported (bool): Whether to support multimodal input.
-        team_size (int): Number of parallel instances for m execution.
     """
 
     llm_model: str = Field(
@@ -71,10 +70,13 @@ class LocalAgent(BaseAgent):
         description="Whether to use live prompt system. If False, only uses the static 'prompt' parameter from code.",
     )
     additional_prompt: Optional[str] = Field(
-        default="", description="The prompt add by user, addit to the origin prompt."
+        default="", description="Additional prompt text appended to the base prompt."
     )
     _resolved_prompt: Optional[str] = None
-    tools_placeholder: str = Field("tools_description")
+    tools_placeholder: str = Field(
+        "tools_description",
+        description="Placeholder key in the prompt template for injecting tool descriptions",
+    )
     sub_agents: Optional[list] = Field(
         default_factory=list,
         description="Names of other agents this agent can delegate to (hierarchy support).",
@@ -150,7 +152,7 @@ class LocalAgent(BaseAgent):
             oxy = self.mas.oxy_name_to_oxy[oxy_name]
             if not isinstance(oxy, BaseTool):
                 raise Exception(f"[{oxy_name}] is not a tool.")
-            # mcp tool
+            # Build tool description (MCP or FunctionTool)
             if isinstance(oxy, (MCPTool, FunctionTool)):
                 self.add_permitted_tool(oxy_name)
             elif isinstance(oxy, BaseMCPClient):
@@ -178,6 +180,7 @@ class LocalAgent(BaseAgent):
                 logger.warning(f"Unknown bank type: {type(oxy)}")
 
     def __deepcopy__(self, memo):
+        """Deep copy this agent, preserving non-copyable async primitives."""
         # Extract all fields from the current instance
         fields = self.model_dump()
 
@@ -479,7 +482,7 @@ class LocalAgent(BaseAgent):
             OxyRequest: The request with tools_description added to arguments.
         """
         oxy_request = await super()._before_execute(oxy_request)
-        # get multimodal input
+        # Intent understanding pre-processing
         if self.intent_understanding_agent:
             oxy_response = await oxy_request.call(
                 callee=self.intent_understanding_agent,

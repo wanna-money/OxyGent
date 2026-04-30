@@ -26,7 +26,7 @@ class SSEMCPClient(BaseMCPClient):
     for streaming responses and live data updates.
     """
 
-    sse_url: AnyUrl = Field("")
+    sse_url: AnyUrl = Field("", description="URL of the MCP server's SSE endpoint")
     middlewares: List[Any] = Field(
         default_factory=list, description="Client-side MCP middlewares"
     )
@@ -40,7 +40,7 @@ class SSEMCPClient(BaseMCPClient):
         """
         try:
             if not self.is_dynamic_headers and self.is_keep_alive:
-                # header
+                # Construct SSE transport with optional auth headers and middlewares
                 sse_transport = await self._exit_stack.enter_async_context(
                     sse_client(
                         build_url(self.sse_url),
@@ -80,6 +80,7 @@ class SSEMCPClient(BaseMCPClient):
             raise Exception(f"Server {self.name} error")
 
     async def call_tool(self, tool_name, arguments, headers=None):
+        """Open a fresh SSE connection and invoke the named tool with arguments."""
         async with sse_client(
             build_url(self.sse_url), headers=headers, timeout=self.timeout
         ) as streams:

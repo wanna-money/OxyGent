@@ -1,6 +1,7 @@
-"""Base Bank module for Large Language Model implementations.
+"""Base Bank module for OxyGent.
 
-This module provides a base class for implementing bank modules for large language models.
+Provides a base class for bank tools — namespace containers for grouping related
+FastAPI-router-based tools.
 """
 
 import logging
@@ -14,7 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 class BaseBank(BaseTool):
-    category: str = Field("bank", description="")
+    """Abstract base class for bank tools (FastAPI-router-based tool collections)."""
+
+    category: str = Field(
+        "bank", description="Category identifier, always 'bank' for bank tools"
+    )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Subclasses must implement bank-specific dispatch logic."""
         raise NotImplementedError("This method is not yet implemented")

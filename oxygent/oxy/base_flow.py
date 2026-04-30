@@ -15,17 +15,18 @@ class BaseFlow(Oxy):
     """Abstract base class for all flows in the OxyGent system.
 
     Attributes:
-        category (str): Flow category identifier. Always "flow".
+        category (str): Flow category identifier. Defaults to "agent".
     """
 
     is_permission_required: bool = Field(
         True, description="Whether this flow requires permission."
     )
-    category: str = Field("agent", description="")
+    category: str = Field("agent", description="Category identifier for this flow")
 
     is_master: bool = Field(
         False, description="Whether this flow is a 'MASTER' (central controller)."
     )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Execute the flow logic. Subclasses must override this method."""
         raise NotImplementedError("This method is not yet implemented")

@@ -1,3 +1,8 @@
+"""Embedding cache for OxyGent.
+
+Caches computed embeddings to avoid redundant embedding API calls.
+"""
+
 import base64
 import hashlib
 import json
@@ -28,12 +33,8 @@ async def get_embedding(querys):
 
     Returns:
         np.ndarray: A 2-D float array of shape *(len(querys), embedding_dim)*
-        containing unit-length embedding vectors.
-
-    Raises:
-        ValueError: If *querys* is not a list or tuple.
-        Exception: Propagates any exception raised during the network call or
-            result parsing.
+        containing unit-length embedding vectors, or None if the input is
+        invalid or an error occurs.
     """
     if not isinstance(querys, (list, tuple)):
         print("input querys must be a list")

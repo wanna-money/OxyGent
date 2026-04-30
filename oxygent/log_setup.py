@@ -95,9 +95,6 @@ class ColorFormatter(IDAwareFormatter):
     """Formatter that adds ANSI color codes to the **entire** log line."""
 
     def format(self, record):
-        # 1. call super().format to get the original message
-        # 2. get the style for the entire line
-        # 3. apply the style to the entire message
         return f"{get_style_by_record(record)}{super().format(record)}{Style.RESET_ALL}"
 
 

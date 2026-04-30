@@ -1,3 +1,5 @@
+"""LLM output parser using Pydantic models for structured output extraction."""
+
 import json
 from typing import Any, List, Optional, Type
 

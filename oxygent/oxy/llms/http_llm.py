@@ -60,7 +60,6 @@ class HttpLLM(RemoteLLM):
 
         headers.update(self.headers(oxy_request))
 
-        # Construct payload for the API request
         if is_gemini:
             raw_msgs = await self._get_messages(oxy_request)
             messages = raw_msgs

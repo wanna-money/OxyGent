@@ -20,7 +20,6 @@ class ParallelFlow(BaseFlow):
         Distributes the same request to all tools in the permitted_tool_name_list
         simultaneously and aggregates their outputs into a unified response.
         """
-        # Execute the same request concurrently across all permitted tools
         parallel_id = generate_uuid()
         oxy_responses = await asyncio.gather(
             *[
@@ -33,7 +32,6 @@ class ParallelFlow(BaseFlow):
             ]
         )
 
-        # Aggregate all outputs into a single response
         oxy_response = OxyResponse(
             state=OxyState.COMPLETED,
             output="The following are the results from multiple executions:"

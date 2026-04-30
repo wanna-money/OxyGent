@@ -2,7 +2,7 @@
 
 This file implements a local file system-based simulation of Key-value database,
 providing Redis-like functionality for development and testing environments without
-requiring an actual Elasticsearch server.
+requiring an actual Redis server.
 """
 
 import asyncio
@@ -80,7 +80,7 @@ class LocalRedis:
         if key not in self.data:
             self.data[key] = deque(
                 maxlen=max_size
-            )  # Create new deque if key dosen't exist
+            )  # Create new deque if key doesn't exist
 
         # Process and validate input values
         new_values = []
@@ -94,10 +94,10 @@ class LocalRedis:
             else:
                 raise ValueError(f"Unsupported value type: {type(value)}")
 
-        # Add values to the laft (head) of the deque
+        # Add values to the left (head) of the deque
         self.data[key].extendleft(
             reversed(new_values)
-        )  # Use reserved to ensure proper order
+        )  # Use reversed to ensure proper order
         self.expiry[key] = time.time() + ex
 
         if self._yield_on_ops:
@@ -147,7 +147,6 @@ class LocalRedis:
             del self.expiry[key]
 
     async def close(self):
-        # This method is async to maintain compatibility with the Redis interface
         # Async for interface compatibility
         if self._yield_on_ops:
             await asyncio.sleep(0)

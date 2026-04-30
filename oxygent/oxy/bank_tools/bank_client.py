@@ -1,3 +1,8 @@
+"""Bank client module for OxyGent.
+
+Defines BankClient which connects to a bank server and registers its tools dynamically.
+"""
+
 from typing import Dict
 
 import httpx
@@ -10,13 +15,19 @@ from .base_bank import BaseBank
 
 
 class BankClient(BaseBank):
-    server_url: AnyUrl = Field("")
-    included_bank_name_list: list = Field(default_factory=list)
+    """Client that connects to a remote BankRouter and registers its tools as BankTool instances."""
+
+    server_url: AnyUrl = Field("", description="URL of the remote bank server")
+    included_bank_name_list: list = Field(
+        default_factory=list,
+        description="Names of bank tools discovered from the server",
+    )
     headers: Dict[str, str] = Field(
         default_factory=dict, description="Extra HTTP headers"
     )
 
     async def init(self):
+        """Connect to the bank server and fetch the tool list."""
         await super().init()
         url = build_url(self.server_url, "list_banks")
         async with httpx.AsyncClient() as client:
@@ -24,6 +35,7 @@ class BankClient(BaseBank):
             self.add_tools(response.json())
 
     def add_tools(self, tools_response) -> None:
+        """Register BankTool instances dynamically from the bank server's tools_response."""
         params = self.model_dump(
             exclude={
                 "sse_url",
@@ -57,4 +69,5 @@ class BankClient(BaseBank):
             self.mas.add_oxy(bank_tool)
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Forward the request to the appropriate tool on the bank server."""
         raise NotImplementedError("This method is not yet implemented")

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class BaseAgent(BaseFlow):
     """Base class for all agents in the OxyGent system.
 
-    This class extends the Oxy base class and provides common functionality for
+    This class extends BaseFlow and provides common functionality for
     agent implementations including permission management, trace handling, and
     data persistence operations.
 
@@ -30,7 +30,7 @@ class BaseAgent(BaseFlow):
         input_schema (dict[str, Any]): Input schema configuration for the agent.
     """
 
-    category: str = Field("agent", description="tool type")
+    category: str = Field("agent", description="Agent category identifier")
 
     input_schema: dict[str, Any] = Field(
         default_factory=Config.get_agent_input_schema,
@@ -87,7 +87,6 @@ class BaseAgent(BaseFlow):
 
         if oxy_request.caller_category == "user":
             if self.mas and self.mas.es_client:
-                # save shared_data
                 shared_data_schema = Config.get_es_schema_shared_data().get(
                     "properties", {}
                 )
@@ -99,7 +98,6 @@ class BaseAgent(BaseFlow):
                     }
                 else:
                     to_save_shared_data = to_json(oxy_request.shared_data)
-                # save group_data
                 group_data_schema = Config.get_es_schema_group_data().get(
                     "properties", {}
                 )
@@ -148,7 +146,6 @@ class BaseAgent(BaseFlow):
         if oxy_request.caller_category == "user":
             # Update trace record with the response output
             if self.mas and self.mas.es_client:
-                # save shared_data
                 shared_data_schema = Config.get_es_schema_shared_data().get(
                     "properties", {}
                 )
@@ -160,7 +157,6 @@ class BaseAgent(BaseFlow):
                     }
                 else:
                     to_save_shared_data = to_json(oxy_request.shared_data)
-                # save group_data
                 group_data_schema = Config.get_es_schema_group_data().get(
                     "properties", {}
                 )

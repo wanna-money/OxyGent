@@ -1,3 +1,5 @@
+"""Image generation tools for OxyGent agents."""
+
 from oxygent.oxy import FunctionHub
 
 image_gen_tools = FunctionHub(name="image_gen_tools")

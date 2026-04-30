@@ -26,10 +26,12 @@ Image.MAX_IMAGE_PIXELS = 400000000
 
 
 def is_linux():
+    """Return True if the current platform is Linux."""
     return platform.system().lower() == "linux"
 
 
 def get_mac_address():
+    """Return the MAC address of this machine as a dash-separated string."""
     mac_address = "-".join(
         [
             "{:02x}".format((uuid.getnode() >> elements) & 0xFF)
@@ -40,30 +42,30 @@ def get_mac_address():
 
 
 def get_timestamp_str():
+    """Return the current UNIX timestamp as a string."""
     return str(datetime.now().timestamp())
 
 
 def get_timestamp():
+    """Return the current UNIX timestamp in milliseconds."""
     return datetime.now().timestamp() * 1000
 
 
 def get_format_time():
-    """Yyyy-MM-dd HH:mm:ss."""
-    """yyyy-MM-dd HH:mm:ss.SSS"""
-    """yyyy-MM-dd HH:mm:ss.SSSSSSSSS"""
+    """Return current time as 'yyyy-MM-dd HH:mm:ss.SSSSSSSSS' with nanosecond precision."""
     now = datetime.now()
-    nano_str = "{:09d}".format(
-        now.microsecond * 1000
-    )  # convert micro second to nano second
+    nano_str = "{:09d}".format(now.microsecond * 1000)
     current_time = now.strftime("%Y-%m-%d %H:%M:%S.") + nano_str
     return current_time
 
 
 def chunk_list(lst, chunk_size=2):
+    """Split a list into chunks of the given size."""
     return [lst[i : i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 
 def extract_first_json(text):
+    """Extract the first JSON object from text, stripping markdown fences if present."""
     matches = re.findall(r"```[\n]*json(.*?)```", text, re.DOTALL)
     json_texts = [match.strip() for match in matches]
     json_text = json_texts[0] if json_texts else text
@@ -86,6 +88,7 @@ def extract_json_str(text: str) -> str:
 
 
 async def source_to_bytes(source: str):
+    """Read a URL or local file path and return its raw bytes."""
     if source.startswith("http"):
         async with httpx.AsyncClient() as client:
             http_response = await client.get(source)
@@ -99,6 +102,7 @@ async def source_to_bytes(source: str):
 async def image_to_base64(
     source: str, max_image_pixels: int = 10000000, base64_prefix="data:image"
 ) -> str:
+    """Convert an image from a URL or file to a base64-encoded data URI."""
     image_bytes = await source_to_bytes(source)
 
     def process_image(image_bytes):
@@ -106,7 +110,7 @@ async def image_to_base64(
             width, height = img.size
             current_pixels = width * height
 
-            # Reduce size 50% each time until it's under max_pixels
+            # Proportionally resize the image to fit under max_pixels
             if current_pixels > max_image_pixels:
                 scale = (max_image_pixels / current_pixels) ** 0.5
                 new_width = max(1, int(width * scale))
@@ -127,6 +131,7 @@ async def image_to_base64(
 async def video_to_base64(
     source: str, max_video_size: int = 512 * 1024 * 1024, base64_prefix="data:video"
 ) -> str:
+    """Convert a video to a base64-encoded data URI if under the size limit."""
     video_bytes = await source_to_bytes(source)
     if len(video_bytes) > max_video_size:
         return source
@@ -164,7 +169,7 @@ async def table_to_base64(source: str, max_table_size: int = 50 * 1024 * 1024) -
 
 
 async def file_to_base64(source: str, max_file_size: int = 10 * 1024 * 1024) -> str:
-    """For small non-media files (<10 MB) return a data-URI, otherwise回传原路径/URL."""
+    """For small non-media files (<10 MB) return a data-URI; otherwise return the original path/URL."""
     file_bytes = await source_to_bytes(source)
     if len(file_bytes) > max_file_size:
         return source
@@ -203,6 +208,7 @@ def get_table_file_info(file_path: str) -> dict:
 
 
 def append_url_path(url, path):
+    """Append a relative path segment to an existing URL."""
     parsed = urlparse(str(url))
     final_path = parsed.path.rstrip("/") + "/" + path.lstrip("/")
     return urlunparse(parsed._replace(path=final_path))
@@ -227,6 +233,7 @@ def build_url(
 
 
 def print_tree(node, prefix="", is_root=True, is_last=True, logger=None):
+    """Recursively print a tree structure with box-drawing branch connectors."""
     # Print branch symbol
     branch = "└── " if is_last else "├── "
     if is_root:
@@ -249,6 +256,7 @@ def print_tree(node, prefix="", is_root=True, is_last=True, logger=None):
 
 
 def filter_json_types(d):
+    """Filter a dict, replacing non-JSON-serializable values with '...'."""
     result = {}
     for k, v in d.items():
         if isinstance(v, (str, int, float, bool, list, dict, type(None))):
@@ -259,6 +267,7 @@ def filter_json_types(d):
 
 
 def msgpack_preprocess(obj):
+    """Recursively convert an object into msgpack-serializable types."""
     # The 3 types of objects that can be serialized by msgpack
     if obj is None or isinstance(obj, (bool, int, float, str, bytes)):
         return obj
@@ -274,6 +283,7 @@ def msgpack_preprocess(obj):
 
 
 def get_md5(arg_str):
+    """Return the MD5 hex digest of a UTF-8 encoded string."""
     md5 = hashlib.md5()
     md5.update(arg_str.encode("utf-8"))
     md5_value = md5.hexdigest()
@@ -281,21 +291,25 @@ def get_md5(arg_str):
 
 
 def to_json(obj):
+    """Serialize an object to a JSON string, passing strings through unchanged."""
     if isinstance(obj, str):
         return obj
     return json.dumps(obj, ensure_ascii=False, default=str)
 
 
 def generate_uuid(length=16):
+    """Generate a short random UUID string of the given length."""
     return shortuuid.ShortUUID().random(length=length)
 
 
 def is_image(source):
+    """Return True if the source path has a recognized image file extension."""
     exts = ("png", "jpg", "jpeg", "gif", "svg", "bmp", "webp", "tiff")
     return source.split(".")[-1] in exts
 
 
 def parse_mixed_string(s):
+    """Parse a markdown-style string into a list of typed content segments."""
     if not isinstance(s, str):
         return s
 
@@ -305,19 +319,19 @@ def parse_mixed_string(s):
     }
     ext_to_url = {ext: k for k, exts in url_to_ext.items() for ext in exts}
 
-    # 正则匹配 ![描述](链接) 或 ![](链接)
+    # Regex match ![description](link) or ![](link)
     pattern = re.compile(r"(!)?\[([^\]]*)\]\(([^)]+)\)")
     results = []
     last_end = 0
 
     for match in pattern.finditer(s):
         start, end = match.span()
-        # 先处理前面的文本
+        # Process the preceding text segment
         if start > last_end:
             text = s[last_end:start]
             if text:
                 results.append({"type": "text", "content": text})
-        # 处理文件
+        # Process the embedded file
         is_image = match.group(1)
         desc = match.group(2)
         link = match.group(3)
@@ -332,7 +346,7 @@ def parse_mixed_string(s):
         )
         last_end = end
 
-    # 处理最后的文本
+    # Process the trailing text segment
     if last_end < len(s):
         text = s[last_end:]
         if text:
@@ -342,6 +356,7 @@ def parse_mixed_string(s):
 
 
 def parse_mixed_string0(s):
+    """Parse a markdown-style string into multimodal content parts."""
     if not isinstance(s, str):
         return s
 
@@ -351,19 +366,19 @@ def parse_mixed_string0(s):
     }
     ext_to_url = {ext: k for k, exts in url_to_ext.items() for ext in exts}
 
-    # 正则匹配 ![描述](链接) 或 ![](链接)
+    # Regex match ![description](link) or ![](link)
     pattern = re.compile(r"!?\[([^\]]*)\]\(([^)]+)\)")
     results = []
     last_end = 0
 
     for match in pattern.finditer(s):
         start, end = match.span()
-        # 先处理前面的文本
+        # Process the preceding text segment
         if start > last_end:
             text = s[last_end:start]
             if text:
                 results.append({"type": "text", "text": text})
-        # 处理文件
+        # Process the embedded file
         desc = match.group(1)
         if desc:
             results.append({"type": "text", "text": f"the {desc} is: "})
@@ -372,16 +387,16 @@ def parse_mixed_string0(s):
         if content_type in url_to_ext:
             results.append({"type": content_type, content_type: {"url": link}})
         else:
-            # TODO: 处理其他类型的文件
+            # TODO: Handle other file types
             with open(link) as f:
                 results.append({"type": "text", "text": f.read()})
         last_end = end
 
-    # 如果没有匹配到，则直接返回原始字符串
+    # Return the original string if no matches found
     if last_end == 0:
         return [{"type": "text", "text": s}]
 
-    # 处理最后的文本
+    # Process the trailing text segment
     if last_end < len(s):
         text = s[last_end:]
         if text:
@@ -391,5 +406,6 @@ def parse_mixed_string0(s):
 
 
 def clean_ansi_codes(text):
+    """Remove ANSI escape sequences from a string."""
     ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
     return ansi_escape.sub("", text)

@@ -238,9 +238,7 @@ class LocalEs(BaseEs):
             v_lower = str(v).lower()
             if k == "_id":
                 return [d for d in docs if v_lower in str(d["_id"]).lower()]
-            return [
-                d for d in docs if v_lower in str(d["_source"].get(k, "")).lower()
-            ]
+            return [d for d in docs if v_lower in str(d["_source"].get(k, "")).lower()]
 
         if "range" in query:
             k, bounds = next(iter(query["range"].items()))
@@ -275,7 +273,8 @@ class LocalEs(BaseEs):
             # must_not: exclude docs matching any condition
             for cond in bool_query.get("must_not", []):
                 filtered_docs = [
-                    d for d in filtered_docs
+                    d
+                    for d in filtered_docs
                     if not self._match_single_condition(d, cond)
                 ]
 
@@ -288,7 +287,8 @@ class LocalEs(BaseEs):
                 has_required = bool_query.get("must") or bool_query.get("filter")
                 if not has_required:
                     filtered_docs = [
-                        d for d in filtered_docs
+                        d
+                        for d in filtered_docs
                         if any(
                             self._match_single_condition(d, cond)
                             for cond in should_conditions

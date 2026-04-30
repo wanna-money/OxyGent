@@ -87,9 +87,22 @@ def check_alive():
 
 
 ALLOWED_UPLOAD_EXTENSIONS = {
-    ".txt", ".jpg", ".jpeg", ".png", ".mp4",
-    ".xlsx", ".xls", ".doc", ".docx", ".pdf",
-    ".csv", ".tsv", ".ods", ".py", ".md", ".json",
+    ".txt",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".mp4",
+    ".xlsx",
+    ".xls",
+    ".doc",
+    ".docx",
+    ".pdf",
+    ".csv",
+    ".tsv",
+    ".ods",
+    ".py",
+    ".md",
+    ".json",
 }
 
 

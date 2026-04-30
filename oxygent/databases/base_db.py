@@ -48,16 +48,12 @@ class BaseDB:
                 retries = 0
                 while retries < max_retries:
                     try:
-                        return await func(
-                            *args, **kwargs
-                        )  # Attempt to execute the original function
+                        return await func(*args, **kwargs)
                     except Exception as e:
                         logger.error(e)
                         retries += 1
                         if retries < max_retries:
-                            await asyncio.sleep(
-                                delay_between_retries
-                            )  # Retry until reached max retries
+                            await asyncio.sleep(delay_between_retries)
                 return None
 
             return wrapper
@@ -77,9 +73,9 @@ class BaseDB:
         for (
             name,
             method,
-        ) in cls.__dict__.items():  # Iterate over all attributes of the subclass
+        ) in cls.__dict__.items():
             # Apply decorator only to callable methods that are not magic methods
             if callable(method) and not name.startswith(
                 "_"
-            ):  # Applt the try_decorator with default parameters
+            ):  # Apply the try_decorator with default parameters
                 setattr(cls, name, cls.try_decorator()(method))

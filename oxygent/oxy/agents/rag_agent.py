@@ -1,9 +1,6 @@
-"""Chat agent module for conversational interactions.
+"""RAG agent module.
 
-This module provides the ChatAgent class, which handles conversational AI interactions
-by managing conversation memory, processing user queries, and coordinating with language
-models to generate responses.
-"""
+Provides the RAGAgent class which augments LLM responses with retrieved context."""
 
 from typing import Callable
 
@@ -14,7 +11,7 @@ from .chat_agent import ChatAgent
 
 
 class RAGAgent(ChatAgent):
-    """A conversational agent that manages chat interactions with language models."""
+    """A retrieval-augmented agent that fetches relevant context before LLM generation."""
 
     knowledge_placeholder: str = Field("knowledge")
 
@@ -23,11 +20,12 @@ class RAGAgent(ChatAgent):
     )
 
     def __init__(self, **kwargs):
-        """Initialize the RAG agent with appropriate prompt and parsing function."""
+        """Initialize the RAG agent."""
         super().__init__(**kwargs)
 
     @model_validator(mode="after")
     def set_default_prompt(self):
+        """Pydantic model validator that injects the default RAG prompt if none provided."""
         if not self.prompt:
             self.prompt = (
                 "You are a helpful assistant. You can refer to the following information to answer the questions.\n${"
@@ -37,6 +35,7 @@ class RAGAgent(ChatAgent):
         return self
 
     async def _pre_process(self, oxy_request: OxyRequest) -> OxyRequest:
+        """Retrieve relevant context and inject it into the request before execution."""
         oxy_request = await super()._pre_process(oxy_request)
         knowledge = await self.func_retrieve_knowledge(oxy_request)
         oxy_request.arguments[self.knowledge_placeholder] = knowledge

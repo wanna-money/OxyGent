@@ -16,13 +16,19 @@ logger = logging.getLogger(__name__)
 class StreamableMCPClient(BaseMCPClient):
     """MCP client implementation using Streamable-HTTP transport."""
 
-    server_url: AnyUrl = Field("")
+    server_url: AnyUrl = Field(
+        "", description="URL of the MCP server's streamable-HTTP endpoint"
+    )
     middlewares: List[Any] = Field(
         default_factory=list, description="Client-side MCP middlewares"
     )
 
     async def init(self, is_fetch_tools=True) -> None:
-        """Initialize the HTTP streaming connection to the MCP server."""
+        """Initialize the HTTP streaming connection to the MCP server.
+
+        Args:
+            is_fetch_tools (bool): If True, fetch the tool list after connecting.
+        """
         try:
             if not self.is_dynamic_headers and self.is_keep_alive:
                 self._http_transport = await self._exit_stack.enter_async_context(
@@ -63,6 +69,7 @@ class StreamableMCPClient(BaseMCPClient):
             raise Exception(f"Server {self.name} error") from e
 
     async def call_tool(self, tool_name, arguments, headers=None):
+        """Open a fresh streamable-HTTP connection and invoke the named tool with arguments."""
         async with streamablehttp_client(
             build_url(self.server_url), headers=headers, timeout=self.timeout
         ) as (read, write, _):

@@ -1,3 +1,8 @@
+"""Local LLM module for OxyGent.
+
+Provides LocalLLM which loads and runs a HuggingFace transformer model locally.
+"""
+
 import logging
 
 from pydantic import Field
@@ -10,11 +15,14 @@ logger = logging.getLogger(__name__)
 
 
 class LocalLLM(BaseLLM):
+    """LLM that loads a transformer model from disk and runs inference locally."""
+
     model_path: str = Field("")
     device_map: str = Field("auto")
     dtype: str = Field("bfloat16")
 
     async def init(self):
+        """Load the model and tokenizer from the configured path."""
         try:
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -25,13 +33,13 @@ class LocalLLM(BaseLLM):
             ) from e
 
         await super().init()
-        # Load model directly
         self._model = AutoModelForCausalLM.from_pretrained(
             self.model_path, device_map=self.device_map, dtype=self.dtype
         )
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_path)
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Generate a response by running the local model on the input messages."""
         payload = Config.get_llm_config(exclude=["semaphore", "timeout"])
         for k, v in self.llm_params.items():
             payload[k] = v

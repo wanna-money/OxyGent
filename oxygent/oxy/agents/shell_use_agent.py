@@ -19,9 +19,12 @@ logger = logging.getLogger(__name__)
 
 
 class ShellUseAgent(ReActAgent):
+    """ReAct-style agent that uses shell/SSH tools to accomplish tasks."""
+
     auth_info: dict = Field(default_factory=dict)
 
     async def init(self):
+        """Async initialization for the shell-use agent."""
         await super().init()
 
         import paramiko
@@ -40,17 +43,7 @@ class ShellUseAgent(ReActAgent):
     def _parse_llm_response(
         self, ori_response: str, oxy_request: OxyRequest = None
     ) -> LLMResponse:
-        """Parse LLM response to determine next action.
-
-        This method handles various LLM output formats and determines whether
-        the response is a tool call, final answer, or parsing error.
-
-        Args:
-            ori_response (str): Raw LLM response text.
-
-        Returns:
-            LLMResponse: Parsed response with state and extracted content.
-        """
+        """Parse the LLM response into a structured action, with shell-specific handling."""
         try:
             # Handle think model format
             if "</think>" in ori_response:
@@ -89,18 +82,7 @@ class ShellUseAgent(ReActAgent):
             )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Execute the ReAct reasoning and acting loop.
-
-        This method implements the core ReAct algorithm by iterating between
-        reasoning (LLM calls) and acting (tool execution) until a satisfactory
-        answer is found or maximum rounds are reached.
-
-        Args:
-            oxy_request (OxyRequest): The request to process.
-
-        Returns:
-            OxyResponse: Final response with answer and ReAct memory trace.
-        """
+        """Run the ReAct loop using shell/SSH tool invocations."""
 
         def mock_receive_email(query):
             return f"python3 receive_email.py Bob\n{query}\nvboxuser@ubuntu:~$ "

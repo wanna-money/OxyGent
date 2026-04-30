@@ -98,9 +98,9 @@ class SkillMetadata(BaseModel):
 
     @classmethod
     def from_frontmatter(
-            cls,
-            frontmatter: dict,
-            skill_path: Path,
+        cls,
+        frontmatter: dict,
+        skill_path: Path,
     ) -> "SkillMetadata":
         """Create SkillMetadata from parsed frontmatter.
 
@@ -148,4 +148,3 @@ class SkillMetadata(BaseModel):
         """String representation for debugging."""
         version_str = f" v{self.version}" if self.version else ""
         return f"SkillMetadata(name='{self.name}'{version_str})"
-
