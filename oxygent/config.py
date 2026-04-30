@@ -101,6 +101,7 @@ class Config:
             "auto_open_webpage": True,
             "log_level": "INFO",
             "workers": 1,
+            "allow_origins": ["*"],
         },
         "oxy": {
             "semaphore": 1024,
@@ -591,6 +592,16 @@ class Config:
     @classmethod
     def get_server_workers(cls):
         return cls.get_module_config("server", "workers")
+
+    @classmethod
+    def set_server_allow_origins(cls, allow_origins=None):
+        if allow_origins is None:
+            allow_origins = ["*"]
+        cls.set_module_config("server", "allow_origins", allow_origins)
+
+    @classmethod
+    def get_server_allow_origins(cls):
+        return cls.get_module_config("server", "allow_origins")
 
     # --- oxy ---
 

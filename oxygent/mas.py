@@ -1294,7 +1294,7 @@ class MAS(BaseModel):
 
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],  # Or assign specific frontend origins
+            allow_origins=Config.get_server_allow_origins(),  # Or assign specific frontend origins
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
