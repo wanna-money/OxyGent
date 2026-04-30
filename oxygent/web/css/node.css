@@ -554,9 +554,9 @@ li {
     box-sizing: border-box;
     width: auto;
     height: auto;
-    padding: 0;
-    background-color: transparent;
-    border-radius: 4px;
+    padding: 2px;
+    background-color: #EAEAED;
+    border-radius: 6px;
     color: black;
 }
 
@@ -564,13 +564,17 @@ li {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
     box-sizing: border-box;
     width: auto;
     height: auto;
-    padding: 2px 8px;
+    padding: 4px 12px;
     border-radius: 4px;
     cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.tab-item:hover {
+    background-color: rgba(255, 255, 255, 0.6);
 }
 
 /*.tab-item:first-child {*/
@@ -580,19 +584,20 @@ li {
 /*  width: 50px;*/
 /*  background-color: white;*/
 /*}*/
-.tab-text-active {
-    background-color: #f3f3f5;
-    color: black;
+.tab-item.tab-text-active {
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .tab-text {
     font-size: 12px;
     line-height: 1.42;
-    color: black;
+    color: #6B7280;
 }
 
-.tab-text-active {
+.tab-text-active .tab-text {
     font-weight: 600;
+    color: #1F2433;
 }
 
 

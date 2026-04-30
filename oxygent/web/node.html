@@ -264,8 +264,8 @@
                     img = `<img alt="" src="${typeMap[plan_data.node_type]}" style="background-color: #E1EFFD" />`;
                 }
 
+                resetHtmlEmpty();
                 $("#avatarEmojiId").append(img);
-
 
                 // 展示node base info
                 $("#node_caller").text(plan_data.caller);
@@ -421,12 +421,10 @@
 
 
     function pre() {
-        resetHtmlEmpty()
         get_plan(pre_id);
     }
 
     function next() {
-        resetHtmlEmpty()
         get_plan(next_id);
     }
 
@@ -654,7 +652,6 @@
             });
             server_id = id.replace('-text', '');
         }
-        resetHtmlEmpty()
         get_plan(server_id)
     }
     
@@ -693,7 +690,6 @@
         if (nodeId) {
             $('#swimlane-container .seq-msg').removeClass('checked');
             $('#swimlane-container .seq-msg[data-node-id="' + nodeId + '"]').addClass('checked');
-            resetHtmlEmpty();
             get_plan(nodeId);
         }
     });
@@ -703,7 +699,6 @@
         if (!nodeId) return;
         $('#timeline-container .view4-node').removeClass('checked');
         $(this).addClass('checked');
-        resetHtmlEmpty();
         get_plan(nodeId);
     });
 
@@ -812,7 +807,6 @@
         }
 
         if (id) {
-            resetHtmlEmpty();
             get_plan(id);
         }
     });
