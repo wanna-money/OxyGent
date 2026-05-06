@@ -62,7 +62,7 @@
     height: 42px;
 }
 
-.master p {
+.master > p {
     margin: 0;
     float: left;
     position: absolute;
@@ -120,7 +120,7 @@
     padding: 6px;
 }
 
-.other p {
+.other > p {
     margin: 0;
     float: left;
     position: absolute;
@@ -143,18 +143,79 @@
     line-height: 20px;
 }
 
-.other span p {
-    margin: 0;
-    float: left;
-    position: absolute;
-    left: 54px;
-    font-size: 14px;
-    font-weight: 500;
-}
-
 .other span section{
     color: #155EEF;
 }
+
+/* Markdown body styles for chat messages */
+.master span.markdown-body,
+.other span.markdown-body {
+    white-space: normal;
+}
+
+.markdown-body p {
+    margin: 0 0 8px 0;
+}
+
+.markdown-body p:last-child {
+    margin-bottom: 0;
+}
+
+.markdown-body pre {
+    background: #f6f8fa;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 8px 0;
+}
+
+.markdown-body code {
+    background: #f0f0f0;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.markdown-body pre code {
+    background: none;
+    padding: 0;
+}
+
+.markdown-body ul, .markdown-body ol {
+    padding-left: 20px;
+    margin: 8px 0;
+}
+
+.markdown-body blockquote {
+    border-left: 3px solid #ddd;
+    padding-left: 10px;
+    color: #666;
+    margin: 8px 0;
+}
+
+.markdown-body table {
+    border-collapse: collapse;
+    margin: 8px 0;
+}
+
+.markdown-body th, .markdown-body td {
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+}
+
+.markdown-body th {
+    background: #f6f8fa;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3,
+.markdown-body h4, .markdown-body h5, .markdown-body h6 {
+    margin: 12px 0 8px 0;
+    line-height: 1.4;
+}
+
+.markdown-body h1 { font-size: 1.3em; }
+.markdown-body h2 { font-size: 1.2em; }
+.markdown-body h3 { font-size: 1.1em; }
 
 #agent_log_close_id {
     background-color: transparent;

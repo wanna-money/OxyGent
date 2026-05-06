@@ -799,8 +799,8 @@
                     if (finalContent) {
                         markdownInput = finalContent;
                     }
-                    // 移除streaming-content类并清理
-                    streaming_info.element.removeClass("streaming-content");
+                    // 移除streaming-content类并清理，渲染markdown
+                    streaming_info.element.removeClass("streaming-content").addClass("markdown-body").html(marked.marked(markdownInput));
                     attach_rating_ui(streaming_info.element.closest("li"), trace_id);
                     attach_trace_chain(streaming_info.element.closest("li"), trace_id);
                     delete streaming_elements_map[key];
@@ -810,6 +810,8 @@
                     if (finalContent) {
                         markdownInput = finalContent;
                     }
+                    // 渲染markdown
+                    current_streaming_element.addClass("markdown-body").html(marked.marked(markdownInput));
                     attach_rating_ui(current_streaming_element.closest("li"), trace_id);
                     attach_trace_chain(current_streaming_element.closest("li"), trace_id);
                 }
@@ -1868,11 +1870,17 @@
                 li.append($('<span class="1">').html(argentNameHtml + " " + msg));
                 argentName = '';
                 renderCharlist();
-            } else {
+            } else if (name === "user") {
                 li.append($('<span class="1">').text(msg));
+            } else {
+                li.append($('<span class="1 markdown-body">').html(marked.marked(msg)));
             }
         } else {
-            li.append($('<span>').append($("<section>").css("color", agentImgMap[agent_id_dict[at]]?.color).text("@" + at)).append(msg));
+            if (name === "user") {
+                li.append($('<span>').append($("<section>").css("color", agentImgMap[agent_id_dict[at]]?.color).text("@" + at)).append(msg));
+            } else {
+                li.append($('<span class="markdown-body">').append($("<section>").css("color", agentImgMap[agent_id_dict[at]]?.color).text("@" + at)).append(marked.marked(msg)));
+            }
         }
 
         if (name === master_agent_name && at === "") {
@@ -2297,16 +2305,6 @@
                         markdownInput = JSON.stringify(markdownInput, null, 2);
                     }
 
-                    // if (agent_log["plannings"][i].type == 'observation') {
-                    //     div_right
-                    //         .append($("<div class='observation-head'>")
-                    //         .text(agent_log["plannings"][i].callee));
-
-                    //     div_right.append($("<div class='observation-output-head'>").text('Output'));
-                    //     var temp_div = $("<div>").addClass("observation");
-                    //     temp_div.html(marked.marked(markdownInput));
-                    //     div_right.append(temp_div);
-                    // } else {
                         if (agent_log["plannings"][i].type == 'observation') {
                             div_right
                                 .append($("<div class='observation-head'>")
@@ -2316,19 +2314,31 @@
                                 .append($("<div class='plannings-head'>")
                                 .text(agent_log["plannings"][i].callee));
                         }
-                            
-                        div_right
-                            .append($("<div class='plannings-output-head'>")
-                            .text('Output'));
 
-                        var a_tag = $("<a class='plannings-link'>")
+                        // Output header with toggle button inside
+                        var outputHead = $("<div class='plannings-output-head'>").text('Output');
+                        outputHead.append($("<button class='btn-output-toggle' onclick='toggleOutputView(this); event.stopPropagation();'>").text('Raw'));
+                        div_right.append(outputHead);
+
+                        // Wrapper containing both markdown and raw views
+                        var outputWrapper = $("<div class='plannings-output-wrapper'>");
+
+                        var a_tag = $("<a class='plannings-link planning-markdown'>")
                             .attr("href", "./node.html?id=" + agent_log["plannings"][i].node_id).attr("target", "_blank")
                             .css("text-decoration", "none")
                             .css("color", "black");
                         var temp_div = $("<div>").addClass("planning");
                         temp_div.html(marked.marked(markdownInput));
                         a_tag.append(temp_div);
-                        div_right.append(a_tag);
+                        outputWrapper.append(a_tag);
+
+                        // Raw view (hidden by default), same nested structure as markdown
+                        var rawLink = $("<div class='plannings-link planning-raw'>").hide();
+                        var rawInner = $("<div class='planning'>").css({"white-space": "pre-wrap", "word-wrap": "break-word", "font-family": "'Menlo','Monaco','Courier New',monospace", "font-size": "12px"}).text(markdownInput);
+                        rawLink.append(rawInner);
+                        outputWrapper.append(rawLink);
+
+                        div_right.append(outputWrapper);
 
                         // 节点操作按钮：仅 tool 和 llm 类型支持重跑
                         var curNodeId = agent_log["plannings"][i].node_id;
@@ -2347,7 +2357,6 @@
                             );
                             div_right.append(node_actions);
                         }
-                    // }
                 }
             }
 
@@ -2988,6 +2997,22 @@
             $('#message_group').html('<img src="./image/group-vector-default.svg" alt=""/>')
             $('#rightId').css('display', 'block');
             $('#rightResizeHandle').css('display', 'block');
+        }
+    }
+
+    // ── Right panel per-output view toggle (markdown / raw) ──
+    function toggleOutputView(btn) {
+        var wrapper = $(btn).closest('.plannings-output-head').next('.plannings-output-wrapper');
+        var mdDiv = wrapper.find('.planning-markdown');
+        var rawDiv = wrapper.find('.planning-raw');
+        if (mdDiv.is(':visible')) {
+            mdDiv.hide();
+            rawDiv.show();
+            $(btn).text('Markdown');
+        } else {
+            rawDiv.hide();
+            mdDiv.show();
+            $(btn).text('Raw');
         }
     }
 
