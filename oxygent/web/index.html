@@ -2315,22 +2315,24 @@
                                 .text(agent_log["plannings"][i].callee));
                         }
 
-                        // Output header with toggle button inside
-                        var outputHead = $("<div class='plannings-output-head'>").text('Output');
-                        outputHead.append($("<button class='btn-output-toggle' onclick='toggleOutputView(this); event.stopPropagation();'>").text('Raw'));
+                        // Output header with toggle group and detail link
+                        var outputHead = $("<div class='plannings-output-head'>");
+                        outputHead.append($("<span>").text('Output'));
+                        var toggleGroup = $("<span class='output-toggle-group'>");
+                        toggleGroup.append($("<button class='output-toggle-btn active' onclick='toggleOutputView(this, \"markdown\"); event.stopPropagation();'>").text('Markdown'));
+                        toggleGroup.append($("<button class='output-toggle-btn' onclick='toggleOutputView(this, \"raw\"); event.stopPropagation();'>").text('Raw'));
+                        toggleGroup.append($("<a class='output-detail-btn' title='View detail' onclick='event.stopPropagation();'>").attr("href", "./node.html?id=" + agent_log["plannings"][i].node_id).attr("target", "_blank").html('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'));
+                        outputHead.append(toggleGroup);
                         div_right.append(outputHead);
 
                         // Wrapper containing both markdown and raw views
                         var outputWrapper = $("<div class='plannings-output-wrapper'>");
 
-                        var a_tag = $("<a class='plannings-link planning-markdown'>")
-                            .attr("href", "./node.html?id=" + agent_log["plannings"][i].node_id).attr("target", "_blank")
-                            .css("text-decoration", "none")
-                            .css("color", "black");
+                        var mdLink = $("<div class='plannings-link planning-markdown'>");
                         var temp_div = $("<div>").addClass("planning");
                         temp_div.html(marked.marked(markdownInput));
-                        a_tag.append(temp_div);
-                        outputWrapper.append(a_tag);
+                        mdLink.append(temp_div);
+                        outputWrapper.append(mdLink);
 
                         // Raw view (hidden by default), same nested structure as markdown
                         var rawLink = $("<div class='plannings-link planning-raw'>").hide();
@@ -3001,18 +3003,20 @@
     }
 
     // ── Right panel per-output view toggle (markdown / raw) ──
-    function toggleOutputView(btn) {
+    function toggleOutputView(btn, mode) {
+        var group = $(btn).closest('.output-toggle-group');
+        group.find('.output-toggle-btn').removeClass('active');
+        $(btn).addClass('active');
+
         var wrapper = $(btn).closest('.plannings-output-head').next('.plannings-output-wrapper');
         var mdDiv = wrapper.find('.planning-markdown');
         var rawDiv = wrapper.find('.planning-raw');
-        if (mdDiv.is(':visible')) {
+        if (mode === 'raw') {
             mdDiv.hide();
             rawDiv.show();
-            $(btn).text('Markdown');
         } else {
             rawDiv.hide();
             mdDiv.show();
-            $(btn).text('Raw');
         }
     }
 

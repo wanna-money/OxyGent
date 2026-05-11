@@ -642,22 +642,59 @@ td {
     position: relative;
 }
 
-.btn-output-toggle {
+.output-toggle-group {
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+    gap: 0;
+    flex-shrink: 0;
+}
+
+.output-toggle-btn {
     border: 1px solid #ddd;
     background: #f8f8f8;
-    color: #666;
+    color: #999;
     font-size: 11px;
-    padding: 1px 6px;
-    border-radius: 3px;
+    padding: 1px 8px;
+    cursor: pointer;
+    line-height: 18px;
+    transition: all 0.15s;
+}
+
+.output-toggle-btn:first-child {
+    border-radius: 3px 0 0 3px;
+    border-right: none;
+}
+
+.output-toggle-btn:nth-child(2) {
+    border-radius: 0 3px 3px 0;
+}
+
+.output-toggle-btn.active {
+    background: #155EEF;
+    color: #fff;
+    border-color: #155EEF;
+}
+
+.output-toggle-btn:hover:not(.active) {
+    background: #eee;
+    color: #333;
+}
+
+.output-detail-btn {
+    color: #999;
+    font-size: 12px;
     cursor: pointer;
     line-height: 18px;
     margin-left: 8px;
-    vertical-align: middle;
+    margin-right: 12px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
 }
 
-.btn-output-toggle:hover {
-    background: #eee;
-    color: #333;
+.output-detail-btn:hover {
+    color: #155EEF;
 }
 
 .plannings-output-wrapper {
@@ -740,11 +777,14 @@ td {
     margin-top: 6px;
     margin-bottom: 6px;
     padding-left: 64px;
-    height: 22px;
+    min-height: 22px;
     font-size: 14px;
     line-height: 22px;
     position: relative;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 .plannings-output-head:before {
     content:"";

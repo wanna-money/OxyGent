@@ -1485,7 +1485,10 @@ class MAS(BaseModel):
             if intercepted_response is not None:
                 return intercepted_response
             oxy_response = await self.chat_with_agent(payload=payload)
-            return oxy_response.output
+            return {
+                "answer": oxy_response.output,
+                "current_trace_id": oxy_response.oxy_request.current_trace_id,
+            }
 
         @app.api_route("/sse/chat", methods=["GET", "POST"])
         async def sse_chat(request: Request):
