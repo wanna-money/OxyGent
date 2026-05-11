@@ -1018,6 +1018,11 @@ class MAS(BaseModel):
                                     )
                                     if historical_from_trace:
                                         payload["from_trace_id"] = historical_from_trace
+                                if not payload.get("shared_data"):
+                                    payload["shared_data"] = trace_source.get(
+                                        "shared_data", dict()
+                                    )
+
                             else:
                                 logger.warning(
                                     f"Trace {trace_id_for_lookup} not found when auto-retrieving query for restart"
@@ -1224,6 +1229,8 @@ class MAS(BaseModel):
         routers=None,
         middlewares=None,
         mounts=None,
+        shared_data=None,
+        group_data=None,
     ):
         """Start the FastAPI + SSE service (see original inline documentation)."""
         self.routers.extend(routers or [])
@@ -1393,7 +1400,11 @@ class MAS(BaseModel):
         @app.get("/get_first_query")
         def get_first_query():
             return WebResponse(
-                data={"first_query": self.first_query if self.first_query else ""}
+                data={
+                    "first_query": self.first_query if self.first_query else "",
+                    "shared_data": shared_data,
+                    "group_data": group_data,
+                }
             ).to_dict()
 
         @app.get("/get_welcome_message")

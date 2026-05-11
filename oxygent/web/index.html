@@ -198,6 +198,32 @@
                         <span class="file-tooltip-description">Max 10, 10MB each. Images, videos and table files are supported.</span>
                     </span>
                 </button>
+                <button class="json-editor-btn" id="json_editor_toggle" onclick="toggleJsonEditor()">
+                    <img src="./image/json.svg" alt="JSON"/>
+                </button>
+                <!-- JSON Editor Panel -->
+                <div class="json-editor-panel" id="json_editor_panel" style="display:none;">
+                    <div class="json-editor-header">
+                        <span class="json-editor-title">Request Data</span>
+                    </div>
+                    <div class="json-editor-body">
+                        <div class="json-editor-field">
+                            <label>shared_data</label>
+                            <textarea id="json_shared_data" rows="6" spellcheck="false"></textarea>
+                            <div class="json-editor-error" id="json_shared_data_error"></div>
+                        </div>
+                        <div class="json-editor-field">
+                            <label>group_data</label>
+                            <textarea id="json_group_data" rows="6" spellcheck="false"></textarea>
+                            <div class="json-editor-error" id="json_group_data_error"></div>
+                        </div>
+                    </div>
+                    <div class="json-editor-footer">
+                        <button class="json-editor-btn-clear" onclick="clearJsonEditor()">Clear</button>
+                        <button class="json-editor-btn-cancel" onclick="cancelJsonEditor()">Cancel</button>
+                        <button class="json-editor-btn-apply" onclick="applyJsonEditor()">Apply</button>
+                    </div>
+                </div>
                 <button id="message_send" onclick="send_message()">
                     <img src="./image/up_arrow.svg" alt=""/>
                 </button>
@@ -334,6 +360,10 @@
     var node_state = {};
     var eventSource = null;
     var _cascader = null
+
+    // JSON editor state for shared_data / group_data
+    var chatSharedData = {};
+    var chatGroupData = {};
 
     const agentImgMap = [
         {bgColor: '#FEEAD4', color: '#7d4303', imgUrl: './image/agents/agent_0.png'},
@@ -497,9 +527,14 @@
                 // console.log('first_query', response);
                 $("#message_input").val(response.data.first_query);
                 if (response.data.first_query) {
-                    $("#message_send").addClass('message_send_active'); // 有值时背景色为蓝色
+                    $("#message_send").addClass('message_send_active');
                 }
-
+                if (response.data.shared_data) {
+                    chatSharedData = response.data.shared_data;
+                }
+                if (response.data.group_data) {
+                    chatGroupData = response.data.group_data;
+                }
             }
         })
         $("#message_input").keydown(function (event) {
@@ -1964,7 +1999,12 @@
             var payload = {
                 "from_trace_id": from_trace_id,
                 "query": message,
-                "shared_data": {"extra": "extra argument"},
+            }
+            if (Object.keys(chatSharedData).length > 0) {
+                payload["shared_data"] = chatSharedData;
+            }
+            if (Object.keys(chatGroupData).length > 0) {
+                payload["group_data"] = chatGroupData;
             }
 
             if (filesToUpload.length) {
@@ -2190,7 +2230,6 @@
 
         var payload = {
             "restart_node_id": nodeId,
-            "shared_data": {"extra": "extra argument"},
         };
         if (editedOutput !== undefined && editedOutput !== null) {
             payload["restart_node_output"] = editedOutput;
@@ -2986,6 +3025,61 @@
             document.body.style.userSelect = '';
         });
     })();
+
+    // ── JSON Editor for shared_data / group_data ──
+    function toggleJsonEditor() {
+        var panel = $('#json_editor_panel');
+        if (panel.is(':visible')) {
+            panel.hide();
+        } else {
+            $('#json_shared_data').val(JSON.stringify(chatSharedData, null, 2));
+            $('#json_group_data').val(JSON.stringify(chatGroupData, null, 2));
+            $('#json_shared_data_error').text('');
+            $('#json_group_data_error').text('');
+            panel.show();
+        }
+    }
+
+    function applyJsonEditor() {
+        var sharedText = $('#json_shared_data').val().trim();
+        var groupText = $('#json_group_data').val().trim();
+        var hasError = false;
+
+        // Parse shared_data
+        try {
+            chatSharedData = sharedText ? JSON.parse(sharedText) : {};
+            $('#json_shared_data_error').text('');
+        } catch (e) {
+            $('#json_shared_data_error').text('Invalid JSON: ' + e.message);
+            hasError = true;
+        }
+
+        // Parse group_data
+        try {
+            chatGroupData = groupText ? JSON.parse(groupText) : {};
+            $('#json_group_data_error').text('');
+        } catch (e) {
+            $('#json_group_data_error').text('Invalid JSON: ' + e.message);
+            hasError = true;
+        }
+
+        if (!hasError) {
+            $('#json_editor_panel').hide();
+        }
+    }
+
+    function clearJsonEditor() {
+        chatSharedData = {};
+        chatGroupData = {};
+        $('#json_shared_data').val('{}');
+        $('#json_group_data').val('{}');
+        $('#json_shared_data_error').text('');
+        $('#json_group_data_error').text('');
+    }
+
+    function cancelJsonEditor() {
+        $('#json_editor_panel').hide();
+    }
 
     // 关闭最右侧对话框
     function closeRight() {
