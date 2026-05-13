@@ -910,6 +910,24 @@ class MAS(BaseModel):
             if channel_id in self.feedback_dict:
                 del self.feedback_dict[channel_id]
 
+    @staticmethod
+    def _parse_dict_field(raw_value, field_name: str = "dict field") -> dict:
+        """Parse a raw value from ES into a dict.
+
+        Handles str (JSON), dict, or other types gracefully.
+        """
+        if isinstance(raw_value, str):
+            try:
+                return json.loads(raw_value)
+            except json.JSONDecodeError:
+                logger.warning(
+                    f"Failed to parse {field_name} from string, using empty dict"
+                )
+                return {}
+        elif isinstance(raw_value, dict):
+            return raw_value
+        return {}
+
     async def chat_with_agent(
         self,
         payload: dict = None,
@@ -1018,10 +1036,14 @@ class MAS(BaseModel):
                                     )
                                     if historical_from_trace:
                                         payload["from_trace_id"] = historical_from_trace
-                                if not payload.get("shared_data"):
-                                    payload["shared_data"] = trace_source.get(
-                                        "shared_data", dict()
-                                    )
+                                payload["shared_data"] = self._parse_dict_field(
+                                    trace_source.get("shared_data", {}),
+                                    "shared_data",
+                                )
+                                payload["group_data"] = self._parse_dict_field(
+                                    trace_source.get("group_data", {}),
+                                    "group_data",
+                                )
 
                             else:
                                 logger.warning(
@@ -1068,19 +1090,10 @@ class MAS(BaseModel):
                 hits = es_response_group_id.get("hits", {}).get("hits", [])
                 if hits:
                     oxy_request.group_id = hits[0]["_source"].get("group_id", "")
-                    raw_group_data = hits[0]["_source"].get("group_data", {})
-                    if isinstance(raw_group_data, str):
-                        try:
-                            history_group_data = json.loads(raw_group_data)
-                        except json.JSONDecodeError:
-                            logger.warning(
-                                "Failed to parse group_data from string, using empty dict"
-                            )
-                            history_group_data = {}
-                    else:
-                        history_group_data = (
-                            raw_group_data if isinstance(raw_group_data, dict) else {}
-                        )
+                    history_group_data = self._parse_dict_field(
+                        hits[0]["_source"].get("group_data", {}),
+                        "group_data",
+                    )
 
                     merged_group_data = history_group_data.copy()
                     merged_group_data.update(oxy_request.group_data)
@@ -1132,7 +1145,7 @@ class MAS(BaseModel):
             print("LLM: ", oxy_response.output)
         while True:
             query = input("Enter your query: ").strip()
-            if query in ["exit", "quite", "bye"]:
+            if query in ["exit", "quit", "bye"]:
                 break
             if query in ["reset", "clear"]:
                 from_trace_id = ""

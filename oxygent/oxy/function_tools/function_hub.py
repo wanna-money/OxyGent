@@ -84,7 +84,7 @@ class FunctionHub(BaseTool):
                 @functools.wraps(func)
                 async def async_func(*args, **kwargs):
                     # Use thread pool for blocking synchronous operations
-                    loop = asyncio.get_event_loop()
+                    loop = asyncio.get_running_loop()
                     if kwargs:
                         # If kwargs are provided, wrap the function with functools.partial
                         partial_func = functools.partial(func, **kwargs)

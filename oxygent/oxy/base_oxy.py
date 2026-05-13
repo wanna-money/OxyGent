@@ -686,7 +686,18 @@ Arguments:
                         output=f"Tool {self.name} was cancelled",
                     )
                     oxy_response.oxy_request = oxy_request
-                    asyncio.create_task(self._post_save_data(oxy_response))
+
+                    if oxy_request.is_async_storage:
+                        post_save_data_task = asyncio.create_task(
+                            self._post_save_data(oxy_response)
+                        )
+                        post_save_data_task.add_done_callback(
+                            self.mas.background_tasks.discard
+                        )
+                        self.mas.background_tasks.add(post_save_data_task)
+                    else:
+                        await self._post_save_data(oxy_response)
+
                     raise
                 except Exception as e:
                     # Handle exceptions and retry logic

@@ -424,6 +424,7 @@ class OxyRequest(BaseModel):
     async def call_async(self, **kwargs):
         """Call a callee asynchronously in a background task."""
         task = asyncio.create_task(self.call(**kwargs))
+        task.add_done_callback(self.mas.background_tasks.discard)
         self.mas.background_tasks.add(task)
 
     async def start(self) -> "OxyResponse":

@@ -30,6 +30,11 @@ class WorkflowAgent(LocalAgent):
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Execute the user-defined workflow function."""
+        if self.func_workflow is None:
+            return OxyResponse(
+                state=OxyState.FAILED,
+                output=f"WorkflowAgent '{self.name}' has no func_workflow defined.",
+            )
         return OxyResponse(
             state=OxyState.COMPLETED, output=await self.func_workflow(oxy_request)
         )

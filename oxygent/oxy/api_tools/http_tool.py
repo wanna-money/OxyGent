@@ -31,17 +31,36 @@ class HttpTool(BaseTool):
     )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Execute the HTTP request.
-
-        Note: currently always issues a GET, regardless of the configured `method` field.
-        """
+        """Execute the HTTP request using the configured method."""
         # Merge default parameters with request arguments
         params = self.default_params.copy()
         params.update(oxy_request.arguments)
 
         # Make HTTP request with timeout handling
         async with httpx.AsyncClient(timeout=self.timeout) as client:
-            http_response = await client.get(
-                self.url, params=params, headers=self.headers
-            )
+            method = self.method.upper()
+            if method == "GET":
+                http_response = await client.get(
+                    self.url, params=params, headers=self.headers
+                )
+            elif method == "POST":
+                http_response = await client.post(
+                    self.url, json=params, headers=self.headers
+                )
+            elif method == "PUT":
+                http_response = await client.put(
+                    self.url, json=params, headers=self.headers
+                )
+            elif method == "DELETE":
+                http_response = await client.delete(
+                    self.url, params=params, headers=self.headers
+                )
+            elif method == "PATCH":
+                http_response = await client.patch(
+                    self.url, json=params, headers=self.headers
+                )
+            else:
+                http_response = await client.request(
+                    method, self.url, params=params, headers=self.headers
+                )
             return OxyResponse(state=OxyState.COMPLETED, output=http_response.text)

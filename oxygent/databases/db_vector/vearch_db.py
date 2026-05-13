@@ -93,7 +93,7 @@ class VectorToolAsync(object):
         Returns:
             str: Random alphanumeric string
         """
-        base_str = "ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789"
+        base_str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         return "".join(random.choices(base_str, k=randomlength))
 
     @staticmethod
