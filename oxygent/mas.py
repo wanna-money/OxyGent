@@ -1274,23 +1274,6 @@ class MAS(BaseModel):
                 self.routers.append(a2a_router)
                 existing_prefixes.add(prefix)
 
-        # Auto-discover and mount A2A routers exposed by oxy instances.
-        for oxy in self.oxy_name_to_oxy.values():
-            if oxy.__class__.__name__ not in {"A2AServerGateway", "A2AServerGateway"}:
-                continue
-            build_router = getattr(oxy, "build_router", None)
-            if not callable(build_router):
-                continue
-            try:
-                a2a_router = build_router()
-            except Exception as e:
-                logger.warning(f"Failed to build router from [{oxy.name}]: {e}")
-                continue
-            prefix = getattr(a2a_router, "prefix", "")
-            if a2a_router and prefix not in existing_prefixes:
-                self.routers.append(a2a_router)
-                existing_prefixes.add(prefix)
-
         if not self.master_agent_name:
             logger.warning("No agent was registered.")
 
