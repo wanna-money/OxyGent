@@ -82,7 +82,10 @@ class Oxy(BaseModel, ABC):
     input_schema: dict[str, Any] = Field(
         default_factory=dict, description="Input schema definition"
     )
-    system_args: list = Field(default_factory=list, description="")
+    system_args: list = Field(
+        default_factory=list,
+        description="System-level arguments extracted from input_schema",
+    )
     desc_for_llm: str = Field("", description="Description shown to LLM")
 
     is_entrance: bool = Field(False, description="Whether this is a MAS entry point")
@@ -154,14 +157,23 @@ class Oxy(BaseModel, ABC):
     timeout: float = Field(
         default_factory=Config.get_oxy_timeout, description="Timeout in seconds."
     )
-    retries: int = Field(default_factory=Config.get_oxy_retries)
-    delay: float = Field(default_factory=Config.get_oxy_delay)
+    retries: int = Field(
+        default_factory=Config.get_oxy_retries,
+        description="Number of retry attempts on failure",
+    )
+    delay: float = Field(
+        default_factory=Config.get_oxy_delay,
+        description="Delay in seconds between retries",
+    )
 
     preceding_oxy: Optional[list] = Field(
         default_factory=list,
         description="A list of oxy names that must be called before the current oxy.",
     )
-    preceding_placeholder: str = Field("preceding_text")
+    preceding_placeholder: str = Field(
+        "preceding_text",
+        description="Key name in arguments for injecting preceding Oxy outputs",
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -172,7 +184,6 @@ class Oxy(BaseModel, ABC):
 
     def _ensure_async_functions(self):
         """Ensure all function fields are async. Convert sync functions to async if needed."""
-        # List of function field names to check and convert
         func_fields = [
             "func_process_input",
             "func_process_output",
@@ -189,10 +200,12 @@ class Oxy(BaseModel, ABC):
                 object.__setattr__(self, field_name, async_func)
 
     def model_post_init(self, __context):
+        """Auto-populate class_name from the actual class if not explicitly set."""
         if self.class_name is None:
             object.__setattr__(self, "class_name", self.__class__.__name__)
 
     def set_mas(self, mas):
+        """Bind this Oxy instance to a MAS runtime container."""
         self.mas = mas
 
     def add_permitted_tool(self, tool_name: str):
@@ -226,18 +239,18 @@ class Oxy(BaseModel, ABC):
                 args_desc.append(arg_desc)
 
         self.desc_for_llm = f"""
-            Tool: {self.name}
-            Description: {self.desc}
-            Arguments:
-            {chr(10).join(args_desc)}
-            """
+Tool: {self.name}
+Description: {self.desc}
+Arguments:
+{chr(10).join(args_desc)}
+"""
 
     async def init(self):
+        """Perform async initialization. Rebuilds the LLM-facing description."""
         self._set_desc_for_llm()
 
     async def _pre_process(self, oxy_request: OxyRequest) -> OxyRequest:
         """Pre-process the request before execution."""
-        # Initialize the parameters
         if not oxy_request.node_id:
             oxy_request.node_id = generate_uuid()
         oxy_request.callee = self.name
@@ -265,10 +278,17 @@ class Oxy(BaseModel, ABC):
         )
 
     async def _request_interceptor(self, oxy_request: OxyRequest):
+        """Intercept the request for restart/replay scenarios.
+
+        When a reference_trace_id and restart_node_id are present, queries ES
+        for cached outputs from a prior trace. Returns an OxyResponse built
+        from the cached data if found, allowing execution to be skipped.
+        Returns None when no cache hit occurs, so normal execution continues.
+        """
         if (
             oxy_request.reference_trace_id
             and oxy_request.restart_node_id
-            and oxy_request.is_load_data_for_restart
+            and oxy_request.get_shared_data("_is_read_cache_for_restart", True)
             and self.mas
             and self.mas.es_client
             and self.category in ["llm", "tool"]
@@ -287,7 +307,7 @@ class Oxy(BaseModel, ABC):
                     "size": 1,
                 },
             )
-            logging.info(f"ES search returned {len(es_response['hits']['hits'])} hits")
+            logger.info(f"ES search returned {len(es_response['hits']['hits'])} hits")
             if es_response["hits"]["hits"]:
                 current_node_order = es_response["hits"]["hits"][0]["_source"][
                     "update_time"
@@ -296,6 +316,15 @@ class Oxy(BaseModel, ABC):
                     restart_node_output = es_response["hits"]["hits"][0]["_source"][
                         "output"
                     ]
+
+                    copied_node_id = es_response["hits"]["hits"][0]["_source"][
+                        "copied_node_id"
+                    ]
+                    oxy_request.copied_node_id = (
+                        copied_node_id
+                        if copied_node_id
+                        else es_response["hits"]["hits"][0]["_source"]["node_id"]
+                    )
 
                     logger.info(
                         f"{' <<< '.join(oxy_request.call_stack)}  Load from ES: {restart_node_output}",
@@ -320,7 +349,7 @@ class Oxy(BaseModel, ABC):
                     oxy_request.restart_node_output
                     and current_node_order == oxy_request.restart_node_order
                 ):
-                    oxy_request.is_load_data_for_restart = False
+                    oxy_request.set_shared_data("_is_read_cache_for_restart", False)
                     restart_node_output = oxy_request.restart_node_output
                     logger.info(
                         f"{' <<< '.join(oxy_request.call_stack)}  Wrote by user: {restart_node_output}",
@@ -342,7 +371,7 @@ class Oxy(BaseModel, ABC):
                     oxy_response.oxy_request = oxy_request
                     return await self._format_output(oxy_response)
                 else:
-                    oxy_request.is_load_data_for_restart = False
+                    oxy_request.set_shared_data("_is_read_cache_for_restart", False)
             else:
                 logger.warning(
                     f"{' === '.join(oxy_request.call_stack)}  : load null from ES.",
@@ -353,6 +382,7 @@ class Oxy(BaseModel, ABC):
                 )
 
     async def _pre_save_data(self, oxy_request: OxyRequest):
+        """Persist the initial node record to ES before execution starts."""
         if not self.is_save_data:
             return
         if self.mas and self.mas.es_client:
@@ -375,6 +405,7 @@ class Oxy(BaseModel, ABC):
                 doc_id=oxy_request.node_id,
                 body={
                     "node_id": oxy_request.node_id,
+                    "copied_node_id": oxy_request.copied_node_id,
                     "node_type": callee_cat,
                     "trace_id": oxy_request.current_trace_id,
                     "group_id": oxy_request.group_id,
@@ -387,7 +418,7 @@ class Oxy(BaseModel, ABC):
                     "node_id_stack": oxy_request.node_id_stack,
                     "pre_node_ids": oxy_request.pre_node_ids,
                     "shared_data": to_save_shared_data,
-                    "create_time": get_format_time(),
+                    "create_time": oxy_request.create_time,
                 },
             )
         else:
@@ -412,6 +443,7 @@ class Oxy(BaseModel, ABC):
                     "type": "tool_call",
                     "content": {
                         "node_id": oxy_request.node_id,
+                        "copied_node_id": oxy_request.copied_node_id,
                         "caller": oxy_request.caller,
                         "callee": oxy_request.callee,
                         "caller_category": oxy_request.caller_category,
@@ -424,6 +456,7 @@ class Oxy(BaseModel, ABC):
             )
 
     async def _before_execute(self, oxy_request: OxyRequest) -> OxyRequest:
+        """Run preceding Oxy instances and merge their outputs into the request."""
         if self.preceding_oxy:
             arguments = {k: v for k, v in oxy_request.arguments.items()}
             tasks = [
@@ -438,15 +471,19 @@ class Oxy(BaseModel, ABC):
 
     @abstractmethod
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Core execution logic. Subclasses must implement this method."""
         pass
 
     async def _handle_exception(self, e):
+        """Hook for subclass-specific exception handling during retries."""
         pass
 
     async def _after_execute(self, oxy_response: OxyResponse) -> OxyResponse:
+        """Post-execution hook for modifying the response before post-processing."""
         return oxy_response
 
     async def _post_process(self, oxy_response: OxyResponse) -> OxyResponse:
+        """Apply the output processing function to the response."""
         return await self.func_process_output(oxy_response)
 
     async def _post_log(self, oxy_response: OxyResponse):
@@ -493,6 +530,7 @@ class Oxy(BaseModel, ABC):
                 doc_id=oxy_request.node_id,
                 body={
                     "node_id": oxy_request.node_id,
+                    "copied_node_id": oxy_request.copied_node_id,
                     "node_type": callee_cat,
                     "trace_id": oxy_request.current_trace_id,
                     "group_id": oxy_request.group_id,
@@ -505,13 +543,14 @@ class Oxy(BaseModel, ABC):
                     "output": to_json(oxy_response.output),
                     "state": oxy_response.state.value,
                     "extra": to_json(oxy_response.extra),
-                    "update_time": get_format_time(),
+                    "update_time": oxy_request.update_time,
                 },
             )
         else:
             logger.warning(f"Node {oxy_request.callee} data unsaved.")
 
     async def _format_output(self, oxy_response: OxyResponse) -> OxyResponse:
+        """Format the output for the caller and substitute friendly error text on failure."""
         oxy_response = await self.func_format_output(oxy_response)
         if oxy_response.state is OxyState.FAILED and self.friendly_error_text:
             oxy_response.output = self.friendly_error_text
@@ -528,6 +567,7 @@ class Oxy(BaseModel, ABC):
                     "type": "observation",
                     "content": {
                         "node_id": oxy_request.node_id,
+                        "copied_node_id": oxy_request.copied_node_id,
                         "caller": oxy_request.caller,
                         "callee": oxy_request.callee,
                         "caller_category": oxy_request.caller_category,
@@ -555,25 +595,16 @@ class Oxy(BaseModel, ABC):
         """Execute the complete lifecycle of an Oxy operation.
 
         This method orchestrates the entire execution pipeline including:
-        - Pre-processing
-        - logging and data saving
-        - Input formatting
-        - Pre-send message handling
-
-        - validation and permission checks
-
-        - Before execution hooks
-        - Execution with retry logic
-        - After execution hooks
-
-
-        - Post-processing
-        - Logging and data saving
-        - Output formatting
-        - Post-send message handling
+        - Pre-processing, logging, and data saving
+        - Input formatting and pre-send message handling
+        - Request interception (restart/replay cache)
+        - Before-execute hooks (preceding Oxy calls)
+        - Core execution with retry logic
+        - After-execute hooks
+        - Post-processing, logging, and data saving
+        - Output formatting and post-send message handling
         """
         async with self._semaphore:
-            # Pre-process
             oxy_request = await self._pre_process(oxy_request)
             await self._pre_log(oxy_request)
 
@@ -585,10 +616,22 @@ class Oxy(BaseModel, ABC):
             oxy_request.input_md5 = get_md5(to_json(key_to_md5))
             result = await self._request_interceptor(oxy_request)
             if isinstance(result, OxyResponse):
+                await self._pre_send_message(oxy_request)
+                # Persist the replayed node under the new trace_id so restart
+                # chains (T1 -> T2 -> T3) keep a complete node tree.
+                if self.mas and self.mas.es_client:
+                    oxy_request.create_time = get_format_time()
+                    await self._pre_save_data(oxy_request)
+
+                    await self._post_log(result)
+                    oxy_request.update_time = get_format_time()
+                    await self._post_save_data(result)
+                await self._post_send_message(result)
                 return result
 
             event = asyncio.Event()
             if self.mas:
+                oxy_request.create_time = get_format_time()
 
                 def pre_done_callback(task):
                     self.mas.background_tasks.discard(task)
@@ -613,7 +656,6 @@ class Oxy(BaseModel, ABC):
 
             oxy_request = await self._before_execute(oxy_request)
 
-            # Execute the request with retry logic
             attempt = 0
             while attempt < self.retries:
                 try:
@@ -644,7 +686,18 @@ class Oxy(BaseModel, ABC):
                         output=f"Tool {self.name} was cancelled",
                     )
                     oxy_response.oxy_request = oxy_request
-                    asyncio.create_task(self._post_save_data(oxy_response))
+
+                    if oxy_request.is_async_storage:
+                        post_save_data_task = asyncio.create_task(
+                            self._post_save_data(oxy_response)
+                        )
+                        post_save_data_task.add_done_callback(
+                            self.mas.background_tasks.discard
+                        )
+                        self.mas.background_tasks.add(post_save_data_task)
+                    else:
+                        await self._post_save_data(oxy_response)
+
                     raise
                 except Exception as e:
                     # Handle exceptions and retry logic
@@ -682,12 +735,11 @@ class Oxy(BaseModel, ABC):
 
             oxy_response.oxy_request = oxy_request
             oxy_response = await self._after_execute(oxy_response)
-
-            # Post-process
             oxy_response = await self._post_process(oxy_response)
             await self._post_log(oxy_response)
 
             if self.mas:
+                oxy_request.update_time = get_format_time()
 
                 async def _post_save_data_task(oxy_response):
                     await event.wait()

@@ -66,7 +66,7 @@
 
 .file-item:hover {
     cursor: pointer;
-    transition: box-shadow .2s ease-in-out;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .file-item:hover .file-close {
@@ -85,9 +85,73 @@
     align-items: center;
     display: flex;
     height: 68px;
-    border-radius: 4px;
+    border-radius: 8px;
     background: #F3F3F5;
     padding: 14px;
+    transition: box-shadow .2s ease-in-out;
+}
+
+/* Image thumbnail card variant */
+.file-item-image {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #F3F3F5;
+    flex-shrink: 0;
+    transition: box-shadow .2s ease-in-out;
+}
+
+.file-item-image:hover {
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.file-item-image:hover .file-close {
+    display: flex;
+    opacity: 1;
+}
+
+.file-item-image .file-close {
+    display: none;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.file-item-image .file-close img {
+    width: 12px;
+    height: 12px;
+    filter: brightness(10);
+}
+
+.file-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.file-item-image .file-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2px 6px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.5));
+    color: #fff;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .file-info {
@@ -139,4 +203,21 @@
     background-color: #fff2f0;
     border: 1px solid #ffccc7;
     color: #f5222d;
+}
+
+/* Image thumbnail in chat bubble */
+.file-item-image-chat {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.file-item-image-chat .file-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 8px;
 }

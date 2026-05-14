@@ -32,7 +32,7 @@ class Reflexion(BaseFlow):
 
     # Custom parsing functions
     func_parse_worker_response: Optional[Callable[[str], str]] = (
-        Field(  # 可以不调用reflexion_agent
+        Field(  # Reflexion agent is optional; may be omitted
             None, exclude=True, description="Worker response parser"
         )
     )
@@ -80,6 +80,7 @@ Previous answer: {previous_answer}""",
     )
 
     def __init__(self, **kwargs):
+        """Initialize the Reflexion flow with worker and evaluator agents."""
         super().__init__(**kwargs)
 
         self.add_permitted_tools(
@@ -109,7 +110,7 @@ Previous answer: {previous_answer}""",
             return self._parse_reflexion_text(response)
 
     def _parse_reflexion_text(self, response: str) -> ReflectionEvaluation:
-        """Parse reflexion response from text format."""
+        """Parse the evaluator LLM response into a satisfaction flag and feedback text."""
         lines = response.split("\n")
 
         is_satisfactory = False
@@ -239,7 +240,7 @@ Please provide the best possible final answer considering all the feedback above
 
 
 class MathReflexion(Reflexion):
-    """Specialized reflexion flow for mathematical problems."""
+    """Math-specific Reflexion flow with numeric answer comparison."""
 
     def __init__(self, **kwargs):
         # Set default agents for math problems

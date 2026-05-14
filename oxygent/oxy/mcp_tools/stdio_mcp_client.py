@@ -31,7 +31,9 @@ class StdioMCPClient(BaseMCPClient):
         params: Configuration parameters including command, arguments, and environment variables.
     """
 
-    params: dict[str, Any] = Field(default_factory=dict)
+    params: dict[str, Any] = Field(
+        default_factory=dict, description="Stdio server parameters (command, args, env)"
+    )
 
     async def _ensure_directories_exist(self, args: list[str]) -> None:
         """Ensure required directories exist before starting MCP server."""

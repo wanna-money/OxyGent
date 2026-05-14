@@ -1,6 +1,6 @@
 """oxy.py.
 
-NOTE: The variables difined in this file have meanings as:
+NOTE: The variables defined in this file have meanings as:
     - mas: the runtime container that knows every agent/tool(oxy) and routes messages among them
     - oxy: autonomous object, the agent/tool that can be called by other agents/tools
     - session: persistent channel between caller and callee
@@ -66,52 +66,109 @@ class OxyRequest(BaseModel):
         default_factory=generate_uuid,
         description="Static group identifier for trace trees.",
     )
-    from_trace_id: Optional[str] = Field("", description="")
+    from_trace_id: Optional[str] = Field(
+        "", description="Parent trace ID this conversation branched from"
+    )
     current_trace_id: Optional[str] = Field(
-        default_factory=generate_uuid, description=""
+        default_factory=generate_uuid,
+        description="Unique identifier for this conversation node",
     )
-    reference_trace_id: Optional[str] = Field("", description="")
-    restart_node_id: Optional[str] = Field("", description="")
-    restart_node_output: Optional[str] = Field("", description="")
-    restart_node_order: Optional[str] = Field("", description="")
-    is_load_data_for_restart: bool = Field(
-        True, description="wehether to load data from database"
+    reference_trace_id: Optional[str] = Field(
+        "", description="Trace ID of a prior execution used for restart/replay"
     )
-    input_md5: Optional[str] = Field("", description="")
-    root_trace_ids: list = Field(default_factory=list, description="")
-    mas: Optional[Any] = Field(None, description="", repr=False)
+    restart_node_id: Optional[str] = Field(
+        "", description="Node ID to restart execution from"
+    )
+    restart_node_output: Optional[str] = Field(
+        "", description="User-overridden output for the restart node"
+    )
+    restart_node_order: Optional[str] = Field(
+        "", description="Timestamp ordering of the restart node"
+    )
+    input_md5: Optional[str] = Field(
+        "", description="MD5 hash of the input for cache matching"
+    )
+    root_trace_ids: list = Field(
+        default_factory=list,
+        description="All root trace IDs composing the current session tree",
+    )
+    mas: Optional[Any] = Field(
+        None, description="Reference to the bound MAS runtime container", repr=False
+    )
 
-    caller: Optional[str] = Field("user", description="")
-    callee: Optional[str] = Field("", description="")
-    call_stack: List[str] = Field(default_factory=lambda: ["user"], description="")
-    node_id_stack: List[str] = Field(default_factory=lambda: [""], description="")
-    father_node_id: Optional[str] = Field("", description="")
+    caller: Optional[str] = Field(
+        "user", description="Name of the Oxy initiating this call"
+    )
+    callee: Optional[str] = Field("", description="Name of the Oxy being called")
+    call_stack: List[str] = Field(
+        default_factory=lambda: ["user"],
+        description="Ordered list of caller names forming the invocation chain",
+    )
+    node_id_stack: List[str] = Field(
+        default_factory=lambda: [""],
+        description="Ordered list of node IDs paralleling the call stack",
+    )
+    father_node_id: Optional[str] = Field(
+        "", description="Node ID of the direct parent in the call tree"
+    )
     pre_node_ids: Optional[Union[List[str], str]] = Field(
-        default_factory=list, description=""
+        default_factory=list,
+        description="Node IDs that must complete before this node executes",
     )
     latest_node_ids: Optional[Union[List[str], str]] = Field(
-        default_factory=list, description=""
+        default_factory=list,
+        description="Most recently completed node IDs in the current branch",
     )
-    caller_category: Optional[str] = Field("user", description="")
-    callee_category: Optional[str] = Field("", description="")
+    caller_category: Optional[str] = Field(
+        "user", description="Category of the caller (e.g. user, agent, tool)"
+    )
+    callee_category: Optional[str] = Field(
+        "", description="Category of the callee (e.g. agent, tool, llm)"
+    )
 
-    node_id: Optional[str] = Field("", description="")
+    node_id: Optional[str] = Field(
+        "", description="Unique identifier for this execution node"
+    )
+    copied_node_id: Optional[str] = Field(
+        "", description="Original node ID when this node is replayed from a prior trace"
+    )
 
-    is_save_history: bool = Field(True, description="whether history is saved")
-    is_send_message: bool = Field(True, description="whether message is send")
-    is_async_storage: bool = Field(True, description="whether async storage is used")
+    is_save_history: bool = Field(
+        True, description="Whether conversation history is persisted to ES"
+    )
+    is_send_message: bool = Field(
+        True, description="Whether messages are sent to the frontend"
+    )
+    is_async_storage: bool = Field(
+        True, description="Whether data storage runs asynchronously in background tasks"
+    )
 
-    parallel_id: Optional[str] = Field("", description="")
-    parallel_dict: Optional[dict] = Field(default_factory=dict, description="")
+    parallel_id: Optional[str] = Field(
+        "", description="Identifier grouping nodes in the same parallel execution batch"
+    )
+    parallel_dict: Optional[dict] = Field(
+        default_factory=dict,
+        description="Mapping of parallel execution metadata for batch coordination",
+    )
 
     arguments: dict = Field(
-        default_factory=dict, description="public data in the scope of a oxy node"
+        default_factory=dict,
+        description="Call-specific parameters (user input, tool args, etc.)",
     )
     shared_data: dict = Field(
-        default_factory=dict, description="public data in the scope of a single request"
+        default_factory=dict,
+        description="Public data shared across the entire trace tree",
     )
     group_data: dict = Field(
-        default_factory=dict, description="public data in the scope of a session group"
+        default_factory=dict,
+        description="Data shared across all traces in the same session group",
+    )
+
+    create_time: Optional[str] = Field(
+        None, description="Timestamp when this node was created"
+    )
+    update_time: Optional[str] = Field(
+        None, description="Timestamp when this node was last updated"
     )
 
     @property
@@ -119,19 +176,23 @@ class OxyRequest(BaseModel):
         return self.caller + "__" + self.callee
 
     def set_mas(self, mas):
+        """Bind a MAS instance to this request."""
         self.mas = mas
 
     def get_oxy(self, oxy_name):
+        """Retrieve a registered Oxy instance by name from the bound MAS."""
         return self.mas.oxy_name_to_oxy[oxy_name]
 
     def has_oxy(self, oxy_name):
+        """Check whether a named Oxy instance is registered in the bound MAS."""
         return oxy_name in self.mas.oxy_name_to_oxy
 
     def __deepcopy__(self, memo):
+        """Deep copy the request while sharing mutable cross-trace references."""
         # Dump all the fields into a dict
         fields = self.model_dump()
 
-        # Quote messanger
+        # Exclude messenger fields during deep copy
         temp_data = {
             "mas": None,
             "shared_data": dict(),
@@ -148,7 +209,7 @@ class OxyRequest(BaseModel):
         # create new instance
         new_instance = self.__class__(**fields)
 
-        # 直接赋值共享引用
+        # Assign shared references directly (no deep copy)
         new_instance.mas = self.mas
         new_instance.shared_data = self.shared_data
         new_instance.group_data = self.group_data
@@ -361,13 +422,17 @@ class OxyRequest(BaseModel):
         # return await self.retry_execute(oxy, oxy_request)
 
     async def call_async(self, **kwargs):
+        """Call a callee asynchronously in a background task."""
         task = asyncio.create_task(self.call(**kwargs))
+        task.add_done_callback(self.mas.background_tasks.discard)
         self.mas.background_tasks.add(task)
 
     async def start(self) -> "OxyResponse":
+        """Start a streaming call to the callee."""
         return await self.get_oxy(self.callee).execute(self)
 
     async def send_message(self, message=None, event=None, id=None, retry=None):
+        """Send a message to the frontend via the bound MAS."""
         if self.mas and self.is_send_message:
             # Record first response time on user-facing messages
             # Exclude: tool_call (preparing to execute), observation (internal execution result)
@@ -401,12 +466,14 @@ class OxyRequest(BaseModel):
             await self.mas.send_message(sse_message, redis_key, group_id=self.group_id)
 
     def set_query(self, query, master_level=False):
+        """Set the query text in the arguments."""
         if master_level:
             self.shared_data["query"] = query
         else:
             self.arguments["query"] = query
 
     def get_query(self, master_level=False):
+        """Get the query text from the arguments."""
         md_attachments = []
         for i, attachment in enumerate(self.arguments.get("attachments", [])):
             if attachment.startswith("../static/"):
@@ -426,14 +493,17 @@ class OxyRequest(BaseModel):
             return attachments_str + self.arguments.get("query", "")
 
     def has_short_memory(self, master_level=False):
+        """Check whether short-term memory exists in arguments."""
         var_short_memory = "master_short_memory" if master_level else "short_memory"
         return var_short_memory in self.arguments
 
     def set_short_memory(self, short_memory, master_level=False):
+        """Set short-term memory in arguments."""
         var_short_memory = "master_short_memory" if master_level else "short_memory"
         self.arguments[var_short_memory] = short_memory
 
     def get_short_memory(self, master_level=False):
+        """Get short-term memory from arguments."""
         var_short_memory = "master_short_memory" if master_level else "short_memory"
         return self.arguments.get(var_short_memory, [])
 
@@ -454,59 +524,73 @@ class OxyRequest(BaseModel):
         self.group_id = request_id
 
     def has_arguments(self, key):
+        """Check whether arguments exist."""
         return key in self.arguments
 
     def get_arguments(self, key=None, default=None):
+        """Get a specific argument by key."""
         if key is None:
             return self.arguments
         return self.arguments.get(key, default)
 
     def set_arguments(self, key, value):
+        """Set a specific argument by key."""
         self.arguments[key] = value
 
     def has_shared_data(self, key):
+        """Check whether a key exists in shared_data."""
         return key in self.shared_data
 
     def get_shared_data(self, key=None, default=None):
+        """Get a value from shared_data."""
         if key is None:
             return self.shared_data
         return self.shared_data.get(key, default)
 
     def set_shared_data(self, key, value):
+        """Set a value in shared_data."""
         self.shared_data[key] = value
 
     def has_group_data(self, key):
+        """Check whether a key exists in group_data."""
         return key in self.group_data
 
     def get_group_data(self, key=None, default=None):
+        """Get a value from group_data."""
         if key is None:
             return self.group_data
         return self.group_data.get(key, default)
 
     def set_group_data(self, key, value):
+        """Set a value in group_data."""
         self.group_data[key] = value
 
     def has_global_data(self, key):
+        """Check whether a key exists in global_data."""
         return key in self.mas.global_data
 
     def get_global_data(self, key=None, default=None):
+        """Get a value from global_data."""
         if key is None:
             return self.mas.global_data
         return self.mas.global_data.get(key, default)
 
     def set_global_data(self, key, value):
+        """Set a value in global_data."""
         self.mas.global_data[key] = value
 
     async def break_task(self):
+        """Signal task cancellation for the current trace."""
         await self.send_message(message="done", event="close")
         self.mas.active_tasks[self.current_trace_id].cancel()
 
     async def get_feedback_stream(self, channel_id=None):
+        """Get the feedback stream channel for interactive responses."""
         if channel_id is None:
             channel_id = self.current_trace_id
         if channel_id not in self.mas.feedback_dict:
             self.mas.feedback_dict[channel_id] = asyncio.Queue()
-            # 存储当前trace_id用到的所有channel_id
+            # Store all channel_ids used by the current trace_id
             if self.current_trace_id not in self.mas.channel_id_dict:
                 self.mas.channel_id_dict[self.current_trace_id] = []
             self.mas.channel_id_dict[self.current_trace_id].append(channel_id)
@@ -537,10 +621,20 @@ class OxyResponse(BaseModel):
 
     state: OxyState
     output: Any
-    extra: dict = Field(default_factory=dict)
-    oxy_request: Optional[OxyRequest] = Field(None)
+    extra: dict = Field(
+        default_factory=dict,
+        description="Optional metadata (token usage, latency, etc.)",
+    )
+    oxy_request: Optional[OxyRequest] = Field(
+        None, description="Echo of the originating request for traceability"
+    )
 
 
 class OxyOutput(BaseModel):
+    """Container for the final output of an Oxy execution chain."""
+
     result: Any
-    attachments: list = Field(default_factory=list)
+    attachments: list = Field(
+        default_factory=list,
+        description="Supplementary files or data attached to the output",
+    )

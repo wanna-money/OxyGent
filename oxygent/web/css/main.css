@@ -37,7 +37,7 @@
     padding: 14px;
     border-radius:4px;
     margin-right: 12px;
-    max-width: 485px;
+    max-width: calc(100% - 54px);
     position: relative;
     font-size: 14px;
     line-height: 20px;
@@ -62,7 +62,7 @@
     height: 42px;
 }
 
-.master p {
+.master > p {
     margin: 0;
     float: left;
     position: absolute;
@@ -77,7 +77,7 @@
     border-radius: 4px;
     float: left;
     margin: 23px 0 0 12px;
-    max-width: 485px;
+    max-width: calc(100% - 54px);
     position: relative;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -120,7 +120,7 @@
     padding: 6px;
 }
 
-.other p {
+.other > p {
     margin: 0;
     float: left;
     position: absolute;
@@ -135,7 +135,7 @@
     border-radius: 4px;
     float: left;
     margin: 23px 0 0 12px;
-    width: 480px;
+    max-width: calc(100% - 54px);
     position: relative;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -143,18 +143,79 @@
     line-height: 20px;
 }
 
-.other span p {
-    margin: 0;
-    float: left;
-    position: absolute;
-    left: 54px;
-    font-size: 14px;
-    font-weight: 500;
-}
-
 .other span section{
     color: #155EEF;
 }
+
+/* Markdown body styles for chat messages */
+.master span.markdown-body,
+.other span.markdown-body {
+    white-space: normal;
+}
+
+.markdown-body p {
+    margin: 0 0 8px 0;
+}
+
+.markdown-body p:last-child {
+    margin-bottom: 0;
+}
+
+.markdown-body pre {
+    background: #f6f8fa;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 8px 0;
+}
+
+.markdown-body code {
+    background: #f0f0f0;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.markdown-body pre code {
+    background: none;
+    padding: 0;
+}
+
+.markdown-body ul, .markdown-body ol {
+    padding-left: 20px;
+    margin: 8px 0;
+}
+
+.markdown-body blockquote {
+    border-left: 3px solid #ddd;
+    padding-left: 10px;
+    color: #666;
+    margin: 8px 0;
+}
+
+.markdown-body table {
+    border-collapse: collapse;
+    margin: 8px 0;
+}
+
+.markdown-body th, .markdown-body td {
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+}
+
+.markdown-body th {
+    background: #f6f8fa;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3,
+.markdown-body h4, .markdown-body h5, .markdown-body h6 {
+    margin: 12px 0 8px 0;
+    line-height: 1.4;
+}
+
+.markdown-body h1 { font-size: 1.3em; }
+.markdown-body h2 { font-size: 1.2em; }
+.markdown-body h3 { font-size: 1.1em; }
 
 #agent_log_close_id {
     background-color: transparent;
@@ -546,4 +607,313 @@
         left: 10px;
         right: 10px;
     }
+}
+
+/* ========== Node Restart Buttons ========== */
+
+.node-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 4px 12px;
+    padding-left: 20px;
+}
+
+.node-actions .btn-restart,
+.node-actions .btn-edit-restart {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 12px;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.node-actions .btn-restart:hover {
+    background: #eff6ff;
+    border-color: #155EEF;
+    color: #155EEF;
+}
+
+.node-actions .btn-edit-restart:hover {
+    background: #fff7ed;
+    border-color: #f59e0b;
+    color: #d97706;
+}
+
+.node-action-icon {
+    font-size: 11px;
+}
+
+/* ========== Restart Edit Modal ========== */
+
+.restart-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.restart-modal {
+    background: #fff;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 620px;
+    max-height: 80vh;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.restart-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.restart-modal-header span {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.restart-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 22px;
+    color: #9ca3af;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+    transition: color 0.2s;
+}
+
+.restart-modal-close:hover {
+    color: #4b5563;
+}
+
+.restart-modal-body {
+    padding: 16px 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.restart-modal-hint {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 10px;
+}
+
+#restart-output-editor {
+    width: 100%;
+    min-height: 240px;
+    max-height: 50vh;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #1f2937;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+#restart-output-editor:focus {
+    border-color: #155EEF;
+    box-shadow: 0 0 0 2px rgba(21, 94, 239, 0.12);
+}
+
+.restart-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 20px 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+#restart-modal-cancel {
+    padding: 8px 20px;
+    background: #f3f4f6;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+#restart-modal-cancel:hover {
+    background: #e5e7eb;
+}
+
+#restart-modal-confirm {
+    padding: 8px 24px;
+    background: #155EEF;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+#restart-modal-confirm:hover {
+    background: #104ab5;
+    box-shadow: 0 2px 6px rgba(21, 94, 239, 0.25);
+}
+
+/* ── JSON Editor ── */
+.json-editor-btn {
+    position: absolute;
+    left: 52px;
+    bottom: 16px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.json-editor-btn img {
+    width: 22px;
+    height: 22px;
+}
+
+.json-editor-panel {
+    position: absolute;
+    bottom: 56px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    z-index: 100;
+    padding: 16px;
+}
+
+.json-editor-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.json-editor-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.json-editor-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.json-editor-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.json-editor-field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.json-editor-field textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.json-editor-field textarea:focus {
+    outline: none;
+    border-color: #155EEF;
+}
+
+.json-editor-error {
+    font-size: 11px;
+    color: #e53e3e;
+    margin-top: 4px;
+}
+
+.json-editor-error:empty {
+    display: none;
+}
+
+.json-editor-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.json-editor-btn-cancel,
+.json-editor-btn-clear,
+.json-editor-btn-apply {
+    padding: 5px 16px;
+    font-size: 13px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.json-editor-btn-cancel {
+    background: #f3f3f5;
+    color: #333;
+}
+
+.json-editor-btn-cancel:hover {
+    background: #e8e8ea;
+}
+
+.json-editor-btn-clear {
+    background: #f3f3f5;
+    color: #333;
+    margin-right: auto;
+}
+
+.json-editor-btn-clear:hover {
+    background: #e8e8ea;
+}
+
+.json-editor-btn-apply {
+    background: #155EEF;
+    color: #fff;
+}
+
+.json-editor-btn-apply:hover {
+    background: #104ab5;
 }

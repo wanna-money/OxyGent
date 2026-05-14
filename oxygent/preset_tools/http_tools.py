@@ -1,3 +1,5 @@
+"""HTTP utility tools for OxyGent agents."""
+
 import asyncio
 import json
 from typing import Any, Dict, Optional
@@ -17,11 +19,9 @@ def http_get(
     headers: Optional[Dict[str, str]] = None,
     params: Optional[Dict[str, Any]] = None,
 ) -> str:
-    """
-    发送HTTP GET请求
-    """
+    """Send an HTTP GET request."""
     try:
-        # 使用同步客户端
+        # Use synchronous client
         with httpx.Client() as client:
             response = client.get(url, headers=headers, params=params)
             response.raise_for_status()
@@ -45,17 +45,15 @@ def http_post(
     data: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
 ) -> str:
-    """
-    发送HTTP POST请求
-    """
+    """Send an HTTP POST request."""
     try:
-        # 确保Content-Type设置为application/json
+        # Ensure Content-Type is set to application/json
         if headers is None:
             headers = {}
         if "Content-Type" not in headers:
             headers["Content-Type"] = "application/json"
 
-        # 使用同步客户端
+        # Use synchronous client
         with httpx.Client() as client:
             response = client.post(url, json=data, headers=headers)
             response.raise_for_status()
@@ -72,11 +70,11 @@ def http_post(
 
 
 async def main():
-    # GET请求示例
+    # GET request example
     result = await http_get("https://www.json.cn/", params={"key": "value"})
     print("GET Result:", result)
 
-    # POST请求示例
+    # POST request example
     data = {"name": "test", "value": 123}
     result = await http_post("https://httpbin.org/post", data=data)
     print("POST Result:", result)

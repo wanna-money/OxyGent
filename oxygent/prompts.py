@@ -1,3 +1,9 @@
+"""Default prompt templates used by agents in OxyGent.
+
+Contains system prompts, ReAct prompts, intention analysis prompts,
+and other prompt templates for agent behavior.
+"""
+
 SYSTEM_PROMPT = """
 You are a helpful assistant that can use these tools:
 ${tools_description}

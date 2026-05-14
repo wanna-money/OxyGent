@@ -1,4 +1,12 @@
+"""Database factory for OxyGent.
+
+Provides DBFactory, a singleton factory for creating and caching database client instances.
+"""
+
+
 class DBFactory:
+    """Singleton factory that creates and caches database client instances (ES, Redis, Vector)."""
+
     _instance = None
     _created_class = None
 
@@ -30,7 +38,7 @@ class DBFactory:
             self._instance = class_type(*args, **kwargs)
             self._created_class = class_type
         elif self._created_class != class_type:
-            # Have exsiting instance, but the class_type is not the same as the created class
+            # Have existing instance, but the class_type is not the same as the created class
             raise Exception(
                 f"DBFactory can only produce single instance of a class: {self._created_class.__name__}"
             )

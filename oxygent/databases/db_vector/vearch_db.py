@@ -93,7 +93,7 @@ class VectorToolAsync(object):
         Returns:
             str: Random alphanumeric string
         """
-        base_str = "ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789"
+        base_str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         return "".join(random.choices(base_str, k=randomlength))
 
     @staticmethod
@@ -354,7 +354,7 @@ class VearchDB(BaseVectorDB):
             System usage must provide this configuration.
         """
         self.config = VearchConfig(config)
-        self.vearch_tools = VectorToolAsync()  # Initialize vector datebase tools
+        self.vearch_tools = VectorToolAsync()  # Initialize vector database tools
         # Low level operations are not provided in this class
 
         if (
@@ -362,7 +362,7 @@ class VearchDB(BaseVectorDB):
         ):  # Not a system instance; the config should be provided in system instance
             pass
 
-        if "embedding_model_url" in config:  # Initalize  embedding function
+        if "embedding_model_url" in config:  # Initialize embedding function
             emb_model = EmbeddingModel(url=self.config.embedding_model_url)
             self.emb_func = emb_model.get_embeddings_async
         else:
@@ -571,7 +571,7 @@ class VearchDB(BaseVectorDB):
         )
         # print(df)
 
-        # 1. Generate embeddings for tool dscriptions
+        # 1. Generate embeddings for tool descriptions
         with EmbeddingCache() as embedding:
             # Method 1: Individual embedding
             # for app_name, agent_name, tool_name, tool_desc in tool_list:
@@ -737,7 +737,7 @@ class VearchDB(BaseVectorDB):
         Args:
             body: Document data dictionary
             vector_col: Name of the field to generate embedding from
-            sapce_name: Name of the target space
+            space_name: Name of the target space
 
         Returns:
             str: Response from insert operation

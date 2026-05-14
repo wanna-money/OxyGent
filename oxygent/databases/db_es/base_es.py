@@ -54,6 +54,7 @@ class BaseEs(BaseDB, ABC):
 
     @abstractmethod
     async def update(self, index_name, doc_id, body):
+        """Update a document by ID. Subclasses must implement this."""
         pass
 
     @abstractmethod

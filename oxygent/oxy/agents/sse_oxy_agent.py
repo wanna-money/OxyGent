@@ -15,11 +15,14 @@ logger = logging.getLogger(__name__)
 
 
 class SSEOxyGent(RemoteAgent):
+    """Remote agent that connects to another OxyGent MAS via SSE."""
+
     is_share_call_stack: bool = Field(
         True, description="Whether to share the call stack with the agent."
     )
 
     async def init(self):
+        """Initialize the SSE remote agent connection."""
         await super().init()
 
         async with httpx.AsyncClient() as client:
@@ -36,6 +39,7 @@ class SSEOxyGent(RemoteAgent):
         self._set_desc_for_llm()
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Forward the request to the remote SSE endpoint and stream the response."""
         logger.info(
             f"Initiating SSE connection. {self.server_url}",
             extra={
@@ -111,7 +115,7 @@ class SSEOxyGent(RemoteAgent):
                                 status=resp.status,
                             )
 
-                        # 使用规范的 SSE 事件解析
+                        # Use standard SSE event parsing
                         async for event in iter_sse_events(resp):
                             message_event = event.get("event")
                             message_data = event.get("data")
@@ -147,7 +151,7 @@ class SSEOxyGent(RemoteAgent):
                                         ):
                                             continue
                                         else:
-                                            # Discord user and callee
+                                            # Discard self-referential user/callee entries
                                             if not self.is_share_call_stack:
                                                 data["content"]["call_stack"] = (
                                                     oxy_request.call_stack
@@ -174,7 +178,7 @@ class SSEOxyGent(RemoteAgent):
                                         retry=message_retry,
                                     )
 
-                        # 如果正常完成，直接返回
+                        # Return immediately on normal completion
                         return OxyResponse(state=OxyState.COMPLETED, output=answer)
 
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
@@ -200,7 +204,7 @@ class SSEOxyGent(RemoteAgent):
                 else:
                     retry_delay = base_retry_delay
 
-                # 限制最大重试延迟
+                # Cap the maximum retry delay
                 retry_delay = min(retry_delay, 30.0)
                 last_retry_delay = retry_delay
 

@@ -1,3 +1,5 @@
+"""System monitoring tools for OxyGent agents."""
+
 import asyncio
 import json
 import platform
@@ -13,9 +15,7 @@ system_tools = FunctionHub(name="system_tools")
     description="Get system information including OS, architecture, and Python version"
 )
 async def get_system_info() -> str:
-    """
-    获取系统信息
-    """
+    """Get system information."""
     info = {
         "system": platform.system(),
         "release": platform.release(),
@@ -33,9 +33,7 @@ async def get_system_info() -> str:
     description="Get current system resource usage including CPU, memory, and disk usage"
 )
 async def get_system_usage() -> str:
-    """
-    获取系统资源使用情况
-    """
+    """Get system resource usage."""
     try:
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
@@ -58,38 +56,38 @@ async def get_system_usage() -> str:
 
 async def main():
     """
-    主函数，用于测试系统工具的效果
+    Main function for testing system tools.
     """
-    print("=== 系统信息测试 ===")
-    system_info_result = await get_system_info()  # 添加 await
-    print("系统信息:")
+    print("=== System Info Test ===")
+    system_info_result = await get_system_info()
+    print("System info:")
     print(system_info_result)
 
-    # 将JSON字符串转换为字典以便更清晰地显示
+    # Convert JSON string to dict for clearer display
     try:
         system_info_dict = json.loads(system_info_result)
-        print("\n格式化系统信息:")
+        print("\nFormatted system info:")
         for key, value in system_info_dict.items():
             print(f"  {key}: {value}")
     except json.JSONDecodeError:
-        print("无法解析系统信息JSON")
+        print("Failed to parse system info JSON")
 
-    print("\n=== 系统资源使用情况测试 ===")
-    usage_result = await get_system_usage()  # 添加 await
-    print("资源使用情况:")
+    print("\n=== System Resource Usage Test ===")
+    usage_result = await get_system_usage()
+    print("Resource usage:")
     print(usage_result)
 
-    # 将JSON字符串转换为字典以便更清晰地显示
+    # Convert JSON string to dict for clearer display
     try:
         usage_dict = json.loads(usage_result)
-        print("\n格式化资源使用情况:")
+        print("\nFormatted resource usage:")
         if "error" in usage_dict:
-            print(f"获取资源使用情况时出错: {usage_dict['error']}")
+            print(f"Error getting resource usage: {usage_dict['error']}")
         else:
             for key, value in usage_dict.items():
                 print(f"  {key}: {value}")
     except json.JSONDecodeError:
-        print("无法解析资源使用情况JSON")
+        print("Failed to parse resource usage JSON")
 
 
 if __name__ == "__main__":

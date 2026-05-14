@@ -65,53 +65,112 @@ class MAS(BaseModel):
 
     name: str = Field("", description="Identifier for the mas.")
 
-    default_oxy_space: list = Field(default_factory=list, description="")
+    default_oxy_space: list = Field(
+        default_factory=list,
+        description="Built-in core Oxy components always registered",
+    )
 
-    oxy_space: list = Field(default_factory=list, description="")
+    oxy_space: list = Field(
+        default_factory=list,
+        description="User-provided Oxy instances to register at startup",
+    )
 
-    oxy_name_to_oxy: dict[str, Oxy] = Field(default_factory=dict, description="")
+    oxy_name_to_oxy: dict[str, Oxy] = Field(
+        default_factory=dict,
+        description="Registry mapping Oxy names to their instances",
+    )
 
-    master_agent_name: str = Field("")
+    master_agent_name: str = Field(
+        "", description="Name of the master agent serving as the entry point"
+    )
 
-    first_query: str = Field("")
+    first_query: str = Field(
+        "", description="Initial query sent to the master agent on web UI load"
+    )
 
-    welcome_message: str = Field(default_factory=Config.get_agent_welcome_message)
+    welcome_message: str = Field(
+        default_factory=Config.get_agent_welcome_message,
+        description="Welcome message displayed to users on session start",
+    )
 
-    agent_organization: dict = Field(default_factory=list)
+    agent_organization: dict = Field(
+        default_factory=dict,
+        description="Hierarchical tree of agents and their callable tools",
+    )
 
-    vearch_client: Optional[VearchDB] = Field(None)
-    es_client: Optional[AsyncElasticsearch] = Field(None)
-    redis_client: Optional[JimdbApRedis] = Field(None)
+    vearch_client: Optional[VearchDB] = Field(
+        None, description="Vearch vector database client for tool retrieval"
+    )
+    es_client: Optional[AsyncElasticsearch] = Field(
+        None, description="Elasticsearch client for trace/node persistence"
+    )
+    redis_client: Optional[JimdbApRedis] = Field(
+        None, description="Redis client for SSE message queuing"
+    )
 
-    lock: bool = Field(False)
-    active_tasks: dict = Field(default_factory=dict)
-    background_tasks: set = Field(default_factory=set)
-    event_dict: dict = Field(default_factory=dict)
+    lock: bool = Field(False, description="Global lock flag to pause new requests")
+    active_tasks: dict = Field(
+        default_factory=dict,
+        description="Currently running task futures keyed by trace_id",
+    )
+    background_tasks: set = Field(
+        default_factory=set,
+        description="Background asyncio tasks (e.g. data persistence)",
+    )
+    event_dict: dict = Field(
+        default_factory=dict,
+        description="Asyncio events for coordinating task completion",
+    )
 
-    message_prefix: str = Field("oxygent")
+    message_prefix: str = Field(
+        "oxygent", description="Prefix for Redis message queue keys"
+    )
 
     global_data: dict = Field(
-        default_factory=dict, description="public data in the scope of application"
+        default_factory=dict,
+        description="Application-scoped public data shared across all traces",
     )
 
     func_filter: Optional[Callable] = Field(
-        lambda x: x, exclude=True, description="filter function"
+        lambda x: x,
+        exclude=True,
+        description="Request filter function applied before routing",
     )
     func_interceptor: Optional[Callable] = Field(
-        lambda x: None, exclude=True, description="interceptor function"
+        lambda x: None,
+        exclude=True,
+        description="Request interceptor for validation or early exit",
     )
 
     func_process_message: Optional[Callable] = Field(
-        lambda x, oxy_request: x, exclude=True, description="process message function"
+        lambda x, oxy_request: x,
+        exclude=True,
+        description="Hook to transform outgoing messages before sending",
     )
 
-    routers: list = Field(default_factory=list)
-    middlewares: list = Field(default_factory=list)
-    mounts: list = Field(default_factory=list)
+    routers: list = Field(
+        default_factory=list,
+        description="Additional FastAPI routers to mount on the web server",
+    )
+    middlewares: list = Field(
+        default_factory=list,
+        description="Additional ASGI middlewares for the web server",
+    )
+    mounts: list = Field(
+        default_factory=list, description="Additional ASGI mounts for the web server"
+    )
 
-    stream_dict: dict[str, list] = Field(default_factory=dict)
-    feedback_dict: dict[str, asyncio.Queue] = Field(default_factory=dict)
-    channel_id_dict: dict[str, list] = Field(default_factory=dict)
+    stream_dict: dict[str, list] = Field(
+        default_factory=dict, description="SSE stream buffers keyed by trace_id"
+    )
+    feedback_dict: dict[str, asyncio.Queue] = Field(
+        default_factory=dict,
+        description="Feedback queues keyed by trace_id for interactive responses",
+    )
+    channel_id_dict: dict[str, list] = Field(
+        default_factory=dict,
+        description="Channel IDs used by each trace for message routing",
+    )
     enable_a2a_server: bool = Field(
         False, description="Whether to auto-enable built-in A2A server adapter."
     )
@@ -158,8 +217,10 @@ class MAS(BaseModel):
         logger.info("=" * 64)
         logger.info("🪂 OxyGent MAS Application Exit")
         logger.info("=" * 64)
-        await self.es_client.close()
-        await self.redis_client.close()
+        if self.es_client:
+            await self.es_client.close()
+        if self.redis_client:
+            await self.redis_client.close()
         await self.cleanup_servers()
 
     @classmethod
@@ -169,11 +230,13 @@ class MAS(BaseModel):
         return self
 
     def show_banner(self):
+        """Print the OxyGent ASCII art banner."""
         from .banner import oxygent_slant as banner_str
 
         print(banner_str[1:-1])
 
     def show_mas_info(self):
+        """Print basic MAS configuration info."""
         import platform
         from datetime import datetime
 
@@ -232,7 +295,7 @@ class MAS(BaseModel):
             from .core_tools.retrieve_tools import fh as retrieve_fh
 
             self.add_oxy(retrieve_fh)
-        # Initialize datebase asynchronously
+        # Initialize database asynchronously
         await self.init_db()
         # Initialize all oxy instances
         await self.init_all_oxy()
@@ -284,7 +347,7 @@ class MAS(BaseModel):
         {app_name}_history: history_id: record history of read and write operations
         """
 
-        # es
+        # Initialize Elasticsearch client
         db_factory = DBFactory()
         if Config.get_es_config():
             jes_config = Config.get_es_config()
@@ -351,6 +414,7 @@ class MAS(BaseModel):
                 "mappings": {
                     "properties": {
                         "node_id": {"type": "keyword"},
+                        "copied_node_id": {"type": "keyword"},
                         "node_type": {"type": "keyword"},
                         "group_id": {"type": "keyword"},
                         "trace_id": {"type": "keyword"},
@@ -546,7 +610,7 @@ class MAS(BaseModel):
             class_types: List of class types to initialize (e.g., BaseLLM, BaseTool, BaseAgent).
 
         NOTE:
-            Fetch all oxy objects of the specified class types,
+            Initialize all oxy objects of the specified class types,
         """
         tasks = []
         for oxy_name in list(self.oxy_name_to_oxy.keys()):
@@ -589,14 +653,14 @@ class MAS(BaseModel):
     # Organisation helpers
     # ------------------------------------------------------------------
     def is_agent(self, oxy_name):
-        """Show if the oxy_name is an agent."""
+        """Check if the oxy_name is an agent."""
         if not oxy_name:
             return False
         # return self.oxy_name_to_oxy[oxy_name].category == 'agent'
         return isinstance(self.oxy_name_to_oxy[oxy_name], (BaseFlow, BaseAgent))
 
     def init_agent_organization(self):
-        """Append callable tools to the agent organization structure."""
+        """Build the agent organization tree structure, including tools."""
 
         def add_tools(agent_organization: list, agent_names: list, path: list = []):
             for agent_name in agent_names:
@@ -636,12 +700,8 @@ class MAS(BaseModel):
 
         self.agent_organization = agent_organization[0]
 
-    """
-    Display the organization structure of the MAS.
-    Prints the agent organization in a tree format in the logs.
-    """
-
     def show_org(self):
+        """Display the agent organization tree."""
         logger.info("🌐 OxyGent MAS Organization Structure Overview")
         logger.info("=" * 64)
         print_tree(self.agent_organization, logger=logger)
@@ -776,7 +836,7 @@ class MAS(BaseModel):
             parts = redis_key.split(":")
             current_trace_id = parts[-1] if len(parts) >= 3 else ""
 
-            # 考虑 message 是 str 的情况
+            # Handle the case where message is a str
             node_id = ""
             node_name = ""
             message_timestamp = get_timestamp()
@@ -787,7 +847,7 @@ class MAS(BaseModel):
                     node_name = message.get("content", {}).get("agent", "")
 
             if message_type in ["stream", "stream_end"]:
-                # 排队
+                # Enqueue
                 if message_type == "stream":
                     delta = message.get("content", {}).get("delta", "")
                     if node_id not in self.stream_dict:
@@ -853,9 +913,28 @@ class MAS(BaseModel):
             await self.redis_client.lpush(redis_key, bytes_msg)
 
     def clear_queues(self, trace_id):
+        """Clear all Redis message queues for active traces."""
         for channel_id in self.channel_id_dict.get(trace_id, []):
             if channel_id in self.feedback_dict:
                 del self.feedback_dict[channel_id]
+
+    @staticmethod
+    def _parse_dict_field(raw_value, field_name: str = "dict field") -> dict:
+        """Parse a raw value from ES into a dict.
+
+        Handles str (JSON), dict, or other types gracefully.
+        """
+        if isinstance(raw_value, str):
+            try:
+                return json.loads(raw_value)
+            except json.JSONDecodeError:
+                logger.warning(
+                    f"Failed to parse {field_name} from string, using empty dict"
+                )
+                return {}
+        elif isinstance(raw_value, dict):
+            return raw_value
+        return {}
 
     async def chat_with_agent(
         self,
@@ -873,16 +952,18 @@ class MAS(BaseModel):
         them to the browser.
 
         Args:
-            payload: Mapping that **must** contain the key ``query``.
+            payload: Mapping that contains the key ``query`` (optional when
+                ``restart_node_id`` is provided — the original query is
+                auto‑retrieved from the database).
             send_msg_key: Optional Redis key for SSE streaming.
 
         Returns:
             OxyResponse: Fully populated response object.
         """
+        oxy_request = None
         try:
             if "shared_data" not in payload:
                 payload["shared_data"] = dict()
-            payload["shared_data"]["query"] = payload["query"]
 
             # Initialize metrics dict and record query start time
             metrics = payload["shared_data"].setdefault("_metrics", {})
@@ -920,14 +1001,76 @@ class MAS(BaseModel):
                         payload["restart_node_order"] = restart_node_data["update_time"]
                         payload["reference_trace_id"] = restart_node_data[
                             "trace_id"
-                        ]  # 自动设置
+                        ]  # Auto-configure
                         logger.info(
                             f"Found restart node {payload['restart_node_id']}, auto-set trace_id to {restart_node_data['trace_id']}"
                         )
+
+                    # Auto-retrieve original query (and from_trace_id) from trace record
+                    # when caller did not supply them, so that restart only needs restart_node_id.
+                    if not payload.get("query") or not payload.get("from_trace_id"):
+                        trace_id_for_lookup = restart_node_data["trace_id"]
+                        try:
+                            trace_response = await self.es_client.search(
+                                Config.get_app_name() + "_trace",
+                                {
+                                    "query": {"term": {"_id": trace_id_for_lookup}},
+                                    "size": 1,
+                                },
+                            )
+                            trace_hits = trace_response.get("hits", {}).get("hits", [])
+                            if trace_hits:
+                                trace_source = trace_hits[0]["_source"]
+                                if not payload.get("query"):
+                                    raw_input = trace_source.get("input", "")
+                                    try:
+                                        parsed_input = (
+                                            json.loads(raw_input)
+                                            if isinstance(raw_input, str)
+                                            else raw_input
+                                        )
+                                    except json.JSONDecodeError:
+                                        parsed_input = {}
+                                    if isinstance(parsed_input, dict):
+                                        original_query = parsed_input.get("query", "")
+                                        if original_query:
+                                            payload["query"] = original_query
+                                            logger.info(
+                                                f"Auto-retrieved query from trace {trace_id_for_lookup} for restart"
+                                            )
+                                if not payload.get("from_trace_id"):
+                                    historical_from_trace = trace_source.get(
+                                        "from_trace_id", ""
+                                    )
+                                    if historical_from_trace:
+                                        payload["from_trace_id"] = historical_from_trace
+                                payload["shared_data"] = self._parse_dict_field(
+                                    trace_source.get("shared_data", {}),
+                                    "shared_data",
+                                )
+                                payload["group_data"] = self._parse_dict_field(
+                                    trace_source.get("group_data", {}),
+                                    "group_data",
+                                )
+
+                            else:
+                                logger.warning(
+                                    f"Trace {trace_id_for_lookup} not found when auto-retrieving query for restart"
+                                )
+                        except Exception as e:
+                            logger.warning(
+                                f"Failed to auto-retrieve query from trace {trace_id_for_lookup}: {e}"
+                            )
                 else:
                     logger.warning(
                         f"Restart node {payload['restart_node_id']} not found in ES"
                     )
+
+            # Ensure query default and sync into shared_data AFTER restart auto-fill,
+            # so that auto-retrieved query can propagate correctly.
+            if "query" not in payload:
+                payload["query"] = ""
+            payload["shared_data"]["query"] = payload["query"]
 
             oxy_request = OxyRequest(mas=self)
             if not send_msg_key:
@@ -955,33 +1098,24 @@ class MAS(BaseModel):
                 hits = es_response_group_id.get("hits", {}).get("hits", [])
                 if hits:
                     oxy_request.group_id = hits[0]["_source"].get("group_id", "")
-                    raw_group_data = hits[0]["_source"].get("group_data", {})
-                    if isinstance(raw_group_data, str):
-                        try:
-                            history_group_data = json.loads(raw_group_data)
-                        except json.JSONDecodeError:
-                            logger.warning(
-                                "Failed to parse group_data from string, using empty dict"
-                            )
-                            history_group_data = {}
-                    else:
-                        history_group_data = (
-                            raw_group_data if isinstance(raw_group_data, dict) else {}
-                        )
+                    history_group_data = self._parse_dict_field(
+                        hits[0]["_source"].get("group_data", {}),
+                        "group_data",
+                    )
 
                     merged_group_data = history_group_data.copy()
                     merged_group_data.update(oxy_request.group_data)
                     oxy_request.group_data = merged_group_data
                     logger.debug(
-                        f"继承历史会话 group_id: {oxy_request.group_id}, "
-                        f"历史 group_data: {history_group_data if history_group_data else '空'}, "
-                        f"当前 group_data: {oxy_request.group_data if oxy_request.group_data else '空'}, "
-                        f"合并后 group_data: {merged_group_data}",
+                        f"Inherited historical session group_id: {oxy_request.group_id}, "
+                        f"history group_data: {history_group_data}, "
+                        f"current group_data: {oxy_request.group_data}, "
+                        f"merged group_data: {oxy_request.group_data}",
                         extra={"trace_id": oxy_request.current_trace_id},
                     )
                 else:
                     logger.warning(
-                        f"未找到 from_trace_id: {payload['from_trace_id']} 对应的记录，无法继承历史 group_data",
+                        f"Cannot find record for from_trace_id: {oxy_request.from_trace_id}, unable to inherit historical group_data",
                         extra={"trace_id": oxy_request.current_trace_id},
                     )
 
@@ -1001,14 +1135,15 @@ class MAS(BaseModel):
             logger.error(traceback.format_exc())
             raise
         finally:
-            self.clear_queues(oxy_request.current_trace_id)
+            if oxy_request:
+                self.clear_queues(oxy_request.current_trace_id)
 
     # ------------------------------------------------------------------
     # Interactive CLI helper
     # ------------------------------------------------------------------
 
     async def start_cli_mode(self, first_query=None):
-        """MAS communicates with the environment, launching REPL."""
+        """Start an interactive CLI REPL for chatting with agents."""
         from_trace_id = ""
         if first_query:
             print("You: ", first_query)
@@ -1018,7 +1153,7 @@ class MAS(BaseModel):
             print("LLM: ", oxy_response.output)
         while True:
             query = input("Enter your query: ").strip()
-            if query in ["exit", "quite", "bye"]:
+            if query in ["exit", "quit", "bye"]:
                 break
             if query in ["reset", "clear"]:
                 from_trace_id = ""
@@ -1034,6 +1169,7 @@ class MAS(BaseModel):
     # ------------------------------------------------------------------
 
     async def _process_redis_messages(self, redis_key, current_trace_id):
+        """Consume messages from Redis and yield them as SSE events."""
         while True:
             bytes_msg = await self.redis_client.rpop(redis_key)
             if bytes_msg is None:
@@ -1073,6 +1209,7 @@ class MAS(BaseModel):
                 yield sse_message_dict
 
     async def event_stream(self, redis_key, current_trace_id, task):
+        """Generate an SSE event stream for the given trace."""
         try:
             task.add_done_callback(
                 lambda future: self.active_tasks.pop(current_trace_id, None)
@@ -1091,6 +1228,7 @@ class MAS(BaseModel):
             raise
 
     async def yield_async_message(self, redis_key, current_trace_id):
+        """Yield async messages for the given trace from the Redis queue."""
         try:
             async for message in self._process_redis_messages(
                 redis_key, current_trace_id
@@ -1111,6 +1249,9 @@ class MAS(BaseModel):
         port=None,
         routers=None,
         middlewares=None,
+        mounts=None,
+        shared_data=None,
+        group_data=None,
         enable_a2a_server: bool | None = None,
         a2a_target_agent_name: str | None = None,
         a2a_base_path: str | None = None,
@@ -1118,6 +1259,7 @@ class MAS(BaseModel):
         """Start the FastAPI + SSE service (see original inline documentation)."""
         self.routers.extend(routers or [])
         self.middlewares.extend(middlewares or [])
+        self.mounts.extend(mounts or [])
 
         if enable_a2a_server is not None:
             self.enable_a2a_server = enable_a2a_server
@@ -1192,7 +1334,7 @@ class MAS(BaseModel):
                         route.dependant.query_params + route.dependant.body_params
                     ):
                         param_type = param.type_
-                        # 类型转换（简单实现）
+                        # Type conversion (simple implementation)
                         if param_type is str:
                             t = "string"
                         elif param_type is int:
@@ -1226,11 +1368,23 @@ class MAS(BaseModel):
 
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],  # Or assign specific frontend origins
+            allow_origins=Config.get_server_allow_origins(),  # Or assign specific frontend origins
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
         )
+
+        @app.middleware("http")
+        async def no_cache_static(request: Request, call_next):
+            response = await call_next(request)
+            if request.url.path.startswith("/web/"):
+                response.headers["Cache-Control"] = "no-cache"
+            # Prevent uploaded files from being rendered as HTML by the browser
+            if request.url.path.startswith("/static/"):
+                response.headers["Content-Disposition"] = "attachment"
+                response.headers["X-Content-Type-Options"] = "nosniff"
+                response.headers["Content-Security-Policy"] = "default-src 'none'"
+            return response
 
         for app_middleware in self.middlewares:
             app.add_middleware(app_middleware)
@@ -1261,12 +1415,10 @@ class MAS(BaseModel):
         for mount in self.mounts:
             app.mount(**mount)
 
-        """
-        For all of the nodes we fill the following information:
-        - path: The path from the root node (master agent) to the currrent node.
-        - id_dict: A dictionary mapping agent names to their unique IDs.
-        However the path would not be sent here.
-        """
+        # For all of the nodes we fill the following information:
+        # - path: The path from the root node (master agent) to the current node.
+        # - id_dict: A dictionary mapping agent names to their unique IDs.
+        # However the path would not be sent here.
 
         @app.get("/get_organization")
         def get_organization():
@@ -1310,14 +1462,16 @@ class MAS(BaseModel):
                 }
             ).to_dict()
 
-        """
-        When teh frontend is loaded, it will send the first query to user.
-        """
+        # When the frontend is loaded, it will send the first query to the user.
 
         @app.get("/get_first_query")
         def get_first_query():
             return WebResponse(
-                data={"first_query": self.first_query if self.first_query else ""}
+                data={
+                    "first_query": self.first_query if self.first_query else "",
+                    "shared_data": shared_data,
+                    "group_data": group_data,
+                }
             ).to_dict()
 
         @app.get("/get_welcome_message")
@@ -1367,6 +1521,7 @@ class MAS(BaseModel):
             return WebResponse(data={"agents": agents}).to_dict()
 
         async def request_to_payload(request: Request):
+            """Convert raw HTTP request data into an OxyRequest."""
             if request.method == "GET":
                 params = dict(request.query_params)
                 payload = dict()
@@ -1408,7 +1563,10 @@ class MAS(BaseModel):
             if intercepted_response is not None:
                 return intercepted_response
             oxy_response = await self.chat_with_agent(payload=payload)
-            return oxy_response.output
+            return {
+                "answer": oxy_response.output,
+                "current_trace_id": oxy_response.oxy_request.current_trace_id,
+            }
 
         @app.api_route("/sse/chat", methods=["GET", "POST"])
         async def sse_chat(request: Request):
@@ -1512,7 +1670,7 @@ class MAS(BaseModel):
                 port=port,
                 log_level=Config.get_server_log_level().lower(),
                 log_config=None,
-                workers=Config.set_server_workers(),
+                workers=Config.get_server_workers(),
             )
             server = uvicorn.Server(config)
             asyncio.create_task(log_and_open())
@@ -1568,8 +1726,11 @@ class MAS(BaseModel):
 
 
 class BankRouter(APIRouter):
+    """FastAPI router that exposes bank tools as HTTP endpoints."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(tags=["bank"], *args, **kwargs)
 
     def set_mas(self, mas: MAS):
+        """Bind the MAS instance to this bank router."""
         self.mas = mas

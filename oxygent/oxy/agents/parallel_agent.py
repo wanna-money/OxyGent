@@ -49,7 +49,7 @@ Please summarize the results of the parallel execution of the above tasks."""
         )
         temp_memory.add_message(
             Message.user_message(
-                "The parallel resulte are as following:\n"
+                "The parallel results are as following:\n"
                 + "\n".join(
                     [
                         str(i + 1) + ". " + res.output
@@ -58,7 +58,6 @@ Please summarize the results of the parallel execution of the above tasks."""
                 )
             )
         )
-        # llm call
         return await oxy_request.call(
             callee=self.llm_model,
             arguments={

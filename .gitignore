@@ -232,6 +232,8 @@ pyproject.toml*
 *.jsonl
 *.log
 *.lock
+time.txt
+CLAUDE.md
 
 # macOS 系统生成的隐藏文件
 .DS_Store

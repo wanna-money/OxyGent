@@ -19,7 +19,8 @@ class BaseTool(Oxy):
         is_permission_required (bool): Whether permission is required to execute
             this tool. Defaults to True for security.
         category (str): Tool category identifier. Always "tool".
-        timeout (float): Execution timeout in seconds. Defaults to 60 seconds.
+        timeout (float): Execution timeout in seconds. Defaults to the value
+            configured via Config.get_tool_timeout().
     """
 
     is_permission_required: bool = Field(
@@ -34,4 +35,5 @@ class BaseTool(Oxy):
     )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Execute the tool logic. Subclasses must override this method."""
         raise NotImplementedError("This method is not yet implemented")

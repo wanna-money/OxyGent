@@ -17,6 +17,7 @@ from ..db_factory import DBFactory
 
 logger = logging.getLogger(__name__)
 
+
 class PromptManager:
     """Prompt management system with automatic ES/LocalEs fallback.
 
@@ -145,7 +146,9 @@ class PromptManager:
 
             # Update cache (for immediate read availability) - with lock protection
             async with self._cache_lock:
-                old_cache_value = self._prompt_cache.get(prompt_key)  # Backup for rollback
+                old_cache_value = self._prompt_cache.get(
+                    prompt_key
+                )  # Backup for rollback
                 self._prompt_cache[prompt_key] = doc
                 logger.info(
                     f"  Cache now contains {len(self._prompt_cache)} keys: {list(self._prompt_cache.keys())}"

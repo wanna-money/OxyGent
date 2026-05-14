@@ -1,3 +1,5 @@
+"""SSH remote execution tools for OxyGent agents."""
+
 import asyncio
 
 from pydantic import Field

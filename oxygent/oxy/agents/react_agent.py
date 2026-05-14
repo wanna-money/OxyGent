@@ -64,7 +64,9 @@ class ReActAgent(LocalAgent):
         - Agent long memory: Vector-based HTTP URL addition
     """
 
-    max_react_rounds: int = Field(16, description="Maximum retries for operations.")
+    max_react_rounds: int = Field(
+        16, description="Maximum number of ReAct reasoning-acting rounds."
+    )
 
     is_discard_react_memory: bool = Field(
         True, description="Whether to discard react_memory"
@@ -102,7 +104,7 @@ class ReActAgent(LocalAgent):
         if self.func_reflexion is None:
             self.func_reflexion = self._default_reflexion
 
-        # Add retrieve_tools if vector search is conf igured
+        # Add retrieve_tools if vector search is configured
         if Config.get_vearch_config():
             self.tools.append("retrieve_tools")
 
@@ -114,7 +116,7 @@ class ReActAgent(LocalAgent):
             oxy_request (OxyRequest): The current request context
 
         Returns:
-            reflection_message (str): Feedback message for improvement (used when is_acceptable=False)
+            reflection_message (str or None): Feedback message for improvement, or None if acceptable.
         """
         # Check if response is empty
         if not response or len(response.strip()) == 0:
@@ -360,7 +362,6 @@ class ReActAgent(LocalAgent):
                     ]
                 )
 
-                # observation_list = []
                 observation = Observation()
                 for tool_call_dict, oxy_response in zip(
                     tool_call_dict_list, oxy_responses
@@ -372,7 +373,7 @@ class ReActAgent(LocalAgent):
                         )
                     )
 
-                # When trust_mode == 1, write in short_memory，return observation
+                # When trust_mode == 1, return observation as final answer
                 if isinstance(llm_response.output, dict):
                     if (
                         isinstance(oxy_response.output, dict)

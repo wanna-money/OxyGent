@@ -76,7 +76,6 @@ class JimdbApRedis:
         self.default_list_max_size = Config.get_redis_max_size()
         self.default_list_max_length = Config.get_redis_max_length() * 1024
 
-        # Initialize Redis connection pool
         try:
             self.redis_pool = self._get_redis_connection()
         except Exception as e:
@@ -237,7 +236,7 @@ class JimdbApRedis:
             max_size = self.default_list_max_size
         if max_length is None:
             max_length = self.default_list_max_length
-        # Default value lehgth: 3
+        # Default list max length
         # Process and validate input values
         new_values = []
         for value in values:
@@ -251,7 +250,6 @@ class JimdbApRedis:
                 raise ValueError(f"Unsupported value type: {type(value)}")
 
         async with self.redis_pool.pipeline(transaction=False) as pipe:
-            # Batch commands: use pipeline for operations
             pipe.lpush(key, *new_values)
             pipe.ltrim(key, 0, max_size - 1)
             pipe.expire(key, ex)
@@ -259,7 +257,7 @@ class JimdbApRedis:
             results = await pipe.execute()
             return results[0]
 
-    async def rpop(self, key: str):  # Waiting for 1 sec for default
+    async def rpop(self, key: str):  # Non-blocking pop from the right end of the list
         """Remove and return the last element of a list.
 
         Args:
@@ -351,7 +349,7 @@ class JimdbApRedis:
 
     @retry_decorator
     async def ltrim(self, key: str, start: int, end: int):
-        """Get the length of a list.
+        """Trim a list to the specified range.
 
         Args:
             key: The list key

@@ -28,12 +28,16 @@ class FunctionTool(BaseTool):
     Attributes:
         is_permission_required (bool): Whether permission is required for execution.
             Defaults to True for security.
-        func_execute (Optional[Callable]): The Python function to execute.
+        func_process (Optional[Callable]): The Python function to execute.
             Should be an async function or will be wrapped as async.
     """
 
-    is_permission_required: bool = Field(True, description="")
-    func_process: Optional[Callable] = Field(None, exclude=True, description="")
+    is_permission_required: bool = Field(
+        True, description="Whether permission is required for execution"
+    )
+    func_process: Optional[Callable] = Field(
+        None, exclude=True, description="The Python function to wrap and execute"
+    )
     needs_oxy_request: bool = Field(
         False, description="Whether this tool needs oxy_request parameter"
     )

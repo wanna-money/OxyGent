@@ -8,21 +8,25 @@
     <meta http-equiv="Expires" content="0">
     <link rel="shortcut icon" href="./image/group-favicon.png" type="image/x-icon">
     <title>Node Visualization</title>
-    <link href="./css/normalize.css?time=2" rel="stylesheet">
-    <link href="./css/node.css?time=2" rel="stylesheet">
-    <link href="./css/style_load1.css?time=2" rel="stylesheet">
-    <link href="./css/main.css?time=2" rel="stylesheet">
-    <link href="./css/gantt.css?time=2" rel="stylesheet">
-    <link href="./css/flowchart_view1.css?time=2" rel="stylesheet">
+    <link href="./css/normalize.css" rel="stylesheet">
+    <link href="./css/node.css" rel="stylesheet">
+    <link href="./css/style_load1.css" rel="stylesheet">
+    <link href="./css/main.css" rel="stylesheet">
+    <link href="./css/gantt.css" rel="stylesheet">
+    <link href="./css/flowchart_view1.css" rel="stylesheet">
+    <link href="./css/swimlane.css" rel="stylesheet">
+    <link href="./css/timeline.css" rel="stylesheet">
 
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
-    <script src="./js/marked.min.js?time=2"></script>
-    <script src="./js/mermaid.min.js?time=2"></script>
+    <script src="./js/marked.min.js"></script>
+    <script src="./js/mermaid.min.js"></script>
 
-    <script src="./js/mermaid-sdk-gantt.js?time=2"></script>
-    <script src="./js/utils.js?time=2"></script>
-    <script src='./js/autosize.js?time=2'></script>
-    <script src="./js/flowchart.js?time=2"></script>
+    <script src="./js/mermaid-sdk-gantt.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src='./js/autosize.js'></script>
+    <script src="./js/flowchart.js"></script>
+    <script src="./js/swimlane.js"></script>
+    <script src="./js/timeline.js"></script>
 </head>
 <body>
 
@@ -43,6 +47,12 @@
                         <div class="tab-item" data-id="gantt-container-section">
                             <span class="tab-text ">View 2</span>
                         </div>
+                        <div class="tab-item" data-id="swimlane-container-section">
+                            <span class="tab-text ">View 3</span>
+                        </div>
+                        <div class="tab-item" data-id="timeline-container-section">
+                            <span class="tab-text ">View 4</span>
+                        </div>
                     </div>
                 </div>
                 <div class="node-node-map-row-col">
@@ -57,8 +67,11 @@
                 <div id="flowchartId">
                     <div id="flowchart-container" class="view1-flowchart"></div>
                     <div id="flowchart-container-gantt"></div>
+                    <div id="swimlane-container" style="display:none;"></div>
+                    <div id="timeline-container" style="display:none;"></div>
                 </div>
             </div>
+            <div class="resize-handle" id="resizeHandle"></div>
         </div>
         <!--        <div id="chart_log_close">-->
         <!--            <button id="chart_log_close_id">-->
@@ -67,20 +80,15 @@
         <!--        </div>-->
     </div>
     <div class="agentCard">
-        <div class="avatarContainer">
-            <div id="avatarEmojiId" class="avatarEmoji"></div>
+        <div id="avatarEmojiId" class="avatarEmoji"></div>
+        <span id="node_callee" class="agentName"></span>
+        <div class="tagContainer">
+            <span id="node_type" class="tagspan"></span>
         </div>
-        <div class="contentWrapper">
-            <div class="titleContainer">
-                <span id="node_callee" class="agentName"></span>
-                <div class="tagContainer">
-                    <span id="node_type" class="tagspan"></span>
-                </div>
-            </div>
-            <!-- <span class="metaInfo">create_time: <span id="node_create_time"></span></span> -->
-            <span id="trace_id" class="metaInfo"></span>
-            <span class="metaInfo">caller: <span id="node_caller" class="ellipsisspan metaInfo"></span></span>
-        </div>
+        <span class="agentCard-separator"></span>
+        <span id="trace_id" class="metaInfo"></span>
+        <span class="agentCard-separator"></span>
+        <span class="metaInfo">caller: <span id="node_caller" class="ellipsisspan metaInfo"></span></span>
     </div>
     </div>
     <div class="node-container">
@@ -184,11 +192,13 @@
             success: function (response) {
                 response = response.data;
                 agent_id_dict = response.id_dict;
+                getViews();
             }
         })
     }
 
     function get_plan(plan_id) {
+        // View 1 (flowchart) — toggle 'checked'
         $('.view1-node').each((i, ele) => {
             $(ele).removeClass('checked');
         });
@@ -196,6 +206,30 @@
             $(ele).removeClass('checked');
         });
         $(`#${plan_id}`).addClass('checked');
+
+        // View 2 (Gantt) — toggle 'mermaid-selected' / 'mermaid-selected-text'
+        document.querySelectorAll('#flowchart-container-gantt .task').forEach(node => {
+            if (node.id === plan_id) {
+                node.classList.add('mermaid-selected');
+            } else {
+                node.classList.remove('mermaid-selected');
+            }
+        });
+        document.querySelectorAll('#flowchart-container-gantt .taskText, #flowchart-container-gantt .taskTextOutsideRight, #flowchart-container-gantt .taskTextOutsideLeft').forEach(node => {
+            if (node.id === `${plan_id}-text`) {
+                node.classList.add('mermaid-selected-text');
+            } else {
+                node.classList.remove('mermaid-selected-text');
+            }
+        });
+
+        // View 3 (Swimlane) — toggle 'checked' on all matching arrows (forward + return)
+        $('#swimlane-container .seq-msg').removeClass('checked');
+        $('#swimlane-container .seq-msg[data-node-id="' + plan_id + '"]').addClass('checked');
+
+        // View 4 (Timeline) — toggle 'checked' on the matching chain node
+        $('#timeline-container .view4-node').removeClass('checked');
+        $('#timeline-container .view4-node[data-node-id="' + plan_id + '"]').addClass('checked');
 
         $.ajax({
             type: "GET",
@@ -222,15 +256,16 @@
                 // 展示图像
                 let img = '';
                 if (plan_data.node_type === 'agent' || plan_data.node_type === 'flow') {
-                    const idx = agent_id_dict[plan_data.callee] % 16;
+                    const rawIdx = agent_id_dict ? agent_id_dict[plan_data.callee] : undefined;
+                    const idx = (rawIdx != null ? rawIdx : 0) % 16;
                     const cur = agentImgMap[idx];
                     img = `<img alt="" src="${cur.imgUrl}" style="background-color: ${cur.bgColor}" />`;
                 } else {
                     img = `<img alt="" src="${typeMap[plan_data.node_type]}" style="background-color: #E1EFFD" />`;
                 }
 
+                resetHtmlEmpty();
                 $("#avatarEmojiId").append(img);
-
 
                 // 展示node base info
                 $("#node_caller").text(plan_data.caller);
@@ -386,12 +421,10 @@
 
 
     function pre() {
-        resetHtmlEmpty()
         get_plan(pre_id);
     }
 
     function next() {
-        resetHtmlEmpty()
         get_plan(next_id);
     }
 
@@ -501,7 +534,8 @@
 
         let img = '';
         if (data.node_type === 'agent' || data.node_type === 'flow') {
-            const idx = agent_id_dict[data.callee] % 16;
+            const rawIdx = agent_id_dict ? agent_id_dict[data.callee] : undefined;
+            const idx = (rawIdx != null ? rawIdx : 0) % 16;
             const cur = agentImgMap[idx];
             img = `<img alt="" src="${cur.imgUrl}" style="background-color: ${cur.bgColor}" />`;
         } else {
@@ -541,10 +575,11 @@
             axisFormat: "%M:%S:%L",
             tickInterval: "millisecond",
             topAxis: false,
+            leftPadding: 150,
+            rightPadding: 20,
         }
     });
 
-    getViews()
     var ViewsDatas = []
 
     //  获取全局节点
@@ -577,6 +612,8 @@
 
     function renderGanttClickHighlight(id, tagName = 'rect') {
         let server_id = null;
+        // Selector covering all task-text variants (inside bar, outside-right, outside-left)
+        const taskTextSel = '.taskText, .taskTextOutsideRight, .taskTextOutsideLeft';
         if (tagName === 'rect') {
             // 移除所有节点的选中样式
             document.querySelectorAll('.task').forEach(node => {
@@ -588,7 +625,7 @@
             });
 
             // 移除所有节点的选中文本样式
-            document.querySelectorAll('.taskText').forEach(node => {
+            document.querySelectorAll(taskTextSel).forEach(node => {
                 if (node.id === `${id}-text`) {
                     node.classList.add('mermaid-selected-text');
                 } else {
@@ -606,7 +643,7 @@
                 }
             });
             // 移除所有节点的选中文本样式
-            document.querySelectorAll('.taskText').forEach(node => {
+            document.querySelectorAll(taskTextSel).forEach(node => {
                 if (node.id === id) {
                     node.classList.add('mermaid-selected-text');
                 } else {
@@ -615,7 +652,6 @@
             });
             server_id = id.replace('-text', '');
         }
-        resetHtmlEmpty()
         get_plan(server_id)
     }
     
@@ -623,34 +659,121 @@
     $('#flowchart-container-gantt').on('click', function (event) {
         const state = event.target;
         const id = state.id;
-        const tagName = state.tagName
+        const tagName = state.tagName;
         if (!id) {
+            return;
+        }
+        // Only react to real task bars (rect.task) or task labels — including
+        // taskTextOutsideRight/Left, which mermaid uses when the bar is too
+        // narrow (very short-running tools) to fit its label inside.
+        // Mermaid generates other id-bearing elements like `exclude-YYYY-MM-DD`
+        // for axis exclude-range rects, which are NOT valid node_ids and would
+        // crash get_plan() when looked up on the server.
+        const cls = (state.getAttribute && state.getAttribute('class')) || '';
+        const isTaskRect = tagName === 'rect' && /\btask\b/.test(cls);
+        const isTaskText = tagName === 'text' && /\b(taskText|taskTextOutsideRight|taskTextOutsideLeft)\b/.test(cls);
+        if (!isTaskRect && !isTaskText) {
+            return;
+        }
+        // Extra safety: the node_id we feed back must exist in ViewsDatas.
+        const candidateId = tagName === 'text' ? id.replace(/-text$/, '') : id;
+        const exists = Array.isArray(ViewsDatas) &&
+            ViewsDatas.some(function (n) { return n && n.node_id === candidateId; });
+        if (!exists) {
             return;
         }
         renderGanttClickHighlight(id, tagName);
     })
 
+    $('#swimlane-container').on('click', '.seq-msg-clickable', function () {
+        var nodeId = $(this).attr('data-node-id');
+        if (nodeId) {
+            $('#swimlane-container .seq-msg').removeClass('checked');
+            $('#swimlane-container .seq-msg[data-node-id="' + nodeId + '"]').addClass('checked');
+            get_plan(nodeId);
+        }
+    });
 
+    $('#timeline-container').on('click', '.view4-node', function () {
+        var nodeId = $(this).attr('data-node-id');
+        if (!nodeId) return;
+        $('#timeline-container .view4-node').removeClass('checked');
+        $(this).addClass('checked');
+        get_plan(nodeId);
+    });
+
+
+
+    // Helper: get the currently-selected node_id from the URL query string.
+    function getCurrentNodeId() {
+        return new URLSearchParams(window.location.search).get('id') || '';
+    }
+
+    // Helper: re-apply selection highlight to a specific view after it is
+    // (re-)rendered.  Called by the tab-switch handler below so every view
+    // shows the same active node.
+    function highlightNodeInView(viewName, nodeId) {
+        if (!nodeId) return;
+        switch (viewName) {
+            case 'view1':
+                $('.view1-node').removeClass('checked');
+                $('.view1-container').removeClass('checked');
+                // view1 nodes use their node_id as the element id
+                $('#' + CSS.escape(nodeId)).addClass('checked');
+                break;
+            case 'view2':
+                renderGanttClickHighlight(nodeId, 'rect');
+                break;
+            case 'view3':
+                $('#swimlane-container .seq-msg').removeClass('checked');
+                $('#swimlane-container .seq-msg[data-node-id="' + nodeId + '"]').addClass('checked');
+                break;
+            case 'view4':
+                $('#timeline-container .view4-node').removeClass('checked');
+                $('#timeline-container .view4-node[data-node-id="' + nodeId + '"]').addClass('checked');
+                break;
+        }
+    }
 
     $(".tabs .tab-item").click(function () {
         // 链式编程操作
         // 2.点击的同时，得到当前li 的索引号
         var index = $(this).attr('data-id');
         $(this).addClass("tab-text-active").siblings().removeClass("tab-text-active");
+        var currentId = getCurrentNodeId();
 
         if (index === 'flowchart-container') {
             renderFlowchart(ViewsDatas, 'flowchart-container');
             $('#flowchart-container').css('display', 'flex');
             $('#flowchart-container-gantt').css('display', 'none');
+            $('#swimlane-container').css('display', 'none');
+            $('#timeline-container').css('display', 'none');
+            highlightNodeInView('view1', currentId);
 
         } else if (index === 'gantt-container-section') {
             renderGantt(ViewsDatas, 'flowchart-container-gantt');
             $('#flowchart-container').css('display', 'none');
             $('#flowchart-container-gantt').css('display', 'block');
-        
+            $('#swimlane-container').css('display', 'none');
+            $('#timeline-container').css('display', 'none');
+
             setTimeout(() => {
-                renderGanttClickHighlight(param_id, 'rect');    
+                highlightNodeInView('view2', currentId);
             }, 100);
+        } else if (index === 'swimlane-container-section') {
+            renderSwimlane(ViewsDatas, 'swimlane-container');
+            $('#flowchart-container').css('display', 'none');
+            $('#flowchart-container-gantt').css('display', 'none');
+            $('#swimlane-container').css('display', 'block');
+            $('#timeline-container').css('display', 'none');
+            highlightNodeInView('view3', currentId);
+        } else if (index === 'timeline-container-section') {
+            renderTraceChain(ViewsDatas, 'timeline-container');
+            $('#flowchart-container').css('display', 'none');
+            $('#flowchart-container-gantt').css('display', 'none');
+            $('#swimlane-container').css('display', 'none');
+            $('#timeline-container').css('display', 'flex');
+            highlightNodeInView('view4', currentId);
         }
         // 3.让下部里面相应索引号的item显示，其余的item隐藏
     });
@@ -684,7 +807,6 @@
         }
 
         if (id) {
-            resetHtmlEmpty();
             get_plan(id);
         }
     });
@@ -705,5 +827,41 @@
         modLeftClassAttrId.style.height = availableHeight + 'px';
         modLeftClassAttrId.style.overflow = 'auto';
     }
+    // Resize handle for the top visualization panel
+    (function () {
+        const resizeHandle = document.getElementById('resizeHandle');
+        const flowchartId = document.getElementById('flowchartId');
+        let isResizing = false;
+        let startY = 0;
+        let startHeight = 0;
+
+        resizeHandle.addEventListener('mousedown', function (e) {
+            isResizing = true;
+            startY = e.clientY;
+            startHeight = flowchartId.offsetHeight;
+            resizeHandle.classList.add('active');
+            document.body.style.cursor = 'ns-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!isResizing) return;
+            var newHeight = startHeight + (e.clientY - startY);
+            if (newHeight < 80) newHeight = 80;
+            if (newHeight > window.innerHeight * 0.8) newHeight = window.innerHeight * 0.8;
+            flowchartId.style.height = newHeight + 'px';
+        });
+
+        document.addEventListener('mouseup', function () {
+            if (!isResizing) return;
+            isResizing = false;
+            resizeHandle.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            adjustModLeftHeight('modLeftClassAttrId');
+            adjustModLeftHeight('rightArgumentsId');
+        });
+    })();
 </script>
 </html>

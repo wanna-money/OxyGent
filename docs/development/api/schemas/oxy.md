@@ -21,7 +21,6 @@
 | `restart_node_id`          | `Optional[str]`              | `""`                           | Node id to restart from.                    |
 | `restart_node_output`      | `Optional[str]`              | `""`                           | Cached output for restart.                  |
 | `restart_node_order`       | `Optional[str]`              | `""`                           | Order index for restart.                    |
-| `is_load_data_for_restart` | `bool`                       | `True`                         | Whether to reload data from DB.             |
 | `input_md5`                | `Optional[str]`              | `""`                           | Hash of the input payload.                  |
 | `root_trace_ids`           | `list`                       | `[]`                           | All root ids of the session tree.           |
 | `mas`                      | `Optional[Any]`              | `None`                         | Handle to the MAS runtime (not dumped).     |

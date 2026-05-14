@@ -1,0 +1,557 @@
+/* View 4 — Timeline Chain (style follows View 1's view1-node) */
+
+#timeline-container {
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    box-sizing: border-box;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+}
+
+.view4-chain {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    padding: 10px;
+    flex-shrink: 0;
+}
+
+.view4-node {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    border: 1px solid #E1E1E1;
+    border-radius: 6px;
+    padding: 8px 14px;
+    background-color: #ffffff;
+    color: #000;
+    cursor: pointer;
+    min-width: 140px;
+    min-height: 64px;
+    position: relative;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.view4-node.checked {
+    background-color: #5048E5;
+    color: #fff;
+    border-color: #5048E5;
+}
+
+.view4-node.checked .view4-callee {
+    color: #fff;
+}
+
+.view4-node.checked .view4-caller {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.view4-caller-row {
+    display: flex;
+    align-items: center;
+    min-height: 18px;
+    margin-bottom: 6px;
+}
+
+.view4-main-row {
+    display: flex;
+    align-items: center;
+}
+
+.view4-main-row > .view4-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 24px;
+    background-color: #E1EFFD;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.view4-callee {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1F2433;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.view4-caller {
+    font-size: 11px;
+    color: #6B7280;
+    background-color: #F1F2F6;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 1px 8px;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+.view4-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    padding: 0 2px;
+}
+
+.view4-arrow svg {
+    display: block;
+}
+
+.view4-empty {
+    padding: 20px;
+    text-align: center;
+    color: #7A7F8C;
+    font-size: 13px;
+}
+
+/* ── Start / End sentinel nodes ── */
+.view4-node-start,
+.view4-node-end {
+    border-style: dashed;
+    cursor: default;
+    min-width: auto;
+    min-height: auto;
+    padding: 4px 8px;
+}
+
+.view4-node-start {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.view4-node-start .view4-callee {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.view4-node-end {
+    border-color: #fca5a5;
+    background: #fef2f2;
+}
+
+.view4-node-end .view4-callee {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.view4-node-start:hover,
+.view4-node-end:hover {
+    box-shadow: none;
+}
+
+.view4-node-start:hover {
+    border-color: #86efac;
+}
+
+.view4-node-end:hover {
+    border-color: #fca5a5;
+}
+
+.view4-icon-svg {
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+/* ========== Trace Graph Section (branch tree in index.html) ========== */
+.tracegraph-section {
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+    background-color: #fff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.tracegraph-section.collapsed {
+    border-bottom: none;
+}
+
+.tracegraph-section.collapsed .tracegraph-body {
+    height: 0;
+    min-height: 0;
+    padding: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.tracegraph-bar {
+    width: 100%;
+}
+
+.tracegraph-body {
+    width: 100%;
+    min-height: 40px;
+    max-height: 50vh;
+    overflow-x: auto;
+    overflow-y: auto;
+    transition: padding 0.25s ease, opacity 0.25s ease;
+    padding: 6px 12px 8px;
+}
+
+/* Drag handle at bottom of Trace Graph section */
+.tracegraph-resize-handle {
+    height: 6px;
+    cursor: ns-resize;
+    background: transparent;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.tracegraph-resize-handle::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 36px;
+    height: 3px;
+    border-radius: 2px;
+    background: #d1d5db;
+    transition: background 0.15s;
+}
+
+.tracegraph-resize-handle:hover::after {
+    background: #9ca3af;
+}
+
+.tracegraph-section.collapsed .tracegraph-resize-handle {
+    display: none;
+}
+
+/* ── Trace Graph Tree Layout ── */
+.tg-tree {
+    display: inline-flex;
+    align-items: flex-start;
+    padding: 4px 4px;
+    white-space: nowrap;
+}
+
+.tg-empty {
+    padding: 16px 20px;
+    text-align: center;
+    color: #7A7F8C;
+    font-size: 13px;
+}
+
+.tg-branch {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+/* Inline arrow element between connected nodes */
+.tg-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    user-select: none;
+    padding: 0 2px;
+}
+
+.tg-arrow svg {
+    display: block;
+}
+
+/* Horizontal line from fork node to vertical spine */
+.tg-fork-line {
+    width: 14px;
+    height: 0;
+    border-top: 1.5px solid #B0B5C2;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+/* ── Children layout at fork points ── */
+.tg-children {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding-left: 20px;
+}
+
+.tg-children > .tg-branch {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    position: relative;
+}
+
+/* Horizontal stub with arrowhead from vertical spine to child node */
+.tg-children > .tg-branch::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 12px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='12' viewBox='0 0 20 12'%3E%3Cpath d='M0 6h16M13 2.5l3 3.5-3 3.5' fill='none' stroke='%23B0B5C2' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center center;
+}
+
+/* Vertical line segment connecting sibling branches */
+.tg-children > .tg-branch::after {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1.5px solid #B0B5C2;
+}
+
+/* First child: vertical line from center downward only */
+.tg-children > .tg-branch:first-child::after {
+    top: 50%;
+}
+
+/* Last child: vertical line from top to center only */
+.tg-children > .tg-branch:last-child::after {
+    bottom: 50%;
+}
+
+/* Only child: no vertical line, just horizontal stub */
+.tg-children > .tg-branch:only-child::after {
+    display: none;
+}
+
+.tg-node {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 4px 10px;
+    background: #fff;
+    cursor: pointer;
+    min-width: 60px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.tg-node:hover {
+    border-color: #93b4f5;
+    box-shadow: 0 2px 8px rgba(21, 94, 239, 0.1);
+}
+
+.tg-node.active {
+    border-color: #155EEF;
+    background: #EFF4FF;
+    box-shadow: 0 0 0 2px rgba(21, 94, 239, 0.18);
+}
+
+.tg-node.active .tg-node-callee {
+    color: #155EEF;
+}
+
+.tg-node.active .tg-node-caller {
+    color: #155EEF;
+    background-color: rgba(21, 94, 239, 0.08);
+    border-color: rgba(21, 94, 239, 0.2);
+}
+
+.tg-node.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Node currently being replayed during a ReRun (matched via copied_node_id) */
+.tg-node.replaying {
+    border-color: #f59e0b;
+    background: #fffbeb;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+    animation: tg-replay-pulse 1.2s ease-in-out infinite;
+}
+
+.tg-node.replaying.disabled {
+    opacity: 1;                 /* keep highlight fully visible during ReRun */
+}
+
+.tg-node.replaying .tg-node-callee {
+    color: #b45309;
+}
+
+@keyframes tg-replay-pulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25); }
+    50%      { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.45); }
+}
+
+.tg-node-caller {
+    font-size: 10px;
+    color: #6B7280;
+    background-color: #F1F2F6;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 0px 6px;
+    margin-bottom: 2px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.4;
+    align-self: flex-start;
+}
+
+.tg-node-main {
+    display: flex;
+    align-items: center;
+}
+
+.tg-node-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 18px;
+    background-color: #E1EFFD;
+    margin-right: 5px;
+    flex-shrink: 0;
+}
+
+.tg-node-callee {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1F2433;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+/* Inline ReRun button inside tg-node */
+.tg-node-rerun {
+    display: none;              /* hidden by default, shown on hover */
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-left: 4px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: #9CA3AF;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+}
+
+.tg-node:hover .tg-node-rerun {
+    display: inline-flex;
+}
+
+.tg-node-rerun:hover {
+    background: rgba(21, 94, 239, 0.12);
+    color: #155EEF;
+}
+
+.tg-node.disabled .tg-node-rerun {
+    display: none !important;
+}
+
+/* ── Start / End sentinel nodes ── */
+.tg-node-start,
+.tg-node-end {
+    border-style: dashed;
+    cursor: default;
+    min-width: auto;
+    padding: 4px 8px;
+}
+
+.tg-node-start {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.tg-node-start .tg-node-callee {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.tg-node-end {
+    border-color: #fca5a5;
+    background: #fef2f2;
+}
+
+.tg-node-end .tg-node-callee {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.tg-node-start:hover,
+.tg-node-end:hover {
+    box-shadow: none;
+    border-color: inherit;
+}
+
+.tg-node-start:hover {
+    border-color: #86efac;
+}
+
+.tg-node-end:hover {
+    border-color: #fca5a5;
+}
+
+.tg-node-icon-svg {
+    flex-shrink: 0;
+    margin-right: 5px;
+}
+
+/* Running (intermediate) terminal node */
+.tg-node-running {
+    border-style: dashed;
+    cursor: default;
+    min-width: auto;
+    padding: 4px 8px;
+    border-color: #93c5fd;
+    background: #eff6ff;
+}
+
+.tg-node-running .tg-node-callee {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.tg-node-running:hover {
+    box-shadow: none;
+    border-color: #93c5fd;
+}
+
+/* Turn separator between multi-turn conversations */
+.tg-node-turn {
+    border-style: dashed;
+    border-color: #c4b5fd;
+    background: #f5f3ff;
+    cursor: default;
+    min-width: auto;
+    padding: 4px 8px;
+}
+
+.tg-node-turn .tg-node-callee {
+    color: #7c3aed;
+    font-weight: 600;
+}
+
+.tg-node-turn:hover {
+    box-shadow: none;
+    border-color: #c4b5fd;
+}
+
+.tg-spin {
+    animation: tg-spin 1s linear infinite;
+    transform-origin: 50% 50%;
+}
+
+@keyframes tg-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+

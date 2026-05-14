@@ -58,7 +58,8 @@
             "port": 8080,
             "auto_open_webpage": true,
             "log_level": "INFO",
-            "workers": 1
+            "workers": 1,
+            "allow_origins": ["*"]
         },
         "oxy": {
             "semaphore": 1024,

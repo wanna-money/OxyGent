@@ -35,10 +35,12 @@ async def main():
         oxy_response = await mas.chat_with_agent(payload=payload)
         print("LLM-first: ", oxy_response.output)
 
-        """second"""
+        """second
+        Only restart_node_id is required — query is auto-retrieved from the database.
+        restart_node_output is optional: if provided, it replaces the output of that node.
+        """
         # payload = {
-        #     "query": "Get what time it is Asia/Shanghai",
-        #     "restart_node_id": "wYF2EqBj3RYKiRK7",  # 传入第一次调用的中间节点node_id
+        #     "restart_node_id": "BcgSFR4Ls3nHCkFm",  # 传入第一次调用的中间节点node_id
         #     "restart_node_output": """{
         #         "timezone": "Asia/Shanghai",
         #         "datetime": "2024-10-14T06:18:00+08:00",

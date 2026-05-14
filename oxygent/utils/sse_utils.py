@@ -1,5 +1,10 @@
+"""SSE (Server-Sent Events) utility functions for streaming responses."""
+
+from typing import Any, AsyncIterator, Dict, Optional
+
 import aiohttp
-from typing import AsyncIterator, Dict, Any, Optional
+
+
 async def iter_sse_events(
     resp: aiohttp.ClientResponse,
     *,

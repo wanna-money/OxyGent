@@ -8,21 +8,23 @@
     <meta http-equiv="Expires" content="0">
     <link rel="shortcut icon" href="./image/group-favicon.png" type="image/x-icon">
     <title>OxyGent App</title>
-    <link rel="stylesheet" href="./css/style.css?time=2">
-    <link rel="stylesheet" href="./css/main.css?time=2"/>
-    <link rel="stylesheet" href="./css/tree.css?time=2"/>
-    <link rel="stylesheet" href="./css/cascader.css?time=2"/>
-    <link rel="stylesheet" href="./css/file.css?time=2"/>
-    <link rel="stylesheet" href="./css/agent-list.css?time=2"/>
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/main.css"/>
+    <link rel="stylesheet" href="./css/tree.css"/>
+    <link rel="stylesheet" href="./css/cascader.css"/>
+    <link rel="stylesheet" href="./css/file.css"/>
+    <link rel="stylesheet" href="./css/agent-list.css"/>
+    <link rel="stylesheet" href="./css/timeline.css"/>
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
-    <script src="./js/utils.js?time=2"></script>
-    <script src="./js/marked.min.js?time=2"></script>
-    <script src="./js/agent_tree.js?time=2"></script>
-    <script src="./js/cascader.js?time=2"></script>
-    <script src="./js/upload.js?time=2"></script>
-    <script src="./js/message.js?time=2"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/marked.min.js"></script>
+    <script src="./js/agent_tree.js"></script>
+    <script src="./js/cascader.js"></script>
+    <script src="./js/upload.js"></script>
+    <script src="./js/message.js"></script>
+    <script src="./js/timeline.js"></script>
 </head>
-<body>
+<body class="timeline-hidden tracegraph-hidden">
 <div class="header">
     <div class="header-left">
         <img class="header-left-img" src="./image/group-favicon.png" alt="">
@@ -76,6 +78,14 @@
             </button>
             <div id="step"></div>
         </div>
+        <button class="btn-timeline-toggle" id="btn-timeline-toggle" onclick="toggleTimeline()" title="Toggle Steps">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,9 7,5 11,9"/></svg>
+            <span class="btn-toggle-label">Steps</span>
+        </button>
+        <button class="btn-tracegraph-toggle" id="btn-tracegraph-toggle" onclick="toggleTraceGraph()" title="Toggle Trace Graph">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,9 7,5 11,9"/></svg>
+            <span class="btn-toggle-label">Trace Graph</span>
+        </button>
         <!--        todo  中英文  主题-->
         <!--                <div class="global-buttons">-->
         <!--                    <button class="btn-theme">-->
@@ -87,8 +97,39 @@
         <!--                </div>-->
     </div>
 </div>
+<!-- Timeline Section -->
+<div class="timeline-section collapsed" id="timeline-section">
+    <div id="timeline-bar" class="timeline-bar">
+        <div class="branch-selector" id="branch-selector"></div>
+        <div class="timeline-track-wrapper" id="timeline-track-wrapper">
+            <div class="timeline-track" id="timeline-track"></div>
+        </div>
+    </div>
+</div>
+<!-- Trace Graph Section (branch tree visualization) -->
+<div class="tracegraph-section collapsed" id="tracegraph-section">
+    <div class="tracegraph-bar">
+        <div class="tracegraph-body" id="tracegraph-body">
+            <div class="tg-empty">No branches yet.</div>
+        </div>
+        <div class="tracegraph-resize-handle" id="tracegraph-resize-handle"></div>
+    </div>
+</div>
 <div class="container">
-    <div class="center xMind">
+    <div class="center">
+        <div class="center-scroll xMind">
+            <div id="org-zoom-wrapper"></div>
+        </div>
+        <div id="org-minimap">
+            <canvas id="org-minimap-canvas" width="150" height="100"></canvas>
+            <div id="org-minimap-viewport"></div>
+        </div>
+        <div id="org-zoom-controls">
+            <button id="org-zoom-out" title="Zoom out">&minus;</button>
+            <span id="org-zoom-level">100%</span>
+            <button id="org-zoom-in" title="Zoom in">+</button>
+            <button id="org-zoom-reset" title="Reset zoom">&#x27F2;</button>
+        </div>
     </div>
     <div class="left">
         <div class="left_bottom">
@@ -132,16 +173,16 @@
                         </div>
                     </div>
                 </div> -->
-                <div class="chat-agent-list" id="chatAgentList"></div>
+                <div class="chat-agent-list" id="chatAgentList" style="display:none;"></div>
+
+                <!-- agentlist popup -->
+                <div id="chat-at-list-container-id" class="chat-at-list-container">
+                    <div class="chat-at-list-title">Agents</div>
+                    <ul id="chatAtListId" class="chat-at-list"></ul>
+                </div>
 
                 <div id="message_input_wrap">
-                    <!-- agentlist -->
-                    <div id="chat-at-list-container-id" class="chat-at-list-container">
-                        <ul id="chatAtListId" class="chat-at-list"></ul>
-                    </div>
-
-
-                    <input type="text" id="message_input" placeholder="Ask me anything here.">
+                    <textarea id="message_input" rows="1" placeholder="Ask me anything here."></textarea>
                 </div>
                 <button class="file-upload-area" id="message_addtional">
                     <input
@@ -157,6 +198,32 @@
                         <span class="file-tooltip-description">Max 10, 10MB each. Images, videos and table files are supported.</span>
                     </span>
                 </button>
+                <button class="json-editor-btn" id="json_editor_toggle" onclick="toggleJsonEditor()">
+                    <img src="./image/json.svg" alt="JSON"/>
+                </button>
+                <!-- JSON Editor Panel -->
+                <div class="json-editor-panel" id="json_editor_panel" style="display:none;">
+                    <div class="json-editor-header">
+                        <span class="json-editor-title">Request Data</span>
+                    </div>
+                    <div class="json-editor-body">
+                        <div class="json-editor-field">
+                            <label>shared_data</label>
+                            <textarea id="json_shared_data" rows="6" spellcheck="false"></textarea>
+                            <div class="json-editor-error" id="json_shared_data_error"></div>
+                        </div>
+                        <div class="json-editor-field">
+                            <label>group_data</label>
+                            <textarea id="json_group_data" rows="6" spellcheck="false"></textarea>
+                            <div class="json-editor-error" id="json_group_data_error"></div>
+                        </div>
+                    </div>
+                    <div class="json-editor-footer">
+                        <button class="json-editor-btn-clear" onclick="clearJsonEditor()">Clear</button>
+                        <button class="json-editor-btn-cancel" onclick="cancelJsonEditor()">Cancel</button>
+                        <button class="json-editor-btn-apply" onclick="applyJsonEditor()">Apply</button>
+                    </div>
+                </div>
                 <button id="message_send" onclick="send_message()">
                     <img src="./image/up_arrow.svg" alt=""/>
                 </button>
@@ -164,6 +231,7 @@
         </div>
     </div>
 
+    <div class="resize-handle" id="rightResizeHandle"></div>
     <div class="right" id="rightId">
         <div class="right-container">
             <div id="agent_log">
@@ -178,6 +246,27 @@
 
     </div>
 </div>
+
+<!-- 编辑并重跑 模态框 -->
+<div id="restart-modal" class="restart-modal-overlay" style="display:none;">
+    <div class="restart-modal">
+        <div class="restart-modal-header">
+            <span>Edit Node Output & Restart</span>
+            <button type="button" class="restart-modal-close">&times;</button>
+        </div>
+        <div class="restart-modal-body">
+            <div class="restart-modal-hint">
+                Modify the output below, then restart inference from this node:
+            </div>
+            <textarea id="restart-output-editor" rows="12" spellcheck="false"></textarea>
+        </div>
+        <div class="restart-modal-footer">
+            <button type="button" id="restart-modal-cancel">Cancel</button>
+            <button type="button" id="restart-modal-confirm">Confirm & Restart</button>
+        </div>
+    </div>
+</div>
+
 </body>
 <script>
     var ws = null;
@@ -189,9 +278,70 @@
     var llm_is_work = false;
     var chats = [];
     var plan_dict = {};
-    var historys = [];
+    var nodeContentMap = {};
     var tool_calls = [];
     var show_id = 0;
+    var traceGraphTurnIndex = 0;  // incremented on each new question
+
+    // ── Branching history system ──
+    var branches = [];
+    var activeBranchId = null;
+    var branchCounter = 0;
+
+    function getActiveBranch() {
+        return branches.find(function(b) { return b.id === activeBranchId; });
+    }
+    function getActiveFrames() {
+        var b = getActiveBranch();
+        return b ? b.frames : [];
+    }
+
+    function createBranch(parentBranchId, forkFrameIndex) {
+        branchCounter++;
+        var b = {
+            id: "branch_" + branchCounter,
+            label: "Branch " + branchCounter,
+            parentBranchId: parentBranchId,
+            forkFrameIndex: forkFrameIndex,
+            traceId: "",
+            frames: []
+        };
+        branches.push(b);
+        activeBranchId = b.id;
+        show_id = 0;
+        return b;
+    }
+
+    function switchBranch(branchId) {
+        if (llm_is_work) return;
+        var b = branches.find(function(x) { return x.id === branchId; });
+        if (!b) return;
+        activeBranchId = b.id;
+        show_id = Math.max(0, b.frames.length - 1);
+        from_trace_id = b.traceId || "";
+        renderTraceGraph();
+        renderTimeline();
+        show_step();
+        if (b.frames.length > 0) {
+            show_by_history(b.frames[show_id]);
+        }
+    }
+
+    function renderBranchSelector() {
+        var container = document.getElementById('branch-selector');
+        if (!container) return;
+        container.innerHTML = '';
+        if (branches.length <= 1) return; // hide selector when only 1 branch
+        branches.forEach(function(b) {
+            var pill = document.createElement('button');
+            pill.className = 'branch-pill' + (b.id === activeBranchId ? ' active' : '')
+                + (llm_is_work ? ' disabled' : '');
+            pill.textContent = b.label;
+            pill.title = b.traceId ? ('trace: ' + b.traceId) : b.label;
+            pill.addEventListener('click', function() { switchBranch(b.id); });
+            container.appendChild(pill);
+        });
+    }
     var agent_id_dict = {};
     var agent_organization = {};
     var current_streaming_agent = null; // 当前正在流式输出的agent名称（向后兼容）
@@ -202,7 +352,7 @@
     var div_right = $("#agent_log");
     var div_chat_history = $("#chat_history");
     var div_chatbox = $("#chatbox");
-    var div_org = $(".center");
+    var div_org = $("#org-zoom-wrapper");
     var interval_id = null;
     var no_change_history = true;
     var now_script_id = '';
@@ -210,6 +360,10 @@
     var node_state = {};
     var eventSource = null;
     var _cascader = null
+
+    // JSON editor state for shared_data / group_data
+    var chatSharedData = {};
+    var chatGroupData = {};
 
     const agentImgMap = [
         {bgColor: '#FEEAD4', color: '#7d4303', imgUrl: './image/agents/agent_0.png'},
@@ -373,34 +527,43 @@
                 // console.log('first_query', response);
                 $("#message_input").val(response.data.first_query);
                 if (response.data.first_query) {
-                    $("#message_send").addClass('message_send_active'); // 有值时背景色为蓝色
+                    $("#message_send").addClass('message_send_active');
                 }
-
+                if (response.data.shared_data) {
+                    chatSharedData = response.data.shared_data;
+                }
+                if (response.data.group_data) {
+                    chatGroupData = response.data.group_data;
+                }
             }
         })
         $("#message_input").keydown(function (event) {
-            if (event.keyCode === 13) {
+            if (event.keyCode === 13 && !event.shiftKey) {
+                event.preventDefault();
                 send_message();
             }
         });
 
         $('#message_input').on('input', function () {
+            // Auto-resize textarea height
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+
             const val = $(this).val();
             if (val) {
                 $("#message_send").addClass('message_send_active'); // 有值时背景色为蓝色
                 if (val.indexOf('@') > -1) {
-                    // console.log('@val', val)
                     // 把当前的输入@删除保留其他的输入项，只删除@这个字符
                     const inputVal = val.replace('@', '');
                     $('#message_input').val(inputVal);
 
-                    var $element = $('#message_input'); //
-                    var distanceFromBottom = $(window).height() - ($element.offset().top + $element.outerHeight());
+                    var $element = $('#message_input');
+                    var elTop = $element.offset().top;
                     var distanceFromLeft = $element.offset().left;
                     const marginLeftValue = getTextWidth(inputVal);
-                    // 显示chat list
+                    // 显示chat list — 定位到输入框正上方
                     $('#chat-at-list-container-id').css({
-                        bottom: (distanceFromBottom + 70) + 'px',
+                        bottom: ($(window).height() - elTop + 8) + 'px',
                         left: (distanceFromLeft + marginLeftValue) + 'px',
                     });
                     $('#chat-at-list-container-id').show();
@@ -524,7 +687,7 @@
         return result;
     }
 
-    function push_plan(caller, type, content, node_id = '', callee) {
+    function push_plan(caller, type, content, node_id = '', callee, callee_category = '') {
         if (!plan_dict.hasOwnProperty(caller)) {
             plan_dict[caller] = {
                 "agent_name": caller,
@@ -539,7 +702,8 @@
                 "callee": callee,
                 "type": type,
                 "content": content,
-                "node_id": node_id
+                "node_id": node_id,
+                "callee_category": callee_category
             });
         } else {
             plan_dict[caller][type] = content;
@@ -565,14 +729,46 @@
             return;
         }
 
-        console.log(historys.length + 1, JSON.parse(JSON.stringify(jm)));
+        console.log(getActiveFrames().length + 1, JSON.parse(JSON.stringify(jm)));
 
+        var frames = getActiveFrames();
         var history = {};
-        if (historys[historys.length - 1] !== undefined) {
-            history = JSON.parse(JSON.stringify(historys[historys.length - 1]));
+        if (frames.length > 0) {
+            history = JSON.parse(JSON.stringify(frames[frames.length - 1]));
         }
 
         if (jm["type"] == "tool_call") {
+            var _cc = jm["content"];
+            var isCachedReplay = _cc && _cc["copied_node_id"];
+
+            if (isCachedReplay) {
+                // Cached/replayed node during ReRun: track the copied_node_id
+                // mapping and highlight the original node in the parent branch.
+                // Do NOT add to traceGraphData (the parent branch already has it)
+                // or create streaming elements (no streaming data will follow).
+                nodeCopiedIdMap[_cc["node_id"]] = _cc["copied_node_id"];
+                if (llm_is_work) {
+                    traceGraphHighlightReplay(_cc["copied_node_id"]);
+                }
+                return;
+            }
+
+            // Feed LLM/tool nodes into the Trace Graph tree.
+            if (_cc && (_cc["callee_category"] === 'llm' || _cc["callee_category"] === 'tool')) {
+                traceGraphAddNode({
+                    node_id: _cc["node_id"],
+                    copied_node_id: _cc["copied_node_id"] || '',
+                    node_type: _cc["callee_category"],
+                    caller: _cc["caller"] || '',
+                    callee: _cc["callee"] || '',
+                    trace_id: _cc["current_trace_id"] || _cc["trace_id"] || ''
+                });
+            }
+            // Set traceId on the active branch.
+            if (_cc && (_cc["current_trace_id"] || _cc["trace_id"])) {
+                traceGraphSetTrace(_cc["current_trace_id"] || _cc["trace_id"]);
+            }
+
             if (jm["content"]["callee_category"] === 'agent') {
                 push_plan(jm["content"]["callee"], "job_desc", jm["content"].arguments.query, jm["content"].node_id);
                 history["agent_log"] = JSON.parse(JSON.stringify(plan_dict[jm["content"]["callee"]]));
@@ -602,9 +798,25 @@
         }
 
         if (jm["type"] == "observation") {
+            // Track copied_node_id from ALL observations (including cached/replayed nodes
+            // that don't get a tool_call message and thus aren't in traceGraphData).
+            var _oc = jm["content"];
+            if (_oc && _oc["node_id"] && _oc["copied_node_id"]) {
+                nodeCopiedIdMap[_oc["node_id"]] = _oc["copied_node_id"];
+                // During a ReRun, highlight the original node being replayed
+                if (llm_is_work) {
+                    traceGraphHighlightReplay(_oc["copied_node_id"]);
+                }
+            }
+
             if (jm["content"]["caller"] === 'user') {
                 // answer
                 from_trace_id = jm["content"]["current_trace_id"];
+                var activeBranch = getActiveBranch();
+                if (activeBranch) {
+                    activeBranch.traceId = from_trace_id;
+                    renderTraceGraph();
+                }
                 var trace_id = jm["content"]["current_trace_id"] || jm["content"]["trace_id"];
                 var markdownInput = jm["content"]["output"];
                 if (typeof markdownInput !== 'string') {
@@ -622,9 +834,10 @@
                     if (finalContent) {
                         markdownInput = finalContent;
                     }
-                    // 移除streaming-content类并清理
-                    streaming_info.element.removeClass("streaming-content");
+                    // 移除streaming-content类并清理，渲染markdown
+                    streaming_info.element.removeClass("streaming-content").addClass("markdown-body").html(marked.marked(markdownInput));
                     attach_rating_ui(streaming_info.element.closest("li"), trace_id);
+                    attach_trace_chain(streaming_info.element.closest("li"), trace_id);
                     delete streaming_elements_map[key];
                 } else if (current_streaming_element && current_streaming_agent) {
                     // 向后兼容
@@ -632,13 +845,18 @@
                     if (finalContent) {
                         markdownInput = finalContent;
                     }
+                    // 渲染markdown
+                    current_streaming_element.addClass("markdown-body").html(marked.marked(markdownInput));
                     attach_rating_ui(current_streaming_element.closest("li"), trace_id);
+                    attach_trace_chain(current_streaming_element.closest("li"), trace_id);
                 }
                 
                 var msg = {"role": jm["content"].callee, "content": markdownInput, "trace_id": trace_id};
                 chats.push(msg);
                 history["answer"] = JSON.parse(JSON.stringify(chats));
                 llm_is_work = false;
+                traceGraphClearReplayHighlights();
+                renderTraceGraph();
                 // $("#message_send").text("Send");
                 // 重置react_memory
                 plan_dict = {};
@@ -651,7 +869,7 @@
                 // 清理所有流式输出元素
                 streaming_elements_map = {};
             } else if (jm["content"]["caller_category"] === 'agent' && jm["content"]["callee_category"] === 'agent') {
-                push_plan(jm["content"]["caller"], "observation", jm["content"].output, jm["content"].node_id, jm["content"]["callee"]);
+                push_plan(jm["content"]["caller"], "observation", jm["content"].output, jm["content"].node_id, jm["content"]["callee"], jm["content"]["callee_category"]);
                 history["agent_log"] = JSON.parse(JSON.stringify(plan_dict[jm["content"]["caller"]]));
 
                 var msg = {
@@ -662,7 +880,7 @@
                 chats.push(msg);
                 history["answer"] = JSON.parse(JSON.stringify(chats));
             } else if (jm["content"]["caller_category"] === 'agent' && jm["content"]["callee_category"] === 'llm') {
-                push_plan(jm["content"]["caller"], "plan", jm["content"].output, jm["content"].node_id, jm["content"]["callee"]);
+                push_plan(jm["content"]["caller"], "plan", jm["content"].output, jm["content"].node_id, jm["content"]["callee"], jm["content"]["callee_category"]);
                 history["agent_log"] = JSON.parse(JSON.stringify(plan_dict[jm["content"]["caller"]]));
                 // 流式输出完成，移除streaming-content类
                 // 注意：planning内容不保存到chats，只保存到plan_dict
@@ -680,7 +898,7 @@
                 }
                 current_streaming_agent = null;
             } else if (jm["content"]["caller_category"] === 'agent' && ['tool', 'bank', 'memory_bank'].includes(jm["content"]["callee_category"])) {
-                push_plan(jm["content"]["caller"], "observation", jm["content"].output, jm["content"].node_id, jm["content"]["callee"]);
+                push_plan(jm["content"]["caller"], "observation", jm["content"].output, jm["content"].node_id, jm["content"]["callee"], jm["content"]["callee_category"]);
                 history["agent_log"] = JSON.parse(JSON.stringify(plan_dict[jm["content"]["caller"]]));
             }
 
@@ -691,9 +909,10 @@
         }
 
         show_by_history(history);
-        historys.push(history);
-        show_id += 1;
+        frames.push(history);
+        show_id = frames.length - 1;
         show_step();
+        appendTimelineFrame(history, frames.length - 1);
     }
 
     function init_ws() {
@@ -714,8 +933,8 @@
     }
 
     function init_organization() {
-        agent_id_dict = historys[0].agent_id_dict;
-        var agent_org = historys[0].agent_organization;
+        agent_id_dict = getActiveFrames()[0].agent_id_dict;
+        var agent_org = getActiveFrames()[0].agent_organization;
 
         div_org.empty();
         div_org.HOkrTree({
@@ -763,12 +982,203 @@
         });
     }
 
+    // ── Zoom & Minimap ──
+    var orgZoomLevel = 1.0;
+    var orgContainer = document.querySelector('.center-scroll');
+    var orgWrapper = document.getElementById('org-zoom-wrapper');
+    var orgMinimapCanvas = document.getElementById('org-minimap-canvas');
+    var orgMinimapViewport = document.getElementById('org-minimap-viewport');
+    var orgZoomLevelSpan = document.getElementById('org-zoom-level');
+
+    function updateOrgZoom() {
+        orgWrapper.style.transform = 'scale(' + orgZoomLevel + ')';
+        orgZoomLevelSpan.textContent = Math.round(orgZoomLevel * 100) + '%';
+        // After scale changes, scroll dimensions change — update minimap after a short delay
+        setTimeout(updateMinimap, 150);
+    }
+
+    function orgZoomIn() {
+        orgZoomLevel = Math.min(1.5, Math.round((orgZoomLevel + 0.1) * 10) / 10);
+        updateOrgZoom();
+    }
+    function orgZoomOut() {
+        orgZoomLevel = Math.max(0.3, Math.round((orgZoomLevel - 0.1) * 10) / 10);
+        updateOrgZoom();
+    }
+    function orgZoomReset() {
+        orgZoomLevel = 1.0;
+        updateOrgZoom();
+    }
+
+    document.getElementById('org-zoom-in').addEventListener('click', orgZoomIn);
+    document.getElementById('org-zoom-out').addEventListener('click', orgZoomOut);
+    document.getElementById('org-zoom-reset').addEventListener('click', orgZoomReset);
+
+    // Ctrl/Cmd + wheel to zoom
+    orgContainer.addEventListener('wheel', function (e) {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            if (e.deltaY < 0) orgZoomIn(); else orgZoomOut();
+        }
+    }, { passive: false });
+
+    // ── Minimap rendering ──
+    function updateMinimap() {
+        var canvas = orgMinimapCanvas;
+        var ctx = canvas.getContext('2d');
+        var cw = canvas.width, ch = canvas.height;
+        ctx.clearRect(0, 0, cw, ch);
+
+        // Content size = wrapper's scrollable extent (unscaled)
+        var contentW = orgWrapper.scrollWidth;
+        var contentH = orgWrapper.scrollHeight;
+        if (contentW === 0 || contentH === 0) return;
+
+        // Scale factor to fit content into minimap
+        var scaleX = cw / contentW;
+        var scaleY = ch / contentH;
+        var scale = Math.min(scaleX, scaleY);
+
+        // Offset to center the drawing in minimap
+        var offX = (cw - contentW * scale) / 2;
+        var offY = (ch - contentH * scale) / 2;
+
+        // Draw each node as a small rectangle
+        var nodes = orgWrapper.querySelectorAll('.item-template');
+        nodes.forEach(function (node) {
+            // Get position relative to wrapper (since wrapper is the offset parent via inline-block)
+            var r = node.getBoundingClientRect();
+            var wr = orgWrapper.getBoundingClientRect();
+            var nx = (r.left - wr.left) / orgZoomLevel;
+            var ny = (r.top - wr.top) / orgZoomLevel;
+            var nw = r.width / orgZoomLevel;
+            var nh = r.height / orgZoomLevel;
+
+            var x = offX + nx * scale;
+            var y = offY + ny * scale;
+            var w = nw * scale;
+            var h = nh * scale;
+
+            if (node.classList.contains('select')) {
+                ctx.fillStyle = '#155EEE';
+                ctx.strokeStyle = '#155EEE';
+                ctx.lineWidth = 0.5;
+            } else if (node.classList.contains('pre-select')) {
+                ctx.fillStyle = '#C5D3E8';
+                ctx.strokeStyle = '#155EEE';
+                ctx.lineWidth = 1.5;
+            } else {
+                ctx.fillStyle = '#C5D3E8';
+                ctx.strokeStyle = '#93A8C9';
+                ctx.lineWidth = 0.5;
+            }
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeRect(x, y, w, h);
+        });
+
+        // Update viewport rectangle
+        // Visible area in content coordinates (unscaled)
+        var visW = orgContainer.clientWidth / orgZoomLevel;
+        var visH = orgContainer.clientHeight / orgZoomLevel;
+        var scrollL = orgContainer.scrollLeft / orgZoomLevel;
+        var scrollT = orgContainer.scrollTop / orgZoomLevel;
+
+        var vpLeft = offX + scrollL * scale;
+        var vpTop = offY + scrollT * scale;
+        var vpW = visW * scale;
+        var vpH = visH * scale;
+
+        orgMinimapViewport.style.left = vpLeft + 'px';
+        orgMinimapViewport.style.top = vpTop + 'px';
+        orgMinimapViewport.style.width = vpW + 'px';
+        orgMinimapViewport.style.height = vpH + 'px';
+    }
+
+    // Sync minimap on scroll
+    orgContainer.addEventListener('scroll', updateMinimap);
+
+    // Drag viewport on minimap to scroll
+    (function () {
+        var dragging = false;
+        var startX, startY, startScrollL, startScrollT;
+
+        var minimap = document.getElementById('org-minimap');
+
+        function getMinimapScale() {
+            var contentW = orgWrapper.scrollWidth;
+            var contentH = orgWrapper.scrollHeight;
+            var cw = orgMinimapCanvas.width, ch = orgMinimapCanvas.height;
+            var scaleX = cw / contentW;
+            var scaleY = ch / contentH;
+            return Math.min(scaleX, scaleY);
+        }
+
+        minimap.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            dragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startScrollL = orgContainer.scrollLeft;
+            startScrollT = orgContainer.scrollTop;
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!dragging) return;
+            var scale = getMinimapScale();
+            if (scale === 0) return;
+            var dx = (e.clientX - startX) / scale * orgZoomLevel;
+            var dy = (e.clientY - startY) / scale * orgZoomLevel;
+            orgContainer.scrollLeft = startScrollL + dx;
+            orgContainer.scrollTop = startScrollT + dy;
+        });
+
+        document.addEventListener('mouseup', function () {
+            dragging = false;
+        });
+
+        // Click on minimap to jump
+        minimap.addEventListener('click', function (e) {
+            if (e.target === orgMinimapViewport) return;
+            var rect = minimap.getBoundingClientRect();
+            var mx = e.clientX - rect.left;
+            var my = e.clientY - rect.top;
+
+            var contentW = orgWrapper.scrollWidth;
+            var contentH = orgWrapper.scrollHeight;
+            var cw = orgMinimapCanvas.width, ch = orgMinimapCanvas.height;
+            var scale = getMinimapScale();
+            var offX = (cw - contentW * scale) / 2;
+            var offY = (ch - contentH * scale) / 2;
+
+            var contentX = (mx - offX) / scale;
+            var contentY = (my - offY) / scale;
+
+            orgContainer.scrollLeft = contentX * orgZoomLevel - orgContainer.clientWidth / 2;
+            orgContainer.scrollTop = contentY * orgZoomLevel - orgContainer.clientHeight / 2;
+        });
+    })();
+
+    // Refresh minimap after tree renders
+    var _origInitOrg = init_organization;
+    init_organization = function () {
+        _origInitOrg();
+        setTimeout(function() {
+            updateMinimap();
+            renderTimeline();
+        }, 200);
+    };
+
     function init_chat_box() {
-        historys = [];
+        branches = [];
+        branchCounter = 0;
+        activeBranchId = null;
+        traceGraphReset();
         chats = [];
+        from_trace_id = "";
         var msg = {"role": master_agent_name, "content": first_chat};
         chats.push(msg);
-        historys.push({
+        var rootBranch = createBranch(null, null);
+        rootBranch.frames.push({
             "agent_id_dict": agent_id_dict,
             "agent_organization": agent_organization,
             "answer": JSON.parse(JSON.stringify(chats)),
@@ -776,6 +1186,8 @@
             "tool_call": []
         });
         begin();
+        renderTimeline();
+        renderTraceGraph();
     }
 
     // 创建流式输出的消息元素
@@ -1044,6 +1456,425 @@
         li.append(create_rating_container(trace_id));
     }
 
+    // ── Trace Graph (LLM/tool node tree across all branches) ──
+    // Each branch stores its own ordered list of LLM/tool nodes.
+    // The tree is built from the branch hierarchy (parentBranchId) and
+    // fork-point detection (matching shared node_id prefixes between
+    // parent and child, with forkFrameIndex as fallback).
+    // Renders incrementally — every traceGraphAddNode triggers a re-render.
+
+    var traceGraphData = {};  // branch_id → [{ node_id, copied_node_id, node_type, caller, callee, trace_id, frameIndex }]
+    var nodeCopiedIdMap = {};  // node_id → copied_node_id (populated from ALL observation messages, including cached nodes)
+    var replayHighlightIds = new Set();  // Set of node_ids to highlight as "replaying" during a ReRun
+
+    function traceGraphReset() {
+        traceGraphData = {};
+        nodeCopiedIdMap = {};
+        replayHighlightIds = new Set();
+        traceGraphTurnIndex = 0;
+    }
+
+    // Mark a node as "replaying" in the trace graph (highlight without full re-render).
+    function traceGraphHighlightReplay(copiedNodeId) {
+        if (!copiedNodeId) return;
+        replayHighlightIds.add(copiedNodeId);
+        // Use lightweight DOM update instead of full re-render
+        $('#tracegraph-body .tg-node[data-node-id]').each(function () {
+            if ($(this).attr('data-node-id') === copiedNodeId) {
+                $(this).addClass('replaying');
+            }
+        });
+    }
+
+    // Clear all replay highlights.
+    function traceGraphClearReplayHighlights() {
+        replayHighlightIds = new Set();
+        $('#tracegraph-body .tg-node.replaying').removeClass('replaying');
+    }
+
+    function traceGraphAddNode(node) {
+        var ab = getActiveBranch();
+        if (!ab || !node || !node.node_id) return;
+        if (!traceGraphData[ab.id]) traceGraphData[ab.id] = [];
+        traceGraphData[ab.id].push({
+            node_id: node.node_id,
+            copied_node_id: node.copied_node_id || '',
+            node_type: node.node_type,
+            caller: node.caller || '',
+            callee: node.callee || '',
+            trace_id: node.trace_id || '',
+            frameIndex: getActiveFrames().length,
+            turnIndex: traceGraphTurnIndex
+        });
+        renderTraceGraph();
+    }
+
+    var START_NODE = '<div class="tg-node tg-node-start" title="Start">'
+        + '<div class="tg-node-main">'
+        + '<svg class="tg-node-icon-svg" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7" fill="#22c55e" stroke="#16a34a" stroke-width="1.5"/><polygon points="7.5,5.5 13,9 7.5,12.5" fill="#fff"/></svg>'
+        + '<span class="tg-node-callee">Start</span>'
+        + '</div></div>';
+
+    var END_NODE = '<div class="tg-node tg-node-end" title="End">'
+        + '<div class="tg-node-main">'
+        + '<svg class="tg-node-icon-svg" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7" fill="#ef4444" stroke="#dc2626" stroke-width="1.5"/><rect x="6.5" y="6.5" width="5" height="5" rx="0.5" fill="#fff"/></svg>'
+        + '<span class="tg-node-callee">End</span>'
+        + '</div></div>';
+
+    var RUNNING_NODE = '<div class="tg-node tg-node-running" title="Running">'
+        + '<div class="tg-node-main">'
+        + '<svg class="tg-node-icon-svg tg-spin" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="6.5" fill="none" stroke="#e5e7eb" stroke-width="2"/><path d="M9 2.5 a6.5 6.5 0 0 1 6.5 6.5" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/></svg>'
+        + '<span class="tg-node-callee">Running</span>'
+        + '</div></div>';
+
+    var TURN_SEPARATOR = '<div class="tg-node tg-node-turn" title="New Turn">'
+        + '<div class="tg-node-main">'
+        + '<svg class="tg-node-icon-svg" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7" fill="#8b5cf6" stroke="#7c3aed" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>'
+        + '<span class="tg-node-callee">New Turn</span>'
+        + '</div></div>';
+
+    // Check if a turn separator should be inserted between nodes[i-1] and nodes[i].
+    function needsTurnSeparator(nodes, i) {
+        return i > 0 && nodes[i].turnIndex !== nodes[i - 1].turnIndex;
+    }
+
+    // Return End for completed branches, Running for the active branch while
+    // the LLM is still working. Non-active branches are always finished.
+    function terminalNodeFor(branch) {
+        var ab = getActiveBranch();
+        var isActive = ab && branch && ab.id === branch.id;
+        return (llm_is_work && isActive) ? RUNNING_NODE : END_NODE;
+    }
+
+    function renderTraceGraph() {
+        var $body = $('#tracegraph-body');
+        var hasData = false;
+        for (var k in traceGraphData) {
+            if (traceGraphData[k] && traceGraphData[k].length) { hasData = true; break; }
+        }
+        if (!hasData) {
+            $body.html('<div class="tg-empty">No LLM/tool nodes yet.</div>');
+            return;
+        }
+        var roots = branches.filter(function(b) { return !b.parentBranchId; });
+        if (!roots.length) return;
+        // Promote child branches whose fork point is before parent's first node
+        // (forkNodeIdx === -1, i.e. rerun on the very first node) to virtual roots,
+        // so both the original and rerun flow as siblings directly off Start.
+        var virtualRoots = roots.slice();
+        branches.forEach(function(b) {
+            if (b.parentBranchId && b.forkNodeIdx === -1) {
+                if (virtualRoots.indexOf(b) === -1) virtualRoots.push(b);
+            }
+        });
+        // A branch is a "real" virtual root for End-rendering if it has no
+        // descendant branches that fork from a real node (forkNodeIdx >= 0).
+        var html = '<div class="tg-tree">';
+        // Single chain with no forks at all: Start → chain → End (inline)
+        var anyForks = branches.some(function(b) {
+            return b.parentBranchId && b.forkNodeIdx != null && b.forkNodeIdx >= 0;
+        });
+        if (virtualRoots.length === 1 && !anyForks) {
+            html += '<div class="tg-branch">' + START_NODE + ARROW;
+            var nodes = traceGraphData[virtualRoots[0].id] || [];
+            for (var i = 0; i < nodes.length; i++) {
+                if (i > 0) {
+                    if (needsTurnSeparator(nodes, i)) {
+                        html += ARROW + TURN_SEPARATOR;
+                    }
+                    html += ARROW;
+                }
+                html += renderNodeEl(nodes[i], virtualRoots[0]);
+            }
+            html += ARROW + terminalNodeFor(virtualRoots[0]) + '</div>';
+        } else {
+            // Multiple virtual roots OR forks within a chain: Start → fork → branches → End
+            html += '<div class="tg-branch">' + START_NODE;
+            html += '<span class="tg-fork-line"></span>';
+            html += '<div class="tg-children">';
+            virtualRoots.forEach(function(rb) { html += renderBranchSubtreeWithEnd(rb, 0); });
+            html += '</div></div>';
+        }
+        html += '</div>';
+        $body.html(html);
+    }
+
+    // Render nodes of `branch` from index `startIdx` onward, inserting
+    // child-branch forks at the correct positions.
+    function renderBranchSubtree(branch, startIdx, showArrowPrefix) {
+        var nodes = traceGraphData[branch.id] || [];
+        // Exclude children promoted to virtual roots (forkNodeIdx === -1)
+        var childBranches = branches.filter(function(b) {
+            return b.parentBranchId === branch.id && b.forkNodeIdx !== -1;
+        });
+
+        // Determine fork point for each child branch.
+        // Prefer the pre-computed forkNodeIdx stored on the branch object.
+        // Fall back to frameIndex matching if forkNodeIdx is not set.
+        var forkAt = {};  // nodeIdx → [ { branch, skipCount } , … ]
+        childBranches.forEach(function(cb) {
+            var forkIdx;
+            if (cb.forkNodeIdx != null && cb.forkNodeIdx >= 0) {
+                // Pre-computed at branch-creation time
+                forkIdx = cb.forkNodeIdx;
+            } else if (cb.forkNodeIdx === -1) {
+                // Fork is before the first parent node → attach at node 0
+                // (the child will appear alongside the parent's first node)
+                forkIdx = 0;
+            } else {
+                // Legacy / fallback: use forkFrameIndex to find the position
+                forkIdx = -1;
+                if (cb.forkFrameIndex != null) {
+                    for (var j = nodes.length - 1; j >= 0; j--) {
+                        if (nodes[j].frameIndex <= cb.forkFrameIndex) {
+                            forkIdx = j; break;
+                        }
+                    }
+                }
+                if (forkIdx === -1) forkIdx = Math.max(0, nodes.length - 1);
+            }
+            console.log('[TraceGraph] render fork:', cb.id,
+                'forkNodeIdx:', cb.forkNodeIdx,
+                'resolved forkIdx:', forkIdx,
+                'parentNodes:', nodes.length,
+                'childNodes:', (traceGraphData[cb.id] || []).length);
+            if (!forkAt[forkIdx]) forkAt[forkIdx] = [];
+            forkAt[forkIdx].push({ branch: cb, skipCount: 0 });
+        });
+
+        return buildNodeChain(branch, nodes, startIdx, forkAt, showArrowPrefix);
+    }
+
+    // Like renderBranchSubtree but appends End node at each leaf branch.
+    function renderBranchSubtreeWithEnd(branch, startIdx, showArrowPrefix) {
+        var nodes = traceGraphData[branch.id] || [];
+        var childBranches = branches.filter(function(b) {
+            return b.parentBranchId === branch.id && b.forkNodeIdx !== -1;
+        });
+
+        var forkAt = {};
+        childBranches.forEach(function(cb) {
+            var forkIdx;
+            if (cb.forkNodeIdx != null && cb.forkNodeIdx >= 0) {
+                forkIdx = cb.forkNodeIdx;
+            } else if (cb.forkNodeIdx === -1) {
+                forkIdx = 0;
+            } else {
+                forkIdx = -1;
+                if (cb.forkFrameIndex != null) {
+                    for (var j = nodes.length - 1; j >= 0; j--) {
+                        if (nodes[j].frameIndex <= cb.forkFrameIndex) {
+                            forkIdx = j; break;
+                        }
+                    }
+                }
+                if (forkIdx === -1) forkIdx = Math.max(0, nodes.length - 1);
+            }
+            if (!forkAt[forkIdx]) forkAt[forkIdx] = [];
+            forkAt[forkIdx].push({ branch: cb, skipCount: 0 });
+        });
+
+        return buildNodeChainWithEnd(branch, nodes, startIdx, forkAt, showArrowPrefix);
+    }
+
+    var ARROW = '<span class="tg-arrow"><svg width="24" height="14" viewBox="0 0 28 14"><path d="M2 7h20m0 0l-5-4m5 4l-5 4" fill="none" stroke="#B0B5C2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+
+    function buildNodeChain(branch, nodes, idx, forkAt, showArrowPrefix) {
+        if (idx >= nodes.length) {
+            // No more parent nodes, but there might be child forks at this index
+            var trailingForks = forkAt[idx] || [];
+            if (trailingForks.length === 0) return '';
+            var html = '';
+            trailingForks.forEach(function(item) {
+                html += renderBranchSubtree(item.branch, item.skipCount, false);
+            });
+            return html;
+        }
+
+        // Render a flat horizontal chain of nodes that have no forks.
+        // When we hit a fork point (or the end), split into .tg-children.
+        var html = '<div class="tg-branch">';
+        var i = idx;
+        var first = true;
+        while (i < nodes.length) {
+            var forksHere = forkAt[i] || [];
+            // Arrow before node (between consecutive nodes, or at branch start)
+            if (first && showArrowPrefix) {
+                html += ARROW;
+            } else if (!first) {
+                if (needsTurnSeparator(nodes, i)) {
+                    html += ARROW + TURN_SEPARATOR;
+                }
+                html += ARROW;
+            }
+            first = false;
+            html += renderNodeEl(nodes[i], branch);
+
+            var hasMore = i + 1 < nodes.length;
+            if (forksHere.length > 0) {
+                // Fork point: CSS tree connectors handle the visual connection
+                // from this node to each child branch.
+                // If the continuation crosses a turn boundary, render the
+                // separator BEFORE the fork so it is shared by all branches.
+                if (hasMore && needsTurnSeparator(nodes, i + 1)) {
+                    html += ARROW + TURN_SEPARATOR;
+                }
+                var childrenHtml = '';
+                if (hasMore) {
+                    childrenHtml += buildNodeChain(branch, nodes, i + 1, forkAt, false);
+                }
+                forksHere.forEach(function(item) {
+                    childrenHtml += renderBranchSubtree(item.branch, item.skipCount, false);
+                });
+                if (childrenHtml) {
+                    html += '<span class="tg-fork-line"></span>';
+                    html += '<div class="tg-children">' + childrenHtml + '</div>';
+                }
+                break; // rest of chain is handled recursively inside .tg-children
+            }
+            if (!hasMore) break;
+            // No fork here and more nodes follow: continue flat chain
+            i++;
+        }
+        html += '</div>';
+        return html;
+    }
+
+    // Like buildNodeChain but appends an End node when the chain has no children/forks.
+    function buildNodeChainWithEnd(branch, nodes, idx, forkAt, showArrowPrefix) {
+        if (idx >= nodes.length) {
+            var trailingForks = forkAt[idx] || [];
+            if (trailingForks.length === 0) {
+                // Empty branch with no forks → just an End node alone
+                return '<div class="tg-branch">' + (showArrowPrefix ? ARROW : '') + terminalNodeFor(branch) + '</div>';
+            }
+            var html = '';
+            trailingForks.forEach(function(item) {
+                html += renderBranchSubtreeWithEnd(item.branch, item.skipCount, false);
+            });
+            return html;
+        }
+
+        var html = '<div class="tg-branch">';
+        var i = idx;
+        var first = true;
+        while (i < nodes.length) {
+            var forksHere = forkAt[i] || [];
+            if (first && showArrowPrefix) {
+                html += ARROW;
+            } else if (!first) {
+                if (needsTurnSeparator(nodes, i)) {
+                    html += ARROW + TURN_SEPARATOR;
+                }
+                html += ARROW;
+            }
+            first = false;
+            html += renderNodeEl(nodes[i], branch);
+
+            var hasMore = i + 1 < nodes.length;
+            if (forksHere.length > 0) {
+                // If the continuation crosses a turn boundary, render the
+                // separator BEFORE the fork so it is shared by all branches.
+                if (hasMore && needsTurnSeparator(nodes, i + 1)) {
+                    html += ARROW + TURN_SEPARATOR;
+                }
+                var childrenHtml = '';
+                if (hasMore) {
+                    childrenHtml += buildNodeChainWithEnd(branch, nodes, i + 1, forkAt, false);
+                } else {
+                    // This branch's chain ends here but it has child forks → terminate this
+                    // branch's own line with an End node alongside the child branches
+                    childrenHtml += '<div class="tg-branch">' + ARROW + terminalNodeFor(branch) + '</div>';
+                }
+                forksHere.forEach(function(item) {
+                    childrenHtml += renderBranchSubtreeWithEnd(item.branch, item.skipCount, false);
+                });
+                if (childrenHtml) {
+                    html += '<span class="tg-fork-line"></span>';
+                    html += '<div class="tg-children">' + childrenHtml + '</div>';
+                }
+                break;
+            }
+            if (!hasMore) {
+                // Leaf: append End node
+                html += ARROW + terminalNodeFor(branch);
+                break;
+            }
+            i++;
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function renderNodeEl(n, branch) {
+        var ab = getActiveBranch();
+        var isActive = ab && ab.id === branch.id;
+        var isDisabled = llm_is_work && !isActive;
+        var isReplaying = replayHighlightIds.has(n.node_id);
+        var iconSrc = (n.node_type === 'llm' || n.node_type === 'model')
+            ? './image/org_model.svg' : './image/org_tool.svg';
+        var rerunBtn = (!llm_is_work && (n.node_type === 'llm' || n.node_type === 'model' || n.node_type === 'tool'))
+            ? '<button type="button" class="tg-node-rerun" title="ReRun from this node"'
+                + ' data-node-id="' + escapeHtml(n.node_id) + '">'
+                + '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">'
+                + '<polygon points="2,1 9,5 2,9" fill="currentColor"/></svg></button>'
+            : '';
+        var cls = 'tg-node' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '') + (isReplaying ? ' replaying' : '');
+        return '<div class="' + cls + '"'
+            + ' data-trace-id="' + escapeHtml(n.trace_id) + '"'
+            + ' data-node-id="' + escapeHtml(n.node_id) + '"'
+            + ' data-branch-id="' + escapeHtml(branch.id) + '"'
+            + ' title="' + escapeHtml(n.callee) + ' (' + escapeHtml(n.node_id) + ')">'
+            + (n.caller ? '<div class="tg-node-caller">' + escapeHtml(n.caller) + '</div>' : '')
+            + '<div class="tg-node-main">'
+            + '<img class="tg-node-icon" src="' + iconSrc + '" alt="" />'
+            + '<span class="tg-node-callee">' + escapeHtml(n.callee) + '</span>'
+            + rerunBtn
+            + '</div></div>';
+    }
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    // Click a Trace Graph node → switch to the branch that owns it.
+    $('#tracegraph-body').on('click', '.tg-node', function (e) {
+        // Ignore clicks on the ReRun button (handled separately)
+        if ($(e.target).closest('.tg-node-rerun').length) return;
+        var bid = $(this).attr('data-branch-id');
+        if (bid) {
+            switchBranch(bid);
+        }
+    });
+
+    // Click the ReRun button inside a Trace Graph node → restart from that node.
+    $('#tracegraph-body').on('click', '.tg-node-rerun', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var nodeId = $(this).attr('data-node-id');
+        if (!nodeId || llm_is_work) return;
+        restart_from_node(nodeId, undefined);
+    });
+
+    // Set traceId on active branch and re-render the graph.
+    function traceGraphSetTrace(trace_id) {
+        if (!trace_id) return;
+        var ab = getActiveBranch();
+        if (ab) {
+            ab.traceId = trace_id;
+            renderTraceGraph();
+        }
+    }
+
+    // Backwards-compat shim kept for old call sites.
+    function attach_trace_chain(li, trace_id) {
+        traceGraphSetTrace(trace_id);
+    }
+
     function send_msg_to_chatbox(msg, name = "user", at = "", scroll_top = true, trace_id = "") {
         var li = $("<li>");
         if (name === "user") {
@@ -1074,15 +1905,22 @@
                 li.append($('<span class="1">').html(argentNameHtml + " " + msg));
                 argentName = '';
                 renderCharlist();
-            } else {
+            } else if (name === "user") {
                 li.append($('<span class="1">').text(msg));
+            } else {
+                li.append($('<span class="1 markdown-body">').html(marked.marked(msg)));
             }
         } else {
-            li.append($('<span>').append($("<section>").css("color", agentImgMap[agent_id_dict[at]]?.color).text("@" + at)).append(msg));
+            if (name === "user") {
+                li.append($('<span>').append($("<section>").css("color", agentImgMap[agent_id_dict[at]]?.color).text("@" + at)).append(msg));
+            } else {
+                li.append($('<span class="markdown-body">').append($("<section>").css("color", agentImgMap[agent_id_dict[at]]?.color).text("@" + at)).append(marked.marked(msg)));
+            }
         }
 
         if (name === master_agent_name && at === "") {
             attach_rating_ui(li, trace_id);
+            attach_trace_chain(li, trace_id);
         }
 
         if (name === "user" && filesToUpload.length > 0) {
@@ -1090,15 +1928,20 @@
             fileList.className = 'file-list-chat';
             filesToUpload.forEach(_file => {
                 var fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                fileItem.innerHTML = `
+                if (_file.objectUrl) {
+                    fileItem.className = 'file-item-image-chat';
+                    fileItem.innerHTML = `<img class="file-thumb" src="${_file.objectUrl}" alt="${_file.name}" />`;
+                } else {
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
                             <div class="file-icon">
-                                <img src="./image/video.svg" alt=""></img>
+                                <img src="./image/video.svg" alt="" />
                             </div>
                             <div class="file-info">
                                 <div class="file-name">${_file.name}</div>
-                                <div class="file-size">${_file.size}KB</div>
-                            </div>`
+                                <div class="file-size">${_file.size}</div>
+                            </div>`;
+                }
                 fileList.append(fileItem);
             })
             li.append(fileList);
@@ -1136,6 +1979,9 @@
             if (!message) {
                 return
             }
+            // Re-render the trace graph (traceId will be set when SSE events arrive).
+            traceGraphTurnIndex++;
+            renderTraceGraph();
             let query_val = message;
             try {
                 const parsed = JSON.parse(message.trim());
@@ -1153,7 +1999,12 @@
             var payload = {
                 "from_trace_id": from_trace_id,
                 "query": message,
-                "shared_data": {"extra": "extra argument"},
+            }
+            if (Object.keys(chatSharedData).length > 0) {
+                payload["shared_data"] = chatSharedData;
+            }
+            if (Object.keys(chatGroupData).length > 0) {
+                payload["group_data"] = chatGroupData;
             }
 
             if (filesToUpload.length) {
@@ -1200,13 +2051,16 @@
             });
             // ws.send(JSON.stringify(payload));  // 发送消息
             input.value = '';
+            input.style.height = 'auto';
             var msg = {"role": "user", "content": message};
             chats.push(msg);
-            let history = JSON.parse(JSON.stringify(historys[historys.length - 1]));
+            var frames = getActiveFrames();
+            let history = JSON.parse(JSON.stringify(frames[frames.length - 1] || {}));
             history["answer"] = JSON.parse(JSON.stringify(chats));
-            historys.push(history);
-            show_id += 1;
+            frames.push(history);
+            show_id = frames.length - 1;
             show_step();
+            appendTimelineFrame(history, frames.length - 1);
             send_msg_to_chatbox(message);
             llm_is_work = true;
             $("#message_send").html(`
@@ -1215,11 +2069,211 @@
         } else {
             eventSource.close();
             llm_is_work = false;
+            traceGraphClearReplayHighlights();
+            renderTraceGraph();
             plan_dict = {};
             $("#message_send").html(`
                 <img src="./image/up_arrow.svg" alt="" />
             `);
         }
+    }
+
+    // 从中间节点重跑推理（利用 restart_node_id 后端能力）
+    // Creates a new branch forking from the current branch at the current show_id.
+    function restart_from_node(nodeId, editedOutput) {
+        if (llm_is_work) return;
+
+        // Clear any leftover replay highlights from a prior ReRun
+        traceGraphClearReplayHighlights();
+
+        var parentBranch = getActiveBranch();
+        var forkIndex = show_id;
+
+        // Restore chat state from the fork point
+        var forkFrame = parentBranch ? parentBranch.frames[forkIndex] : null;
+        if (forkFrame) {
+            chats = JSON.parse(JSON.stringify(forkFrame.answer || []));
+        }
+        plan_dict = {};
+        nodeContentMap = {};
+
+        // Create a new branch
+        var newBranch = createBranch(parentBranch ? parentBranch.id : null, forkIndex);
+
+        // Compute fork-node index for the Trace Graph.
+        //
+        // We need to find which branch OWNS the node being rerun, so the
+        // new branch forks from the correct level.  The nodeId from the
+        // ReRun button may be a replayed/cached copy with a different ID
+        // than the original.  We resolve it via nodeCopiedIdMap and also
+        // match against copied_node_id fields stored in traceGraphData.
+        //
+        // Strategy: build the full ancestor chain from root → current
+        // branch, then search top-down (root first).  Finding the match
+        // in the HIGHEST ancestor ensures the fork is placed at the
+        // correct level.  If the ancestor chain has no match, fall back
+        // to searching ALL branches.
+
+        // 1. Resolve nodeId via copied-id chain
+        var resolvedId = nodeId;
+        var _seen = {};
+        while (nodeCopiedIdMap[resolvedId] && !_seen[resolvedId]) {
+            _seen[resolvedId] = true;
+            resolvedId = nodeCopiedIdMap[resolvedId];
+        }
+        var searchIds = [nodeId];
+        if (resolvedId !== nodeId) searchIds.push(resolvedId);
+        // Also add reverse lookups: find any traceGraphData node whose
+        // copied_node_id === nodeId, and include its node_id as a search
+        // candidate (handles the case where the button ID is an original
+        // but the traceGraphData stores the copy, or vice versa).
+        for (var _bid in traceGraphData) {
+            var _arr = traceGraphData[_bid];
+            for (var _j = 0; _j < _arr.length; _j++) {
+                if (_arr[_j].copied_node_id) {
+                    if (searchIds.indexOf(_arr[_j].node_id) === -1
+                        && searchIds.indexOf(_arr[_j].copied_node_id) !== -1) {
+                        searchIds.push(_arr[_j].node_id);
+                    }
+                    if (searchIds.indexOf(_arr[_j].copied_node_id) === -1
+                        && searchIds.indexOf(_arr[_j].node_id) !== -1) {
+                        searchIds.push(_arr[_j].copied_node_id);
+                    }
+                }
+            }
+        }
+
+        // 2. Build ancestor chain from root → parentBranch
+        var ancestorChain = [];
+        var cur = parentBranch;
+        while (cur) {
+            ancestorChain.unshift(cur);  // prepend → root first
+            cur = cur.parentBranchId
+                ? branches.find(function(b) { return b.id === cur.parentBranchId; })
+                : null;
+        }
+
+        // Helper: search a branch's nodes for any of the searchIds
+        function findNodeInBranch(branch) {
+            var nodes = traceGraphData[branch.id] || [];
+            for (var k = 0; k < nodes.length; k++) {
+                var nd = nodes[k];
+                for (var s = 0; s < searchIds.length; s++) {
+                    if (nd.node_id === searchIds[s] || nd.copied_node_id === searchIds[s]) {
+                        return k;
+                    }
+                }
+            }
+            return -1;
+        }
+
+        // 3. Search ancestor chain top-down (root first)
+        var ownerBranch = null;
+        var restartIdx = -1;
+        for (var _a = 0; _a < ancestorChain.length; _a++) {
+            var idx = findNodeInBranch(ancestorChain[_a]);
+            if (idx !== -1) {
+                ownerBranch = ancestorChain[_a];
+                restartIdx = idx;
+                break;              // found in the highest ancestor – stop
+            }
+        }
+
+        // 4. Fallback: search ALL branches (handles non-ancestor owners)
+        if (restartIdx === -1) {
+            for (var _b = 0; _b < branches.length; _b++) {
+                var idx2 = findNodeInBranch(branches[_b]);
+                if (idx2 !== -1) {
+                    ownerBranch = branches[_b];
+                    restartIdx = idx2;
+                    break;
+                }
+            }
+        }
+
+        // 5. Re-parent the new branch onto the owner of the rerun node
+        if (ownerBranch) {
+            newBranch.parentBranchId = ownerBranch.id;
+        }
+        var fni;
+        if (restartIdx > 0) {
+            fni = restartIdx - 1;
+        } else if (restartIdx === 0) {
+            // Rerunning the very first node of the owner branch: bubble up
+            // to the owner's parent and fork from the same point, so the new
+            // branch becomes a sibling of the owner rather than a virtual root.
+            // e.g. owner forks from grandparent at node C → new branch also
+            // forks from grandparent at node C → they appear as siblings.
+            if (ownerBranch && ownerBranch.parentBranchId != null && ownerBranch.forkNodeIdx != null) {
+                newBranch.parentBranchId = ownerBranch.parentBranchId;
+                fni = ownerBranch.forkNodeIdx;
+            } else {
+                // Owner is a root branch — fork before Start
+                fni = -1;
+            }
+        } else {
+            // Node not found anywhere — attach at end of parent as fallback
+            var fallbackNodes = parentBranch ? (traceGraphData[parentBranch.id] || []) : [];
+            fni = Math.max(0, fallbackNodes.length - 1);
+        }
+        newBranch.forkNodeIdx = fni;
+        console.log('[TraceGraph] fork:', newBranch.id,
+            'parent:', newBranch.parentBranchId,
+            'restartNodeId:', nodeId,
+            'searchIds:', searchIds,
+            'ownerBranch:', ownerBranch ? ownerBranch.id : null,
+            'restartIdx:', restartIdx,
+            'forkNodeIdx:', fni);
+
+        // Re-render trace graph to show the new branch
+        renderTraceGraph();
+
+        var payload = {
+            "restart_node_id": nodeId,
+        };
+        if (editedOutput !== undefined && editedOutput !== null) {
+            payload["restart_node_output"] = editedOutput;
+        }
+
+        // 使用与 send_message 相同的 EventSource GET 模式
+        eventSource = new EventSource('../sse/chat?payload=' + encodeURIComponent(JSON.stringify(payload)));
+        eventSource.onmessage = (event) => {
+            message_handler(event.data);
+        };
+        eventSource.onerror = (e) => {
+            console.log('SSE restart connection error', e);
+            $("#message_send").html('<img src="./image/up_arrow.svg" alt="" />');
+            eventSource.close();
+            llm_is_work = false;
+            traceGraphClearReplayHighlights();
+            renderTraceGraph();
+        };
+        eventSource.addEventListener("close", (event) => {
+            console.log("Restart complete, closing SSE:", event.data);
+            $("#message_send").html('<img src="./image/up_arrow.svg" alt="" />');
+            eventSource.close();
+            llm_is_work = false;
+            traceGraphClearReplayHighlights();
+            renderTraceGraph();
+        });
+
+        var hint = (editedOutput !== undefined && editedOutput !== null)
+            ? "[Restart with edited output] node_id: " + nodeId
+            : "[Restart from node] node_id: " + nodeId;
+        chats.push({"role": "user", "content": hint});
+        var frames = getActiveFrames();
+        // Seed the new branch with a hint frame
+        var seedFrame = forkFrame
+            ? JSON.parse(JSON.stringify(forkFrame))
+            : {};
+        seedFrame["answer"] = JSON.parse(JSON.stringify(chats));
+        frames.push(seedFrame);
+        show_id = frames.length - 1;
+        show_step();
+        renderTimeline(); // full rebuild to show the new branch in the selector
+        send_msg_to_chatbox(hint);
+        llm_is_work = true;
+        $("#message_send").html('<img src="./image/stop-circle.svg" alt="" />');
     }
 
     function show(jm) {
@@ -1290,16 +2344,6 @@
                         markdownInput = JSON.stringify(markdownInput, null, 2);
                     }
 
-                    // if (agent_log["plannings"][i].type == 'observation') {
-                    //     div_right
-                    //         .append($("<div class='observation-head'>")
-                    //         .text(agent_log["plannings"][i].callee));
-
-                    //     div_right.append($("<div class='observation-output-head'>").text('Output'));
-                    //     var temp_div = $("<div>").addClass("observation");
-                    //     temp_div.html(marked.marked(markdownInput));
-                    //     div_right.append(temp_div);
-                    // } else {
                         if (agent_log["plannings"][i].type == 'observation') {
                             div_right
                                 .append($("<div class='observation-head'>")
@@ -1309,20 +2353,51 @@
                                 .append($("<div class='plannings-head'>")
                                 .text(agent_log["plannings"][i].callee));
                         }
-                            
-                        div_right
-                            .append($("<div class='plannings-output-head'>")
-                            .text('Output'));
 
-                        var a_tag = $("<a class='plannings-link'>")
-                            .attr("href", "./node.html?id=" + agent_log["plannings"][i].node_id).attr("target", "_blank")
-                            .css("text-decoration", "none")
-                            .css("color", "black");
+                        // Output header with toggle group and detail link
+                        var outputHead = $("<div class='plannings-output-head'>");
+                        outputHead.append($("<span>").text('Output'));
+                        var toggleGroup = $("<span class='output-toggle-group'>");
+                        toggleGroup.append($("<button class='output-toggle-btn active' onclick='toggleOutputView(this, \"markdown\"); event.stopPropagation();'>").text('Markdown'));
+                        toggleGroup.append($("<button class='output-toggle-btn' onclick='toggleOutputView(this, \"raw\"); event.stopPropagation();'>").text('Raw'));
+                        toggleGroup.append($("<a class='output-detail-btn' title='View detail' onclick='event.stopPropagation();'>").attr("href", "./node.html?id=" + agent_log["plannings"][i].node_id).attr("target", "_blank").html('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'));
+                        outputHead.append(toggleGroup);
+                        div_right.append(outputHead);
+
+                        // Wrapper containing both markdown and raw views
+                        var outputWrapper = $("<div class='plannings-output-wrapper'>");
+
+                        var mdLink = $("<div class='plannings-link planning-markdown'>");
                         var temp_div = $("<div>").addClass("planning");
                         temp_div.html(marked.marked(markdownInput));
-                        a_tag.append(temp_div);
-                        div_right.append(a_tag);
-                    // }
+                        mdLink.append(temp_div);
+                        outputWrapper.append(mdLink);
+
+                        // Raw view (hidden by default), same nested structure as markdown
+                        var rawLink = $("<div class='plannings-link planning-raw'>").hide();
+                        var rawInner = $("<div class='planning'>").css({"white-space": "pre-wrap", "word-wrap": "break-word", "font-family": "'Menlo','Monaco','Courier New',monospace", "font-size": "12px"}).text(markdownInput);
+                        rawLink.append(rawInner);
+                        outputWrapper.append(rawLink);
+
+                        div_right.append(outputWrapper);
+
+                        // 节点操作按钮：仅 tool 和 llm 类型支持重跑
+                        var curNodeId = agent_log["plannings"][i].node_id;
+                        var curCalleeCategory = agent_log["plannings"][i].callee_category || "";
+                        nodeContentMap[curNodeId] = markdownInput;
+                        if (curCalleeCategory === "llm" || curCalleeCategory === "tool") {
+                            var node_actions = $("<div class='node-actions'>")
+                                .attr("data-node-id", curNodeId);
+                            node_actions.append(
+                                $("<button type='button' class='btn-restart' title='Restart from this node'>")
+                                    .html("<span class='node-action-icon'>&#9654;</span> ReRun")
+                            );
+                            node_actions.append(
+                                $("<button type='button' class='btn-edit-restart' title='Edit output and restart'>")
+                                    .html("<span class='node-action-icon'>&#9998;</span> Edit & ReRun")
+                            );
+                            div_right.append(node_actions);
+                        }
                 }
             }
 
@@ -1353,6 +2428,7 @@
                 }
             });
             node_state = JSON.parse(JSON.stringify(new_node_state));
+            if (typeof updateMinimap === 'function') updateMinimap();
         }
     }
 
@@ -1369,6 +2445,8 @@
             }
         }
 
+        if (aimDom === null) return;
+
         if (aimDom.hasClass("collapse")) {
             aimDom.removeClass("collapse");
             aimDom.next().css({
@@ -1379,6 +2457,45 @@
             aimDom.next().css({
                 display: "none",
             })
+        }
+    });
+
+    // "从此重跑" 按钮事件
+    $("#agent_log").on("click", ".btn-restart", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var nodeId = $(this).closest(".node-actions").attr("data-node-id");
+        restart_from_node(nodeId, undefined);
+    });
+
+    // "编辑并重跑" 按钮事件 — 打开模态框
+    $("#agent_log").on("click", ".btn-edit-restart", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var actions = $(this).closest(".node-actions");
+        var nodeId = actions.attr("data-node-id");
+        var content = nodeContentMap[nodeId] || "";
+        $("#restart-output-editor").val(content);
+        $("#restart-modal").data("node-id", nodeId).show();
+    });
+
+    // 模态框确认
+    $(document).on("click", "#restart-modal-confirm", function () {
+        var nodeId = $("#restart-modal").data("node-id");
+        var edited = $("#restart-output-editor").val();
+        $("#restart-modal").hide();
+        restart_from_node(nodeId, edited);
+    });
+
+    // 模态框关闭 / 取消
+    $(document).on("click", "#restart-modal-cancel, .restart-modal-close", function () {
+        $("#restart-modal").hide();
+    });
+
+    // 点击模态框遮罩层关闭
+    $(document).on("click", ".restart-modal-overlay", function (e) {
+        if ($(e.target).hasClass("restart-modal-overlay")) {
+            $(this).hide();
         }
     });
 
@@ -1397,14 +2514,15 @@
             </div>
         `);
         show_step();
-        show_by_history(historys[show_id]);
+        var f = getActiveFrames();
+        if (f.length > 0) show_by_history(f[show_id]);
     }
 
     function back() {
         if (show_id > 0) {
             show_id -= 1;
             show_step();
-            show_by_history(historys[show_id]);
+            show_by_history(getActiveFrames()[show_id]);
         }
     }
 
@@ -1412,17 +2530,19 @@
         let status = $("#play")[0].dataset.status;
 
         if (status == "play") {
-            if (show_id < historys.length - 1) {
+            var f = getActiveFrames();
+            if (show_id < f.length - 1) {
                 $("#play").html(`
                         <img src="./image/pause.svg" alt="" />
                     `);
                 $("#play")[0].setAttribute('data-status', 'pause');
 
                 interval_id = setInterval(function () {
-                    if (show_id < historys.length - 1) {
+                    var f = getActiveFrames();
+                    if (show_id < f.length - 1) {
                         show_id += 1;
                         show_step();
-                        show_by_history(historys[show_id]);
+                        show_by_history(f[show_id]);
                     } else {
                         clearInterval(interval_id);
                         $("#play").html(`
@@ -1442,17 +2562,19 @@
     }
 
     function next() {
-        if (show_id < historys.length - 1) {
+        var f = getActiveFrames();
+        if (show_id < f.length - 1) {
             show_id += 1;
             show_step();
-            show_by_history(historys[show_id]);
+            show_by_history(f[show_id]);
         }
     }
 
     function end() {
-        show_id = historys.length - 1;
+        var f = getActiveFrames();
+        show_id = Math.max(0, f.length - 1);
         show_step();
-        show_by_history(historys[show_id]);
+        if (f.length > 0) show_by_history(f[show_id]);
     }
 
     window.onbeforeunload = function () {
@@ -1463,7 +2585,7 @@
 
     function focus_agent(eid) {
         var target_div = $("#" + eid);
-        var window_div = div_org;
+        var window_div = $(".center-scroll");
 
         // 1. 计算target_div相对于window_div的坐标
         var td_offset = target_div.offset() || {};
@@ -1520,7 +2642,7 @@
             type: "POST",
             url: "../save_script",
             data: JSON.stringify({
-                contents: historys,
+                contents: getActiveFrames(),
                 name: now_script_id.replace('.json', '')
             }),
             contentType: "application/json; charset=utf-8",
@@ -1556,7 +2678,13 @@
                 item_id: script_id
             },
             success: function (response) {
-                historys = response.data.contents
+                // Wrap loaded flat list into a single root branch
+                branches = [];
+                branchCounter = 0;
+                activeBranchId = null;
+                traceGraphReset();
+                var rootBranch = createBranch(null, null);
+                rootBranch.frames = response.data.contents;
                 clearInterval(interval_id);
 
                 $("#play").html(`
@@ -1566,6 +2694,8 @@
 
                 init_organization();
                 begin();
+                renderTimeline();
+                renderTraceGraph();
                 no_change_history = false;
                 now_script_id = script_id;
                 renderHeaderTitle(now_script_id)
@@ -1608,21 +2738,419 @@
     }
 
     function show_step() {
-        $("#step").text((show_id + 1) + " / " + historys.length);
+        $("#step").text((show_id + 1) + " / " + getActiveFrames().length);
+        updateTimelineActive();
+    }
+
+    // ========== Timeline Functions ==========
+
+    function extractFrameInfo(history, index) {
+        var info = { index: index, actionType: '', label: '', detail: '', agentName: '' };
+        var agentLog = history.agent_log || {};
+        var answer = history.answer || [];
+        info.agentName = agentLog.agent_name || '';
+
+        if (index === 0) {
+            info.actionType = 'init';
+            info.label = 'Start';
+            info.detail = 'Initial state';
+        } else if (answer.length > 0 && answer[answer.length - 1].role === 'user') {
+            info.actionType = 'user';
+            info.label = 'User';
+            var msg = answer[answer.length - 1].content || '';
+            info.detail = msg.length > 30 ? msg.substring(0, 28) + '...' : msg;
+        } else if (agentLog.plannings && agentLog.plannings.length > 0) {
+            var last = agentLog.plannings[agentLog.plannings.length - 1];
+            if (last.type === 'observation') {
+                info.actionType = 'observation';
+                info.label = last.callee || info.agentName || 'Tool';
+            } else {
+                info.actionType = 'llm';
+                info.label = info.agentName || 'LLM';
+            }
+            info.detail = agentLog.job_desc || '';
+            if (info.detail.length > 30) info.detail = info.detail.substring(0, 28) + '...';
+        } else {
+            info.actionType = 'agent';
+            info.label = info.agentName || ('Frame ' + (index + 1));
+            info.detail = agentLog.job_desc || '';
+            if (info.detail.length > 30) info.detail = info.detail.substring(0, 28) + '...';
+        }
+        return info;
+    }
+
+    function captureTreeThumbnail(toolCallState) {
+        var wrapper = document.getElementById('org-zoom-wrapper');
+        if (!wrapper) return '';
+        var nodes = wrapper.querySelectorAll('.item-template');
+        if (nodes.length === 0) return '';
+
+        // Apply highlights for this frame
+        nodes.forEach(function(node) {
+            node.classList.remove('select', 'pre-select');
+        });
+        if (toolCallState && typeof toolCallState === 'object') {
+            Object.entries(toolCallState).forEach(function(entry) {
+                var el = document.getElementById(entry[0]);
+                if (el) {
+                    if (entry[1] === 'red') el.classList.add('select');
+                    else if (entry[1] === 'yellow') el.classList.add('pre-select');
+                }
+            });
+        }
+
+        // Draw nodes on a small canvas
+        var canvas = document.createElement('canvas');
+        var cw = 120, ch = 80;
+        canvas.width = cw;
+        canvas.height = ch;
+        var ctx = canvas.getContext('2d');
+
+        var wr = wrapper.getBoundingClientRect();
+        var contentW = wrapper.scrollWidth;
+        var contentH = wrapper.scrollHeight;
+        if (contentW === 0 || contentH === 0) return '';
+
+        var scaleX = cw / contentW;
+        var scaleY = ch / contentH;
+        var scale = Math.min(scaleX, scaleY) * 0.9;
+        var offX = (cw - contentW * scale) / 2;
+        var offY = (ch - contentH * scale) / 2;
+
+        nodes.forEach(function(node) {
+            var r = node.getBoundingClientRect();
+            var nx = (r.left - wr.left) / orgZoomLevel;
+            var ny = (r.top - wr.top) / orgZoomLevel;
+            var nw = r.width / orgZoomLevel;
+            var nh = r.height / orgZoomLevel;
+
+            var x = offX + nx * scale;
+            var y = offY + ny * scale;
+            var w = nw * scale;
+            var h = nh * scale;
+
+            if (node.classList.contains('select')) {
+                ctx.fillStyle = '#155EEF';
+                ctx.strokeStyle = '#0E47C0';
+                ctx.lineWidth = 0.5;
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeRect(x, y, w, h);
+            } else if (node.classList.contains('pre-select')) {
+                ctx.fillStyle = '#C5D3E8';
+                ctx.strokeStyle = '#155EEF';
+                ctx.lineWidth = 1.5;
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeRect(x, y, w, h);
+            } else {
+                ctx.fillStyle = '#C5D3E8';
+                ctx.strokeStyle = '#93A8C9';
+                ctx.lineWidth = 0.5;
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeRect(x, y, w, h);
+            }
+        });
+
+        return canvas.toDataURL('image/png');
+    }
+
+    function createTimelineFrameEl(info, index) {
+        var frame = document.createElement('div');
+        frame.className = 'timeline-frame';
+        frame.setAttribute('data-frame-index', index);
+        if (index === show_id) frame.classList.add('active');
+        else if (index < show_id) frame.classList.add('visited');
+
+        if (info.thumbnail) {
+            var thumb = document.createElement('img');
+            thumb.className = 'timeline-thumb-img';
+            thumb.src = info.thumbnail;
+            thumb.draggable = false;
+            frame.appendChild(thumb);
+        }
+
+        var badge = document.createElement('div');
+        badge.className = 'timeline-thumb-badge';
+        badge.textContent = '#' + (index + 1);
+        frame.appendChild(badge);
+
+        frame.addEventListener('click', function() { jumpToFrame(index); });
+        return frame;
+    }
+
+    function renderTimeline() {
+        var track = document.getElementById('timeline-track');
+        if (!track) return;
+        track.innerHTML = '';
+
+        var wrapper = document.getElementById('org-zoom-wrapper');
+        var nodes = wrapper ? wrapper.querySelectorAll('.item-template') : [];
+        var canCapture = nodes.length > 0;
+
+        if (canCapture) {
+            // Save current highlight state
+            var savedState = {};
+            nodes.forEach(function(node) {
+                if (node.id) {
+                    if (node.classList.contains('select')) savedState[node.id] = 'select';
+                    else if (node.classList.contains('pre-select')) savedState[node.id] = 'pre-select';
+                }
+            });
+
+            var af = getActiveFrames();
+            for (var i = 0; i < af.length; i++) {
+                var info = extractFrameInfo(af[i], i);
+                info.thumbnail = captureTreeThumbnail(af[i].tool_call);
+                track.appendChild(createTimelineFrameEl(info, i));
+            }
+
+            // Restore original highlight state
+            nodes.forEach(function(node) {
+                node.classList.remove('select', 'pre-select');
+                if (node.id && savedState[node.id]) {
+                    node.classList.add(savedState[node.id]);
+                }
+            });
+            if (typeof updateMinimap === 'function') updateMinimap();
+        } else {
+            var af = getActiveFrames();
+            for (var i = 0; i < af.length; i++) {
+                var info = extractFrameInfo(af[i], i);
+                track.appendChild(createTimelineFrameEl(info, i));
+            }
+        }
+
+        renderBranchSelector();
+        scrollTimelineToActive();
+    }
+
+    function updateTimelineActive() {
+        var track = document.getElementById('timeline-track');
+        if (!track) return;
+        var frames = track.querySelectorAll('.timeline-frame');
+        for (var i = 0; i < frames.length; i++) {
+            frames[i].classList.remove('active', 'visited');
+            if (i === show_id) frames[i].classList.add('active');
+            else if (i < show_id) frames[i].classList.add('visited');
+        }
+        scrollTimelineToActive();
+    }
+
+    function appendTimelineFrame(history, index) {
+        var track = document.getElementById('timeline-track');
+        if (!track) return;
+        var info = extractFrameInfo(history, index);
+
+        // Capture current minimap canvas as thumbnail (tree is already in correct state)
+        if (typeof updateMinimap === 'function') updateMinimap();
+        var srcCanvas = document.getElementById('org-minimap-canvas');
+        if (srcCanvas && srcCanvas.width > 0) {
+            try { info.thumbnail = srcCanvas.toDataURL('image/png'); } catch(e) {}
+        }
+
+        track.appendChild(createTimelineFrameEl(info, index));
+        updateTimelineActive();
+    }
+
+    function jumpToFrame(index) {
+        var f = getActiveFrames();
+        if (index < 0 || index >= f.length) return;
+        show_id = index;
+        show_step();
+        show_by_history(f[show_id]);
+    }
+
+    function scrollTimelineToActive() {
+        var wrapper = document.getElementById('timeline-track-wrapper');
+        if (!wrapper) return;
+        var active = wrapper.querySelector('.timeline-frame.active');
+        if (!active) return;
+        var fl = active.offsetLeft;
+        var fw = active.offsetWidth;
+        var ww = wrapper.clientWidth;
+        var sl = wrapper.scrollLeft;
+        if (fl < sl || fl + fw > sl + ww) {
+            wrapper.scrollLeft = fl - (ww / 2) + (fw / 2);
+        }
+    }
+
+    function toggleTimeline() {
+        var section = document.getElementById('timeline-section');
+        if (!section) return;
+        section.classList.toggle('collapsed');
+        var isCollapsed = section.classList.contains('collapsed');
+        document.body.classList.toggle('timeline-hidden', isCollapsed);
+    }
+
+    function toggleTraceGraph() {
+        var section = document.getElementById('tracegraph-section');
+        if (!section) return;
+        section.classList.toggle('collapsed');
+        var isCollapsed = section.classList.contains('collapsed');
+        document.body.classList.toggle('tracegraph-hidden', isCollapsed);
+        // Clear inline height set by drag resize so CSS collapse rules take effect
+        if (isCollapsed) {
+            var body = document.getElementById('tracegraph-body');
+            if (body) body.style.height = '';
+        }
+    }
+
+    // ── Trace Graph resize handle ──
+    (function () {
+        var handle = document.getElementById('tracegraph-resize-handle');
+        var body = document.getElementById('tracegraph-body');
+        if (!handle || !body) return;
+        var dragging = false;
+        var startY, startH;
+
+        handle.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            dragging = true;
+            startY = e.clientY;
+            startH = body.offsetHeight;
+            document.body.style.cursor = 'ns-resize';
+            document.body.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!dragging) return;
+            var maxH = window.innerHeight * 0.5;
+            var newH = Math.max(40, Math.min(maxH, startH + (e.clientY - startY)));
+            body.style.height = newH + 'px';
+        });
+
+        document.addEventListener('mouseup', function () {
+            if (!dragging) return;
+            dragging = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        });
+    })();
+
+    // ── JSON Editor for shared_data / group_data ──
+    function toggleJsonEditor() {
+        var panel = $('#json_editor_panel');
+        if (panel.is(':visible')) {
+            panel.hide();
+        } else {
+            $('#json_shared_data').val(JSON.stringify(chatSharedData, null, 2));
+            $('#json_group_data').val(JSON.stringify(chatGroupData, null, 2));
+            $('#json_shared_data_error').text('');
+            $('#json_group_data_error').text('');
+            panel.show();
+        }
+    }
+
+    function applyJsonEditor() {
+        var sharedText = $('#json_shared_data').val().trim();
+        var groupText = $('#json_group_data').val().trim();
+        var hasError = false;
+
+        // Parse shared_data
+        try {
+            chatSharedData = sharedText ? JSON.parse(sharedText) : {};
+            $('#json_shared_data_error').text('');
+        } catch (e) {
+            $('#json_shared_data_error').text('Invalid JSON: ' + e.message);
+            hasError = true;
+        }
+
+        // Parse group_data
+        try {
+            chatGroupData = groupText ? JSON.parse(groupText) : {};
+            $('#json_group_data_error').text('');
+        } catch (e) {
+            $('#json_group_data_error').text('Invalid JSON: ' + e.message);
+            hasError = true;
+        }
+
+        if (!hasError) {
+            $('#json_editor_panel').hide();
+        }
+    }
+
+    function clearJsonEditor() {
+        chatSharedData = {};
+        chatGroupData = {};
+        $('#json_shared_data').val('{}');
+        $('#json_group_data').val('{}');
+        $('#json_shared_data_error').text('');
+        $('#json_group_data_error').text('');
+    }
+
+    function cancelJsonEditor() {
+        $('#json_editor_panel').hide();
     }
 
     // 关闭最右侧对话框
     function closeRight() {
         $('#rightId').css('display', 'none');
+        $('#rightResizeHandle').css('display', 'none');
         $('#message_group').html('<img src="./image/group-vector-active.svg" alt=""/>')
     }
 
     function openRight() {
         if ($('#rightId').css('display') == 'none') {
             $('#message_group').html('<img src="./image/group-vector-default.svg" alt=""/>')
-            $('#rightId').css('display', 'block');    
+            $('#rightId').css('display', 'block');
+            $('#rightResizeHandle').css('display', 'block');
         }
     }
+
+    // ── Right panel per-output view toggle (markdown / raw) ──
+    function toggleOutputView(btn, mode) {
+        var group = $(btn).closest('.output-toggle-group');
+        group.find('.output-toggle-btn').removeClass('active');
+        $(btn).addClass('active');
+
+        var wrapper = $(btn).closest('.plannings-output-head').next('.plannings-output-wrapper');
+        var mdDiv = wrapper.find('.planning-markdown');
+        var rawDiv = wrapper.find('.planning-raw');
+        if (mode === 'raw') {
+            mdDiv.hide();
+            rawDiv.show();
+        } else {
+            rawDiv.hide();
+            mdDiv.show();
+        }
+    }
+
+    // ── Right panel resize handle ──
+    (function () {
+        var handle = document.getElementById('rightResizeHandle');
+        var rightPanel = document.getElementById('rightId');
+        var dragging = false;
+        var startX, startWidth;
+
+        handle.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            dragging = true;
+            startX = e.clientX;
+            startWidth = rightPanel.offsetWidth;
+            handle.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!dragging) return;
+            // Use mouse position relative to container's right edge to compute max width.
+            // This guarantees the right panel can never extend past the viewport.
+            var containerRect = rightPanel.parentElement.getBoundingClientRect();
+            var rightMargin = 20;
+            var maxFromEdge = containerRect.right - e.clientX - handle.offsetWidth - rightMargin;
+            var newWidth = startWidth - (e.clientX - startX);
+            newWidth = Math.max(200, Math.min(newWidth, maxFromEdge));
+            rightPanel.style.flex = '0 0 ' + newWidth + 'px';
+        });
+
+        document.addEventListener('mouseup', function () {
+            if (!dragging) return;
+            dragging = false;
+            handle.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        });
+    })();
 
 
     var _cascaderOptions = [
@@ -1670,7 +3198,9 @@
 
                 if (selectedValues[0] === 'New') {
                     // 清空选项
-                    historys = [];
+                    branches = [];
+                    branchCounter = 0;
+                    activeBranchId = null;
                     now_script_id = '';
                     window.location.reload();
                 }
@@ -1680,10 +3210,11 @@
                 }
 
                 if (selectedValues[0] === 'Export') {
-                    if (!historys.length) {
+                    var _exportFrames = getActiveFrames();
+                    if (!_exportFrames.length) {
                         return
                     }
-                    var jsonData = JSON.stringify(historys, null, 2);
+                    var jsonData = JSON.stringify(_exportFrames, null, 2);
                     // 创建下载链接
                     var blob = new Blob([jsonData], {type: 'application/json'});
                     var url = URL.createObjectURL(blob);
@@ -1721,7 +3252,13 @@
                 try {
                     var _options = JSON.parse(e.target.result);
                     if (Array.isArray(_options)) {
-                        historys = _options;
+                        // Wrap imported flat list into a single root branch
+                        branches = [];
+                        branchCounter = 0;
+                        activeBranchId = null;
+                        traceGraphReset();
+                        var rootBranch = createBranch(null, null);
+                        rootBranch.frames = _options;
                         clearInterval(interval_id);
 
                         $("#play").html(`
@@ -1731,6 +3268,8 @@
 
                         init_organization();
                         begin();
+                        renderTimeline();
+                        renderTraceGraph();
                         no_change_history = false;
                         // now_script_id = script_id;
 
@@ -1826,32 +3365,32 @@
     // 处理选择的文件
     function handleFiles(files) {
         for (var i = 0; i < files.length; i++) {
-            var file = files[i];
+            (function (file) {
+                // 检查文件类型
+                var fileType = getFileType(file.name);
+                if (!fileType) {
+                    showStatus('不支持的文件类型: ' + file.name, false);
+                    return;
+                }
 
-            // 检查文件类型
-            var fileType = getFileType(file.name);
-            if (!fileType) {
-                showStatus('不支持的文件类型: ' + file.name, false);
-                continue;
-            }
+                // 先上传，成功以后再放入缓存中
+                var isImage = ['jpg', 'png'].indexOf(fileType) !== -1;
 
-            // 先上传，成功以后再放入缓存中
-
-            uploadFile(file, (res) => {
-                // console.log('file', res);
-
-                // 添加到上传列表
-                filesToUpload.push({
-                    serverName: res.data.file_name,
-                    file: file,
-                    name: file.name,
-                    size: formatFileSize(file.size),
-                    type: fileType,
-                    progress: 0,
-                    status: 'pending' // pending, uploading, success, error
-                });
-                renderFileList();
-            })
+                uploadFile(file, (res) => {
+                    // 添加到上传列表
+                    filesToUpload.push({
+                        serverName: res.data.file_name,
+                        file: file,
+                        name: file.name,
+                        size: formatFileSize(file.size),
+                        type: fileType,
+                        objectUrl: isImage ? URL.createObjectURL(file) : null,
+                        progress: 0,
+                        status: 'pending' // pending, uploading, success, error
+                    });
+                    renderFileList();
+                })
+            })(files[i]);
         }
 
 
@@ -1895,6 +3434,10 @@
 
     function fileDelete(v) {
         // console.log('fileDelete', v);
+        var removed = filesToUpload.filter(item => item.name === v);
+        removed.forEach(function (item) {
+            if (item.objectUrl) URL.revokeObjectURL(item.objectUrl);
+        });
         filesToUpload = filesToUpload.filter(item => item.name !== v);
         renderFileList()
     }
@@ -1902,6 +3445,9 @@
     renderFileList()
 
     function fileReset() {
+        filesToUpload.forEach(function (item) {
+            if (item.objectUrl) URL.revokeObjectURL(item.objectUrl);
+        });
         filesToUpload = [];
         renderFileList();
     }
@@ -1921,25 +3467,32 @@
         $("#message_send").addClass('message_send_active'); // 有值时背景色为蓝色
         filesToUpload.forEach(function (file, index) {
             var fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
 
-            var statusClass = '';
-            if (file.status === 'success') statusClass = 'status-success';
-            if (file.status === 'error') statusClass = 'status-error';
+            if (file.objectUrl) {
+                // Image file — render as thumbnail card
+                fileItem.className = 'file-item-image';
+                fileItem.innerHTML = `
+                    <img class="file-thumb" src="${file.objectUrl}" alt="${file.name}" />
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-close" data-id="${file.name}">
+                        <img src="./image/group_close.svg" alt="#">
+                    </div>`;
+            } else {
+                // Non-image file — render as icon + name bar
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="file-icon">
+                        <img src="./image/video.svg" alt="" />
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${file.size}</div>
+                    </div>
+                    <div class="file-close" data-id="${file.name}">
+                        <img src="./image/group_close.svg" alt="#">
+                    </div>`;
+            }
 
-            fileItem.innerHTML = `
-                        <div class="file-icon">
-                            <img src="./image/video.svg" alt=""></img>
-                        </div>
-                        <div class="file-info">
-                            <div class="file-name">${file.name}</div>
-                            <div class="file-size">${file.size}KB</div>
-                        </div>
-                        <div class="file-close" data-id="${file.name}">
-                            <img src="./image/group_close.svg" alt="#">
-                        </div>
-
-                    `;
             fileList.appendChild(fileItem);
         });
         $('.file-close').on('click', function (event) {
@@ -1972,17 +3525,19 @@
     renderCharlist();
     function renderCharlist() {
         if (argentName) {
+            chatAgentList.style.display = 'flex';
             chatAgentList.innerHTML= `
                 <div class="chat-agent-item">
                     <div class="chat-agent-info">
                         <div class="chat-agent-name"><span>@</span>${argentName}</div>
                     </div>
-                    <div class="chat-agent-close" onclick="chatAgentClose('${argentName}')" data-id="Group-favicon.png">
+                    <div class="chat-agent-close" onclick="chatAgentClose('${argentName}')">
                         <img src="./image/group_close.svg" alt="#">
                     </div>
                 </div>
             `;
         }else{
+            chatAgentList.style.display = 'none';
             chatAgentList.innerHTML = '';
         }
     }

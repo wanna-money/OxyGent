@@ -5,11 +5,11 @@ analysis and improvement strategies. It supports framework-specific constraints
 and custom optimization requirements.
 """
 
-import logging
 import json
-from typing import Optional, Dict, Any, List
-from ..schemas import OxyRequest
+import logging
+from typing import Any, Dict, List, Optional
 
+from ..schemas import OxyRequest
 
 logger = logging.getLogger(__name__)
 
@@ -38,17 +38,17 @@ If solving the user's problem requires multiple tool calls, call only one tool a
             "Must contain the exact JSON format specification",
             "Must include 'call only one tool at a time' instruction",
             "Must preserve the ${tools_description} placeholder if present",
-            "Must preserve the ${additional_prompt} placeholder if present"
-        ]
+            "Must preserve the ${additional_prompt} placeholder if present",
+        ],
     },
     "general": {
         "required_format": "",
         "validation_rules": [
             "Clear and concise instructions",
             "Proper structure and formatting",
-            "Appropriate for the use case"
-        ]
-    }
+            "Appropriate for the use case",
+        ],
+    },
 }
 
 
@@ -139,7 +139,7 @@ class PromptOptimizer:
         "comprehensive": """
 Combine all optimization strategies: clarity, structure, completeness, and effectiveness.
 This provides a full prompt engineering review and improvement.
-"""
+""",
     }
 
     def __init__(self, llm_model: Optional[str] = None):
@@ -170,7 +170,9 @@ This provides a full prompt engineering review and improvement.
                 logger.info(f"Using specified LLM: {preferred_llm}")
                 return preferred_llm
             else:
-                logger.warning(f"Specified LLM '{preferred_llm}' not found in registered instances")
+                logger.warning(
+                    f"Specified LLM '{preferred_llm}' not found in registered instances"
+                )
                 logger.info("Attempting to auto-detect available LLM...")
 
         # Try to find registered LLM instances
@@ -184,9 +186,9 @@ This provides a full prompt engineering review and improvement.
 
         # If no instances found, raise error
         raise ValueError(
-            f"No LLM instances found. "
-            f"Please register an LLM instance (e.g., oxy.HttpLLM(name='default_llm', ...)) "
-            f"or specify llm_model parameter with an existing instance name."
+            "No LLM instances found. "
+            "Please register an LLM instance (e.g., oxy.HttpLLM(name='default_llm', ...)) "
+            "or specify llm_model parameter with an existing instance name."
         )
 
     def _get_available_llm_instances(self) -> List[str]:
@@ -200,7 +202,10 @@ This provides a full prompt engineering review and improvement.
             from .. import routes
 
             # Get global MAS instance
-            if not hasattr(routes, '_global_mas_instance') or routes._global_mas_instance is None:
+            if (
+                not hasattr(routes, "_global_mas_instance")
+                or routes._global_mas_instance is None
+            ):
                 logger.debug("Global MAS instance not available")
                 return []
 
@@ -208,8 +213,9 @@ This provides a full prompt engineering review and improvement.
 
             # Filter for LLM instances from oxy_name_to_oxy
             llm_instances = [
-                name for name, instance in mas.oxy_name_to_oxy.items()
-                if 'LLM' in instance.__class__.__name__
+                name
+                for name, instance in mas.oxy_name_to_oxy.items()
+                if "LLM" in instance.__class__.__name__
             ]
 
             logger.debug(f"Found LLM instances: {llm_instances}")
@@ -225,7 +231,7 @@ This provides a full prompt engineering review and improvement.
         agent_type: str = "general",
         optimization_strategy: str = "comprehensive",
         custom_requirements: str = "",
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Optimize a prompt based on specified strategy and constraints.
 
@@ -258,19 +264,25 @@ This provides a full prompt engineering review and improvement.
                 if context.get("use_case"):
                     context_info.append(f"Use case: {context['use_case']}")
                 if context.get("target_audience"):
-                    context_info.append(f"Target audience: {context['target_audience']}")
+                    context_info.append(
+                        f"Target audience: {context['target_audience']}"
+                    )
                 if context.get("constraints"):
-                    context_info.append(f"Additional constraints: {context['constraints']}")
+                    context_info.append(
+                        f"Additional constraints: {context['constraints']}"
+                    )
 
                 if context_info:
-                    enhanced_requirements = f"{custom_requirements}\n\nContext:\n" + "\n".join(context_info)
+                    enhanced_requirements = (
+                        f"{custom_requirements}\n\nContext:\n" + "\n".join(context_info)
+                    )
 
             # Build optimization prompt
             optimizer_prompt = self._build_optimization_prompt(
                 current_prompt=current_prompt,
                 optimization_goals=optimization_goals,
                 framework_constraints=framework_constraints,
-                custom_requirements=enhanced_requirements
+                custom_requirements=enhanced_requirements,
             )
 
             # Execute optimization via LLM
@@ -280,22 +292,21 @@ This provides a full prompt engineering review and improvement.
             if result and result.get("optimized_prompt"):
                 try:
                     result["validated"] = self._validate_optimized_prompt(
-                        result["optimized_prompt"],
-                        agent_type
+                        result["optimized_prompt"], agent_type
                     )
                 except Exception as e:
                     logger.warning(f"Validation failed: {e}")
                     result["validated"] = {
                         "meets_constraints": False,
                         "missing_elements": ["Validation error"],
-                        "warnings": [f"Validation failed: {str(e)}"]
+                        "warnings": [f"Validation failed: {str(e)}"],
                     }
             elif result:
                 # Optimized prompt is None or missing
                 result["validated"] = {
                     "meets_constraints": False,
                     "missing_elements": ["No optimized prompt generated"],
-                    "warnings": ["Optimization did not produce a result"]
+                    "warnings": ["Optimization did not produce a result"],
                 }
 
             return result
@@ -311,8 +322,8 @@ This provides a full prompt engineering review and improvement.
                 "validation": {
                     "meets_constraints": False,
                     "missing_elements": ["Optimization failed"],
-                    "warnings": [str(e)]
-                }
+                    "warnings": [str(e)],
+                },
             }
 
     def _get_optimization_goals(self, strategy: str) -> str:
@@ -325,8 +336,7 @@ This provides a full prompt engineering review and improvement.
             String describing optimization goals
         """
         return self.OPTIMIZATION_STRATEGIES.get(
-            strategy,
-            self.OPTIMIZATION_STRATEGIES["comprehensive"]
+            strategy, self.OPTIMIZATION_STRATEGIES["comprehensive"]
         )
 
     def _get_framework_constraints(self, agent_type: str) -> str:
@@ -338,7 +348,9 @@ This provides a full prompt engineering review and improvement.
         Returns:
             String describing required format and constraints
         """
-        constraints = FRAMEWORK_CONSTRAINTS.get(agent_type, FRAMEWORK_CONSTRAINTS["general"])
+        constraints = FRAMEWORK_CONSTRAINTS.get(
+            agent_type, FRAMEWORK_CONSTRAINTS["general"]
+        )
 
         output = []
         if constraints.get("required_format"):
@@ -349,14 +361,18 @@ This provides a full prompt engineering review and improvement.
             for rule in constraints["validation_rules"]:
                 output.append(f"- {rule}")
 
-        return "\n".join(output) if output else "No specific constraints for this agent type."
+        return (
+            "\n".join(output)
+            if output
+            else "No specific constraints for this agent type."
+        )
 
     def _build_optimization_prompt(
         self,
         current_prompt: str,
         optimization_goals: str,
         framework_constraints: str,
-        custom_requirements: str
+        custom_requirements: str,
     ) -> str:
         """Build the optimization prompt for the LLM.
 
@@ -373,7 +389,7 @@ This provides a full prompt engineering review and improvement.
             current_prompt=current_prompt,
             optimization_goals=optimization_goals,
             framework_constraints=framework_constraints,
-            custom_requirements=custom_requirements or "None specified"
+            custom_requirements=custom_requirements or "None specified",
         )
 
     async def _execute_optimization(self, optimizer_prompt: str) -> Dict[str, Any]:
@@ -390,8 +406,13 @@ This provides a full prompt engineering review and improvement.
             from .. import routes
 
             # Get global MAS instance
-            if not hasattr(routes, '_global_mas_instance') or routes._global_mas_instance is None:
-                raise ValueError("MAS instance not available. Please ensure the service is running.")
+            if (
+                not hasattr(routes, "_global_mas_instance")
+                or routes._global_mas_instance is None
+            ):
+                raise ValueError(
+                    "MAS instance not available. Please ensure the service is running."
+                )
 
             mas = routes._global_mas_instance
 
@@ -404,14 +425,17 @@ This provides a full prompt engineering review and improvement.
             # Create request with messages format for OpenAILLM
             # Wrap the optimizer prompt as a system message
             messages = [
-                {"role": "system", "content": "You are an expert prompt engineering assistant."},
-                {"role": "user", "content": optimizer_prompt}
+                {
+                    "role": "system",
+                    "content": "You are an expert prompt engineering assistant.",
+                },
+                {"role": "user", "content": optimizer_prompt},
             ]
 
             # Create request with messages parameter
             oxy_request = OxyRequest(
                 query=optimizer_prompt,  # For compatibility
-                arguments={"messages": messages}  # OpenAILLM requires this
+                arguments={"messages": messages},  # OpenAILLM requires this
             )
 
             # Execute
@@ -446,18 +470,19 @@ This provides a full prompt engineering review and improvement.
                     "validation": {
                         "meets_constraints": False,
                         "missing_elements": ["Failed to generate optimized prompt"],
-                        "warnings": ["LLM output was empty or None"]
-                    }
+                        "warnings": ["LLM output was empty or None"],
+                    },
                 }
 
             # Try to extract JSON from the output
             import re
-            json_match = re.search(r'```json\s*(\{.*?\})\s*```', output, re.DOTALL)
+
+            json_match = re.search(r"```json\s*(\{.*?\})\s*```", output, re.DOTALL)
             if json_match:
                 json_str = json_match.group(1)
             else:
                 # Try to find JSON without code blocks
-                json_match = re.search(r'\{.*\}', output, re.DOTALL)
+                json_match = re.search(r"\{.*\}", output, re.DOTALL)
                 if json_match:
                     json_str = json_match.group(0)
                 else:
@@ -470,14 +495,19 @@ This provides a full prompt engineering review and improvement.
                         "validation": {
                             "meets_constraints": False,
                             "missing_elements": ["JSON validation skipped"],
-                            "warnings": ["Response was not in JSON format"]
-                        }
+                            "warnings": ["Response was not in JSON format"],
+                        },
                     }
 
             result = json.loads(json_str)
 
             # Ensure required fields are present
-            required_fields = ["analysis", "improvements", "optimized_prompt", "rationale"]
+            required_fields = [
+                "analysis",
+                "improvements",
+                "optimized_prompt",
+                "rationale",
+            ]
             for field in required_fields:
                 if field not in result:
                     result[field] = f"[Missing {field}]"
@@ -486,7 +516,7 @@ This provides a full prompt engineering review and improvement.
                 result["validation"] = {
                     "meets_constraints": True,
                     "missing_elements": [],
-                    "warnings": []
+                    "warnings": [],
                 }
 
             return result
@@ -502,8 +532,8 @@ This provides a full prompt engineering review and improvement.
                 "validation": {
                     "meets_constraints": False,
                     "missing_elements": ["JSON parsing failed"],
-                    "warnings": ["Using raw output instead"]
-                }
+                    "warnings": ["Using raw output instead"],
+                },
             }
         except Exception as e:
             logger.error(f"Error parsing optimization result: {e}")
@@ -516,11 +546,13 @@ This provides a full prompt engineering review and improvement.
                 "validation": {
                     "meets_constraints": False,
                     "missing_elements": ["Failed to generate optimized prompt"],
-                    "warnings": ["LLM output could not be parsed"]
-                }
+                    "warnings": ["LLM output could not be parsed"],
+                },
             }
 
-    def _validate_optimized_prompt(self, optimized_prompt: str, agent_type: str) -> Dict[str, Any]:
+    def _validate_optimized_prompt(
+        self, optimized_prompt: str, agent_type: str
+    ) -> Dict[str, Any]:
         """Validate that the optimized prompt meets framework requirements.
 
         Args:
@@ -535,7 +567,7 @@ This provides a full prompt engineering review and improvement.
             return {
                 "meets_constraints": False,
                 "missing_elements": ["No prompt to validate"],
-                "warnings": ["Optimized prompt is empty or None"]
+                "warnings": ["Optimized prompt is empty or None"],
             }
 
         constraints = FRAMEWORK_CONSTRAINTS.get(agent_type, {})
@@ -544,7 +576,7 @@ This provides a full prompt engineering review and improvement.
         validation_result = {
             "meets_constraints": True,
             "missing_elements": [],
-            "warnings": []
+            "warnings": [],
         }
 
         for rule in validation_rules:
@@ -553,7 +585,10 @@ This provides a full prompt engineering review and improvement.
                 # Extract what needs to be contained
                 keyword = rule.lower()
                 if "json format" in keyword.lower():
-                    if "```json" not in optimized_prompt and '{"think"' not in optimized_prompt:
+                    if (
+                        "```json" not in optimized_prompt
+                        and '{"think"' not in optimized_prompt
+                    ):
                         validation_result["missing_elements"].append(rule)
                         validation_result["meets_constraints"] = False
 
@@ -594,7 +629,9 @@ This provides a full prompt engineering review and improvement.
 _optimizer_instance: Optional[PromptOptimizer] = None
 
 
-def get_prompt_optimizer(llm_model: Optional[str] = None, force_new: bool = False) -> PromptOptimizer:
+def get_prompt_optimizer(
+    llm_model: Optional[str] = None, force_new: bool = False
+) -> PromptOptimizer:
     """Get or create the singleton PromptOptimizer instance.
 
     Args:
@@ -613,10 +650,14 @@ def get_prompt_optimizer(llm_model: Optional[str] = None, force_new: bool = Fals
 
     if force_new or _optimizer_instance is None:
         _optimizer_instance = PromptOptimizer(llm_model=llm_model)
-        logger.info(f"Created new PromptOptimizer with LLM: {_optimizer_instance.llm_model}")
+        logger.info(
+            f"Created new PromptOptimizer with LLM: {_optimizer_instance.llm_model}"
+        )
     elif llm_model is not None and llm_model != _optimizer_instance.llm_model:
         # Different LLM requested, create new instance
         _optimizer_instance = PromptOptimizer(llm_model=llm_model)
-        logger.info(f"Recreated PromptOptimizer with LLM: {_optimizer_instance.llm_model}")
+        logger.info(
+            f"Recreated PromptOptimizer with LLM: {_optimizer_instance.llm_model}"
+        )
 
     return _optimizer_instance

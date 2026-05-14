@@ -200,6 +200,7 @@ class SkillAgent(ReActAgent):
         await self._discover_skills()
 
         # Phase 2: Build skill prompt and enhance system prompt
+        self._skill_entries = []
         await self._build_skill_prompt()
 
         # Phase 3: Call parent init
@@ -358,6 +359,8 @@ class SkillAgent(ReActAgent):
             self._skill_entries.append(entry)
 
     async def _before_execute(self, oxy_request: OxyRequest) -> OxyRequest:
+        """Prepare skill context before execution."""
         oxy_request = await super()._before_execute(oxy_request)
-        oxy_request.set_arguments("skill_list", "\n\n".join(self._skill_entries))
+        if not oxy_request.has_arguments("skill_list"):
+            oxy_request.set_arguments("skill_list", "\n\n".join(self._skill_entries))
         return oxy_request

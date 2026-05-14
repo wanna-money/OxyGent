@@ -4,6 +4,7 @@ from .plan_and_solve_agent import PlanAndSolveAgent
 from .rag_agent import RAGAgent
 from .react_agent import ReActAgent
 from .shell_use_agent import ShellUseAgent
+from .skill_agent import SkillAgent
 from .a2a_client_agent import A2AClientAgent
 from oxygent.transport.a2a.a2a_server_gateway import A2AServerGateway
 from .sse_oxy_agent import SSEOxyGent
@@ -20,4 +21,5 @@ __all__ = [
     "A2AServerGateway",
     "PlanAndSolveAgent",
     "ShellUseAgent",
+    "SkillAgent",
 ]

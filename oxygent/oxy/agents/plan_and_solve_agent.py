@@ -1,3 +1,8 @@
+"""Plan-and-Solve agent for OxyGent.
+
+Provides PlanAndSolveAgent which performs explicit task decomposition, step-by-step
+execution, and replanning."""
+
 import json
 import logging
 
@@ -10,16 +15,23 @@ logger = logging.getLogger(__name__)
 
 
 class PlanAndSolveAgent(LocalAgent):
-    max_replan_rounds: int = Field(30, description="Maximum retries for operations.")
+    """Agent that plans tasks, executes them step-by-step, and replans on failure."""
+
+    max_replan_rounds: int = Field(
+        30, description="Maximum number of replanning iterations allowed."
+    )
     planner_agent: str = Field("planner_agent", description="planner agent name")
     executor_agent: str = Field("executor_agent", description="executor agent name")
 
     def __init__(self, **kwargs):
+        """Initialize the plan-and-solve agent."""
         super().__init__(**kwargs)
 
         self.add_permitted_tools([self.planner_agent, self.executor_agent])
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Run the plan-and-solve loop: plan, execute steps, evaluate, replan if needed."""
+
         async def answer(past_steps_str, short_memory, original_query):
             temp_memory = Memory()
             temp_memory.add_message(

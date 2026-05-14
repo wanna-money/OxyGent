@@ -1,0 +1,167 @@
+/* ── Sequence Diagram (View 3) ── */
+
+.seq-diagram {
+    display: inline-block;
+    min-width: 100%;
+}
+
+/* ── Participant header / footer rows ── */
+.seq-header, .seq-footer {
+    display: flex;
+    position: relative;
+    z-index: 2;
+}
+
+.seq-participant {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.seq-participant-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid #D0D5DD;
+    border-radius: 6px;
+    background: #fff;
+    white-space: nowrap;
+}
+
+.seq-participant-box img {
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+}
+
+.seq-participant-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* ── Body (lifelines + messages) ── */
+.seq-body {
+    position: relative;
+    min-height: 40px;
+}
+
+/* ── Lifelines ── */
+.seq-lifeline {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1px dashed #D0D5DD;
+    z-index: 0;
+}
+
+/* ── Message row ── */
+.seq-msg {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 45px;
+}
+
+.seq-msg-clickable {
+    cursor: pointer;
+}
+
+.seq-msg-clickable:hover .seq-msg-label {
+    color: #5048E5;
+}
+
+/* ── Label (above the arrow) ── */
+.seq-msg-label {
+    position: absolute;
+    top: 2px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    font-size: 12px;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background-color: rgba(243, 243, 245, 0.9);
+    padding: 0 6px;
+    border-radius: 2px;
+    z-index: 1;
+}
+
+/* ── Arrow line ── */
+.seq-msg-line {
+    position: absolute;
+    top: 26px;
+    height: 0;
+    border-bottom: 1.5px solid #555;
+    z-index: 1;
+}
+
+.seq-msg-line.seq-msg-dashed {
+    border-bottom-style: dashed;
+    border-bottom-color: #888;
+}
+
+/* Arrowhead: right-pointing */
+.seq-msg-line.seq-arrow-right::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: -5px;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 8px solid #555;
+}
+
+/* Arrowhead: left-pointing */
+.seq-msg-line.seq-arrow-left::after {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: -5px;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 8px solid #555;
+}
+
+/* Dashed arrow colors */
+.seq-msg-line.seq-msg-dashed.seq-arrow-right::after {
+    border-left-color: #888;
+}
+
+.seq-msg-line.seq-msg-dashed.seq-arrow-left::after {
+    border-right-color: #888;
+}
+
+/* ── Selected state ── */
+.seq-msg.checked .seq-msg-line {
+    border-bottom-color: #5048E5;
+}
+
+.seq-msg.checked .seq-msg-line.seq-msg-dashed {
+    border-bottom-color: #7B73F0;
+}
+
+.seq-msg.checked .seq-msg-line.seq-arrow-right::after {
+    border-left-color: #5048E5;
+}
+
+.seq-msg.checked .seq-msg-line.seq-arrow-left::after {
+    border-right-color: #5048E5;
+}
+
+.seq-msg.checked .seq-msg-line.seq-msg-dashed.seq-arrow-right::after {
+    border-left-color: #7B73F0;
+}
+
+.seq-msg.checked .seq-msg-line.seq-msg-dashed.seq-arrow-left::after {
+    border-right-color: #7B73F0;
+}
+
+.seq-msg.checked .seq-msg-label {
+    color: #5048E5;
+    font-weight: 600;
+}

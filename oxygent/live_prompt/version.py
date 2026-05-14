@@ -45,7 +45,9 @@ class VersionSyncCoordinator:
         self.polling_task = None
         self._is_running = False
         self._local_versions: Dict[str, int] = {}  # Track local versions
-        self._pending_updates: Dict[str, set] = {}  # Track pending updates: {prompt_key: {version, ...}}
+        self._pending_updates: Dict[
+            str, set
+        ] = {}  # Track pending updates: {prompt_key: {version, ...}}
 
         # Detect ES polling availability
         self._detect_sync_mechanisms()
@@ -69,7 +71,9 @@ class VersionSyncCoordinator:
                 self.use_es_polling = True
                 logger.info(f"ES polling enabled for remote hosts: {es_hosts}")
             else:
-                logger.info("Local ES detected, polling disabled for multi-instance sync")
+                logger.info(
+                    "Local ES detected, polling disabled for multi-instance sync"
+                )
         else:
             logger.info("ES not configured, polling disabled")
 
@@ -185,9 +189,7 @@ class VersionSyncCoordinator:
         except Exception as e:
             logger.error(f"Error checking ES versions: {e}")
 
-    async def _handle_version_update(
-        self, prompt_key: str, new_version: int
-    ):
+    async def _handle_version_update(self, prompt_key: str, new_version: int):
         """Handle a version update for a prompt with concurrency control.
 
         Prevents duplicate updates, version rollback, and out-of-order updates.
@@ -198,8 +200,13 @@ class VersionSyncCoordinator:
         """
         try:
             # Prevent duplicate updates for the same version
-            if prompt_key in self._pending_updates and new_version in self._pending_updates[prompt_key]:
-                logger.debug(f"Skipping duplicate update for {prompt_key} v{new_version}")
+            if (
+                prompt_key in self._pending_updates
+                and new_version in self._pending_updates[prompt_key]
+            ):
+                logger.debug(
+                    f"Skipping duplicate update for {prompt_key} v{new_version}"
+                )
                 return
 
             # Prevent version rollback: only accept if new_version > current version
@@ -226,14 +233,16 @@ class VersionSyncCoordinator:
                 if len(self._pending_updates[prompt_key]) > 10:
                     # Remove oldest versions (keep higher version numbers)
                     versions_list = sorted(self._pending_updates[prompt_key])
-                    versions_to_remove = versions_list[:len(versions_list) - 10]
+                    versions_to_remove = versions_list[: len(versions_list) - 10]
                     for v in versions_to_remove:
                         self._pending_updates[prompt_key].discard(v)
 
         except Exception as e:
             logger.error(f"Failed to handle version update for {prompt_key}: {e}")
 
-    async def _fetch_from_es_with_retry(self, prompt_key: str, new_version: int, max_retries: int = 3):
+    async def _fetch_from_es_with_retry(
+        self, prompt_key: str, new_version: int, max_retries: int = 3
+    ):
         """Fetch prompt from ES with retry logic to handle ES refresh delay.
 
         Args:
@@ -274,7 +283,9 @@ class VersionSyncCoordinator:
                         if actual_version > new_version:
                             # Newer version already exists, update our tracker and skip
                             self._local_versions[prompt_key] = actual_version
-                            logger.info(f"Found newer version {actual_version} for {prompt_key}, skipping update")
+                            logger.info(
+                                f"Found newer version {actual_version} for {prompt_key}, skipping update"
+                            )
                             return
                         # If actual_version < new_version, continue retrying
                 else:
@@ -290,7 +301,7 @@ class VersionSyncCoordinator:
 
             # Wait before retry (exponential backoff: 0.5s, 1s, 2s)
             if attempt < max_retries - 1:
-                wait_time = 0.5 * (2 ** attempt)
+                wait_time = 0.5 * (2**attempt)
                 logger.debug(f"Retrying {prompt_key} after {wait_time}s...")
                 await asyncio.sleep(wait_time)
 

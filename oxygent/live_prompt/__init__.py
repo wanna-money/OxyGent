@@ -4,16 +4,10 @@ Provides real-time prompt management and hot-reload functionality for OxyGent ag
 """
 
 # Core ES-based prompt management
-from .manager import get_prompt_manager, get_dynamic_prompt, PromptManager
+from .manager import PromptManager, get_dynamic_prompt, get_prompt_manager
 
-# Hot-reload functionality
-from .wrapper import (
-    setup_dynamic_agents,
-    hot_reload_prompt,
-    hot_reload_agent,
-    hot_reload_all_prompts,
-    dynamic_agent_manager,
-)
+# Prompt optimization
+from .optimizer import PromptOptimizer, get_prompt_optimizer
 
 # Version synchronization for multi-instance cache consistency
 from .version import (
@@ -23,29 +17,32 @@ from .version import (
     stop_version_sync,
 )
 
-# Prompt optimization
-from .optimizer import get_prompt_optimizer, PromptOptimizer
+# Hot-reload functionality
+from .wrapper import (
+    dynamic_agent_manager,
+    hot_reload_agent,
+    hot_reload_all_prompts,
+    hot_reload_prompt,
+    setup_dynamic_agents,
+)
 
 __all__ = [
     # Core ES-based prompt management
-    'get_prompt_manager',
-    'get_dynamic_prompt',
-    'PromptManager',
-
+    "get_prompt_manager",
+    "get_dynamic_prompt",
+    "PromptManager",
     # Hot-reload functionality
-    'setup_dynamic_agents',
-    'hot_reload_prompt',
-    'hot_reload_agent',
-    'hot_reload_all_prompts',
-    'dynamic_agent_manager',
-
+    "setup_dynamic_agents",
+    "hot_reload_prompt",
+    "hot_reload_agent",
+    "hot_reload_all_prompts",
+    "dynamic_agent_manager",
     # Version synchronization
-    'VersionSyncCoordinator',
-    'get_version_sync_coordinator',
-    'start_version_sync',
-    'stop_version_sync',
-
+    "VersionSyncCoordinator",
+    "get_version_sync_coordinator",
+    "start_version_sync",
+    "stop_version_sync",
     # Prompt optimization
-    'get_prompt_optimizer',
-    'PromptOptimizer',
+    "get_prompt_optimizer",
+    "PromptOptimizer",
 ]

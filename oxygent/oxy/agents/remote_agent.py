@@ -22,13 +22,17 @@ class RemoteAgent(BaseAgent):
 
     @field_validator("server_url")
     def check_protocol(cls, v):
+        """Pydantic field validator that ensures the protocol is supported."""
         if v.scheme not in ("http", "https"):
             raise ValueError("server_url must start with http:// or https://")
         return v
 
     def get_org(self):
-        # Add remote prefix to the copy
+        """Return the organization tree for this remote agent."""
+
+        # Mark child nodes as remote
         def update_children(children):
+            """Recursively mark all child nodes as remote."""
             for node in children:
                 node["is_remote"] = True
                 if "children" in node and isinstance(node["children"], list):
@@ -40,4 +44,5 @@ class RemoteAgent(BaseAgent):
         return update_children(children_copy)
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Execute by forwarding the request to the remote agent."""
         raise NotImplementedError("This method is not yet implemented")

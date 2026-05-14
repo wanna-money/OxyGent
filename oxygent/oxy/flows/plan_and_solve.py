@@ -1,3 +1,9 @@
+"""Plan-and-Solve flow for OxyGent.
+
+Implements an iterative planning workflow: decompose the goal into steps,
+execute each step via a worker agent, evaluate results, and replan if needed.
+"""
+
 import logging
 from typing import Callable, List, Optional, Union
 
@@ -11,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class Plan(BaseModel):
-    """Plan to follow in future."""
+    """A structured execution plan containing ordered steps."""
 
     steps: List[str] = Field(
         description="different steps to follow, should be in sorted order"
@@ -19,13 +25,13 @@ class Plan(BaseModel):
 
 
 class Response(BaseModel):
-    """Response to user."""
+    """Wrapper for the final response returned to the user."""
 
     response: str
 
 
 class Action(BaseModel):
-    """Action to perform."""
+    """A single actionable step within a plan, with its assigned executor."""
 
     action: Union[Response, Plan] = Field(
         description="Action to perform. If you want to respond to user, use Response. "
@@ -36,22 +42,34 @@ class Action(BaseModel):
 class PlanAndSolve(BaseFlow):
     """Plan-and-Solve Prompting Workflow."""
 
-    max_replan_rounds: int = Field(30, description="Maximum retries for operations.")
+    max_replan_rounds: int = Field(
+        30, description="Maximum number of replanning iterations allowed"
+    )
 
-    planner_agent_name: str = Field("planner_agent", description="planner agent name")
-    pre_plan_steps: List[str] = Field(None, description="pre plan steps")
+    planner_agent_name: str = Field(
+        "planner_agent", description="Name of the agent used to generate plans"
+    )
+    pre_plan_steps: List[str] = Field(
+        None, description="Predefined steps to prepend before the generated plan"
+    )
 
-    enable_replanner: bool = Field(False, description="enable replanner")
-    replanner_agent_name: str = Field("replanner_agent", description="replanner agent name")
+    enable_replanner: bool = Field(
+        False, description="Whether to enable replanning after step failures"
+    )
+    replanner_agent_name: str = Field(
+        "replanner_agent",
+        description="Name of the agent used for replanning on failure",
+    )
 
     executor_agent_name: str = Field(
-        "executor_agent", description="executor agent name"
+        "executor_agent",
+        description="Name of the agent that executes individual plan steps",
     )
 
     llm_model: str = Field("default_llm", description="LLM model name for fallback")
 
     func_parse_planner_response: Optional[Callable[[str], LLMResponse]] = Field(
-        None, exclude=True, description="planner response parser"
+        None, exclude=True, description="Custom parser for planner agent responses"
     )
 
     pydantic_parser_planner: PydanticOutputParser = Field(
@@ -69,6 +87,7 @@ class PlanAndSolve(BaseFlow):
     )
 
     def __init__(self, **kwargs):
+        """Initialize the Plan-and-Solve flow."""
         super().__init__(**kwargs)
 
         self.add_permitted_tools(
@@ -79,16 +98,18 @@ class PlanAndSolve(BaseFlow):
         )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Run the plan-solve-evaluate-replan loop until the goal is achieved or rounds are exhausted."""
         plan_str = ""
         past_steps = ""
         original_query = oxy_request.get_query()
         plan_steps = self.pre_plan_steps
+        plan_response = None
         for current_round in range(self.max_replan_rounds + 1):
             if (current_round == 0) and (self.pre_plan_steps is None):
                 if self.pydantic_parser_planner:
                     query = self.pydantic_parser_planner.format(original_query)
                 else:
-                    query = original_query.copy()
+                    query = original_query
 
                 oxy_response = await oxy_request.call(
                     callee=self.planner_agent_name,
@@ -178,7 +199,7 @@ class PlanAndSolve(BaseFlow):
 
         plan_steps = plan_response.steps
         plan_str = "\n".join(f"{i + 1}. {step}" for i, step in enumerate(plan_steps))
-        user_input_with_results = f"Your objective was this：{oxy_request.get_query()}\n---\nFor the following plan：{plan_str}"
+        user_input_with_results = f"Your objective was this:{oxy_request.get_query()}\n---\nFor the following plan:{plan_str}"
         temp_messages = [
             Message.system_message(
                 "Please answer user questions based on the given plan."
@@ -191,5 +212,5 @@ class PlanAndSolve(BaseFlow):
         )
         return OxyResponse(
             state=OxyState.COMPLETED,
-            output=oxy_response.response,
+            output=oxy_response.output,
         )

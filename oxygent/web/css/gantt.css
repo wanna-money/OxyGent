@@ -25,9 +25,37 @@
     stroke-width: 1px !important;
 }
 
+/* Caller (section title) labels — color matches the corresponding task bars.
+   The bars are pastel; the text uses a darker shade of the same hue so it
+   stays readable on the white section background. */
+#flowchart-container-gantt .sectionTitle0 {
+    fill: #B85C00 !important;
+}
+#flowchart-container-gantt .sectionTitle1 {
+    fill: #1F4E96 !important;
+}
+#flowchart-container-gantt .sectionTitle2 {
+    fill: #2E6B2A !important;
+}
+#flowchart-container-gantt .sectionTitle3 {
+    fill: #B53026 !important;
+}
+/* Long caller names: ellipsize so they never spill into the bar area.
+   SVG <text> can't auto-ellipsize via CSS, so the JS post-processor below
+   truncates the text content; this rule keeps the rendered metrics tidy. */
+#flowchart-container-gantt .sectionTitle {
+    font-weight: 600 !important;
+}
 
+
+/* Time-axis vertical grid lines — gray dashed */
+#flowchart-container-gantt .grid .tick line {
+    stroke: #d0d0d0 !important;
+    stroke-dasharray: 4, 4 !important;
+    shape-rendering: crispEdges !important;
+}
 .tick {
-    stroke: lightgrey !important;
+    stroke: #d0d0d0 !important;
     shape-rendering: crispEdges !important;
 }
 
@@ -36,6 +64,13 @@
     fill: #5048E5 !important;
     stroke: #5048E5 !important;
 }
+/* Selected text inside bars — white on the purple bar */
 #flowchart-container-gantt .taskText.clickable.mermaid-selected-text {
     fill: white !important;
+}
+/* Selected text outside bars — use the selection purple since the background is light */
+#flowchart-container-gantt .taskTextOutsideRight.clickable.mermaid-selected-text,
+#flowchart-container-gantt .taskTextOutsideLeft.clickable.mermaid-selected-text {
+    fill: #5048E5 !important;
+    font-weight: bold !important;
 }

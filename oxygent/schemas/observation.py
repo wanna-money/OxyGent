@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class ExecResult(BaseModel):
+    """Represents the result of a single tool execution."""
+
     executor: str
     oxy_response: OxyResponse
 
@@ -17,13 +19,16 @@ class ExecResult(BaseModel):
 class Observation(BaseModel):
     """Observation for multimodal."""
 
-    exec_results: List[ExecResult] = Field(default_factory=list)
+    exec_results: List[ExecResult] = Field(
+        default_factory=list, description="List of individual tool execution results"
+    )
 
     def add_exec_result(self, exec_result: ExecResult) -> None:
-        """Add a exec result to exec_results."""
+        """Add an exec result to exec_results."""
         self.exec_results.append(exec_result)
 
     def to_str(self, is_prefix_included=True):
+        """Format all execution results as a human-readable string."""
         outs = []
         for exec_result in self.exec_results:
             if is_prefix_included:

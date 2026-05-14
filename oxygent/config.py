@@ -1,4 +1,4 @@
-"""Configments of the mas."""
+"""Configuration settings for the MAS."""
 
 import json
 import logging
@@ -7,6 +7,7 @@ import re
 
 
 def deep_update(d, u):
+    """Recursively merge source dict into target dict, modifying target in place."""
     for k, v in u.items():
         if isinstance(v, dict) and k in d and isinstance(d[k], dict):
             deep_update(d[k], v)
@@ -33,6 +34,12 @@ def replace_env_var(val):
 
 
 class Config:
+    """Singleton configuration manager.
+
+    Loads settings from config.json with environment layering and supports
+    ${VAR} env-var substitution.
+    """
+
     _env = "default"
     _config = {
         "app": {
@@ -94,6 +101,7 @@ class Config:
             "auto_open_webpage": True,
             "log_level": "INFO",
             "workers": 1,
+            "allow_origins": ["*"],
         },
         "oxy": {
             "semaphore": 1024,
@@ -123,9 +131,7 @@ class Config:
         },
         "token_tracking": {
             "enabled": True,
-            "encoding_map": {
-                "<Your Model Name>": "<Your Encoding Name>"
-            },
+            "encoding_map": {"<Your Model Name>": "<Your Encoding Name>"},
             "default_encoding": "o200k_base",
         },
     }
@@ -162,7 +168,7 @@ class Config:
             return mod_cfg
         return mod_cfg.get(key, default)
 
-    """ app """
+    # --- app ---
 
     @classmethod
     def set_app_config(cls, app_config):
@@ -188,7 +194,7 @@ class Config:
     def get_app_version(cls):
         return cls.get_module_config("app", "version")
 
-    """ log """
+    # --- log ---
 
     @classmethod
     def set_log_config(cls, log_config):
@@ -296,7 +302,7 @@ class Config:
     def get_log_is_detailed_observation(cls):
         return cls.get_module_config("log", "is_detailed_observation")
 
-    """ llm """
+    # --- llm ---
 
     @classmethod
     def set_llm_config(cls, llm_config):
@@ -326,7 +332,7 @@ class Config:
     def get_llm_timeout(cls):
         return cls.get_module_config("llm", "timeout")
 
-    """ cache """
+    # --- cache ---
 
     @classmethod
     def set_cache_config(cls, cache_config):
@@ -349,7 +355,7 @@ class Config:
             os.makedirs(save_dir, exist_ok=True)
         return save_dir
 
-    """ message """
+    # --- message ---
 
     @classmethod
     def set_message_config(cls, message_config):
@@ -425,7 +431,7 @@ class Config:
     def get_message_is_send_full_arguments(cls):
         return cls.get_module_config("message", "is_send_full_arguments")
 
-    """ es """
+    # --- es ---
 
     @classmethod
     def set_es_config(cls, es_config):
@@ -435,7 +441,7 @@ class Config:
     def get_es_config(cls):
         return cls.get_module_config("es")
 
-    """ es_schema """
+    # --- es_schema ---
 
     @classmethod
     def set_es_schema_config(cls, es_schema_config):
@@ -467,7 +473,7 @@ class Config:
             del group_data_schema["type"]
         return group_data_schema
 
-    """ es_settings """
+    # --- es_settings ---
 
     @classmethod
     def set_es_settings_config(cls, es_settings_config):
@@ -477,7 +483,7 @@ class Config:
     def get_es_settings_config(cls) -> dict:
         return cls.get_module_config("es_settings")
 
-    """ vearch """
+    # --- vearch ---
 
     @classmethod
     def set_vearch_config(cls, vearch_config):
@@ -491,7 +497,7 @@ class Config:
     def get_vearch_embedding_model_url(cls):
         return cls.get_module_config("vearch", "embedding_model_url")
 
-    """ redis """
+    # --- redis ---
 
     @classmethod
     def set_redis_config(cls, redis_config):
@@ -501,7 +507,7 @@ class Config:
     def get_redis_config(cls):
         return cls.get_module_config("redis")
 
-    """ redis_param """
+    # --- redis_param ---
 
     @classmethod
     def set_redis_expire_time(cls, expire_time):
@@ -527,7 +533,7 @@ class Config:
     def get_redis_max_length(cls):
         return cls.get_module_config("redis_param", "max_length")
 
-    """ server """
+    # --- server ---
 
     @classmethod
     def set_server_config(cls, server_config):
@@ -587,7 +593,17 @@ class Config:
     def get_server_workers(cls):
         return cls.get_module_config("server", "workers")
 
-    """ oxy """
+    @classmethod
+    def set_server_allow_origins(cls, allow_origins=None):
+        if allow_origins is None:
+            allow_origins = ["*"]
+        cls.set_module_config("server", "allow_origins", allow_origins)
+
+    @classmethod
+    def get_server_allow_origins(cls):
+        return cls.get_module_config("server", "allow_origins")
+
+    # --- oxy ---
 
     @classmethod
     def set_oxy_config(cls, oxy_config):
@@ -629,7 +645,7 @@ class Config:
     def get_oxy_delay(cls):
         return cls.get_module_config("oxy", "delay")
 
-    """ agent """
+    # --- agent ---
 
     @classmethod
     def set_agent_config(cls, agent_config):
@@ -679,7 +695,7 @@ class Config:
     def get_agent_welcome_message(cls):
         return cls.get_module_config("agent", "welcome_message")
 
-    """ tool """
+    # --- tool ---
 
     @classmethod
     def set_tool_config(cls, tool_config):
@@ -721,7 +737,7 @@ class Config:
     def get_tool_timeout(cls):
         return cls.get_module_config("tool", "timeout")
 
-    """ live_prompt """
+    # --- live_prompt ---
 
     @classmethod
     def set_live_prompt_config(cls, live_prompt_config):

@@ -1,3 +1,9 @@
+"""Remote LLM base class for OxyGent.
+
+Provides RemoteLLM, the abstract base class for any LLM accessed over the network
+(HTTP/OpenAI-compatible APIs, etc.).
+"""
+
 from typing import Callable, Dict, Optional
 
 from pydantic import Field, field_validator
@@ -7,21 +13,21 @@ from .base_llm import BaseLLM
 
 
 class RemoteLLM(BaseLLM):
-    """Large Language Model implementation.
+    """Abstract base class for LLMs that are accessed over the network.
 
-    This class provides a concrete implementation of BaseLLM for communicating
-    with remote LLM APIs. It handles API authentication, request
-    formatting, and response parsing for OpenAI-compatible APIs.
+    Subclasses (e.g., HttpLLM, OpenAILLM) implement provider-specific request
+    formatting and response parsing."""
 
-    Attributes:
-        api_key: The API key for authentication with the LLM service.
-        base_url: The base URL endpoint for the LLM API.
-        model_name: The specific model name to use for requests.
-    """
-
-    api_key: Optional[str] = Field(default=None)
-    base_url: Optional[str] = Field("")
-    model_name: Optional[str] = Field("")
+    api_key: Optional[str] = Field(
+        default=None,
+        description="API key for authenticating with the remote LLM service",
+    )
+    base_url: Optional[str] = Field(
+        "", description="Base URL of the remote LLM API endpoint"
+    )
+    model_name: Optional[str] = Field(
+        "", description="Model identifier to use for requests"
+    )
     headers: Dict[str, str] | Callable[[OxyRequest], Dict[str, str]] = Field(
         default=lambda oxy_request: {},
         exclude=True,
@@ -31,6 +37,7 @@ class RemoteLLM(BaseLLM):
     @field_validator("base_url", "model_name")
     @classmethod
     def not_empty(cls, value, info):
+        """Pydantic field validator: forbid empty/null required values."""
         key = info.field_name
 
         if value is None:
@@ -51,18 +58,19 @@ class RemoteLLM(BaseLLM):
     @field_validator("headers")
     @classmethod
     def convert_dict_to_function(cls, v):
-        """自动将dict转换为返回该dict的函数"""
+        """Automatically wrap a dict value into a callable returning that dict."""
         if isinstance(v, dict):
-            # 将dict转换为返回该dict的函数
+            # Wrap dict into a function that returns it
             def headers_func(request: OxyRequest) -> Dict[str, str]:
                 return v
 
             return headers_func
         elif callable(v):
-            # 如果已经是函数，直接返回
+            # Return as-is when value is already callable
             return v
         else:
             raise ValueError("headers must be either a dict or a callable")
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
+        """Subclasses must implement provider-specific request execution."""
         raise NotImplementedError("This method is not yet implemented")

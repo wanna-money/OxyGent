@@ -33,13 +33,24 @@ class BaseMCPClient(BaseTool):
         included_tool_name_list: List of tool names discovered from the MCP server.
     """
 
-    included_tool_name_list: list = Field(default_factory=list)
+    included_tool_name_list: list = Field(
+        default_factory=list,
+        description="Tool names discovered and registered from the MCP server",
+    )
     headers: Dict[str, str] = Field(
         default_factory=dict, description="Extra HTTP headers"
     )
-    is_dynamic_headers: bool = Field(False, description="is dynamic headers")
-    is_inherit_headers: bool = Field(False, description="is inherit headers")
-    is_keep_alive: bool = Field(default_factory=Config.get_tool_mcp_is_keep_alive)
+    is_dynamic_headers: bool = Field(
+        False,
+        description="Whether to rebuild HTTP headers on each call from the request context",
+    )
+    is_inherit_headers: bool = Field(
+        False, description="Whether to inherit HTTP headers from the parent request"
+    )
+    is_keep_alive: bool = Field(
+        default_factory=Config.get_tool_mcp_is_keep_alive,
+        description="Whether to reuse the MCP connection across tool calls",
+    )
 
     def __init__(self, **kwargs):
         """Initialize the MCP client with necessary resources.
@@ -65,10 +76,7 @@ class BaseMCPClient(BaseTool):
         self.add_tools(tools_response)
 
     def add_tools(self, tools_response) -> None:
-        """
-        dynamically creates MCPTool instances for each discovered tool. These tools are
-        then registered with the MAS for use by agents.
-        """
+        """Register MCPTool instances dynamically based on the tools_response from the server."""
         params = self.model_dump(
             exclude={
                 "sse_url",
@@ -165,7 +173,7 @@ class BaseMCPClient(BaseTool):
                 await self._exit_stack.aclose()
             except asyncio.CancelledError:
                 # TODO cleanup(): Operation was cancelled
-                logger.error("main(): cancel_me is cancelled now")
+                logger.error("MCP client cleanup was cancelled")
             except Exception:
                 pass
                 # Suppress cleanup exceptions to prevent cascading failures

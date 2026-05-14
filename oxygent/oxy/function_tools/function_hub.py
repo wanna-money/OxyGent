@@ -6,8 +6,8 @@ It supports both synchronous and asynchronous functions with automatic conversio
 """
 
 import asyncio
-import functools
 import concurrent.futures
+import functools
 
 from pydantic import Field
 
@@ -84,22 +84,16 @@ class FunctionHub(BaseTool):
                 @functools.wraps(func)
                 async def async_func(*args, **kwargs):
                     # Use thread pool for blocking synchronous operations
-                    loop = asyncio.get_event_loop()
+                    loop = asyncio.get_running_loop()
                     if kwargs:
-                        # 如果有kwargs，使用functools.partial包装函数
+                        # If kwargs are provided, wrap the function with functools.partial
                         partial_func = functools.partial(func, **kwargs)
                         return await loop.run_in_executor(
-                            self.thread_pool,
-                            partial_func,
-                            *args
+                            self.thread_pool, partial_func, *args
                         )
                     else:
-                        # 如果没有kwargs，直接调用
-                        return await loop.run_in_executor(
-                            self.thread_pool,
-                            func,
-                            *args
-                        )
+                        # If no kwargs, call the function directly
+                        return await loop.run_in_executor(self.thread_pool, func, *args)
 
             # Register function in the hub's dictionary
             self.func_dict[func.__name__] = (description, async_func)

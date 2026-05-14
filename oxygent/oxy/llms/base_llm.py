@@ -48,7 +48,9 @@ class BaseLLM(Oxy):
         max_video_size: Maximum size in bytes for video processing.
     """
 
-    category: str = Field("llm", description="")
+    category: str = Field(
+        "llm", description="Category identifier, always 'llm' for LLM implementations"
+    )
     semaphore: int = Field(
         default_factory=Config.get_llm_semaphore, description="Concurrency limit"
     )
@@ -56,7 +58,9 @@ class BaseLLM(Oxy):
         default_factory=Config.get_llm_timeout, description="Timeout in seconds."
     )
 
-    llm_params: dict = Field(default_factory=dict)
+    llm_params: dict = Field(
+        default_factory=dict, description="Additional provider-specific LLM parameters"
+    )
     is_send_think: bool = Field(
         default_factory=Config.get_message_is_send_think,
         description="Whether to send think messages to the frontend.",
@@ -85,11 +89,24 @@ class BaseLLM(Oxy):
         default=2 * 1024 * 1024,
         description="Maximum non-media file size (bytes) for base64 embedding.",
     )
-    base64_image_prefix: str = Field(default="data:image", description="")
-    base64_video_prefix: str = Field(default="data:video", description="")
-    is_disable_system_prompt: bool = Field(default=False)
+    base64_image_prefix: str = Field(
+        default="data:image",
+        description="Prefix used to detect base64-encoded image data URIs",
+    )
+    base64_video_prefix: str = Field(
+        default="data:video",
+        description="Prefix used to detect base64-encoded video data URIs",
+    )
+    is_disable_system_prompt: bool = Field(
+        default=False, description="Whether to omit the system prompt from the LLM call"
+    )
 
     async def _get_messages(self, oxy_request: OxyRequest):
+        """Build the message list for the LLM call.
+
+        Merges the system prompt, parses multimodal content (text, image, video, file),
+        and optionally converts URLs to base64. Returns the assembled message list.
+        """
         # merge system prompt
         if (
             self.is_disable_system_prompt
@@ -102,7 +119,7 @@ class BaseLLM(Oxy):
             )
             oxy_request.arguments["messages"] = oxy_request.arguments["messages"][1:]
 
-        # Preprocess messages for multimoding input
+        # Preprocess messages for multimodal input
         if not self.is_multimodal_supported:
             return oxy_request.arguments["messages"]
 
@@ -111,13 +128,13 @@ class BaseLLM(Oxy):
         for message in messages_processed:
             role, content = message["role"], message["content"]
             if role == "user":
-                # 如果不是str类型则不做处理
+                # Skip processing if not a str type
                 if not isinstance(content, str):
                     messages_temp.append(message)
                     continue
-                # 解析文本
+                # Parse text
                 items = parse_mixed_string(content)
-                # 读取文件替换成文本内容
+                # Read file and replace with its text content
                 index_of_doc_url = [
                     i for i, item in enumerate(items) if item["type"] == "doc_url"
                 ]
@@ -134,9 +151,9 @@ class BaseLLM(Oxy):
                     else:
                         items[i] = {"type": "text", "content": item["content"]}
 
-                # 判断是否是纯文本
+                # Check whether the message is plain text
                 is_pure_text = all([item["type"] == "text" for item in items])
-                # 直接拼接
+                # Concatenate directly
                 if is_pure_text:
                     content = "".join([item["content"] for item in items])
                 else:
@@ -162,7 +179,7 @@ class BaseLLM(Oxy):
             messages_temp.append({"role": role, "content": content})
         messages_processed = messages_temp
 
-        # hold url
+        # Keep URL as-is when base64 conversion is disabled
         if not self.is_convert_url_to_base64:
             return messages_processed
 

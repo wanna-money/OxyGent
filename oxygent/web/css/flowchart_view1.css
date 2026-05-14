@@ -1,28 +1,30 @@
 .view1-flowchart {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    padding: 20px;
+    padding: 10px 12px;
 }
 
 .view1-node {
     border: 1px solid #E1E1E1;
     border-radius: 4px;
-    padding: 10px 20px;
+    padding: 5px 8px;
     background-color: white;
     text-align: center;
     min-width: 80px;
     position: relative;
+    flex-shrink: 0;
 }
 
 .view1-container {
     border: 1px solid #E1E1E1;
     border-radius: 4px;
-    padding: 10px;
+    padding: 6px 8px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     background-color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 .view1-label,
@@ -31,6 +33,7 @@
     align-items: center;
     cursor: pointer;
     color: #000;
+    font-size: 14px;
 }
 
 .view1-container.checked,
@@ -41,16 +44,16 @@
 
 .view1-label > img,
 .view1-node > img {
-    width: 30px;
-    height: 30px;
-    border-radius: 30px;
+    width: 24px;
+    height: 24px;
+    border-radius: 24px;
     background-color: #E1EFFD;
-    margin-right: 8px;
+    margin-right: 6px;
 }
 
 .view1-container>.view1-label {
     background-color: #fff;
-    padding: 2px 5px;
+    padding: 2px 0px;
     border-radius: 5px;
     font-weight: bold;
     cursor: pointer;
@@ -84,12 +87,52 @@
 .view1-content {
     display: flex;
     align-items: center;
-    margin-top: 15px;
+    margin-top: 8px;
 }
 
+/* Straight arrow for 1-to-1 */
+.arrow {
+    margin: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.arrow svg {
+    display: block;
+}
+
+/* ========== Fork / Join right-angle connectors ========== */
+
+/* Fork-line: horizontal connector from previous node to fork vertical spine */
+.view1-fork-line {
+    display: inline-flex;
+    align-items: center;
+    width: 14px;
+    height: 0;
+    border-top: 1.5px solid #286DFF;
+    flex-shrink: 0;
+    margin: 0 2px;
+}
+
+/* Join-arrow: horizontal connector with arrowhead from join spine to next node */
+.view1-join-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0 2px;
+}
+
+.view1-join-arrow svg {
+    display: block;
+}
+
+/* Parallel container (default, non-forked — kept for any legacy usage) */
 .view1-parallel-container {
     display: flex;
     flex-direction: column;
+    gap: 6px;
 }
 
 .view1-parallel-branch {
@@ -97,74 +140,146 @@
     align-items: center;
 }
 
-.arrow {
-    margin: 0 10px;
-    position: relative;
-}
-
-.arrow::after {
-    content: '→';
-    font-size: 24px;
-    color: #286DFF;
-}
-
-.view1-connector {
-    position: relative;
-    width: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.view1-connector .view1-line-start {
-    position: absolute;
-    height: 1px;
-    background-color: black;
-    width: 20px;
-    left: 0;
-}
-
-.view1-connector .view1-line-end {
-    position: absolute;
-    height: 1px;
-    background-color: black;
-    width: 20px;
-    right: 0;
-}
-
-.view1-connector .view1-line-end::after {
-    content: '';
-    position: absolute;
-    right: -2px;
-    top: -4px;
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
-    border-left: 5px solid black;
-}
-
-.view1-connector .view1-vertical-line {
-    position: absolute;
-    width: 1px;
-    background-color: black;
-    height: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
 .view1-parallel-join {
     display: flex;
     align-items: center;
 }
 
-.view1-join-lines {
+/* Forked parallel container: right-angle connectors on both sides */
+.view1-parallel-container.view1-forked {
+    gap: 0;                /* use branch padding instead, so spine segments connect */
+    padding-left: 22px;
+    padding-right: 22px;
     position: relative;
-    width: 20px;
 }
 
-.view1-branch-line {
+.view1-forked > .view1-parallel-branch {
+    position: relative;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+/* Fork stub: horizontal line with arrowhead from left spine into each branch */
+.view1-forked > .view1-parallel-branch::before {
+    content: '';
     position: absolute;
-    height: 1px;
-    background-color: black;
-    width: 20px;
+    left: -22px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 12px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='12' viewBox='0 0 22 12'%3E%3Cpath d='M0 6h18M15 3l3 3-3 3' fill='none' stroke='%23286DFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center center;
+}
+
+/* Fork spine: vertical line on left side connecting branches */
+.view1-forked > .view1-parallel-branch::after {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1.5px solid #286DFF;
+}
+
+/* First child: spine from center downward */
+.view1-forked > .view1-parallel-branch:first-child::after {
+    top: 50%;
+}
+
+/* Last child: spine from top to center */
+.view1-forked > .view1-parallel-branch:last-child::after {
+    bottom: 50%;
+}
+
+/* Only child: no spine */
+.view1-forked > .view1-parallel-branch:only-child::after {
+    display: none;
+}
+
+/* Join hook: container for right-side connector on each branch */
+.view1-join-hook {
+    position: absolute;
+    right: -22px;
+    top: 0;
+    bottom: 0;
+    width: 22px;
+    pointer-events: none;
+}
+
+/* Join stub: horizontal line from branch to right spine */
+.view1-join-hook::before {
+    content: '';
+    position: absolute;
     left: 0;
+    top: 50%;
+    width: 22px;
+    height: 0;
+    border-top: 1.5px solid #286DFF;
+}
+
+/* Join spine: vertical line on right side connecting branches */
+.view1-join-hook::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1.5px solid #286DFF;
+}
+
+/* First child: join spine from center downward */
+.view1-forked > .view1-parallel-branch:first-child > .view1-join-hook::after {
+    top: 50%;
+}
+
+/* Last child: join spine from top to center */
+.view1-forked > .view1-parallel-branch:last-child > .view1-join-hook::after {
+    bottom: 50%;
+}
+
+/* Only child: no join spine */
+.view1-forked > .view1-parallel-branch:only-child > .view1-join-hook::after {
+    display: none;
+}
+
+/* ========== Start / End sentinel nodes ========== */
+.view1-node-start,
+.view1-node-end {
+    border-style: dashed;
+    cursor: default;
+    min-width: auto;
+}
+
+.view1-node-start {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.view1-node-start span {
+    color: #16a34a;
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.view1-node-end {
+    border-color: #fca5a5;
+    background: #fef2f2;
+}
+
+.view1-node-end span {
+    color: #dc2626;
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.view1-node-start:hover,
+.view1-node-end:hover {
+    box-shadow: none;
+}
+
+.view1-icon-svg {
+    flex-shrink: 0;
+    margin-right: 4px;
 }
