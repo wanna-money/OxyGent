@@ -25,6 +25,9 @@ limitations under the License. -->
   <a href="https://pypi.org/project/oxygent/">
     <img src="https://img.shields.io/pypi/v/oxygent.svg?logo=pypi&logoColor=white" alt="pip"/>
   </a>
+  <a href="https://arxiv.org/abs/2604.25602">
+    <img src="https://img.shields.io/badge/Paper-ACL%202026-orange" alt="paper"/>
+  </a>
 
 <html>
     <h2 align="center">

@@ -19,6 +19,7 @@ NOTE: This module contains the following parts:
 # from __future__ import annotations
 import asyncio
 import copy
+import inspect
 import json
 import os
 import time
@@ -171,6 +172,13 @@ class MAS(BaseModel):
         default_factory=dict,
         description="Channel IDs used by each trace for message routing",
     )
+    enable_a2a_server: bool = Field(
+        False, description="Whether to auto-enable built-in A2A server adapter."
+    )
+    a2a_server_name: str = Field("a2a_server_agent")
+    a2a_server_desc: str = Field("")
+    a2a_target_agent_name: str = Field("")
+    a2a_base_path: str = Field("/a2a")
 
     def __init__(self, **kwargs):
         """Construct a new :class:`MAS`.
@@ -1231,11 +1239,40 @@ class MAS(BaseModel):
         mounts=None,
         shared_data=None,
         group_data=None,
+        enable_a2a_server: bool | None = None,
+        a2a_target_agent_name: str | None = None,
+        a2a_base_path: str | None = None,
     ):
         """Start the FastAPI + SSE service (see original inline documentation)."""
         self.routers.extend(routers or [])
         self.middlewares.extend(middlewares or [])
         self.mounts.extend(mounts or [])
+
+        if enable_a2a_server is not None:
+            self.enable_a2a_server = enable_a2a_server
+        # Deprecated: target is resolved from MAS master_agent_name.
+        # Keep parameter for backward compatibility.
+        if a2a_base_path:
+            self.a2a_base_path = a2a_base_path
+
+        existing_prefixes = {getattr(r, "prefix", "") for r in self.routers}
+
+        if self.enable_a2a_server and self.a2a_base_path not in existing_prefixes:
+            from .oxy.agents import A2AServerGateway
+
+            a2a_server_agent = A2AServerGateway(
+                a2a_base_path=self.a2a_base_path,
+            )
+            a2a_server_agent.set_mas(self)
+            try:
+                a2a_router = a2a_server_agent.build_router()
+            except Exception as e:
+                logger.warning(f"Failed to build auto A2A router: {e}")
+                a2a_router = None
+            prefix = getattr(a2a_router, "prefix", "")
+            if a2a_router and prefix not in existing_prefixes:
+                self.routers.append(a2a_router)
+                existing_prefixes.add(prefix)
 
         if not self.master_agent_name:
             logger.warning("No agent was registered.")

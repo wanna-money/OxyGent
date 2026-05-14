@@ -280,7 +280,7 @@ class SkillAgent(ReActAgent):
                         )
                 else:
                     # Treat as parent directory, search for skills recursively
-                    skill_files = list(skill_path.rglob("SKILL.md"))
+                    skill_files = list(skill_path.glob("*/SKILL.md"))
                     path_skill_count = 0
 
                     for skill_file in skill_files:
