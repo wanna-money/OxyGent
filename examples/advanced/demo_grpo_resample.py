@@ -7,7 +7,6 @@ from oxygent.routes import get_task_info
 Config.set_agent_llm_model("default_llm")
 Config.set_message_is_send_tool_call(False)
 Config.set_message_is_send_observation(False)
-Config.set_oxy_request_is_async_storage(False)
 Config.set_storage_es_engine("MemoryEs")
 
 oxy_space = [
@@ -49,6 +48,8 @@ async def main():
         payload = {"query": "What time is it now? Please save it into time.txt."}
         oxy_response = await mas.chat_with_agent(payload)
         trace_id = oxy_response.oxy_request.current_trace_id
+
+        await mas.await_background_tasks(trace_id)
 
         # Step2
         res = await get_task_info(trace_id)

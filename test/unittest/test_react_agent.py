@@ -25,7 +25,11 @@ class DummyMAS:
         self.oxy_name_to_oxy = {}
         self.vearch_client = AsyncMock()
         self.es_client = AsyncMock()
-        self.background_tasks = set()
+        self.background_tasks = {}
+
+    def add_background_task(self, trace_id, task):
+        self.background_tasks.setdefault(trace_id, set()).add(task)
+        task.add_done_callback(lambda t: self.background_tasks.get(trace_id, set()).discard(t))
 
     @staticmethod
     def is_agent(name: str) -> bool:

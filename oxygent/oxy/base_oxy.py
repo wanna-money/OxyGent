@@ -633,16 +633,14 @@ Arguments:
             if self.mas:
                 oxy_request.create_time = get_format_time()
 
-                def pre_done_callback(task):
-                    self.mas.background_tasks.discard(task)
-                    event.set()
-
                 pre_save_data_task = asyncio.create_task(
                     self._pre_save_data(oxy_request)
                 )
 
-                pre_save_data_task.add_done_callback(pre_done_callback)
-                self.mas.background_tasks.add(pre_save_data_task)
+                pre_save_data_task.add_done_callback(lambda _: event.set())
+                self.mas.add_background_task(
+                    oxy_request.current_trace_id, pre_save_data_task
+                )
             else:
                 logger.warning(
                     "Temporary invocation without storing data.",
@@ -691,10 +689,10 @@ Arguments:
                         post_save_data_task = asyncio.create_task(
                             self._post_save_data(oxy_response)
                         )
-                        post_save_data_task.add_done_callback(
-                            self.mas.background_tasks.discard
+                        self.mas.add_background_task(
+                            oxy_request.current_trace_id,
+                            post_save_data_task,
                         )
-                        self.mas.background_tasks.add(post_save_data_task)
                     else:
                         await self._post_save_data(oxy_response)
 
@@ -749,10 +747,10 @@ Arguments:
                     post_save_data_task = asyncio.create_task(
                         _post_save_data_task(oxy_response)
                     )
-                    post_save_data_task.add_done_callback(
-                        self.mas.background_tasks.discard
+                    self.mas.add_background_task(
+                        oxy_request.current_trace_id,
+                        post_save_data_task,
                     )
-                    self.mas.background_tasks.add(post_save_data_task)
                 else:
                     await _post_save_data_task(oxy_response)
             else:

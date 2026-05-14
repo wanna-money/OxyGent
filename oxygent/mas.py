@@ -114,9 +114,9 @@ class MAS(BaseModel):
         default_factory=dict,
         description="Currently running task futures keyed by trace_id",
     )
-    background_tasks: set = Field(
-        default_factory=set,
-        description="Background asyncio tasks (e.g. data persistence)",
+    background_tasks: dict = Field(
+        default_factory=dict,
+        description="Background asyncio tasks keyed by trace_id",
     )
     event_dict: dict = Field(
         default_factory=dict,
@@ -214,7 +214,9 @@ class MAS(BaseModel):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await asyncio.gather(*self.background_tasks)
+        all_tasks = [t for tasks in self.background_tasks.values() for t in tasks]
+        if all_tasks:
+            await asyncio.gather(*all_tasks)
         logger.info("=" * 64)
         logger.info("🪂 OxyGent MAS Application Exit")
         logger.info("=" * 64)
@@ -223,6 +225,25 @@ class MAS(BaseModel):
         if self.redis_client:
             await self.redis_client.close()
         await self.cleanup_servers()
+
+    def add_background_task(self, trace_id: str, task: asyncio.Task):
+        """Register a background task under the given trace_id."""
+        self.background_tasks.setdefault(trace_id, set()).add(task)
+        task.add_done_callback(lambda t: self._discard_background_task(trace_id, t))
+
+    def _discard_background_task(self, trace_id: str, task: asyncio.Task):
+        """Remove a finished task from its trace_id bucket."""
+        bucket = self.background_tasks.get(trace_id)
+        if bucket is not None:
+            bucket.discard(task)
+            if not bucket:
+                del self.background_tasks[trace_id]
+
+    async def await_background_tasks(self, trace_id: str):
+        """Wait for all background tasks belonging to *trace_id* to finish."""
+        tasks = self.background_tasks.get(trace_id)
+        if tasks:
+            await asyncio.gather(*tasks)
 
     @classmethod
     async def create(cls, **kwargs):
@@ -892,8 +913,7 @@ class MAS(BaseModel):
                             },
                         )
                     )
-                    save_message_task.add_done_callback(self.background_tasks.discard)
-                    self.background_tasks.add(save_message_task)
+                    self.add_background_task(current_trace_id, save_message_task)
                     self.stream_dict[node_id].clear()
             else:
                 save_message_task = asyncio.create_task(
@@ -914,8 +934,7 @@ class MAS(BaseModel):
                         },
                     )
                 )
-                save_message_task.add_done_callback(self.background_tasks.discard)
-                self.background_tasks.add(save_message_task)
+                self.add_background_task(current_trace_id, save_message_task)
         if message_is_send:
             bytes_msg = msgpack.packb(msgpack_preprocess(sse_message.to_sse()))
             await self.redis_client.lpush(redis_key, bytes_msg)
@@ -1076,6 +1095,8 @@ class MAS(BaseModel):
             # Special handling: when from_trace_id exists, inherit and merge historical group_data from ES
             # Note: This logic runs after the loop above to ensure merged result is the final value
             if "from_trace_id" in payload and payload["from_trace_id"]:
+                # Wait for previous trace's background tasks to finish before proceeding
+                await self.await_background_tasks(payload["from_trace_id"])
                 es_response_group_id = await self.es_client.search(
                     Config.get_app_name() + "_trace",
                     {

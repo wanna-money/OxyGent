@@ -28,7 +28,7 @@ oxygent/mas.py
 | `redis_client` | `Optional[JimdbApRedis]` | `None` | Redis client |
 | `lock` | `bool` | `False` | Control task execution flow |
 | `active_tasks` | `dict` | `{}` | Dictionary to manage active tasks |
-| `background_tasks` | `set` | `set()` | Set of background tasks |
+| `background_tasks` | `dict` | `{}` | Dict of background tasks |
 | `event_dict` | `dict` | `{}` | Dictionary for event management |
 | `message_prefix` | `str` | `"oxygent"` | Prefix for messages |
 | `global_data` | `dict` | `{}` | System-wide global data store |
