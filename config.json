@@ -47,6 +47,9 @@
             "number_of_shards": 1,
             "number_of_replicas": 1
         },
+        "storage": {
+            "es_engine": "LocalEs"
+        },
         "redis": {},
         "redis_param": {
             "expire_time": 86400,
@@ -93,6 +96,11 @@
                 "<Your Model Name>": "<Your Encoding Name>"
             },
             "default_encoding": "o200k_base"
+        },
+        "oxy_request": {
+            "is_save_history": true,
+            "is_send_message": true,
+            "is_async_storage": true
         }
     },
     "dev": {

@@ -33,7 +33,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
 from .config import Config
-from .databases.db_es import JesEs, LocalEs
+from .databases.db_es import JesEs, LocalEs, MemoryEs
 from .databases.db_redis import JimdbApRedis, LocalRedis
 from .databases.db_vector import VearchDB
 from .db_factory import DBFactory
@@ -356,6 +356,8 @@ class MAS(BaseModel):
             user = jes_config["user"]
             password = jes_config["password"]
             self.es_client = db_factory.get_instance(JesEs, hosts, user, password)
+        elif Config.get_storage_es_engine == "MemoryEs":
+            self.es_client = MemoryEs()
         else:
             self.es_client = db_factory.get_instance(LocalEs)
         # trace table

@@ -137,13 +137,16 @@ class OxyRequest(BaseModel):
     )
 
     is_save_history: bool = Field(
-        True, description="Whether conversation history is persisted to ES"
+        default_factory=Config.get_oxy_request_is_save_history,
+        description="Whether conversation history is persisted to ES",
     )
     is_send_message: bool = Field(
-        True, description="Whether messages are sent to the frontend"
+        default_factory=Config.get_oxy_request_is_send_message,
+        description="Whether messages are sent to the frontend",
     )
     is_async_storage: bool = Field(
-        True, description="Whether data storage runs asynchronously in background tasks"
+        default_factory=Config.get_oxy_request_is_async_storage,
+        description="Whether data storage runs asynchronously in background tasks",
     )
 
     parallel_id: Optional[str] = Field(

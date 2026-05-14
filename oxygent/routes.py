@@ -33,7 +33,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from .config import Config
-from .databases.db_es import JesEs, LocalEs
+from .databases.db_es import JesEs, LocalEs, MemoryEs
 from .db_factory import DBFactory
 from .evaluation_manager import EvaluationManager
 from .oxy_factory import OxyFactory
@@ -59,6 +59,8 @@ async def get_es_client():
         user = jes_config["user"]
         password = jes_config["password"]
         return db_factory.get_instance(JesEs, hosts, user, password)
+    elif Config.get_storage_es_engine == "MemoryEs":
+        return MemoryEs()
     else:
         return db_factory.get_instance(LocalEs)
 
@@ -230,15 +232,7 @@ async def get_node_info(item_id: str):
 # Define the data model for the LLM call request
 @router.get("/view")
 async def get_task_info(item_id: str):
-    db_factory = DBFactory()
-    if Config.get_es_config():
-        jes_config = Config.get_es_config()
-        hosts = jes_config["hosts"]
-        user = jes_config["user"]
-        password = jes_config["password"]
-        es_client = db_factory.get_instance(JesEs, hosts, user, password)
-    else:
-        es_client = db_factory.get_instance(LocalEs)
+    es_client = await get_es_client()
 
     # es_client.exists(Config.get_app_name() + "_node", doc_id=item_id)
 

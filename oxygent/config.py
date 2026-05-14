@@ -89,6 +89,9 @@ class Config:
             "number_of_shards": 1,
             "number_of_replicas": 1,
         },
+        "storage": {
+            "es_engine": "LocalEs",  # JesEs/LocalEs/MemoryEs
+        },
         "redis": {},
         "redis_param": {
             "expire_time": 86400,  # 24 hours 60 * 60 * 24
@@ -133,6 +136,11 @@ class Config:
             "enabled": True,
             "encoding_map": {"<Your Model Name>": "<Your Encoding Name>"},
             "default_encoding": "o200k_base",
+        },
+        "oxy_request": {
+            "is_save_history": True,
+            "is_send_message": True,
+            "is_async_storage": True,
         },
     }
 
@@ -483,6 +491,24 @@ class Config:
     def get_es_settings_config(cls) -> dict:
         return cls.get_module_config("es_settings")
 
+    # --- es_settings ---
+
+    @classmethod
+    def set_storage_config(cls, storage_config):
+        cls.set_module_config("storage", storage_config)
+
+    @classmethod
+    def get_storage_config(cls) -> dict:
+        return cls.get_module_config("storage")
+
+    @classmethod
+    def set_storage_es_engine(cls, es_engine):
+        cls.set_module_config("storage", "es_engine", es_engine)
+
+    @classmethod
+    def get_storage_es_engine(cls):
+        return cls.get_module_config("storage", "es_engine")
+
     # --- vearch ---
 
     @classmethod
@@ -794,3 +820,37 @@ class Config:
         Defaults to ``o200k_base`` (used by GPT-4o and later models).
         """
         return cls.get_module_config("token_tracking", "default_encoding", "o200k_base")
+
+    # --- oxy_request ---
+
+    @classmethod
+    def set_oxy_request_config(cls, oxy_request_config):
+        cls.set_module_config("oxy_request", oxy_request_config)
+
+    @classmethod
+    def get_oxy_request_config(cls):
+        return cls.get_module_config("oxy_request")
+
+    @classmethod
+    def set_oxy_request_is_save_history(cls, is_save_history):
+        cls.set_module_config("oxy_request", "is_save_history", is_save_history)
+
+    @classmethod
+    def get_oxy_request_is_save_history(cls):
+        return cls.get_module_config("oxy_request", "is_save_history")
+
+    @classmethod
+    def set_oxy_request_is_send_message(cls, is_send_message):
+        cls.set_module_config("oxy_request", "is_send_message", is_send_message)
+
+    @classmethod
+    def get_oxy_request_is_send_message(cls):
+        return cls.get_module_config("oxy_request", "is_send_message")
+
+    @classmethod
+    def set_oxy_request_is_async_storage(cls, is_async_storage):
+        cls.set_module_config("oxy_request", "is_async_storage", is_async_storage)
+
+    @classmethod
+    def get_oxy_request_is_async_storage(cls):
+        return cls.get_module_config("oxy_request", "is_async_storage")
