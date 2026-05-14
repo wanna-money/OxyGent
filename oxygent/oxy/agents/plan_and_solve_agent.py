@@ -70,7 +70,6 @@ class PlanAndSolveAgent(LocalAgent):
             plans = json.loads(past_plan)
 
             for current_step, current_task in enumerate(plans):
-                print(current_step, current_task)
                 executor_oxy_response = await oxy_request.call(
                     callee=self.executor_agent,
                     arguments={
@@ -105,7 +104,5 @@ class PlanAndSolveAgent(LocalAgent):
                     return await answer(past_steps_str, short_memory, original_query)
                 elif ctrl_oxy_response.output.startswith("replan"):
                     break
-                else:
-                    pass
 
         return await answer(past_steps_str, short_memory, original_query)

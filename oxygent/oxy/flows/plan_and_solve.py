@@ -134,14 +134,14 @@ class PlanAndSolve(BaseFlow):
                 The current step to execute is:{task}
                 You should only execute the current step, and do not execute other steps in our plan. Do not execute more than one step continuously or skip any step.
             """.strip()
-            excutor_response = await oxy_request.call(
+            executor_response = await oxy_request.call(
                 callee=self.executor_agent_name,
                 arguments={"query": task_formatted},
             )
             past_steps = (
                 past_steps
                 + "\n"
-                + f"task:{task}, execute task result:{excutor_response.output}"
+                + f"task:{task}, execute task result:{executor_response.output}"
             )
             if self.enable_replanner:
                 # Replanning logic
@@ -194,7 +194,7 @@ class PlanAndSolve(BaseFlow):
                 if 0 == len(plan_steps):
                     return OxyResponse(
                         state=OxyState.COMPLETED,
-                        output=excutor_response.output,
+                        output=executor_response.output,
                     )
 
         plan_steps = plan_response.steps

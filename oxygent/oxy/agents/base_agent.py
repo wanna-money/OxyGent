@@ -14,6 +14,7 @@ from ...config import Config
 from ...schemas import OxyRequest, OxyResponse
 from ...utils.common_utils import generate_uuid, get_format_time, to_json
 from ..base_flow import BaseFlow
+from ..base_oxy import _serialize_data_for_es
 
 logger = logging.getLogger(__name__)
 
@@ -87,28 +88,12 @@ class BaseAgent(BaseFlow):
 
         if oxy_request.caller_category == "user":
             if self.mas and self.mas.es_client:
-                shared_data_schema = Config.get_es_schema_shared_data().get(
-                    "properties", {}
+                to_save_shared_data = _serialize_data_for_es(
+                    oxy_request.shared_data, Config.get_es_schema_shared_data
                 )
-                if shared_data_schema:
-                    to_save_shared_data = {
-                        k: v
-                        for k, v in oxy_request.shared_data.items()
-                        if k in shared_data_schema
-                    }
-                else:
-                    to_save_shared_data = to_json(oxy_request.shared_data)
-                group_data_schema = Config.get_es_schema_group_data().get(
-                    "properties", {}
+                to_save_group_data = _serialize_data_for_es(
+                    oxy_request.group_data, Config.get_es_schema_group_data
                 )
-                if group_data_schema:
-                    to_save_group_data = {
-                        k: v
-                        for k, v in oxy_request.group_data.items()
-                        if k in group_data_schema
-                    }
-                else:
-                    to_save_group_data = to_json(oxy_request.group_data)
                 # Store the current conversation trace record
                 await self.mas.es_client.index(
                     Config.get_app_name() + "_trace",
@@ -147,28 +132,12 @@ class BaseAgent(BaseFlow):
         if oxy_request.caller_category == "user":
             # Update trace record with the response output
             if self.mas and self.mas.es_client:
-                shared_data_schema = Config.get_es_schema_shared_data().get(
-                    "properties", {}
+                to_save_shared_data = _serialize_data_for_es(
+                    oxy_request.shared_data, Config.get_es_schema_shared_data
                 )
-                if shared_data_schema:
-                    to_save_shared_data = {
-                        k: v
-                        for k, v in oxy_request.shared_data.items()
-                        if k in shared_data_schema
-                    }
-                else:
-                    to_save_shared_data = to_json(oxy_request.shared_data)
-                group_data_schema = Config.get_es_schema_group_data().get(
-                    "properties", {}
+                to_save_group_data = _serialize_data_for_es(
+                    oxy_request.group_data, Config.get_es_schema_group_data
                 )
-                if group_data_schema:
-                    to_save_group_data = {
-                        k: v
-                        for k, v in oxy_request.group_data.items()
-                        if k in group_data_schema
-                    }
-                else:
-                    to_save_group_data = to_json(oxy_request.group_data)
                 await self.mas.es_client.update(
                     Config.get_app_name() + "_trace",
                     doc_id=oxy_request.current_trace_id,

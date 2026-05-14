@@ -181,7 +181,7 @@ Previous answer: {previous_answer}""",
                     output=f"Final answer optimized through {current_round + 1} rounds of reflexion:\n\n{current_answer}",
                     extra={
                         "reflexion_rounds": current_round + 1,
-                        "final_evaluation": evaluation.dict(),
+                        "final_evaluation": evaluation.model_dump(),
                     },
                 )
 
@@ -233,7 +233,7 @@ Please provide the best possible final answer considering all the feedback above
             output=f"Answer after {self.max_reflexion_rounds + 1} rounds of reflexion attempts:\n\n{final_response.output}",
             extra={
                 "reflexion_rounds": self.max_reflexion_rounds + 1,
-                "final_evaluation": evaluation.dict(),
+                "final_evaluation": evaluation.model_dump(),
                 "reached_max_rounds": True,
             },
         )
@@ -272,51 +272,3 @@ Return your evaluation in the following format:
 - improvement_suggestions: [Specific correction suggestions if failed]"""
 
         super().__init__(**kwargs)
-
-
-# Usage example in oxy_space
-def create_reflexion_flow_agents():
-    """Create reflexion flow agents for use in oxy_space."""
-
-    return [
-        # General Reflexion Flow
-        Reflexion(
-            name="general_reflexion_flow",
-            desc="General reflexion flow for answer quality improvement",
-            worker_agent="worker_agent",
-            reflexion_agent="reflexion_agent",
-            max_reflexion_rounds=3,
-        ),
-        # Math Reflexion Flow
-        MathReflexion(
-            name="math_reflexion_flow",
-            desc="Specialized reflexion flow for mathematical problems",
-            max_reflexion_rounds=3,
-        ),
-        # Custom Reflexion Flow with specific templates
-        Reflexion(
-            name="detailed_reflexion_flow",
-            desc="Detailed reflexion flow with custom evaluation criteria",
-            worker_agent="detailed_worker_agent",
-            reflexion_agent="detailed_reflexion_agent",
-            max_reflexion_rounds=5,
-            evaluation_template="""Evaluate this answer comprehensively:
-
-Question: {query}
-Answer: {answer}
-
-Rate on scale 1-10 for:
-- Accuracy and factual correctness
-- Completeness of information
-- Clarity and readability  
-- Practical usefulness
-- Professional tone
-
-Provide detailed feedback and specific improvement suggestions.
-
-Format:
-- is_satisfactory: true/false (true only if all aspects score 8+)
-- evaluation_reason: [Detailed scoring and analysis]
-- improvement_suggestions: [Specific actionable improvements]""",
-        ),
-    ]

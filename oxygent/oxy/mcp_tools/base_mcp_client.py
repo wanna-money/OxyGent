@@ -62,7 +62,7 @@ class BaseMCPClient(BaseTool):
         self._session: ClientSession = None
         self._cleanup_lock: asyncio.Lock = asyncio.Lock()
         self._exit_stack: AsyncExitStack = AsyncExitStack()
-        self._stdio_context: Any = Field(None)
+        self._stdio_context: Any = None
 
     async def list_tools(self) -> None:
         """Discover and register tools from the MCP server.

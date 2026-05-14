@@ -19,10 +19,6 @@ class RAGAgent(ChatAgent):
         exclude=True, description="Retrieve knowledge function"
     )
 
-    def __init__(self, **kwargs):
-        """Initialize the RAG agent."""
-        super().__init__(**kwargs)
-
     @model_validator(mode="after")
     def set_default_prompt(self):
         """Pydantic model validator that injects the default RAG prompt if none provided."""

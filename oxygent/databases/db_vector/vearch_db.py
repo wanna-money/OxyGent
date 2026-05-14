@@ -239,7 +239,7 @@ class VectorToolAsync(object):
 
     @staticmethod
     async def filter_and_emb_search(
-        db_name, space_name, router_url, emb, retrieval_nums, fields, filter={}
+        db_name, space_name, router_url, emb, retrieval_nums, fields, filter=None
     ):
         """Perform hybrid search combining vector similarity and filter conditions.
 
@@ -255,6 +255,8 @@ class VectorToolAsync(object):
         Returns:
             Dict[str, Any]: JSON response containing filtered similarity search results
         """
+        if filter is None:
+            filter = {}
         url = f"{router_url}/{db_name}/{space_name}/_search"
         filter_lis = []
         for k, v in filter.items():
@@ -437,7 +439,7 @@ class VearchDB(BaseVectorDB):
         return res
 
     async def query_search(
-        self, space_name, query, retrieval_nums, fields=[], threshold=None
+        self, space_name, query, retrieval_nums, fields=None, threshold=None
     ):
         """Perform semantic search based on text query with optional threshold
         filtering.
@@ -458,6 +460,8 @@ class VearchDB(BaseVectorDB):
         NOTE:
             The Threshold could not be specified
         """
+        if fields is None:
+            fields = []
         # Generate embedding for the query
         if self.emb_func:
             emb = await self.emb_func([query])
@@ -485,7 +489,7 @@ class VearchDB(BaseVectorDB):
         return res_df
 
     async def query_search_batch(
-        self, space_name, query_list, retrieval_nums, fields=[]
+        self, space_name, query_list, retrieval_nums, fields=None
     ):
         """Perform batch semantic search for multiple queries.
 
@@ -504,6 +508,8 @@ class VearchDB(BaseVectorDB):
         Raises:
             ValueError: If embedding function is not specified
         """
+        if fields is None:
+            fields = []
         if self.emb_func is None:
             raise ValueError("Please specify the embedding function")
 
@@ -569,16 +575,9 @@ class VearchDB(BaseVectorDB):
         df = pd.DataFrame(
             tool_list, columns=["app_name", "agent_name", "tool_name", "tool_desc"]
         )
-        # print(df)
 
-        # 1. Generate embeddings for tool descriptions
+        # Generate embeddings for tool descriptions
         with EmbeddingCache() as embedding:
-            # Method 1: Individual embedding
-            # for app_name, agent_name, tool_name, tool_desc in tool_list:
-            #     tool_desc_embedding = embedding.get(tool_desc)
-            #     print(tool_desc_embedding)
-
-            # Method 2: Batch embedding
             tool_desc_embeddings = await embedding.get(list(df["tool_desc"]))
             df["tool_desc_embedding"] = list(tool_desc_embeddings)
 
@@ -731,7 +730,7 @@ class VearchDB(BaseVectorDB):
     ##
     ## NOTE:Agent-level methods for table operations
     ##
-    async def single_mode_insert_by_text(self, body, vector_col, sapce_name):
+    async def single_mode_insert_by_text(self, body, vector_col, space_name):
         """Insert a single document with automatic embedding generation.
 
         Args:
@@ -756,10 +755,9 @@ class VearchDB(BaseVectorDB):
         vector = {"feature": [float(e) for e in list(emb[0])]}  # Convert to float
         # 2. Add vector to document body
         body["vector"] = vector
-        # print(body)
 
         res = await self.vearch_tools.insert_single(
-            self.config.db_name, sapce_name, self.config.router_url, json.dumps(body)
+            self.config.db_name, space_name, self.config.router_url, json.dumps(body)
         )
 
         return res
@@ -793,7 +791,7 @@ class VearchDB(BaseVectorDB):
             res = pd.DataFrame()
         return res
 
-    async def filter_and_emb_search(self, emb, retrieval_nums, fields, filter={}):
+    async def filter_and_emb_search(self, emb, retrieval_nums, fields, filter=None):
         """Combined embedding and filter search.
 
         Args:
@@ -805,6 +803,8 @@ class VearchDB(BaseVectorDB):
         Returns:
             pd.DataFrame: pandas.DataFrame with search results or empty DataFrame
         """
+        if filter is None:
+            filter = {}
         res = await self.vearch_tools.filter_and_emb_search(
             self.config.db_name,
             self.config.space_name,
@@ -918,7 +918,6 @@ class EmbeddingModel(object):
                 )
                 # Check HTTP status
                 if response.status_code != 200:
-                    # print(f"HTTP error: {response.status}")
                     return None
 
                 # Parse JSON response
@@ -948,12 +947,8 @@ class EmbeddingModel(object):
                 return normalized
         except httpx.HTTPError as e:
             raise ValueError(f"HTTP client error: {str(e)}")
-            # print(f"HTTP client error: {str(e)}")
         except asyncio.TimeoutError:
             raise ValueError("Request timed out")
-            # print("Request timed out")
         except Exception as e:
             raise ValueError(f"Unexpected error: {str(e)}")
-            # print(f"Unexpected error: {str(e)}")
-            # print(f"Problematic input: {querys[:3]}...")  # Print 3 examples to avoid leaking data
         return None

@@ -201,7 +201,6 @@ class JimdbApRedis:
             return await self.redis_pool.expire(key, ex)
         return True
 
-    # @retry_decorator
     async def lpush(
         self,
         key: str,
@@ -268,7 +267,6 @@ class JimdbApRedis:
         """
         return await self.redis_pool.rpop(key)
 
-    # @retry_decorator
     async def brpop(self, key: str, timeout=1):  # Waiting for 1 sec for default
         """Blocking pop operation that removes and returns the last element of a list.
 

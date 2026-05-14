@@ -15,7 +15,6 @@ from typing import Any, Callable, Optional
 
 from pydantic import BaseModel, Field
 
-# from ..mas import MAS
 from ..config import Config
 from ..schemas import OxyRequest, OxyResponse, OxyState
 from ..utils.common_utils import (
@@ -27,6 +26,18 @@ from ..utils.common_utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _serialize_data_for_es(data: dict, schema_getter) -> Any:
+    """Serialize shared_data or group_data for ES storage.
+
+    If a schema is configured (via *schema_getter*), only the keys present in
+    the schema are kept; otherwise the whole dict is serialised to JSON.
+    """
+    schema = schema_getter().get("properties", {})
+    if schema:
+        return {k: v for k, v in data.items() if k in schema}
+    return to_json(data)
 
 
 def ensure_async(func: Callable) -> Callable:
@@ -389,17 +400,9 @@ Arguments:
             callee_name = oxy_request.callee
             callee_cat = oxy_request.callee_category
             # save shared_data
-            shared_data_schema = Config.get_es_schema_shared_data().get(
-                "properties", {}
+            to_save_shared_data = _serialize_data_for_es(
+                oxy_request.shared_data, Config.get_es_schema_shared_data
             )
-            if shared_data_schema:
-                to_save_shared_data = {
-                    k: v
-                    for k, v in oxy_request.shared_data.items()
-                    if k in shared_data_schema
-                }
-            else:
-                to_save_shared_data = to_json(oxy_request.shared_data)
             await self.mas.es_client.index(
                 Config.get_app_name() + "_node",
                 doc_id=oxy_request.node_id,
@@ -514,17 +517,9 @@ Arguments:
         callee_cat = oxy_request.callee_category
         if self.mas and self.mas.es_client:
             # save shared_data
-            shared_data_schema = Config.get_es_schema_shared_data().get(
-                "properties", {}
+            to_save_shared_data = _serialize_data_for_es(
+                oxy_request.shared_data, Config.get_es_schema_shared_data
             )
-            if shared_data_schema:
-                to_save_shared_data = {
-                    k: v
-                    for k, v in oxy_request.shared_data.items()
-                    if k in shared_data_schema
-                }
-            else:
-                to_save_shared_data = to_json(oxy_request.shared_data)
             await self.mas.es_client.update(
                 Config.get_app_name() + "_node",
                 doc_id=oxy_request.node_id,

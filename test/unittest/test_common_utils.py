@@ -26,7 +26,6 @@ def test_extract_json_functions():
 
 
 def test_url_helpers():
-    assert cu.append_url_path("https://a.com/api", "/v1") == "https://a.com/api/v1"
     built = cu.build_url("https://a.com", "chat", {"q": "x", "q": ["y"]})  # noqa: F601
     assert built.startswith("https://a.com/chat")
     assert "q=y" in built

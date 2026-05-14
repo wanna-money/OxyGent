@@ -59,7 +59,7 @@ async def get_es_client():
         user = jes_config["user"]
         password = jes_config["password"]
         return db_factory.get_instance(JesEs, hosts, user, password)
-    elif Config.get_storage_es_engine == "MemoryEs":
+    elif Config.get_storage_es_engine() == "MemoryEs":
         return MemoryEs()
     else:
         return db_factory.get_instance(LocalEs)

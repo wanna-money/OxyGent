@@ -426,7 +426,6 @@ class OxyRequest(BaseModel):
                 state=OxyState.FAILED,
                 output=f"Error executing tool {oxy.name}: {str(e)}",
             )
-        # return await self.retry_execute(oxy, oxy_request)
 
     async def call_async(self, **kwargs):
         """Call a callee asynchronously in a background task."""
@@ -525,9 +524,9 @@ class OxyRequest(BaseModel):
         """Return the group_id associated with this request."""
         return self.group_id
 
-    def set_group_id(self, request_id: str):
+    def set_group_id(self, group_id: str):
         """Manually override the group_id."""
-        self.group_id = request_id
+        self.group_id = group_id
 
     def has_arguments(self, key):
         """Check whether arguments exist."""

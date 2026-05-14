@@ -491,7 +491,7 @@ class Config:
     def get_es_settings_config(cls) -> dict:
         return cls.get_module_config("es_settings")
 
-    # --- es_settings ---
+    # --- storage ---
 
     @classmethod
     def set_storage_config(cls, storage_config):
@@ -592,14 +592,6 @@ class Config:
     @classmethod
     def get_server_auto_open_webpage(cls):
         return cls.get_module_config("server", "auto_open_webpage")
-
-    @classmethod
-    def set_server_on_latest_webpage(cls, on_latest_webpage=True):
-        cls.set_module_config("server", "on_latest_webpage", on_latest_webpage)
-
-    @classmethod
-    def get_server_on_latest_webpage(cls):
-        return cls.get_module_config("server", "on_latest_webpage")
 
     @classmethod
     def set_server_log_level(cls, log_level):

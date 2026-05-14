@@ -50,7 +50,7 @@ class RemoteLLM(BaseLLM):
                 f"Environment variable '{key}' type error: expected str, got {type(value).__name__}."
             )
 
-        if not isinstance(value, str) or not value.strip():
+        if not value.strip():
             raise ValueError(f"{key} must be a non-empty string")
 
         return value

@@ -16,10 +16,8 @@ NOTE: This module contains the following parts:
     - lock: Boolean to control task execution flow
 """
 
-# from __future__ import annotations
 import asyncio
 import copy
-import inspect
 import json
 import os
 import time
@@ -377,7 +375,7 @@ class MAS(BaseModel):
             user = jes_config["user"]
             password = jes_config["password"]
             self.es_client = db_factory.get_instance(JesEs, hosts, user, password)
-        elif Config.get_storage_es_engine == "MemoryEs":
+        elif Config.get_storage_es_engine() == "MemoryEs":
             self.es_client = MemoryEs()
         else:
             self.es_client = db_factory.get_instance(LocalEs)
@@ -691,7 +689,9 @@ class MAS(BaseModel):
     def init_agent_organization(self):
         """Build the agent organization tree structure, including tools."""
 
-        def add_tools(agent_organization: list, agent_names: list, path: list = []):
+        def add_tools(agent_organization: list, agent_names: list, path: list = None):
+            if path is None:
+                path = []
             for agent_name in agent_names:
                 agent = self.oxy_name_to_oxy[agent_name]
                 temp_path = path.copy()
@@ -710,13 +710,9 @@ class MAS(BaseModel):
                 else:
                     agent_organization[-1]["children"] = []
 
-                tool_name_list = []
-                for tool_name in list(
+                tool_name_list = list(
                     set(agent.permitted_tool_name_list + agent.permitted_oxy)
-                ):
-                    # if not agent.is_sourcing_tools and tool_name == 'retrieve_tools':
-                    #     continue
-                    tool_name_list.append(tool_name)
+                )
 
                 add_tools(agent_organization[-1]["children"], tool_name_list, temp_path)
 
@@ -1688,8 +1684,6 @@ class MAS(BaseModel):
         Returns:
             list: Answers (or dicts with *output* + *trace_id*).
         """
-        import time
-
         cost_times = []
 
         async def handle_query(query):

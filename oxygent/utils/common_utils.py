@@ -5,11 +5,7 @@ import base64
 import hashlib
 import json
 import logging
-import mimetypes
-import os
-import platform
 import re
-import uuid
 from datetime import datetime
 from io import BytesIO
 from typing import Any, Dict, Union
@@ -24,26 +20,8 @@ from pydantic import AnyUrl
 logger = logging.getLogger(__name__)
 Image.MAX_IMAGE_PIXELS = 400000000
 
-
-def is_linux():
-    """Return True if the current platform is Linux."""
-    return platform.system().lower() == "linux"
-
-
-def get_mac_address():
-    """Return the MAC address of this machine as a dash-separated string."""
-    mac_address = "-".join(
-        [
-            "{:02x}".format((uuid.getnode() >> elements) & 0xFF)
-            for elements in range(0, 2 * 6, 2)
-        ][::-1]
-    )
-    return mac_address
-
-
-def get_timestamp_str():
-    """Return the current UNIX timestamp as a string."""
-    return str(datetime.now().timestamp())
+IMAGE_EXTENSIONS = ("png", "jpg", "jpeg", "gif", "svg", "bmp", "webp", "tiff")
+VIDEO_EXTENSIONS = ("mp4", "avi", "mov", "wmv", "flv", "webm", "mkv")
 
 
 def get_timestamp():
@@ -139,81 +117,6 @@ async def video_to_base64(
         return f"{base64_prefix};base64,{base64.b64encode(video_bytes).decode('utf-8')}"
 
 
-async def table_to_base64(source: str, max_table_size: int = 50 * 1024 * 1024) -> str:
-    """Convert table files to base64 encoding.
-
-    Args:
-        source: File path or URL
-        max_table_size: Maximum file size (default 50MB)
-
-    Returns:
-        Base64 encoded string with data URI format
-    """
-    table_bytes = await source_to_bytes(source)
-    if len(table_bytes) > max_table_size:
-        raise ValueError(
-            f"Table file size ({len(table_bytes)} bytes) exceeds maximum allowed size ({max_table_size} bytes)"
-        )
-
-    file_ext = os.path.splitext(source.lower())[1]
-    mime_type_map = {
-        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        ".xls": "application/vnd.ms-excel",
-        ".csv": "text/csv",
-        ".tsv": "text/tab-separated-values",
-        ".ods": "application/vnd.oasis.opendocument.spreadsheet",
-    }
-
-    mime_type = mime_type_map.get(file_ext, "application/octet-stream")
-    return f"data:{mime_type};base64,{base64.b64encode(table_bytes).decode('utf-8')}"
-
-
-async def file_to_base64(source: str, max_file_size: int = 10 * 1024 * 1024) -> str:
-    """For small non-media files (<10 MB) return a data-URI; otherwise return the original path/URL."""
-    file_bytes = await source_to_bytes(source)
-    if len(file_bytes) > max_file_size:
-        return source
-    mime_type, _ = mimetypes.guess_type(source)
-    if not mime_type:
-        mime_type = "application/octet-stream"
-    return f"data:{mime_type};base64,{base64.b64encode(file_bytes).decode()}"
-
-
-def validate_table_file(file_path: str) -> bool:
-    """Validate if the file is a supported table format."""
-    supported_extensions = (".xlsx", ".xls", ".csv", ".tsv", ".ods")
-    return file_path.lower().endswith(supported_extensions)
-
-
-def get_table_file_info(file_path: str) -> dict:
-    """Get basic information about a table file."""
-
-    if not os.path.exists(file_path) and not file_path.startswith("http"):
-        return {"error": "File not found"}
-
-    try:
-        file_size = (
-            os.path.getsize(file_path) if not file_path.startswith("http") else None
-        )
-        file_ext = os.path.splitext(file_path.lower())[1][1:]
-
-        return {
-            "filename": os.path.basename(file_path),
-            "extension": file_ext,
-            "size": file_size,
-            "is_supported": validate_table_file(file_path),
-        }
-    except Exception as e:
-        return {"error": str(e)}
-
-
-def append_url_path(url, path):
-    """Append a relative path segment to an existing URL."""
-    parsed = urlparse(str(url))
-    final_path = parsed.path.rstrip("/") + "/" + path.lstrip("/")
-    return urlunparse(parsed._replace(path=final_path))
-
-
 def build_url(
     base_url: Union[AnyUrl, str], path: str = "", query_params: Dict[str, Any] = None
 ) -> str:
@@ -304,8 +207,7 @@ def generate_uuid(length=16):
 
 def is_image(source):
     """Return True if the source path has a recognized image file extension."""
-    exts = ("png", "jpg", "jpeg", "gif", "svg", "bmp", "webp", "tiff")
-    return source.split(".")[-1] in exts
+    return source.split(".")[-1] in IMAGE_EXTENSIONS
 
 
 def parse_mixed_string(s):
@@ -314,8 +216,8 @@ def parse_mixed_string(s):
         return s
 
     url_to_ext = {
-        "image_url": ("png", "jpg", "jpeg", "gif", "svg", "bmp", "webp", "tiff"),
-        "video_url": ("mp4", "avi", "mov", "wmv", "flv", "webm", "mkv"),
+        "image_url": IMAGE_EXTENSIONS,
+        "video_url": VIDEO_EXTENSIONS,
     }
     ext_to_url = {ext: k for k, exts in url_to_ext.items() for ext in exts}
 
@@ -351,56 +253,6 @@ def parse_mixed_string(s):
         text = s[last_end:]
         if text:
             results.append({"type": "text", "content": text})
-
-    return results
-
-
-def parse_mixed_string0(s):
-    """Parse a markdown-style string into multimodal content parts."""
-    if not isinstance(s, str):
-        return s
-
-    url_to_ext = {
-        "image_url": ("png", "jpg", "jpeg", "gif", "svg", "bmp", "webp", "tiff"),
-        "video_url": ("mp4", "avi", "mov", "wmv", "flv", "webm", "mkv"),
-    }
-    ext_to_url = {ext: k for k, exts in url_to_ext.items() for ext in exts}
-
-    # Regex match ![description](link) or ![](link)
-    pattern = re.compile(r"!?\[([^\]]*)\]\(([^)]+)\)")
-    results = []
-    last_end = 0
-
-    for match in pattern.finditer(s):
-        start, end = match.span()
-        # Process the preceding text segment
-        if start > last_end:
-            text = s[last_end:start]
-            if text:
-                results.append({"type": "text", "text": text})
-        # Process the embedded file
-        desc = match.group(1)
-        if desc:
-            results.append({"type": "text", "text": f"the {desc} is: "})
-        link = match.group(2)
-        content_type = ext_to_url.get(link.split(".")[-1], "doc_url")
-        if content_type in url_to_ext:
-            results.append({"type": content_type, content_type: {"url": link}})
-        else:
-            # TODO: Handle other file types
-            with open(link) as f:
-                results.append({"type": "text", "text": f.read()})
-        last_end = end
-
-    # Return the original string if no matches found
-    if last_end == 0:
-        return [{"type": "text", "text": s}]
-
-    # Process the trailing text segment
-    if last_end < len(s):
-        text = s[last_end:]
-        if text:
-            results.append({"type": "text", "text": text})
 
     return results
 
