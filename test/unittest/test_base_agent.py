@@ -83,4 +83,6 @@ class TestBaseAgent:
         )
 
         await dummy_agent._post_save_data(oxy_response)
-        assert dummy_agent.mas.es_client.index.call_count >= 2
+        # trace record is updated via update(), history record via index()
+        dummy_agent.mas.es_client.update.assert_called()
+        dummy_agent.mas.es_client.index.assert_called()

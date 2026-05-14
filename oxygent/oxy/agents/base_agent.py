@@ -117,6 +117,7 @@ class BaseAgent(BaseFlow):
                         "request_id": oxy_request.request_id,
                         "trace_id": oxy_request.current_trace_id,
                         "shared_data": to_save_shared_data,
+                        "original_payload": oxy_request.original_payload,
                         "group_id": oxy_request.group_id,
                         "group_data": to_save_group_data,
                         "from_trace_id": oxy_request.from_trace_id,
@@ -168,21 +169,14 @@ class BaseAgent(BaseFlow):
                     }
                 else:
                     to_save_group_data = to_json(oxy_request.group_data)
-                await self.mas.es_client.index(
+                await self.mas.es_client.update(
                     Config.get_app_name() + "_trace",
                     doc_id=oxy_request.current_trace_id,
                     body={
-                        "request_id": oxy_request.request_id,
-                        "trace_id": oxy_request.current_trace_id,
                         "shared_data": to_save_shared_data,
-                        "group_id": oxy_request.group_id,
                         "group_data": to_save_group_data,
-                        "from_trace_id": oxy_request.from_trace_id,
-                        "root_trace_ids": oxy_request.root_trace_ids,
-                        "input": to_json(oxy_request.arguments),
-                        "callee": oxy_request.callee,
                         "output": to_json(oxy_response.output),
-                        "create_time": get_format_time(),
+                        "update_time": get_format_time(),
                     },
                 )
             else:

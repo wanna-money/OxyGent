@@ -18,6 +18,7 @@ NOTE: This module contains the following parts:
 
 # from __future__ import annotations
 import asyncio
+import copy
 import inspect
 import json
 import os
@@ -368,12 +369,17 @@ class MAS(BaseModel):
                         "group_data": Config.get_es_schema_group_data(),
                         "trace_id": {"type": "keyword"},
                         "shared_data": Config.get_es_schema_shared_data(),
+                        "original_payload": {"type": "text"},
                         "from_trace_id": {"type": "keyword"},
                         "root_trace_ids": {"type": "keyword"},
                         "input": {"type": "text"},
                         "callee": {"type": "keyword"},
                         "output": {"type": "text"},
                         "create_time": {
+                            "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                            "type": "date",
+                        },
+                        "update_time": {
                             "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
                             "type": "date",
                         },
@@ -962,6 +968,79 @@ class MAS(BaseModel):
         """
         oxy_request = None
         try:
+            # --- Restart: restore original payload from trace ---
+            if payload.get("restart_node_id"):
+                # Only these fields matter from the restart caller:
+                restart_node_id = payload["restart_node_id"]
+                restart_node_output = payload.get("restart_node_output", "")
+                caller_trace_id = payload.get("current_trace_id", "")
+                caller_request_id = payload.get("request_id", "")
+
+                # Step 1: look up the node → derive reference_trace_id & ordering
+                node_resp = await self.es_client.search(
+                    Config.get_app_name() + "_node",
+                    {
+                        "query": {"term": {"node_id": restart_node_id}},
+                        "size": 1,
+                    },
+                )
+                if not node_resp["hits"]["hits"]:
+                    raise ValueError(f"Restart node {restart_node_id} not found in ES")
+
+                node_source = node_resp["hits"]["hits"][0]["_source"]
+                reference_trace_id = node_source["trace_id"]
+                restart_node_order = node_source["update_time"]
+
+                # Step 2: look up the trace → retrieve original_payload
+                trace_resp = await self.es_client.search(
+                    Config.get_app_name() + "_trace",
+                    {
+                        "query": {"term": {"_id": reference_trace_id}},
+                        "size": 1,
+                    },
+                )
+                trace_hits = trace_resp.get("hits", {}).get("hits", [])
+                if not trace_hits:
+                    raise ValueError(
+                        f"Trace {reference_trace_id} not found when restoring payload for restart"
+                    )
+
+                trace_source = trace_hits[0]["_source"]
+                stored_payload = self._parse_dict_field(
+                    trace_source.get("original_payload", "{}"),
+                    "original_payload",
+                )
+
+                # Step 3: rebuild payload — original as base, restart fields on top
+                payload.clear()
+                if stored_payload:
+                    payload.update(stored_payload)
+                    logger.info(
+                        f"Restored original payload from trace {reference_trace_id} for restart"
+                    )
+                else:
+                    # Fallback for old traces that lack original_payload
+                    logger.warning(
+                        f"Trace {reference_trace_id} has no original_payload, "
+                        f"falling back to trace-level fields"
+                    )
+
+                # Remove per-execution fields so they are regenerated
+                payload.pop("current_trace_id", None)
+                payload.pop("request_id", None)
+
+                # Apply restart-specific fields
+                payload["restart_node_id"] = restart_node_id
+                payload["reference_trace_id"] = reference_trace_id
+                payload["restart_node_order"] = restart_node_order
+                if restart_node_output:
+                    payload["restart_node_output"] = restart_node_output
+                if caller_trace_id:
+                    payload["current_trace_id"] = caller_trace_id
+                if caller_request_id:
+                    payload["request_id"] = caller_request_id
+
+            # --- Common initialisation (both normal and restart paths) ---
             if "shared_data" not in payload:
                 payload["shared_data"] = dict()
 
@@ -969,120 +1048,28 @@ class MAS(BaseModel):
             metrics = payload["shared_data"].setdefault("_metrics", {})
             metrics["_query_start_time"] = time.time()
 
-            if "restart_node_id" in payload and payload.get("restart_node_id"):
-                es_response = await self.es_client.search(
-                    Config.get_app_name() + "_node",
-                    {
-                        "query": {"term": {"node_id": payload["restart_node_id"]}},
-                        "size": 1,
-                    },
-                )
-
-                if es_response["hits"]["hits"]:
-                    restart_node_data = es_response["hits"]["hits"][0]["_source"]
-
-                    if payload.get("reference_trace_id"):
-                        if (
-                            restart_node_data["trace_id"]
-                            == payload["reference_trace_id"]
-                        ):
-                            payload["restart_node_order"] = restart_node_data[
-                                "update_time"
-                            ]
-                            logger.info(
-                                f"Found restart node {payload['restart_node_id']} with matching trace_id"
-                            )
-                        else:
-                            logger.warning(
-                                f"Node {payload['restart_node_id']} found but trace_id mismatch: "
-                                f"expected {payload['reference_trace_id']}, got {restart_node_data['trace_id']}"
-                            )
-                    else:
-                        payload["restart_node_order"] = restart_node_data["update_time"]
-                        payload["reference_trace_id"] = restart_node_data[
-                            "trace_id"
-                        ]  # Auto-configure
-                        logger.info(
-                            f"Found restart node {payload['restart_node_id']}, auto-set trace_id to {restart_node_data['trace_id']}"
-                        )
-
-                    # Auto-retrieve original query (and from_trace_id) from trace record
-                    # when caller did not supply them, so that restart only needs restart_node_id.
-                    if not payload.get("query") or not payload.get("from_trace_id"):
-                        trace_id_for_lookup = restart_node_data["trace_id"]
-                        try:
-                            trace_response = await self.es_client.search(
-                                Config.get_app_name() + "_trace",
-                                {
-                                    "query": {"term": {"_id": trace_id_for_lookup}},
-                                    "size": 1,
-                                },
-                            )
-                            trace_hits = trace_response.get("hits", {}).get("hits", [])
-                            if trace_hits:
-                                trace_source = trace_hits[0]["_source"]
-                                if not payload.get("query"):
-                                    raw_input = trace_source.get("input", "")
-                                    try:
-                                        parsed_input = (
-                                            json.loads(raw_input)
-                                            if isinstance(raw_input, str)
-                                            else raw_input
-                                        )
-                                    except json.JSONDecodeError:
-                                        parsed_input = {}
-                                    if isinstance(parsed_input, dict):
-                                        original_query = parsed_input.get("query", "")
-                                        if original_query:
-                                            payload["query"] = original_query
-                                            logger.info(
-                                                f"Auto-retrieved query from trace {trace_id_for_lookup} for restart"
-                                            )
-                                if not payload.get("from_trace_id"):
-                                    historical_from_trace = trace_source.get(
-                                        "from_trace_id", ""
-                                    )
-                                    if historical_from_trace:
-                                        payload["from_trace_id"] = historical_from_trace
-                                payload["shared_data"] = self._parse_dict_field(
-                                    trace_source.get("shared_data", {}),
-                                    "shared_data",
-                                )
-                                payload["group_data"] = self._parse_dict_field(
-                                    trace_source.get("group_data", {}),
-                                    "group_data",
-                                )
-
-                            else:
-                                logger.warning(
-                                    f"Trace {trace_id_for_lookup} not found when auto-retrieving query for restart"
-                                )
-                        except Exception as e:
-                            logger.warning(
-                                f"Failed to auto-retrieve query from trace {trace_id_for_lookup}: {e}"
-                            )
-                else:
-                    logger.warning(
-                        f"Restart node {payload['restart_node_id']} not found in ES"
-                    )
-
-            # Ensure query default and sync into shared_data AFTER restart auto-fill,
-            # so that auto-retrieved query can propagate correctly.
             if "query" not in payload:
                 payload["query"] = ""
             payload["shared_data"]["query"] = payload["query"]
+
+            # Capture the effective payload (after merge, before OxyRequest mutations)
+            # so future restarts from this execution can recover it.
+            original_payload = copy.deepcopy(payload)
 
             oxy_request = OxyRequest(mas=self)
             if not send_msg_key:
                 oxy_request.is_send_message = False
 
             # Set all fields from payload first，contain current_trace_id and group_data
-            oxy_request_fields = oxy_request.model_fields
+            oxy_request_fields = OxyRequest.model_fields
             for k, v in payload.items():
                 if k in oxy_request_fields:
                     setattr(oxy_request, k, v)
                 else:
                     oxy_request.arguments[k] = v
+
+            # Serialize the effective payload for restart recovery.
+            oxy_request.original_payload = to_json(original_payload)
 
             # Special handling: when from_trace_id exists, inherit and merge historical group_data from ES
             # Note: This logic runs after the loop above to ensure merged result is the final value
