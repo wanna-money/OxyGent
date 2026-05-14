@@ -85,6 +85,9 @@ class OxyRequest(BaseModel):
     restart_node_order: Optional[str] = Field(
         "", description="Timestamp ordering of the restart node"
     )
+    original_payload: Optional[str] = Field(
+        "", description="JSON-serialized original payload for restart recovery"
+    )
     input_md5: Optional[str] = Field(
         "", description="MD5 hash of the input for cache matching"
     )
@@ -199,6 +202,7 @@ class OxyRequest(BaseModel):
             "group_data": dict(),
             "parallel_id": "",
             "latest_node_ids": [],
+            "original_payload": "",
         }
         for k, v in temp_data.items():
             fields[k] = v
