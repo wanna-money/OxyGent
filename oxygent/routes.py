@@ -860,7 +860,7 @@ async def create_rating(rating_request: RatingRequest, request: Request):
             return WebResponse(
                 data={
                     "rating_id": result.rating_id,
-                    "stats": result.current_stats.dict()
+                    "stats": result.current_stats.model_dump()
                     if result.current_stats
                     else None,
                 },
@@ -889,7 +889,7 @@ async def get_rating_stats(trace_id: str):
         stats = await evaluation_manager.get_rating_stats(trace_id)
 
         if stats:
-            return WebResponse(data=stats.dict()).to_dict()
+            return WebResponse(data=stats.model_dump()).to_dict()
         else:
             return WebResponse(
                 data={
@@ -929,7 +929,7 @@ async def get_current_rating(trace_id: str, erp: str = None):
         return WebResponse(
             data={
                 "trace_id": trace_id,
-                "current_rating": current_rating.dict() if current_rating else None,
+                "current_rating": current_rating.model_dump() if current_rating else None,
             }
         ).to_dict()
 
@@ -956,7 +956,7 @@ async def get_rating_history(trace_id: str, erp: str = None):
         history = await evaluation_manager.get_rating_history(trace_id, erp=erp)
 
         # Convert rating records to dictionary format
-        ratings_data = [rating.dict() for rating in history]
+        ratings_data = [rating.model_dump() for rating in history]
 
         return WebResponse(
             data={
@@ -981,7 +981,7 @@ async def debug_rating_stats(trace_id: str):
         return WebResponse(
             data={
                 "trace_id": trace_id,
-                "stats": stats.dict() if stats else None,
+                "stats": stats.model_dump() if stats else None,
                 "found": stats is not None,
             }
         ).to_dict()
@@ -1375,7 +1375,7 @@ async def rebuild_rating_stats(trace_id: str):
         return WebResponse(
             data={
                 "trace_id": trace_id,
-                "rebuilt_stats": stats.dict(),
+                "rebuilt_stats": stats.model_dump(),
                 "message": "Statistics recalculated",
             }
         ).to_dict()

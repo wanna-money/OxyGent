@@ -7,7 +7,6 @@ import logging
 
 from pydantic import Field
 
-from ...config import Config
 from ...schemas import OxyRequest, OxyResponse, OxyState
 from .base_llm import BaseLLM
 
@@ -40,13 +39,8 @@ class LocalLLM(BaseLLM):
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Generate a response by running the local model on the input messages."""
-        payload = Config.get_llm_config(exclude=["semaphore", "timeout"])
-        for k, v in self.llm_params.items():
-            payload[k] = v
-        for k, v in oxy_request.arguments.items():
-            if k == "messages":
-                continue
-            payload[k] = v
+        payload = {}
+        self._build_payload(oxy_request, payload)
 
         replace_dict = {
             "max_tokens": "max_new_tokens",

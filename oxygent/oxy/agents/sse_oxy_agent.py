@@ -3,6 +3,8 @@ import json
 import logging
 
 import aiohttp
+
+from ...utils.common_utils import EXCLUDED_HEADERS
 import httpx
 from pydantic import Field
 
@@ -66,23 +68,6 @@ class SSEOxyGent(RemoteAgent):
         url = build_url(self.server_url, "/sse/chat")
         answer = ""
 
-        EXCLUDED_HEADERS = [
-            "host",
-            "connection",
-            "sec-ch-ua",
-            "sec-ch-ua-mobile",
-            "sec-ch-ua-platform",
-            "user-agent",
-            "referer",
-            "accept-encoding",
-            "accept-language",
-            "cache-control",
-            "sec-fetch-site",
-            "sec-fetch-mode",
-            "sec-fetch-dest",
-            "accept",
-            "content-length",
-        ]
         headers = {
             k: v
             for k, v in oxy_request.get_shared_data("_headers", {}).items()

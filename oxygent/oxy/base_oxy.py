@@ -461,7 +461,7 @@ Arguments:
     async def _before_execute(self, oxy_request: OxyRequest) -> OxyRequest:
         """Run preceding Oxy instances and merge their outputs into the request."""
         if self.preceding_oxy:
-            arguments = {k: v for k, v in oxy_request.arguments.items()}
+            arguments = oxy_request.arguments.copy()
             tasks = [
                 oxy_request.call(callee=oxy_name, arguments=arguments)
                 for oxy_name in self.preceding_oxy

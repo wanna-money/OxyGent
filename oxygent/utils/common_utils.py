@@ -23,6 +23,26 @@ Image.MAX_IMAGE_PIXELS = 400000000
 IMAGE_EXTENSIONS = ("png", "jpg", "jpeg", "gif", "svg", "bmp", "webp", "tiff")
 VIDEO_EXTENSIONS = ("mp4", "avi", "mov", "wmv", "flv", "webm", "mkv")
 
+# HTTP headers to exclude when forwarding requests between agents.
+# Used by SSEOxyAgent and A2AClientAgent to strip browser/proxy headers.
+EXCLUDED_HEADERS = frozenset({
+    "host",
+    "connection",
+    "sec-ch-ua",
+    "sec-ch-ua-mobile",
+    "sec-ch-ua-platform",
+    "user-agent",
+    "referer",
+    "accept-encoding",
+    "accept-language",
+    "cache-control",
+    "sec-fetch-site",
+    "sec-fetch-mode",
+    "sec-fetch-dest",
+    "accept",
+    "content-length",
+})
+
 
 def get_timestamp():
     """Return the current UNIX timestamp in milliseconds."""

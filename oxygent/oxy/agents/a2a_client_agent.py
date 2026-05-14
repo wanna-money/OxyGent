@@ -17,6 +17,7 @@ import httpx
 from pydantic import Field, PrivateAttr
 
 from ...schemas import OxyRequest, OxyResponse, OxyState
+from ...utils.common_utils import EXCLUDED_HEADERS
 from .remote_agent import RemoteAgent
 
 from a2a.client import A2AClient as A2ASDKClient, A2ACardResolver
@@ -39,24 +40,6 @@ from a2a.utils.message import get_message_text
 from a2a.utils.parts import get_text_parts
 
 logger = logging.getLogger(__name__)
-
-EXCLUDED_HEADERS = {
-    "host",
-    "connection",
-    "sec-ch-ua",
-    "sec-ch-ua-mobile",
-    "sec-ch-ua-platform",
-    "user-agent",
-    "referer",
-    "accept-encoding",
-    "accept-language",
-    "cache-control",
-    "sec-fetch-site",
-    "sec-fetch-mode",
-    "sec-fetch-dest",
-    "accept",
-    "content-length",
-}
 
 
 class A2AClientAgent(RemoteAgent):

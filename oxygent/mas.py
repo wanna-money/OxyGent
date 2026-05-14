@@ -379,242 +379,35 @@ class MAS(BaseModel):
             self.es_client = MemoryEs()
         else:
             self.es_client = db_factory.get_instance(LocalEs)
-        # trace table
+
+        app = Config.get_app_name()
+        settings = Config.get_es_settings_config()
+
+        # Create core indices
         await self.es_client.create_index(
-            Config.get_app_name() + "_trace",
-            {
-                "mappings": {
-                    "properties": {
-                        "request_id": {"type": "keyword"},
-                        "group_id": {"type": "keyword"},
-                        "group_data": Config.get_es_schema_group_data(),
-                        "trace_id": {"type": "keyword"},
-                        "shared_data": Config.get_es_schema_shared_data(),
-                        "original_payload": {"type": "text"},
-                        "from_trace_id": {"type": "keyword"},
-                        "root_trace_ids": {"type": "keyword"},
-                        "input": {"type": "text"},
-                        "callee": {"type": "keyword"},
-                        "output": {"type": "text"},
-                        "create_time": {
-                            "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                            "type": "date",
-                        },
-                        "update_time": {
-                            "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                            "type": "date",
-                        },
-                    },
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_trace", self._trace_index_schema(settings),
         )
-        # message table
         if Config.get_message_is_stored():
             await self.es_client.create_index(
-                Config.get_app_name() + "_message",
-                {
-                    "mappings": {
-                        "properties": {
-                            "message_id": {"type": "keyword"},
-                            "group_id": {"type": "keyword"},
-                            "trace_id": {"type": "keyword"},
-                            "node_id": {"type": "keyword"},
-                            "node_name": {"type": "keyword"},
-                            "message": {"type": "text"},
-                            "message_type": {"type": "keyword"},
-                            "message_event": {"type": "keyword"},
-                            "message_timestamp": {"type": "long"},
-                            "create_time": {
-                                "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                                "type": "date",
-                            },
-                        },
-                    },
-                    "settings": Config.get_es_settings_config(),
-                },
+                app + "_message", self._message_index_schema(settings),
             )
-        # node table
         await self.es_client.create_index(
-            Config.get_app_name() + "_node",
-            {
-                "mappings": {
-                    "properties": {
-                        "node_id": {"type": "keyword"},
-                        "copied_node_id": {"type": "keyword"},
-                        "node_type": {"type": "keyword"},
-                        "group_id": {"type": "keyword"},
-                        "trace_id": {"type": "keyword"},
-                        "caller": {"type": "keyword"},
-                        "callee": {"type": "keyword"},
-                        "parallel_id": {"type": "keyword"},
-                        "father_node_id": {"type": "keyword"},
-                        "input": {"type": "text"},
-                        "input_md5": {"type": "keyword"},
-                        "output": {"type": "text"},
-                        "state": {"type": "keyword"},
-                        "extra": {"type": "text"},
-                        "call_stack": {"type": "text"},
-                        "node_id_stack": {"type": "text"},
-                        "pre_node_ids": {"type": "text"},
-                        "shared_data": Config.get_es_schema_shared_data(),
-                        "create_time": {
-                            "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                            "type": "date",
-                        },
-                        "update_time": {
-                            "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                            "type": "date",
-                        },
-                    },
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_node", self._node_index_schema(settings),
         )
-        # history table
         await self.es_client.create_index(
-            Config.get_app_name() + "_history",
-            {
-                "mappings": {
-                    "properties": {
-                        "history_id": {"type": "keyword"},
-                        "session_name": {"type": "keyword"},
-                        "trace_id": {"type": "keyword"},
-                        "memory": {"type": "text"},
-                        "create_time": {
-                            "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                            "type": "date",
-                        },
-                    },
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_history", self._history_index_schema(settings),
         )
-        # prompt table
         await self.es_client.create_index(
-            Config.get_app_name() + "_prompt",
-            {
-                "mappings": {
-                    "properties": {
-                        "prompt_key": {
-                            "type": "keyword"  # Prompt key for exact matching
-                        },
-                        "prompt_content": {
-                            "type": "text",
-                            "analyzer": "standard",  # Prompt content
-                        },
-                        "description": {
-                            "type": "text"  # Prompt description
-                        },
-                        "category": {
-                            "type": "keyword"  # Category: system, expert, workflow, etc.
-                        },
-                        "agent_type": {
-                            "type": "keyword"  # Corresponding Agent type
-                        },
-                        "version": {
-                            "type": "integer"  # Version number
-                        },
-                        "is_active": {
-                            "type": "boolean"  # Whether active
-                        },
-                        "created_at": {"type": "date"},
-                        "updated_at": {"type": "date"},
-                        "created_by": {
-                            "type": "keyword"  # Creator
-                        },
-                        "tags": {
-                            "type": "keyword"  # Tags
-                        },
-                    }
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_prompt", self._prompt_index_schema(settings),
         )
-        # prompt history table
         await self.es_client.create_index(
-            Config.get_app_name() + "_prompt_history",
-            {
-                "mappings": {
-                    "properties": {
-                        "prompt_key": {
-                            "type": "keyword"  # Prompt key for exact matching
-                        },
-                        "prompt_content": {
-                            "type": "text",
-                            "analyzer": "standard",  # Prompt content
-                        },
-                        "description": {
-                            "type": "text"  # Prompt description
-                        },
-                        "category": {
-                            "type": "keyword"  # Category: system, expert, workflow, etc.
-                        },
-                        "agent_type": {
-                            "type": "keyword"  # Corresponding Agent type
-                        },
-                        "version": {
-                            "type": "integer"  # Version number
-                        },
-                        "is_active": {
-                            "type": "boolean"  # Whether active
-                        },
-                        "is_history": {
-                            "type": "boolean"  # Whether this is a history record
-                        },
-                        "history_id": {
-                            "type": "keyword"  # History record ID
-                        },
-                        "created_at": {"type": "date"},
-                        "updated_at": {"type": "date"},
-                        "archived_at": {"type": "date"},
-                        "created_by": {
-                            "type": "keyword"  # Creator
-                        },
-                        "tags": {
-                            "type": "keyword"  # Tags
-                        },
-                    }
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_prompt_history", self._prompt_history_index_schema(settings),
         )
-        # Rating record index mapping
         await self.es_client.create_index(
-            Config.get_app_name() + "_rating",
-            {
-                "mappings": {
-                    "properties": {
-                        "rating_id": {"type": "keyword"},
-                        "trace_id": {"type": "keyword"},
-                        "rating_type": {"type": "keyword"},
-                        "user_id": {"type": "keyword"},
-                        "user_ip": {"type": "ip"},
-                        "comment": {"type": "text"},
-                        "erp": {"type": "keyword"},
-                        "create_time": {"type": "keyword"},
-                        "update_time": {"type": "keyword"},
-                    }
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_rating", self._rating_index_schema(settings),
         )
-        # Rating statistics index mapping
         await self.es_client.create_index(
-            Config.get_app_name() + "_rating_stats",
-            {
-                "mappings": {
-                    "properties": {
-                        "trace_id": {"type": "keyword"},
-                        "like_count": {"type": "integer"},
-                        "dislike_count": {"type": "integer"},
-                        "total_ratings": {"type": "integer"},
-                        "satisfaction_rate": {"type": "float"},
-                        "last_updated": {"type": "keyword"},
-                    }
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_rating_stats", self._rating_stats_index_schema(settings),
         )
 
         # init redis client
@@ -629,6 +422,202 @@ class MAS(BaseModel):
             )
         else:
             self.redis_client = LocalRedis()
+
+    # ------------------------------------------------------------------
+    # Index schema definitions
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _trace_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "request_id": {"type": "keyword"},
+                    "group_id": {"type": "keyword"},
+                    "group_data": Config.get_es_schema_group_data(),
+                    "trace_id": {"type": "keyword"},
+                    "shared_data": Config.get_es_schema_shared_data(),
+                    "original_payload": {"type": "text"},
+                    "from_trace_id": {"type": "keyword"},
+                    "root_trace_ids": {"type": "keyword"},
+                    "input": {"type": "text"},
+                    "callee": {"type": "keyword"},
+                    "output": {"type": "text"},
+                    "create_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                    "update_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                },
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _message_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "message_id": {"type": "keyword"},
+                    "group_id": {"type": "keyword"},
+                    "trace_id": {"type": "keyword"},
+                    "node_id": {"type": "keyword"},
+                    "node_name": {"type": "keyword"},
+                    "message": {"type": "text"},
+                    "message_type": {"type": "keyword"},
+                    "message_event": {"type": "keyword"},
+                    "message_timestamp": {"type": "long"},
+                    "create_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                },
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _node_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "node_id": {"type": "keyword"},
+                    "copied_node_id": {"type": "keyword"},
+                    "node_type": {"type": "keyword"},
+                    "group_id": {"type": "keyword"},
+                    "trace_id": {"type": "keyword"},
+                    "caller": {"type": "keyword"},
+                    "callee": {"type": "keyword"},
+                    "parallel_id": {"type": "keyword"},
+                    "father_node_id": {"type": "keyword"},
+                    "input": {"type": "text"},
+                    "input_md5": {"type": "keyword"},
+                    "output": {"type": "text"},
+                    "state": {"type": "keyword"},
+                    "extra": {"type": "text"},
+                    "call_stack": {"type": "text"},
+                    "node_id_stack": {"type": "text"},
+                    "pre_node_ids": {"type": "text"},
+                    "shared_data": Config.get_es_schema_shared_data(),
+                    "create_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                    "update_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                },
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _history_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "history_id": {"type": "keyword"},
+                    "session_name": {"type": "keyword"},
+                    "trace_id": {"type": "keyword"},
+                    "memory": {"type": "text"},
+                    "create_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                },
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _prompt_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "prompt_key": {"type": "keyword"},
+                    "prompt_content": {
+                        "type": "text",
+                        "analyzer": "standard",
+                    },
+                    "description": {"type": "text"},
+                    "category": {"type": "keyword"},
+                    "agent_type": {"type": "keyword"},
+                    "version": {"type": "integer"},
+                    "is_active": {"type": "boolean"},
+                    "created_at": {"type": "date"},
+                    "updated_at": {"type": "date"},
+                    "created_by": {"type": "keyword"},
+                    "tags": {"type": "keyword"},
+                }
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _prompt_history_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "prompt_key": {"type": "keyword"},
+                    "prompt_content": {
+                        "type": "text",
+                        "analyzer": "standard",
+                    },
+                    "description": {"type": "text"},
+                    "category": {"type": "keyword"},
+                    "agent_type": {"type": "keyword"},
+                    "version": {"type": "integer"},
+                    "is_active": {"type": "boolean"},
+                    "is_history": {"type": "boolean"},
+                    "history_id": {"type": "keyword"},
+                    "created_at": {"type": "date"},
+                    "updated_at": {"type": "date"},
+                    "archived_at": {"type": "date"},
+                    "created_by": {"type": "keyword"},
+                    "tags": {"type": "keyword"},
+                }
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _rating_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "rating_id": {"type": "keyword"},
+                    "trace_id": {"type": "keyword"},
+                    "rating_type": {"type": "keyword"},
+                    "user_id": {"type": "keyword"},
+                    "user_ip": {"type": "ip"},
+                    "comment": {"type": "text"},
+                    "erp": {"type": "keyword"},
+                    "create_time": {"type": "keyword"},
+                    "update_time": {"type": "keyword"},
+                }
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _rating_stats_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "trace_id": {"type": "keyword"},
+                    "like_count": {"type": "integer"},
+                    "dislike_count": {"type": "integer"},
+                    "total_ratings": {"type": "integer"},
+                    "satisfaction_rate": {"type": "float"},
+                    "last_updated": {"type": "keyword"},
+                }
+            },
+            "settings": settings,
+        }
 
     async def batch_init_oxy(self, *class_type):
         """Batch initialize oxy objects of specified types asynchronously.

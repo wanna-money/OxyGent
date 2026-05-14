@@ -268,6 +268,19 @@ class BaseLLM(Oxy):
             oxy_response.extra["usage"] = usage.model_dump()
         return oxy_response
 
+    def _build_payload(self, oxy_request: OxyRequest, payload: dict) -> dict:
+        """Merge global LLM config, instance params, and request args into payload.
+
+        Priority (last wins): global config < self.llm_params < request arguments.
+        The ``messages`` key in request arguments is always skipped.
+        """
+        payload.update(Config.get_llm_config(exclude=["semaphore", "timeout"]))
+        payload.update(self.llm_params)
+        for k, v in oxy_request.arguments.items():
+            if k != "messages":
+                payload[k] = v
+        return payload
+
     def _build_token_usage(self, usage_data, messages: list, output: str):
         """Build TokenUsage with fallback to estimation.
 

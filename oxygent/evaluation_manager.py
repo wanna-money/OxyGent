@@ -190,7 +190,7 @@ class EvaluationManager:
             )
 
             # Store new rating record using rating_id as document ID to ensure uniqueness
-            await es_client.index(self.rating_index, rating_id, rating.dict())
+            await es_client.index(self.rating_index, rating_id, rating.model_dump())
 
             # Refresh index to ensure data is immediately queryable
             await self._refresh_index(es_client, self.rating_index)
@@ -304,7 +304,7 @@ class EvaluationManager:
             )
 
             # Store or update statistics
-            await es_client.index(self.rating_stats_index, trace_id, stats.dict())
+            await es_client.index(self.rating_stats_index, trace_id, stats.model_dump())
 
             # Force refresh index to ensure data is immediately searchable
             await self._refresh_index(es_client, self.rating_stats_index)
