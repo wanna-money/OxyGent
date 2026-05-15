@@ -6,12 +6,23 @@
 Think  ->  Act  ->  Observe  ->  Repeat
 ```
 
+Here is a concrete example of the cycle in action:
+
+```
+Think       ->  I need to look up today's weather
+Action      ->  Call get_weather("Beijing")
+Observation ->  Beijing today: sunny, 25°C
+Think       ->  The user asked about the weather in Beijing and I now have the result
+Answer      ->  It's sunny in Beijing today with a temperature of 25°C.
+```
+
+Each iteration of the loop consists of three steps:
+
 1. **Think**: The LLM reasons about the current state and decides what to do next.
 2. **Act**: The agent calls a tool or sub-agent based on its reasoning.
 3. **Observe**: The agent receives the result of the action.
-4. **Repeat**: The agent feeds the observation back into its reasoning and decides whether to take another action or produce a final answer.
 
-This loop continues until the agent has enough information to answer, or until a maximum number of rounds is reached.
+This loop continues until the agent has enough information to produce a final answer, or until a maximum number of rounds is reached.
 
 ---
 
@@ -45,6 +56,21 @@ At each round, `ReActAgent`:
 
 The agent automatically manages memory across rounds. Detailed ReAct memory (tool calls and observations) can be discarded after the loop to keep the conversation history concise for future turns.
 
+### Key Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `max_react_rounds` | Maximum number of reasoning-action cycles, prevents infinite loops |
+| `tools` | List of tool names available to the agent |
+| `sub_agents` | Sub-agents that can be dispatched (sub-agents are also treated as a type of "tool") |
+| `is_discard_react_memory` | Whether to discard detailed ReAct memory after the loop, saving context window space |
+| `func_reflexion` | Custom reflexion function that triggers a redo when the output is unsatisfactory |
+
+### ChatAgent vs ReActAgent
+
+- **ChatAgent**: Single-turn LLM call with no tool support, suitable for pure conversation.
+- **ReActAgent**: Multi-turn reasoning-action loop with tool and sub-agent support, suitable for complex tasks that require external capabilities.
+
 ---
 
 ## Further Reading
@@ -56,5 +82,13 @@ The agent automatically manages memory across rounds. Detailed ReAct memory (too
 
 ---
 
-[Back to Concepts](.)
+[Previous: Concepts Overview](../getting-started/overview.md)
+[Next: What is MCP?](./what-is-mcp.md)
 [Back to Home](../readme.md)
+
+---
+
+## Related Examples
+
+- [ReAct Agent Example](../../examples/agents/demo_react_agent.md) -- ReActAgent with reflection mechanism
+- [Single Agent Example](../../examples/agents/demo_single_agent.md) -- The simplest ChatAgent configuration

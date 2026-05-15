@@ -207,7 +207,10 @@ async with MAS(oxy_space=oxy_space) as mas:
 ```
 
 - 默认地址：`http://127.0.0.1:8080`
-- 支持同步（`POST /chat`）、SSE 流式（`POST /sse/chat`）、异步（`POST /async/chat`）三种接口。
+- `POST /chat` — 同步对话
+- `POST /sse/chat` — SSE 流式对话
+- `POST /async/chat` — 异步对话（轮询获取结果）
+- `GET /get_organization` — 获取智能体组织树
 - 内置可视化调试界面，实时查看智能体推理过程。
 
 ### CLI 命令行模式
@@ -244,6 +247,20 @@ async with MAS(oxy_space=oxy_space) as mas:
 
 ---
 
+## 存储层
+
+OxyGent 使用可选的存储层实现数据持久化：
+
+| 服务 | 用途 | 降级方案 |
+|------|------|----------|
+| Elasticsearch | 追踪记录、消息、Prompt、评分 | `LocalEs`（基于文件）或 `MemoryEs`（纯内存） |
+| Redis | 后端与前端之间的 SSE 消息队列 | `LocalRedis`（内存队列） |
+| Vearch | 向量数据库，用于工具检索 | 可选，非必需 |
+
+所有存储均为可选。未配置外部数据库时，OxyGent 自动使用本地降级方案。你可以在零基础设施依赖的情况下运行完整的多智能体系统。
+
+---
+
 ## 总结
 
 | 概念 | 说明 |
@@ -257,6 +274,6 @@ async with MAS(oxy_space=oxy_space) as mas:
 
 ---
 
-[上一篇: OxyGent 概念总览](./overview.md)
-[下一篇: 设置 Config](./config.md)
-[返回首页](../readme.md)
+[上一章：OxyGent 概念总览](./overview.md)
+[下一章：设置 Config](./config.md)
+[回到首页](../readme.md)

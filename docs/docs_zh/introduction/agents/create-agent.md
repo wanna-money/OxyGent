@@ -5,26 +5,26 @@
 对于新用户，您可以使用`oxy.HttpLLM`方法通过您的`api_key`注册LLM：
 
 ```python
-    oxy.HttpLLM(
-        name="default_llm",
-        api_key=os.getenv("DEFAULT_LLM_API_KEY"),
-        base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
-        model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
-        llm_params={"temperature": 0.01},
-        semaphore=4, # 并发量
-        timeout=240, # 最大执行时间
-    ),
+oxy.HttpLLM(
+    name="default_llm",
+    api_key=os.getenv("DEFAULT_LLM_API_KEY"),
+    base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
+    model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
+    llm_params={"temperature": 0.01},
+    semaphore=4, # 并发量
+    timeout=240, # 最大执行时间
+),
 ```
 > 其中 `semaphore` 参数的详细说明请参见 [并行](../multi-agent/parallel.md) 部分。
 
 接下来，您可以使用`oxy.ChatAgent`或者`oxy.ReActAgent`封装您的第一个agent：
 ```python
-    oxy.ReActAgent(
-        name="master_agent",
-        prompt = master_prompt, # 支持自定义prompt
-        is_master=True, # 设置为master
-        llm_model="default_llm",
-    ),
+oxy.ReActAgent(
+    name="master_agent",
+    prompt = master_prompt, # 支持自定义prompt
+    is_master=True, # 设置为master
+    llm_model="default_llm",
+),
 ```
 
 为了使 LLM 和智能体生效，它们需要被添加到 `oxy_space` 中。
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-[上一章：运行demo](../getting-started/demo.md)
+[上一章：快速上手](../getting-started/quickstart.md)
 [下一章：和智能体交流](./chat-with-agent.md)
 [回到首页](../readme.md)
 

@@ -5,30 +5,30 @@ If you find that a single agent cannot meet your business needs, using a multi-a
 In the simple example below, we manage functionally related tools using subagents. We recommend new users use `oxy.ReActAgent` to invoke these tools:
 
 ```python
-    oxy.ReActAgent(
-        name="file_agent",
-        desc="A tool that can operate the file system",
-        tools=["file_tools"],
-    ),
-    oxy.ReActAgent(
-        name="time_agent",
-        desc="A tool that can get current time",
-        tools=["time_tools"],
-    ),
-    oxy.ReActAgent(
-        name="math_agent",
-        desc="A tool that can do math calculates",
-        tools=["math_tools"],
-    ),
+oxy.ReActAgent(
+    name="file_agent",
+    desc="A tool that can operate the file system",
+    tools=["file_tools"],
+),
+oxy.ReActAgent(
+    name="time_agent",
+    desc="A tool that can get current time",
+    tools=["time_tools"],
+),
+oxy.ReActAgent(
+    name="math_agent",
+    desc="A tool that can do math calculates",
+    tools=["math_tools"],
+),
 ```
 
 Next, you need to register a **master_agent**, which is responsible for orchestrating other agents within the MAS. Declare the other subagents as the **master_agent**'s `sub_agents`:
 ```python
-    oxy.ReActAgent(
-        name="master_agent",
-        is_master=True,
-        sub_agents=["file_agent","time_agent","math_agent"],
-    ),
+oxy.ReActAgent(
+    name="master_agent",
+    is_master=True,
+    sub_agents=["file_agent","time_agent","math_agent"],
+),
 ```
 
 OxyGent's agent system structure is very flexible, meaning you can register multi-level subagents without manually managing the collaboration relationships between them.

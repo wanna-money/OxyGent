@@ -53,11 +53,11 @@ if __name__ == "__main__":
 Then you can use `oxy.SSEOxyGent` to replace the original time_agent:
 
 ```python
-    oxy.SSEOxyGent(
-        name="time_agent",
-        desc="Remote time query agent",
-        server_url="http://127.0.0.1:8082", # Replace with the actual location of app_time_agent.py
-    ),
+oxy.SSEOxyGent(
+    name="time_agent",
+    desc="Remote time query agent",
+    server_url="http://127.0.0.1:8082", # Replace with the actual location of app_time_agent.py
+),
 ```
 
 If you are using localhost, you can use the following simple script to start the distributed services:

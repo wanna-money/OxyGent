@@ -28,6 +28,14 @@ Answer   →  北京今天天气晴朗，气温 25°C。
 
 ---
 
+## 为什么使用 ReAct？
+
+普通的 LLM 在一次前向传播中生成文本，无法查询实时数据、执行计算或与外部系统交互。ReAct 通过赋予 LLM 执行操作并从结果中学习的能力来解决这一问题。
+
+与纯思维链提示（仅推理）或盲目工具调用（仅行动）相比，ReAct 将两者结合——智能体在每次行动前解释其推理过程，使行为更透明、更易调试。
+
+---
+
 ## OxyGent 中的 ReActAgent
 
 OxyGent 的 `ReActAgent` 是 ReAct 范式的完整实现。它自动管理推理-行动循环，开发者只需声明智能体和工具：
@@ -46,6 +54,15 @@ oxy_space = [
 ]
 ```
 
+每一轮中，`ReActAgent` 会：
+1. 将对话历史（包括之前的观察结果）发送给 LLM。
+2. 解析 LLM 的响应，提取工具调用。
+3. 执行请求的工具并收集观察结果。
+4. 将观察结果追加到对话中，然后回到步骤 1。
+5. 当 LLM 给出最终回答（没有工具调用）时，循环结束。
+
+智能体会自动管理跨轮次的记忆。详细的 ReAct 记忆（工具调用和观察结果）可以在循环结束后丢弃，以保持对话历史简洁。
+
 ### 关键参数
 
 | 参数 | 说明 |
@@ -63,4 +80,22 @@ oxy_space = [
 
 ---
 
-[返回首页](../readme.md)
+## 延伸阅读
+
+- [智能体类型](../agents/agent-types.md) — 所有智能体类型的对比
+- [ReActAgent API 参考](../../api/agent/react_agent.md) — 完整参数参考
+- [注册本地工具](../tools/register-tool.md) — 为智能体添加工具
+- [快速上手](../getting-started/quickstart.md) — 5 分钟构建一个 ReActAgent
+
+---
+
+[上一章：概念总览](../getting-started/overview.md)
+[下一章：什么是 MCP？](./what-is-mcp.md)
+[回到首页](../readme.md)
+
+---
+
+## 相关示例
+
+- [ReAct Agent 示例](../../examples/agents/demo_react_agent.md) — 带反思机制的 ReActAgent
+- [单 Agent 示例](../../examples/agents/demo_single_agent.md) — 最简单的 ChatAgent 配置

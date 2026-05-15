@@ -50,11 +50,11 @@ The position of the class is:
 A simple usage of `WorkflowAgent` is like:
 
 ```python
-    oxy.WorkflowAgent(
-        name="workflow_agent",
-        desc="An agent for executing workflows",
-        func_workflow=my_workflow_function,
-    ),
+oxy.WorkflowAgent(
+    name="workflow_agent",
+    desc="An agent for executing workflows",
+    func_workflow=my_workflow_function,
+),
 ```
 
 Where `my_workflow_function` is a callable that defines the workflow logic to be executed by the agent.

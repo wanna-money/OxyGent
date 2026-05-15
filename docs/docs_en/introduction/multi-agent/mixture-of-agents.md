@@ -25,13 +25,13 @@ Use cases include:
 If you need to generate multiple identical agents, you can use the `team_size` parameter to quickly duplicate agents.
 
 ```python
-    oxy.ReActAgent(
-        name="time_agent",
-        desc="A tool for time query",
-        tools=["time_tools"],
-        llm_model="default_llm",
-        team_size=2,
-    ),
+oxy.ReActAgent(
+    name="time_agent",
+    desc="A tool for time query",
+    tools=["time_tools"],
+    llm_model="default_llm",
+    team_size=2,
+),
 ```
 
 `team_size` currently can only duplicate relatively simple agents. More comprehensive agent duplication will be supported in the future.

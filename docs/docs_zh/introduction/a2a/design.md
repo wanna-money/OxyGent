@@ -127,11 +127,11 @@ OxyGent A2A 已具备以下实用能力：
 
 ---
 
-## 相关示例
-
-- [A2A Server 示例](../../examples/a2a/demo_a2a_oxygent_server.md) — 展示如何启动 OxyGent A2A Server
+[上一章：A2A 快速上手](./demo-guide.md)
+[回到首页](../readme.md)
 
 ---
 
-[上一篇: A2A 快速上手](./demo-guide.md)
-[返回首页](../readme.md)
+## 相关示例
+
+- [A2A Server 示例](../../examples/a2a/demo_a2a_oxygent_server.md) — 展示如何启动 OxyGent A2A Server

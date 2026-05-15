@@ -10,28 +10,28 @@ OxyGent provides many types of preset agents. These agents are sufficient to hel
 
 **Not suitable for:** Tasks requiring complex reasoning/planning, multi-step workflows, or parallel task processing -- use ReActAgent, WorkflowAgent, or ParallelAgent instead.
 
-| Parameter           | Type  | Description              | Default                          |
-|---------------------|-------|--------------------------|----------------------------------|
-| `name`              | str   | Agent name               | Required                         |
-| `desc`              | str   | Agent description        | Required                         |
-| `llm_model`         | str   | LLM model identifier     | Required                         |
-| `prompt`            | str   | System prompt            | `"You are a helpful assistant."` |
-| `short_memory_size` | int   | Short-term memory size   | Inherited from LocalAgent        |
+| Parameter           | Type  | Default                          | Description              |
+|---------------------|-------|----------------------------------|--------------------------|
+| `name`              | str   | Required                         | Agent name               |
+| `desc`              | str   | Required                         | Agent description        |
+| `llm_model`         | str   | Required                         | LLM model identifier     |
+| `prompt`            | str   | `"You are a helpful assistant."` | System prompt            |
+| `short_memory_size` | int   | Inherited from LocalAgent        | Short-term memory size   |
 
 ```python
-    oxy.ChatAgent(
-        name="planner_agent",
-        desc="An agent capable of making plans",
-        llm_model="default_llm",
-        prompt="""
-            For a given goal, create a simple and step-by-step executable plan. \
-            The plan should be concise, with each step being an independent and complete functional module—not an atomic function—to avoid over-fragmentation. \
-            The plan should consist of independent tasks that, if executed correctly, will lead to the correct answer. \
-            Ensure that each step is actionable and includes all necessary information for execution. \
-            The result of the final step should be the final answer. Make sure each step contains all the information required for its execution. \
-            Do not add any redundant steps, and do not skip any necessary steps.
-        """.strip(),
-    )
+oxy.ChatAgent(
+    name="planner_agent",
+    desc="An agent capable of making plans",
+    llm_model="default_llm",
+    prompt="""
+        For a given goal, create a simple and step-by-step executable plan. \
+        The plan should be concise, with each step being an independent and complete functional module—not an atomic function—to avoid over-fragmentation. \
+        The plan should consist of independent tasks that, if executed correctly, will lead to the correct answer. \
+        Ensure that each step is actionable and includes all necessary information for execution. \
+        The result of the final step should be the final answer. Make sure each step contains all the information required for its execution. \
+        Do not add any redundant steps, and do not skip any necessary steps.
+    """.strip(),
+)
 ```
 
 ## `oxy.WorkflowAgent`
@@ -39,13 +39,13 @@ OxyGent provides many types of preset agents. These agents are sufficient to hel
 Built on top of Chat with added [workflow](../advanced/workflow.md) support, this agent allows you to customize the internal process flow.
 
 ```python
-    oxy.WorkflowAgent(
-        name='search_agent',
-        desc='A tool that can query data',
-        sub_agents=['ner_agent', 'nen_agent'],
-        func_workflow=data_workflow,
-        llm_model='default_llm',
-    )
+oxy.WorkflowAgent(
+    name='search_agent',
+    desc='A tool that can query data',
+    sub_agents=['ner_agent', 'nen_agent'],
+    func_workflow=data_workflow,
+    llm_model='default_llm',
+)
 ```
 
 | Parameter | Type | Default | Description |
@@ -60,12 +60,12 @@ Built on top of Chat with added [workflow](../advanced/workflow.md) support, thi
 An agent that supports [planning, execution, observation, and error-correction retry](https://www.promptingguide.ai/zh/techniques/react), suitable for complex tasks and commonly used as a master_agent.
 
 ```python
-    oxy.ReActAgent(
-        name="master_agent",
-        sub_agents=["knowledge_agent", "find_agent", "search_agent"],
-        is_master=True,
-        llm_model="default_llm",
-    )
+oxy.ReActAgent(
+    name="master_agent",
+    sub_agents=["knowledge_agent", "find_agent", "search_agent"],
+    is_master=True,
+    llm_model="default_llm",
+)
 ```
 
 | Parameter | Type | Default | Description |
@@ -81,20 +81,20 @@ An agent that supports [planning, execution, observation, and error-correction r
 
 ReActAgent includes some unique configurable parameters, including:
 
-+ `max_react_rounds: int`: Maximum number of ReAct rounds
-+ `trust_mode: bool`: Whether to [provide response metadata](../advanced/trust-mode.md)
-+ `func_parse_llm_response: Optional[Callable[[str], LLMResponse]]`: [Handle LLM output](../advanced/handle-output.md)
+- `max_react_rounds: int`: Maximum number of ReAct rounds
+- `trust_mode: bool`: Whether to [provide response metadata](../advanced/trust-mode.md)
+- `func_parse_llm_response: Optional[Callable[[str], LLMResponse]]`: [Handle LLM output](../advanced/handle-output.md)
 
 ## `oxy.SSEOxyGent`
 
 An agent that supports [distributed](../multi-agent/distributed.md) deployment.
 
 ```python
-    oxy.SSEOxyGent(
-        name='math_agent',
-        desc='A tool that can query pi',
-        server_url='http://127.0.0.1:8081'
-    )
+oxy.SSEOxyGent(
+    name='math_agent',
+    desc='A tool that can query pi',
+    server_url='http://127.0.0.1:8081'
+)
 ```
 
 | Parameter | Type | Default | Description |
@@ -108,11 +108,11 @@ An agent that supports [distributed](../multi-agent/distributed.md) deployment.
 An agent that supports [parallel](../multi-agent/parallel.md) execution.
 
 ```python
-    oxy.ParallelAgent(
-        name="analyzer",
-        desc="A tool that analyze markdown document",
-        permitted_tool_name_list=["text_summarizer", "data_analyser", "document_checker"]
-    ),
+oxy.ParallelAgent(
+    name="analyzer",
+    desc="A tool that analyze markdown document",
+    permitted_tool_name_list=["text_summarizer", "data_analyser", "document_checker"]
+),
 ```
 
 | Parameter | Type | Default | Description |
@@ -126,12 +126,12 @@ An agent that supports [parallel](../multi-agent/parallel.md) execution.
 A two-stage agent that separates planning from execution. PlanAndSolveAgent coordinates a planner (typically a ChatAgent) and a solver (typically a ReActAgent). The planner generates a step-by-step plan in JSON format, and the solver completes each step sequentially.
 
 ```python
-    oxy.PlanAndSolveAgent(
-        name="master_agent",
-        is_master=True,
-        planner="planner_agent",
-        solver="solver_agent",
-    )
+oxy.PlanAndSolveAgent(
+    name="master_agent",
+    is_master=True,
+    planner="planner_agent",
+    solver="solver_agent",
+)
 ```
 
 | Parameter | Type | Default | Description |
@@ -146,18 +146,18 @@ A two-stage agent that separates planning from execution. PlanAndSolveAgent coor
 An agent that supports Retrieval-Augmented Generation (RAG). It retrieves external knowledge through a custom `func_retrieve_knowledge` async function and injects the retrieval results into the agent's prompt using named placeholders (e.g., `${knowledge}`).
 
 ```python
-    async def my_retrieve(oxy_request):
-        # Implement your retrieval logic here, e.g., query a vector database
-        return "Retrieved knowledge content"
+async def my_retrieve(oxy_request):
+    # Implement your retrieval logic here, e.g., query a vector database
+    return "Retrieved knowledge content"
 
-    oxy.RAGAgent(
-        name="rag_agent",
-        desc="A knowledge-augmented agent",
-        func_retrieve_knowledge=my_retrieve,
-        knowledge_placeholder="knowledge",
-        prompt="Based on the following knowledge: ${knowledge}\nPlease answer the user's question.",
-        llm_model="default_llm",
-    )
+oxy.RAGAgent(
+    name="rag_agent",
+    desc="A knowledge-augmented agent",
+    func_retrieve_knowledge=my_retrieve,
+    knowledge_placeholder="knowledge",
+    prompt="Based on the following knowledge: ${knowledge}\nPlease answer the user's question.",
+    llm_model="default_llm",
+)
 ```
 
 | Parameter | Type | Default | Description |
@@ -173,19 +173,19 @@ An agent that supports Retrieval-Augmented Generation (RAG). It retrieves extern
 An agent that connects to remote hosts via SSH and autonomously executes shell commands to complete tasks. Suitable for server operations and maintenance, automated deployment, and similar scenarios.
 
 ```python
-    oxy.ShellUseAgent(
-        name="shell_agent",
-        desc="An agent that can execute shell commands on remote hosts",
-        tools=["ssh_tools"],
-        max_react_rounds=64,
-        is_discard_react_memory=False,
-        auth_info={
-            "hostname": "your_host",
-            "port": 22,
-            "username": "your_username",
-            "password": "your_password",
-        },
-    )
+oxy.ShellUseAgent(
+    name="shell_agent",
+    desc="An agent that can execute shell commands on remote hosts",
+    tools=["ssh_tools"],
+    max_react_rounds=64,
+    is_discard_react_memory=False,
+    auth_info={
+        "hostname": "your_host",
+        "port": 22,
+        "username": "your_username",
+        "password": "your_password",
+    },
+)
 ```
 
 | Parameter | Type | Default | Description |
@@ -200,12 +200,12 @@ An agent that connects to remote hosts via SSH and autonomously executes shell c
 An agent that can dynamically load skill definitions from a directory (e.g., `./skills`). Skills are reusable structured task templates that the agent can automatically discover and invoke.
 
 ```python
-    oxy.SkillAgent(
-        name="skill_agent",
-        desc="An agent that can discover and execute skills",
-        tools=["file_tools", "shell_tools"],
-        llm_model="default_llm",
-    )
+oxy.SkillAgent(
+    name="skill_agent",
+    desc="An agent that can discover and execute skills",
+    tools=["file_tools", "shell_tools"],
+    llm_model="default_llm",
+)
 ```
 
 | Parameter | Type | Default | Description |

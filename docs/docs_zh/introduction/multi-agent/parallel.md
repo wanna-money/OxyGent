@@ -9,26 +9,26 @@ OxyGent 支持高兼容性的并行执行功能，允许您同时运行多个智
 您还可以通过`semaphore`参数设置每个智能体的最大并发度。
 
 ```python
-    oxy.ChatAgent( # 需要并行的agent
-        name="text_summarizer",
-        desc="A tool that can summarize markdown text",
-        prompt=prompts.text_summarizer_prompt,
-    ),
-    oxy.ChatAgent(
-        name="data_analyser",
-        desc="A tool that can summarize echart data",
-        prompt=prompts.data_analyser_prompt,
-    ),
-    oxy.ChatAgent(
-        name="document_checker",
-        desc="A tool that can find problems in document",
-        prompt=prompts.document_checker_prompt,
-    ),
-    oxy.ParallelAgent( # 管理的上层agent
-        name="analyzer",
-        desc="A tool that analyze markdown document",
-        permitted_tool_name_list=["text_summarizer", "data_analyser", "document_checker"]
-    ),
+oxy.ChatAgent( # 需要并行的agent
+    name="text_summarizer",
+    desc="A tool that can summarize markdown text",
+    prompt=prompts.text_summarizer_prompt,
+),
+oxy.ChatAgent(
+    name="data_analyser",
+    desc="A tool that can summarize echart data",
+    prompt=prompts.data_analyser_prompt,
+),
+oxy.ChatAgent(
+    name="document_checker",
+    desc="A tool that can find problems in document",
+    prompt=prompts.document_checker_prompt,
+),
+oxy.ParallelAgent( # 管理的上层agent
+    name="analyzer",
+    desc="A tool that analyze markdown document",
+    permitted_tool_name_list=["text_summarizer", "data_analyser", "document_checker"]
+),
 ```
 
 `ParallelAgent` 会自动启动所有子智能体，进行并行计算，并最终返回所有任务的结果。

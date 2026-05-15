@@ -4,15 +4,15 @@
 
 ---
 
-## 1. 安装
+## 前置条件
 
-确保你的 Python 版本 >= 3.10，然后安装 OxyGent：
+- **Python 3.10+**
+- 已安装 OxyGent（参见 [安装指南](./install.md)）
+- 一个 LLM API Key（支持任何 OpenAI 兼容的 API：DeepSeek、通义千问、智谱等）
 
-```bash
-pip install -r requirements.txt
-```
+## 1. 设置环境变量
 
-在项目根目录创建 `.env` 文件，OxyGent 启动时会通过 `dotenv` 自动加载：
+在项目根目录创建 `.env` 文件，OxyGent 启动时会通过 `python-dotenv` 自动加载：
 
 ```
 DEFAULT_LLM_API_KEY=your_api_key
@@ -20,17 +20,26 @@ DEFAULT_LLM_BASE_URL=your_base_url
 DEFAULT_LLM_MODEL_NAME=your_model_name
 ```
 
-> 支持任何 OpenAI 兼容的 API（DeepSeek、通义千问、智谱等），只需填入对应的 base_url 和 model_name。
+或直接在终端中导出：
+
+```bash
+export DEFAULT_LLM_API_KEY="your_api_key"
+export DEFAULT_LLM_BASE_URL="your_base_url"
+export DEFAULT_LLM_MODEL_NAME="your_model_name"
+```
+
+支持任何 OpenAI 兼容的 API（DeepSeek、通义千问、智谱等），只需填入对应的 base_url 和 model_name。
 
 ---
 
 ## 2. 创建第一个智能体
 
-最小示例：一个能对话的 ChatAgent，只需 10 行代码。
+创建文件 `quickstart.py`：
 
 ```python
 import asyncio
 import os
+
 from oxygent import MAS, oxy
 
 oxy_space = [
@@ -44,15 +53,31 @@ oxy_space = [
         name="assistant",
         is_master=True,
         llm_model="default_llm",
+        prompt="You are a helpful assistant.",
     ),
 ]
 
+
 async def main():
     async with MAS(oxy_space=oxy_space) as mas:
-        result = await mas.chat_with_agent(payload={"query": "你好！"})
-        print(result.output)
+        response = await mas.chat_with_agent(payload={"query": "你好！你能做什么？"})
+        print("Agent:", response.output)
 
-asyncio.run(main())
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+运行：
+
+```bash
+python quickstart.py
+```
+
+预期输出：
+
+```
+Agent: 你好！我是一个智能助手，可以回答问题、辅助写作、……
 ```
 
 **要点：**
@@ -62,28 +87,68 @@ asyncio.run(main())
 - `is_master=True` 标记入口智能体，用户消息首先到达它。
 - `MAS` 是运行时容器，使用 `async with` 管理生命周期。
 
+`ChatAgent` 只能进行单轮 LLM 调用，不支持工具。适合简单问答，但复杂任务通常需要工具能力。
+
 ---
 
-## 3. 添加工具
+## 3. 启动 Web UI
 
-ChatAgent 只能对话，不能调用外部能力。通过 `FunctionHub` 注册工具，并切换到 `ReActAgent`，智能体就能推理并调用工具。
+将 `chat_with_agent` 替换为 `start_web_service`，即可启动内置 Web 界面：
+
+```python
+async def main():
+    async with MAS(oxy_space=oxy_space) as mas:
+        await mas.start_web_service(
+            first_query="你好！",
+            welcome_message="欢迎使用 OxyGent，有什么可以帮你？",
+        )
+```
+
+启动后浏览器会自动打开 `http://127.0.0.1:8080`，即可在 Web UI 中与智能体对话。
+
+> 修改端口：传入 `port=8082` 参数，或通过 `Config.set_server_port(8082)` 全局设置。
+
+MAS 支持多种启动模式：
+
+| 模式 | 方法 | 用途 |
+|------|------|------|
+| Web 服务 | `start_web_service()` | 可视化界面 + REST API |
+| 命令行 | `start_cli_mode()` | 终端交互式对话 |
+| 批处理 | `start_batch_processing(querys)` | 批量并发执行 |
+| 编程式 | `chat_with_agent(payload)` | 嵌入到应用代码中 |
+
+---
+
+## 4. 添加工具
+
+通过 `FunctionHub` 注册工具，并切换到 `ReActAgent`，智能体就能推理并调用工具。
 
 ```python
 import asyncio
 import os
-from oxygent import MAS, oxy
-from oxygent.oxy.function_tools.function_hub import FunctionHub
 
-# 创建工具集
+from pydantic import Field
+from oxygent import MAS, oxy
+from oxygent.oxy import FunctionHub
+
 calculator_hub = FunctionHub(name="calculator")
 
-@calculator_hub.tool(description="两个数相加")
-def add(a: float, b: float) -> float:
+
+@calculator_hub.tool(description="Add two numbers together")
+def add(
+    a: float = Field(description="First number"),
+    b: float = Field(description="Second number"),
+) -> float:
     return a + b
 
-@calculator_hub.tool(description="两个数相乘")
-def multiply(a: float, b: float) -> float:
+
+@calculator_hub.tool(description="Multiply two numbers together")
+def multiply(
+    a: float = Field(description="First number"),
+    b: float = Field(description="Second number"),
+) -> float:
     return a * b
+
 
 oxy_space = [
     oxy.HttpLLM(
@@ -98,33 +163,60 @@ oxy_space = [
         is_master=True,
         llm_model="default_llm",
         tools=["calculator"],
+        prompt="You are a math assistant. Use the calculator tools to answer math questions.",
     ),
 ]
 
+
 async def main():
     async with MAS(oxy_space=oxy_space) as mas:
-        result = await mas.chat_with_agent(payload={"query": "3.14 乘以 2 再加 10 等于多少？"})
-        print(result.output)
+        response = await mas.chat_with_agent(
+            payload={"query": "12.5 加 7.3 等于多少？再把结果乘以 4。"}
+        )
+        print("Agent:", response.output)
 
-asyncio.run(main())
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+`ReActAgent` 遵循推理-行动循环（Reasoning + Acting）：先思考该做什么，调用工具，观察结果，循环直到得到答案。
+
+预期输出：
+
+```
+Agent: 12.5 + 7.3 = 19.8，乘以 4 等于 79.2。
 ```
 
 **要点：**
-
 - `FunctionHub` 是工具容器，用 `@hub.tool()` 装饰器注册 Python 函数。
 - `ReActAgent` 会自动推理何时调用工具、调用哪个工具，并将结果整合为最终回答。
 - Agent 通过 `tools=["calculator"]` 引用工具集的 `name`，无需传递 Python 对象。
 
 ---
 
-## 4. 多智能体协作
+## 5. 多智能体协作
 
-当任务涉及多个领域时，可以创建多个子智能体，由 master 智能体统一调度。
+添加子智能体，由 master 智能体统一调度。master 根据用户意图自动分发任务。
 
 ```python
 import asyncio
 import os
-from oxygent import MAS, oxy, preset_tools
+
+from pydantic import Field
+from oxygent import MAS, oxy
+from oxygent.oxy import FunctionHub
+
+calculator_hub = FunctionHub(name="calculator")
+
+
+@calculator_hub.tool(description="Add two numbers together")
+def add(
+    a: float = Field(description="First number"),
+    b: float = Field(description="Second number"),
+) -> float:
+    return a + b
+
 
 oxy_space = [
     oxy.HttpLLM(
@@ -133,71 +225,44 @@ oxy_space = [
         base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
         model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
     ),
-    # 内置工具集
-    preset_tools.time_tools,
-    preset_tools.math_tools,
-    # 子智能体：各司其职
-    oxy.ReActAgent(
-        name="time_agent",
-        desc="查询时间的智能体",
-        tools=["time_tools"],
-    ),
+    calculator_hub,
+    # 子智能体：处理数学问题
     oxy.ReActAgent(
         name="math_agent",
-        desc="进行数学计算的智能体",
-        tools=["math_tools"],
+        desc="A math specialist. Delegates math questions to this agent.",
+        llm_model="default_llm",
+        tools=["calculator"],
+        prompt="You are a math assistant. Use the calculator tools to answer math questions.",
     ),
-    # 主智能体：分发任务
+    # 主智能体：路由查询
     oxy.ReActAgent(
         name="master_agent",
         is_master=True,
-        sub_agents=["time_agent", "math_agent"],
+        llm_model="default_llm",
+        sub_agents=["math_agent"],
+        prompt="You are a helpful assistant. Route math questions to math_agent. Answer other questions directly.",
     ),
 ]
 
+
 async def main():
     async with MAS(oxy_space=oxy_space) as mas:
-        result = await mas.chat_with_agent(
-            payload={"query": "现在几点了？另外帮我算一下 123 * 456"}
+        response = await mas.chat_with_agent(
+            payload={"query": "99 加 1 等于多少？"}
         )
-        print(result.output)
+        print("Agent:", response.output)
 
-asyncio.run(main())
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
+
+master 智能体通过 `desc` 字段将 `math_agent` 视为可调用的工具。当数学问题到来时，master 将其分发给 `math_agent`，后者使用计算器工具，然后返回结果。
 
 **要点：**
-
-- `sub_agents` 列表声明子智能体，master 根据用户意图自动分发任务。
-- 每个子智能体有独立的 `desc`（描述），master 根据描述判断应该调度谁。
-- `preset_tools` 是 OxyGent 内置的常用工具集（时间、文件、数学、Shell 等）。
-
----
-
-## 5. 启动 Web UI
-
-将 `chat_with_agent()` 替换为 `start_web_service()`，即可启动带可视化界面的 Web 服务：
-
-```python
-async def main():
-    async with MAS(oxy_space=oxy_space) as mas:
-        await mas.start_web_service(
-            first_query="你好，请问有什么可以帮你？",
-            welcome_message="欢迎使用 OxyGent 多智能体系统！",
-        )
-
-asyncio.run(main())
-```
-
-启动后访问 `http://127.0.0.1:8080`，即可在浏览器中与智能体对话。
-
-除 Web UI 外，MAS 还支持其他启动模式：
-
-| 模式 | 方法 | 用途 |
-|------|------|------|
-| Web 服务 | `start_web_service()` | 可视化界面 + REST API |
-| 命令行 | `start_cli_mode()` | 终端交互式对话 |
-| 批处理 | `start_batch_processing(querys)` | 批量并发执行 |
-| 编程式 | `chat_with_agent(payload)` | 嵌入到应用代码中 |
+- 只有一个智能体设置 `is_master=True`，作为用户请求的入口。
+- 通过 `sub_agents` 列表声明子智能体，按名称引用。
+- `desc` 字段告诉 master 每个子智能体的能力，master 据此判断应该调度谁。
 
 ---
 
@@ -205,13 +270,32 @@ asyncio.run(main())
 
 恭喜你完成了快速上手教程！接下来可以深入了解：
 
-- [OxyGent 概念总览](./overview.md) -- 理解核心架构
-- [设置 Config](./config.md) -- 自定义全局配置
-- [注册本地工具](../tools/register-tool.md) -- 更多工具注册方式
-- [创建多智能体系统](../multi-agent/multi-agent-system.md) -- 复杂协作场景
+- [智能体类型](../agents/agent-types.md) -- ChatAgent、ReActAgent、WorkflowAgent、ParallelAgent 等
+- [注册本地工具](../tools/register-tool.md) -- 更多 FunctionHub 用法
+- [使用 MCP 工具](../tools/custom-mcp-tools.md) -- 连接外部工具服务器
+- [多智能体系统](../multi-agent/multi-agent-system.md) -- 深入了解 master-sub 架构
+- [分布式系统](../multi-agent/distributed.md) -- 跨进程智能体通信
+- [设置 Config](./config.md) -- 全局配置、LLM 默认值、日志
+
+## 常见问题
+
+### 启动后为什么报 404 错误？
+
+检查环境变量是否正确配置。不同模型可能需要不同的 `base_url` 格式。详见 [选择 LLM](../agents/select-llm.md)。
+
+### 如何获取帮助？
+
+- 在 GitHub 上提交 issue
+- 浏览 [完整文档](../readme.md)
+
+[上一章：安装 OxyGent](./install.md)
+[下一章：设置 Config](./config.md)
+[回到首页](../readme.md)
 
 ---
 
-[上一篇: 运行 Demo](./demo.md)
-[下一篇: 设置 Config](./config.md)
-[返回首页](../readme.md)
+## 相关示例
+
+- [单智能体示例](../../examples/agents/demo_single_agent.md) — 最简 ChatAgent 配置
+- [Ollama 本地模型示例](../../examples/llms/demo_ollama.md) — 使用 Ollama 部署本地模型
+- [流式输出示例](../../examples/agents/demo_chat_agent_stream.md) — ChatAgent 流式响应

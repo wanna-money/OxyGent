@@ -52,16 +52,16 @@ The position of the class is:
 A simple usage of `ShellUseAgent` is like:
 
 ```python
-    oxy.ShellUseAgent(
-        name="shell_agent",
-        desc="An agent that operates a remote Linux machine",
-        llm_model="default_llm",
-        prompt=SHELL_SYSTEM_PROMPT,
-        auth_info={
-            "hostname": "192.168.1.100",
-            "username": "admin",
-            "password": "password",
-        },
-        tools=["ssh_tool"],
-    ),
+oxy.ShellUseAgent(
+    name="shell_agent",
+    desc="An agent that operates a remote Linux machine",
+    llm_model="default_llm",
+    prompt=SHELL_SYSTEM_PROMPT,
+    auth_info={
+        "hostname": "192.168.1.100",
+        "username": "admin",
+        "password": "password",
+    },
+    tools=["ssh_tool"],
+),
 ```

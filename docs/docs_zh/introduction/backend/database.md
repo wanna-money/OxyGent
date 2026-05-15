@@ -1,10 +1,10 @@
 # 如何设置数据库？
 
-OxyGent支持设置外部工具，比如您的数据库。现在OxyGent支持三种类型的外部数据库：
+OxyGent 支持设置外部工具，比如您的数据库。现在 OxyGent 支持三种类型的外部数据库：
 
-+ Elasticsearch: https://www.elastic.co/elasticsearch
-+ Redis: https://redis.io/
-+ Vearch: https://github.com/vearch/vearch
+- [Elasticsearch](https://www.elastic.co/elasticsearch)
+- [Redis](https://redis.io/)
+- [Vearch](https://github.com/vearch/vearch)
 
 以Elasticsearch为例，您可以在[设置（Config）](https://github.com/jd-opensource/OxyGent/blob/main/oxygent/config.py)中输入数据库信息：
 

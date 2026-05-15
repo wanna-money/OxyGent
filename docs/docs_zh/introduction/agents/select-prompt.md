@@ -1,8 +1,8 @@
-# 如何向智能体传递prompt
+# 如何向智能体传递 Prompt？
 
-## 使用自定义prompt
+## 使用自定义 Prompt
 
-在OxyGent中，您可以通过预设prompt告知agent一些信息。例如：
+在 OxyGent 中，您可以通过预设 Prompt 告知 Agent 一些信息。例如：
 
 ```python
 text_summarizer_prompt = """
@@ -18,31 +18,31 @@ document_checker_prompt = """
 """
 ```
 
-之后，您可以在执行脚本中使用`prompt`参数调用prompt：
+之后，您可以在执行脚本中使用 `prompt` 参数调用 Prompt：
 
 ```python
-    oxy.ChatAgent(
-        name="text_summarizer",
-        desc="A tool that can summarize markdown text",
-        prompt=text_summarizer_prompt,
-    ),
-    oxy.ChatAgent(
-        name="data_analyser",
-        desc="A tool that can summarize echart data",
-        prompt=data_analyser_prompt,
-    ),
-    oxy.ChatAgent(
-        name="document_checker",
-        desc="A tool that can find problems in document",
-        prompt=document_checker_prompt,
-    ),
+oxy.ChatAgent(
+    name="text_summarizer",
+    desc="A tool that can summarize markdown text",
+    prompt=text_summarizer_prompt,
+),
+oxy.ChatAgent(
+    name="data_analyser",
+    desc="A tool that can summarize echart data",
+    prompt=data_analyser_prompt,
+),
+oxy.ChatAgent(
+    name="document_checker",
+    desc="A tool that can find problems in document",
+    prompt=document_checker_prompt,
+),
 ```
 
-## 使用系统预设prompt
+## 使用系统预设 Prompt
 
-您也可以使用以下方式调用我们的**默认prompts**：
+您也可以使用以下方式调用我们的**默认 Prompts**：
 
-```
+```python
 from oxygent.prompts import INTENTION_PROMPT
 from oxygent.prompts import SYSTEM_PROMPT
 from oxygent.prompts import SYSTEM_PROMPT_RETRIEVAL
@@ -55,15 +55,15 @@ from oxygent.prompts import MULTIMODAL_PROMPT
 
 > 我们也提供了传入您自定义解析函数的属性，以便更加灵活地处理输出。具体请您参考[处理智能体输出](../advanced/handle-output.md)。
 
-如果您不对prompts进行任何指定，我们的智能体将默认使用系统prompts。您可以对系统prompts进行追加：
+如果您不对 Prompts 进行任何指定，我们的智能体将默认使用系统 Prompts。您可以对系统 Prompts 进行追加：
 
 ```python
-    oxy.ReActAgent(
-        name="time_agent",
-        desc="A tool for time query.",
-        additional_prompt="Do not send other information except time.",
-        tools=["time_tools"],
-    ),
+oxy.ReActAgent(
+    name="time_agent",
+    desc="A tool for time query.",
+    additional_prompt="Do not send other information except time.",
+    tools=["time_tools"],
+),
 ```
 
 [上一章：选择智能体使用的LLM](./select-llm.md)

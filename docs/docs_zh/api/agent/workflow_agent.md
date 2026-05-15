@@ -50,11 +50,11 @@
 `WorkflowAgent` 的简单用法如下：
 
 ```python
-    oxy.WorkflowAgent(
-        name="workflow_agent",
-        desc="An agent for executing workflows",
-        func_workflow=my_workflow_function,
-    ),
+oxy.WorkflowAgent(
+    name="workflow_agent",
+    desc="An agent for executing workflows",
+    func_workflow=my_workflow_function,
+),
 ```
 
 其中 `my_workflow_function` 是一个可调用对象，定义了该 Agent 要执行的工作流逻辑。

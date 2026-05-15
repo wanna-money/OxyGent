@@ -99,13 +99,11 @@ Capability Descriptions:
 - Bidirectional communication between OxyGent and AgentScope / LangChain / LangGraph
 - OxyGent Server can be called directly by a generic A2A SDK
 
+[Next: A2A Design & Capabilities](./design.md)
+[Back to Home](../readme.md)
+
 ---
 
 ## Related Examples
 
 - [A2A Examples Overview](../../examples/a2a/readme.md) -- Complete list of A2A-related examples with instructions
-
----
-
-[Next: A2A Design & Capabilities](./design.md)
-[Back to Home](../readme.md)

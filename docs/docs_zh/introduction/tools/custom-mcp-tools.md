@@ -1,8 +1,8 @@
-# 如何使用自定义MCP工具？
+# 如何使用自定义 MCP 工具？
 
-在OxyGent中，您可以通过本地模式或SSE模式注册自定义MCP工具。
+在 OxyGent 中，您可以通过本地模式或 SSE 模式注册自定义 MCP 工具。
 
-## 1.本地MCP工具
+## 1. 本地 MCP 工具
 
 首先，创建一个 `mcp_servers` 文件夹，并在 `/mcp_servers/math_tools.py` 文件中使用 `FastMCP` 声明一个 MCP 实例：
 
@@ -33,13 +33,13 @@ def power(
 然后，您可以在 `oxy_space` 中调用这些工具：
 
 ```python
-    oxy.StdioMCPClient(
-        name="math_tools",
-        params={
-            "command": "uv",
-            "args": ["--directory", "./mcp_servers", "run", "math_tools.py"],
-        },
-    ),
+oxy.StdioMCPClient(
+    name="math_tools",
+    params={
+        "command": "uv",
+        "args": ["--directory", "./mcp_servers", "run", "math_tools.py"],
+    },
+),
 ```
 ## 完整的可运行样例
 
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     mcp.run()
 ```
 
-## 2.SSE MCP工具
+## 2. SSE MCP 工具
 
 如果需要使用SSE MCP工具，您可以在声明`FastMCP`对象时增加端口参数：
 
@@ -172,10 +172,10 @@ oxy.SSEMCPClient(
 `StreamableMCPClient` 使用更新的 Streamable HTTP 传输协议连接远程 MCP 服务器。这是 MCP 规范中推荐的远程连接方式：
 
 ```python
-    oxy.StreamableMCPClient(
-        name="remote_tools",
-        server_url="http://127.0.0.1:8000/mcp",
-    ),
+oxy.StreamableMCPClient(
+    name="remote_tools",
+    server_url="http://127.0.0.1:8000/mcp",
+),
 ```
 
 > `StreamableMCPClient` 和 `SSEMCPClient` 的使用方式类似，主要区别在于底层传输协议。如果你的 MCP 服务器支持 Streamable HTTP，优先使用 `StreamableMCPClient`。

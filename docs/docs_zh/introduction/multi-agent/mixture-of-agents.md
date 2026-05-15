@@ -25,13 +25,13 @@ Mixture of Agents（MoA）是一种多智能体协作模式，通过创建同一
 如果您需要生成多个相同的智能体，您可以使用`team_size`参数快速复制智能体。
 
 ```python
-    oxy.ReActAgent(
-        name="time_agent",
-        desc="A tool for time query",
-        tools=["time_tools"],
-        llm_model="default_llm",
-        team_size=2,
-    ),
+oxy.ReActAgent(
+    name="time_agent",
+    desc="A tool for time query",
+    tools=["time_tools"],
+    llm_model="default_llm",
+    team_size=2,
+),
 ```
 
 `team_size`目前仅能复制较为简单的智能体，之后我们会支持更完备的智能体复制。

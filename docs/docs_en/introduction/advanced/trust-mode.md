@@ -5,14 +5,14 @@ OxyGent provides a rich set of parameters for customizing how agents work.
 If you want to get the raw output of an agent, simply set `trust_mode` to `True`. When trust mode is enabled, the agent directly returns the tool's execution result without performing any additional processing or parsing.
 
 ```python
-    oxy.ReActAgent(
-        name="trust_agent",
-        desc="a time query agent with trust mode enabled",
-        tools=["time_tools"],
-        llm_model="default_llm",
-        trust_mode=True,  # enable trust mode
-        is_master=True,
-    ),
+oxy.ReActAgent(
+    name="trust_agent",
+    desc="a time query agent with trust mode enabled",
+    tools=["time_tools"],
+    llm_model="default_llm",
+    trust_mode=True,  # enable trust mode
+    is_master=True,
+),
 ```
 
 For example, when trust mode is enabled, the raw output returned may look like this:

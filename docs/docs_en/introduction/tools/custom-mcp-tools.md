@@ -33,13 +33,13 @@ def power(
 Then, you can invoke these tools in `oxy_space`:
 
 ```python
-    oxy.StdioMCPClient(
-        name="math_tools",
-        params={
-            "command": "uv",
-            "args": ["--directory", "./mcp_servers", "run", "math_tools.py"],
-        },
-    ),
+oxy.StdioMCPClient(
+    name="math_tools",
+    params={
+        "command": "uv",
+        "args": ["--directory", "./mcp_servers", "run", "math_tools.py"],
+    },
+),
 ```
 ## Complete Runnable Example
 
@@ -172,10 +172,10 @@ oxy.SSEMCPClient(
 `StreamableMCPClient` connects to remote MCP servers using the newer Streamable HTTP transport protocol. This is the recommended approach for remote connections in the MCP specification:
 
 ```python
-    oxy.StreamableMCPClient(
-        name="remote_tools",
-        server_url="http://127.0.0.1:8000/mcp",
-    ),
+oxy.StreamableMCPClient(
+    name="remote_tools",
+    server_url="http://127.0.0.1:8000/mcp",
+),
 ```
 
 > `StreamableMCPClient` and `SSEMCPClient` are used in a similar way. The main difference is the underlying transport protocol. If your MCP server supports Streamable HTTP, prefer using `StreamableMCPClient`.

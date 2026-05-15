@@ -122,7 +122,7 @@ if __name__ == "__main__":
 ## What's Next
 
 - [Install OxyGent](./install.md) -- Set up the framework
-- [Run the Demo](./demo.md) -- Quick start
+- [Quickstart](./quickstart.md) -- Build your first agent in 5 minutes
 - [Create Your First Agent](../agents/create-agent.md) -- Dive deeper
 
 ---

@@ -99,13 +99,11 @@
 - OxyGent 与 AgentScope / LangChain / LangGraph 双向互通
 - OxyGent Server 被通用 A2A SDK 直接调用
 
+[下一章：A2A 设计与能力](./design.md)
+[回到首页](../readme.md)
+
 ---
 
 ## 相关示例
 
 - [A2A 示例总览](../../examples/a2a/readme.md) — A2A 相关示例的完整列表与运行说明
-
----
-
-[下一篇: A2A 设计与能力](./design.md)
-[返回首页](../readme.md)

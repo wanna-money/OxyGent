@@ -125,13 +125,11 @@ OxyGent A2A now provides the following practical capabilities:
 
 For existing OxyGent users, A2A integration can be quickly deployed through "minimal configuration changes."
 
+[Previous: A2A Quick Start](./demo-guide.md)
+[Back to Home](../readme.md)
+
 ---
 
 ## Related Examples
 
 - [A2A Server Example](../../examples/a2a/demo_a2a_oxygent_server.md) -- Demonstrates how to start an OxyGent A2A Server
-
----
-
-[Previous: A2A Quick Start](./demo-guide.md)
-[Back to Home](../readme.md)

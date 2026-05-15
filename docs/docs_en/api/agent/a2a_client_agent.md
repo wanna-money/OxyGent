@@ -64,33 +64,33 @@ The position of the class is:
 A simple usage of `A2AClientAgent` is like:
 
 ```python
-    oxy.A2AClientAgent(
-        name="remote_a2a_agent",
-        desc="An agent that communicates with an A2A server",
-        server_url="http://127.0.0.1:8082",
-    ),
+oxy.A2AClientAgent(
+    name="remote_a2a_agent",
+    desc="An agent that communicates with an A2A server",
+    server_url="http://127.0.0.1:8082",
+),
 ```
 
 For streaming mode with task polling:
 
 ```python
-    oxy.A2AClientAgent(
-        name="streaming_a2a_agent",
-        desc="Streaming A2A client",
-        server_url="http://127.0.0.1:8082",
-        streaming=True,
-        enable_task_polling=True,
-        task_poll_interval_seconds=2.0,
-        task_poll_max_wait_seconds=30.0,
-    ),
+oxy.A2AClientAgent(
+    name="streaming_a2a_agent",
+    desc="Streaming A2A client",
+    server_url="http://127.0.0.1:8082",
+    streaming=True,
+    enable_task_polling=True,
+    task_poll_interval_seconds=2.0,
+    task_poll_max_wait_seconds=30.0,
+),
 ```
 
 Or use the `minimal()` factory:
 
 ```python
-    oxy.A2AClientAgent.minimal(
-        name="quick_a2a",
-        server_url="http://127.0.0.1:8082",
-        streaming=True,
-    ),
+oxy.A2AClientAgent.minimal(
+    name="quick_a2a",
+    server_url="http://127.0.0.1:8082",
+    streaming=True,
+),
 ```

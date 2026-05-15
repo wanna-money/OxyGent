@@ -14,7 +14,7 @@ OxyGent 默认使用一个简单的 JSON 解析器来处理智能体的输出。
 
 如果您需要定制智能体的输出处理方式，可以采用以下方法。
 
-## 设置LLM的输出格式：
+## 设置 LLM 的输出格式
 
 大部分情况下，您可以在 `prompts` 中设置提示，以让 LLM 输出特定格式。
 
@@ -57,7 +57,7 @@ Please only use the tools explicitly defined above.
 ```
 
 
-## 设置LLM的输出解析器:
+## 设置 LLM 的输出解析器
 
 `oxy.ReActAgent` 支持在 `func_parse_llm_response` 中传入自定义的输出解析器。
 
@@ -101,14 +101,14 @@ def json_parser(ori_response: str) -> LLMResponse:
 然后，您可以将该解析器传入 `oxy.ReActAgent`：
 
 ```python
-    oxy.ReActAgent(
-        name="json_agent",
-        desc="A tool that can convert plaintext into json text",
-        func_parse_llm_response=json_parser, # 关键方法
-    ),
+oxy.ReActAgent(
+    name="json_agent",
+    desc="A tool that can convert plaintext into json text",
+    func_parse_llm_response=json_parser, # 关键方法
+),
 ```
 
-## 在MAS中进行处理：
+## 在 MAS 中进行处理
 
 OxyGent 还支持使用外部方法对 `oxy.Response` 进行处理。例如，您可以自定义输出格式：
 
@@ -121,14 +121,14 @@ def format_output(oxy_response: OxyResponse) -> OxyResponse:
 然后将该处理方法注入到对应的 Agent 中：
 
 ```python
-    oxy.ReActAgent(
-        name="master_agent",
-        sub_agents=["time_agent", "file_agent", "math_agent"],
-        is_master=True,
-        func_format_output=format_output, #关键方法
-        timeout=100,
-        llm_model="default_llm",
-    ),
+oxy.ReActAgent(
+    name="master_agent",
+    sub_agents=["time_agent", "file_agent", "math_agent"],
+    is_master=True,
+    func_format_output=format_output, #关键方法
+    timeout=100,
+    llm_model="default_llm",
+),
 ```
 ### 说明
 1. **`func_parse_llm_response`**：用于将 LLM 的输出进行自定义解析。可以根据工具调用结果或普通文本的需求进行处理。

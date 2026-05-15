@@ -15,17 +15,17 @@ The LLM in OxyGent refers to the traditional LLM form, which supports taking a s
 ## Calling General Models
 
 ```python
-    import os
+import os
 
-    oxy.HttpLLM(
-        name="default_llm",
-        api_key=os.getenv("DEFAULT_LLM_API_KEY"),
-        base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
-        model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
-        llm_params={"temperature": 0.01},
-        semaphore=4, # concurrency limit
-        timeout=240, # maximum execution time
-    ),
+oxy.HttpLLM(
+    name="default_llm",
+    api_key=os.getenv("DEFAULT_LLM_API_KEY"),
+    base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
+    model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
+    llm_params={"temperature": 0.01},
+    semaphore=4, # concurrency limit
+    timeout=240, # maximum execution time
+),
 ```
 
 OxyGent supports calling both common open-source and closed-source models in this way.
@@ -36,15 +36,15 @@ OxyGent supports calling both common open-source and closed-source models in thi
 For models that support the OpenAI interface, you can use the following method:
 
 ```python
-    oxy.OpenAILLM(
-        name="default_llm",
-        api_key=os.getenv("DEFAULT_LLM_API_KEY"),
-        base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
-        model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
-        llm_params={"temperature": 0.01},
-        semaphore=4,
-        timeout=240,
-    ),
+oxy.OpenAILLM(
+    name="default_llm",
+    api_key=os.getenv("DEFAULT_LLM_API_KEY"),
+    base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
+    model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
+    llm_params={"temperature": 0.01},
+    semaphore=4,
+    timeout=240,
+),
 ```
 
 ### OpenAILLM Features
@@ -62,15 +62,15 @@ For models that support the OpenAI interface, you can use the following method:
 If you have deployed a model locally using Ollama, use the following approach:
 
 ```python
-    oxy.HttpLLM(                
-        name="local_gemma",  
-        # Note: do not pass the api_key parameter
-        base_url="http://localhost:11434/api/chat", # replace with your local URL endpoint
-        model_name=os.getenv("DEFAULT_OLLAMA_MODEL"),   
-        llm_params={"temperature": 0.2},    
-        semaphore=1,              
-        timeout=240,
-    ),
+oxy.HttpLLM(                
+    name="local_gemma",  
+    # Note: do not pass the api_key parameter
+    base_url="http://localhost:11434/api/chat", # replace with your local URL endpoint
+    model_name=os.getenv("DEFAULT_OLLAMA_MODEL"),   
+    llm_params={"temperature": 0.2},    
+    semaphore=1,              
+    timeout=240,
+),
 ```
 ### URL Auto-Completion Rules
 
@@ -93,10 +93,10 @@ Therefore, please note the following. If you encounter a 404 error, it is most l
 `oxy.MockLLM` does not call a real LLM API. Instead, it returns a preset mock output. It is suitable for development debugging and unit testing:
 
 ```python
-    oxy.MockLLM(
-        name="mock_llm",
-        func_mock_process=lambda oxy_request: "This is a mock response for testing.",
-    ),
+oxy.MockLLM(
+    name="mock_llm",
+    func_mock_process=lambda oxy_request: "This is a mock response for testing.",
+),
 ```
 
 `func_mock_process` receives an `OxyRequest` object and returns a string as the simulated LLM output. If this parameter is not provided, it returns `"output"` by default.
@@ -106,12 +106,12 @@ Therefore, please note the following. If you encounter a 404 error, it is most l
 If you need to use a locally deployed HuggingFace model, you can use `oxy.LocalLLM`:
 
 ```python
-    oxy.LocalLLM(
-        name="local_llm",
-        model_path="/path/to/your/model",
-        device_map="auto",
-        dtype="bfloat16",
-    ),
+oxy.LocalLLM(
+    name="local_llm",
+    model_path="/path/to/your/model",
+    device_map="auto",
+    dtype="bfloat16",
+),
 ```
 
 > LocalLLM requires additional installation of the `torch` and `transformers` packages.

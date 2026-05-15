@@ -62,13 +62,13 @@ The position of the class is:
 A simple usage of `SkillAgent` is like:
 
 ```python
-    oxy.SkillAgent(
-        name="skill_agent",
-        desc="An agent with skill awareness",
-        llm_model="default_llm",
-        skills=["./skills/weather", "./skills/code_review"],
-        tools=["time_tools"],
-    ),
+oxy.SkillAgent(
+    name="skill_agent",
+    desc="An agent with skill awareness",
+    llm_model="default_llm",
+    skills=["./skills/weather", "./skills/code_review"],
+    tools=["time_tools"],
+),
 ```
 
 Each skill directory should contain a `SKILL.md` file with frontmatter:

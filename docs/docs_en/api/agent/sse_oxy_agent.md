@@ -52,9 +52,9 @@ The position of the class is:
 A simple usage of `SSEOxyGent` is like:
 
 ```python
-    oxy.SSEOxyGent(
-        name="time_agent",
-        desc="An tool for time query",
-        server_url="http://127.0.0.1:8082",
-    ),
+oxy.SSEOxyGent(
+    name="time_agent",
+    desc="An tool for time query",
+    server_url="http://127.0.0.1:8082",
+),
 ```

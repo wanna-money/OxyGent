@@ -5,14 +5,14 @@ OxyGent提供了非常丰富的参数供您自定义智能体的工作模式，
 如果您希望获取智能体的原始输出，只需将 trust_mode 设置为 True。启用信任模式后，智能体会直接返回工具的执行结果，而不是对其进行额外的处理或解析。
 
 ```python
-    oxy.ReActAgent(
-        name="trust_agent",
-        desc="a time query agent with trust mode enabled",
-        tools=["time_tools"],
-        llm_model="default_llm",
-        trust_mode=True,  # enable trust mode
-        is_master=True,
-    ),
+oxy.ReActAgent(
+    name="trust_agent",
+    desc="a time query agent with trust mode enabled",
+    tools=["time_tools"],
+    llm_model="default_llm",
+    trust_mode=True,  # enable trust mode
+    is_master=True,
+),
 ```
 
 例如，启用信任模式时，返回的原始输出可能如下所示：

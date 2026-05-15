@@ -53,14 +53,14 @@
 `PlanAndSolveAgent` 的简单用法如下：
 
 ```python
-    oxy.PlanAndSolveAgent(
-        name="plan_solve_agent",
-        desc="An agent that plans and solves complex tasks",
-        llm_model="default_llm",
-        planner_agent="planner",
-        executor_agent="executor",
-        max_replan_rounds=5,
-    ),
+oxy.PlanAndSolveAgent(
+    name="plan_solve_agent",
+    desc="An agent that plans and solves complex tasks",
+    llm_model="default_llm",
+    planner_agent="planner",
+    executor_agent="executor",
+    max_replan_rounds=5,
+),
 ```
 
 其中 `planner` 是一个返回 JSON 任务步骤列表的 Agent（例如 `["step1", "step2"]`），`executor` 是执行每个单独步骤的 Agent。

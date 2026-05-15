@@ -1,6 +1,6 @@
-# 如何使用开源MCP工具？
+# 如何使用开源 MCP 工具？
 
-在使用MCP的过程中，您可能希望使用外部工具。OxyGent支持如同本地工具一样集成外部的开源工具，您可以使用基于MCP协议的`oxy.StdioMCPClient`引入外部工具。
+在使用 MCP 的过程中，您可能希望使用外部工具。OxyGent 支持如同本地工具一样集成外部的开源工具，您可以使用基于 MCP 协议的 `oxy.StdioMCPClient` 引入外部工具。
 
 ## 什么是 MCP？
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 ```
 
 [上一章：注册一个工具](./register-tool.md)
-[下一章：使用MCP自定义工具](./custom-mcp-tools.md)
+[下一章：使用 MCP 自定义工具](./custom-mcp-tools.md)
 [回到首页](../readme.md)
 
 ---

@@ -133,3 +133,4 @@ if __name__ == "__main__":
 ## Related Examples
 
 - [Multimodal Example](../../examples/advanced/demo_multimodal.md) -- Demonstrates how to configure and use multimodal input for image processing
+- [Multimodal Transfer Example](../../examples/advanced/demo_multimodal_transfer.md) -- Demonstrates how to pass multimodal data between agents

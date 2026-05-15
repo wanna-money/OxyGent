@@ -53,14 +53,14 @@ The position of the class is:
 A simple usage of `PlanAndSolveAgent` is like:
 
 ```python
-    oxy.PlanAndSolveAgent(
-        name="plan_solve_agent",
-        desc="An agent that plans and solves complex tasks",
-        llm_model="default_llm",
-        planner_agent="planner",
-        executor_agent="executor",
-        max_replan_rounds=5,
-    ),
+oxy.PlanAndSolveAgent(
+    name="plan_solve_agent",
+    desc="An agent that plans and solves complex tasks",
+    llm_model="default_llm",
+    planner_agent="planner",
+    executor_agent="executor",
+    max_replan_rounds=5,
+),
 ```
 
 Where `planner` is an agent that returns a JSON list of task steps (e.g. `["step1", "step2"]`), and `executor` is an agent that executes each individual step.

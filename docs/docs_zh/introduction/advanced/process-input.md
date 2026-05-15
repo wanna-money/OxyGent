@@ -40,18 +40,18 @@ def update_query(oxy_request: OxyRequest):
 然后，您需要将 `update_query` 方法传递给 Agent 的输入处理函数 `func_process_input` 中，使得每个 Agent 都能使用自定义的处理逻辑：
 
 ```python
-    oxy.ReActAgent(
-        name="file_agent",
-        desc="A tool that can operate the file system",
-        tools=["file_tools"],
-        func_process_input=update_query, #假设您希望file_agent读到原始文件 
-    ),
-    oxy.ReActAgent(
-        name="time_agent",
-        desc="A tool that can get current time",
-        tools=["time_tools"], #您可以控制每个agent的处理方法
-    ),
-    # ...
+oxy.ReActAgent(
+    name="file_agent",
+    desc="A tool that can operate the file system",
+    tools=["file_tools"],
+    func_process_input=update_query, #假设您希望file_agent读到原始文件 
+),
+oxy.ReActAgent(
+    name="time_agent",
+    desc="A tool that can get current time",
+    tools=["time_tools"], #您可以控制每个agent的处理方法
+),
+# ...
 ```
 ## 完整的可运行样例
 

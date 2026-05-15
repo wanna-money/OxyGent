@@ -21,28 +21,28 @@ You need to review the documents provided by users and try to identify issues in
 Then, you can use the `prompt` parameter in your execution script to pass the prompt:
 
 ```python
-    oxy.ChatAgent(
-        name="text_summarizer",
-        desc="A tool that can summarize markdown text",
-        prompt=text_summarizer_prompt,
-    ),
-    oxy.ChatAgent(
-        name="data_analyser",
-        desc="A tool that can summarize echart data",
-        prompt=data_analyser_prompt,
-    ),
-    oxy.ChatAgent(
-        name="document_checker",
-        desc="A tool that can find problems in document",
-        prompt=document_checker_prompt,
-    ),
+oxy.ChatAgent(
+    name="text_summarizer",
+    desc="A tool that can summarize markdown text",
+    prompt=text_summarizer_prompt,
+),
+oxy.ChatAgent(
+    name="data_analyser",
+    desc="A tool that can summarize echart data",
+    prompt=data_analyser_prompt,
+),
+oxy.ChatAgent(
+    name="document_checker",
+    desc="A tool that can find problems in document",
+    prompt=document_checker_prompt,
+),
 ```
 
 ## Using System Preset Prompts
 
 You can also use the following approach to call our **default prompts**:
 
-```
+```python
 from oxygent.prompts import INTENTION_PROMPT
 from oxygent.prompts import SYSTEM_PROMPT
 from oxygent.prompts import SYSTEM_PROMPT_RETRIEVAL
@@ -58,12 +58,12 @@ from oxygent.prompts import MULTIMODAL_PROMPT
 If you do not specify any prompts, our agents will use the system prompts by default. You can append to the system prompts:
 
 ```python
-    oxy.ReActAgent(
-        name="time_agent",
-        desc="A tool for time query.",
-        additional_prompt="Do not send other information except time.",
-        tools=["time_tools"],
-    ),
+oxy.ReActAgent(
+    name="time_agent",
+    desc="A tool for time query.",
+    additional_prompt="Do not send other information except time.",
+    tools=["time_tools"],
+),
 ```
 
 [Previous: Select the LLM for Your Agent](./select-llm.md)

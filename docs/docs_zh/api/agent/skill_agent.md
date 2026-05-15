@@ -62,13 +62,13 @@
 `SkillAgent` 的简单用法如下：
 
 ```python
-    oxy.SkillAgent(
-        name="skill_agent",
-        desc="An agent with skill awareness",
-        llm_model="default_llm",
-        skills=["./skills/weather", "./skills/code_review"],
-        tools=["time_tools"],
-    ),
+oxy.SkillAgent(
+    name="skill_agent",
+    desc="An agent with skill awareness",
+    llm_model="default_llm",
+    skills=["./skills/weather", "./skills/code_review"],
+    tools=["time_tools"],
+),
 ```
 
 每个技能目录应包含一个带有 frontmatter 的 `SKILL.md` 文件：

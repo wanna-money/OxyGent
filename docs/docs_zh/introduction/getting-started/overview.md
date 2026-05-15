@@ -122,7 +122,7 @@ if __name__ == "__main__":
 ## 接下来
 
 - [安装 OxyGent](./install.md) -- 安装框架
-- [运行 Demo](./demo.md) -- 快速上手
+- [快速上手](./quickstart.md) -- 5 分钟构建第一个智能体
 - [创建第一个智能体](../agents/create-agent.md) -- 深入了解
 
 ---

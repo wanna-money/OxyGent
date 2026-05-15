@@ -46,17 +46,17 @@ The position of the class is:
 
 A simple usage of `ChatAgent` is like:
 ```python
-    oxy.ChatAgent(
-        name="planner_agent",
-        desc="An agent capable of making plans",
-        llm_model="default_llm",
-        prompt="""
-            For a given goal, create a simple and step-by-step executable plan. \
-            The plan should be concise, with each step being an independent and complete functional module—not an atomic function—to avoid over-fragmentation. \
-            The plan should consist of independent tasks that, if executed correctly, will lead to the correct answer. \
-            Ensure that each step is actionable and includes all necessary information for execution. \
-            The result of the final step should be the final answer. Make sure each step contains all the information required for its execution. \
-            Do not add any redundant steps, and do not skip any necessary steps.
-        """.strip(),
-    ),
+oxy.ChatAgent(
+    name="planner_agent",
+    desc="An agent capable of making plans",
+    llm_model="default_llm",
+    prompt="""
+        For a given goal, create a simple and step-by-step executable plan. \
+        The plan should be concise, with each step being an independent and complete functional module—not an atomic function—to avoid over-fragmentation. \
+        The plan should consist of independent tasks that, if executed correctly, will lead to the correct answer. \
+        Ensure that each step is actionable and includes all necessary information for execution. \
+        The result of the final step should be the final answer. Make sure each step contains all the information required for its execution. \
+        Do not add any redundant steps, and do not skip any necessary steps.
+    """.strip(),
+),
 ```

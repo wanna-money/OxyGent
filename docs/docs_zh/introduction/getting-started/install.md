@@ -1,29 +1,29 @@
-# 如何安装OxyGent？
+# 如何安装 OxyGent？
 
 ### 如何配置环境？
 ---
 
-我们支持通过`conda`或者`uv`配置环境。
+我们支持通过 `conda` 或者 `uv` 配置环境。
 
-+ 创建运行环境（conda）
+- 创建运行环境（conda）
 ```bash
-   conda create -n oxy_env python==3.10
-   conda activate oxy_env
+conda create -n oxy_env python==3.10
+conda activate oxy_env
 ```
 或者（uv）
 ```bash
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   uv python install 3.10 
-   uv venv .venv --python 3.10
-   source .venv/bin/activate
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv python install 3.10 
+uv venv .venv --python 3.10
+source .venv/bin/activate
 ```
-+ 下载发行包（conda）
+- 下载发行包（conda）
 ```bash
-   pip install oxygent
+pip install oxygent
 ```
 或者（uv）
 ```bash
-   uv pip install oxygent
+uv pip install oxygent
 ```
 
 ### 可不可以使用其他python版本？
@@ -39,8 +39,8 @@
 ### 如何安装OxyGent？
 ---
 ```bash
-   pip install oxygent # conda
-   uv pip install oxygent # uv
+pip install oxygent # conda
+uv pip install oxygent # uv
 ```
 
 ### 安装OxyGent网速太慢怎么办？
@@ -56,7 +56,7 @@ uv pip install oxygent -i https://pypi.tuna.tsinghua.edu.cn/simple
 OxyGent会优先引用本地包。
 
 
-[下一章：运行demo](./demo.md)
+[下一章：快速上手](./quickstart.md)
 [回到首页](../readme.md)
 
 ---

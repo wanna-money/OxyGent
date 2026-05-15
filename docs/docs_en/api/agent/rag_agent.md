@@ -52,15 +52,15 @@ The position of the class is:
 A simple usage of `RAGAgent` is like:
 
 ```python
-    async def retrieve_knowledge(oxy_request):
-        query = oxy_request.get_query()
-        # Your retrieval logic here (e.g., vector DB search)
-        return "Retrieved context: ..."
+async def retrieve_knowledge(oxy_request):
+    query = oxy_request.get_query()
+    # Your retrieval logic here (e.g., vector DB search)
+    return "Retrieved context: ..."
 
-    oxy.RAGAgent(
-        name="rag_agent",
-        desc="A RAG-powered assistant",
-        llm_model="default_llm",
-        func_retrieve_knowledge=retrieve_knowledge,
-    ),
+oxy.RAGAgent(
+    name="rag_agent",
+    desc="A RAG-powered assistant",
+    llm_model="default_llm",
+    func_retrieve_knowledge=retrieve_knowledge,
+),
 ```

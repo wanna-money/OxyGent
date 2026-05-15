@@ -75,23 +75,23 @@ def math_reflexion(response: str, oxy_request: OxyRequest) -> str:
 Reflexion needs to be specified for `oxy.ReActAgent` execution. It is worth noting that if you want the Master Agent to output reflexion-improved results, you need to add reflexion at each level.
 
 ```python
-    oxy.ReActAgent(
-        name="math_agent",
-        desc="A specialized agent for mathematical problems with advanced reflexion",
-        llm_model="default_llm",
-        func_reflexion=math_reflexion, # key parameter
-        max_react_rounds=30, # specify maximum redo count
-        # ...
-    ),
-    # Master agent that coordinates others
-    oxy.ReActAgent(
-        name="master_agent",
-        sub_agents=["basic_agent", "smart_agent", "math_agent"],
-        is_master=True,
-        llm_model="default_llm",
-        func_reflexion=math_reflexion,
-        # ...
-    ),
+oxy.ReActAgent(
+    name="math_agent",
+    desc="A specialized agent for mathematical problems with advanced reflexion",
+    llm_model="default_llm",
+    func_reflexion=math_reflexion, # key parameter
+    max_react_rounds=30, # specify maximum redo count
+    # ...
+),
+# Master agent that coordinates others
+oxy.ReActAgent(
+    name="master_agent",
+    sub_agents=["basic_agent", "smart_agent", "math_agent"],
+    is_master=True,
+    llm_model="default_llm",
+    func_reflexion=math_reflexion,
+    # ...
+),
 ```
 
 ## Using Flows for Reflexion
@@ -99,21 +99,21 @@ Reflexion needs to be specified for `oxy.ReActAgent` execution. It is worth noti
 We provide [Flows](./preset-flows.md): `oxy.Reflexion` for general task reflexion, and `oxy.MathReflexion` for computation task reflexion or verification. You can invoke them as follows:
 
 ```python
-    Reflexion(
-        name="general_reflexion",
-        worker_agent="worker_agent", # worker agent
-        reflexion_agent="reflexion_agent", # reflexion agent
-        evaluation_template="...", # reflexion template
-        max_reflexion_rounds=3, # reflexion rounds
-    ),
-    
-    MathReflexion(
-        name="math_reflexion", 
-        worker_agent="worker_agent", # worker agent
-        reflexion_agent="reflexion_agent", # reflexion agent
-        evaluation_template="...", # reflexion template
-        max_reflexion_rounds=3, # reflexion rounds
-    ),
+Reflexion(
+    name="general_reflexion",
+    worker_agent="worker_agent", # worker agent
+    reflexion_agent="reflexion_agent", # reflexion agent
+    evaluation_template="...", # reflexion template
+    max_reflexion_rounds=3, # reflexion rounds
+),
+
+MathReflexion(
+    name="math_reflexion", 
+    worker_agent="worker_agent", # worker agent
+    reflexion_agent="reflexion_agent", # reflexion agent
+    evaluation_template="...", # reflexion template
+    max_reflexion_rounds=3, # reflexion rounds
+),
 ```
 
 
@@ -122,12 +122,12 @@ We provide [Flows](./preset-flows.md): `oxy.Reflexion` for general task reflexio
 In some cases, you may want to use an agent rather than a fixed method for reflexion. In this case, you can designate a `oxy.ChatAgent` or another type of Agent to perform reflexion:
 
 ```python
-    # Reflexion Agent - responsible for evaluating answer quality
-    oxy.ChatAgent(
-        name="reflexion_agent",
-        desc="Reflexion agent responsible for evaluating answer quality and providing improvement suggestions",
-        llm_model="default_llm",
-    ),
+# Reflexion Agent - responsible for evaluating answer quality
+oxy.ChatAgent(
+    name="reflexion_agent",
+    desc="Reflexion agent responsible for evaluating answer quality and providing improvement suggestions",
+    llm_model="default_llm",
+),
 ```
 
 You can use a [workflow](./workflow.md) to manage the reflexion process. The following demonstrates the full reflexion flow using query updates:
@@ -209,13 +209,13 @@ Improvement Suggestions: [If unsatisfactory, provide specific improvement sugges
 Finally, you need to use `oxy.WorkflowAgent` to manage the reflexion process:
 
 ```python
-    oxy.WorkflowAgent(
-        name="general_reflexion_agent",
-        desc="Workflow agent that optimizes answer quality through external reflexion",
-        sub_agents=["worker_agent", "reflexion_agent"],
-        func_workflow=reflexion_workflow,
-        llm_model="default_llm",
-    ),
+oxy.WorkflowAgent(
+    name="general_reflexion_agent",
+    desc="Workflow agent that optimizes answer quality through external reflexion",
+    sub_agents=["worker_agent", "reflexion_agent"],
+    func_workflow=reflexion_workflow,
+    llm_model="default_llm",
+),
 ```
 
 [Previous: Handling LLM and Agent Output](./handle-output.md)

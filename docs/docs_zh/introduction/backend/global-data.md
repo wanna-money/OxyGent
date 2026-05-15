@@ -1,10 +1,10 @@
 # 如何设置系统全局数据？
 
-OxyGent支持使用非常简单的方式设置和修改系统全局数据，这些数据类似于全局变量，能够在MAS中使用`OxyRequest`进行更改与访问。
+OxyGent 支持使用非常简单的方式设置和修改系统全局数据，这些数据类似于全局变量，能够在 MAS 中使用 `OxyRequest` 进行更改与访问。
 
 支持的方法包括：
-+ `get_global_data`：使用`(key,default_value)`按键值访问全局数据
-+ `set_global_data`：使用`(key,value)`按键值修改全局数据
+- `get_global_data`：使用 `(key, default_value)` 按键值访问全局数据
+- `set_global_data`：使用 `(key, value)` 按键值修改全局数据
 
 下面使用全局数据实现简单的计数器。
 

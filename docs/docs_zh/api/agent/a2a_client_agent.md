@@ -64,33 +64,33 @@
 `A2AClientAgent` 的简单用法如下：
 
 ```python
-    oxy.A2AClientAgent(
-        name="remote_a2a_agent",
-        desc="An agent that communicates with an A2A server",
-        server_url="http://127.0.0.1:8082",
-    ),
+oxy.A2AClientAgent(
+    name="remote_a2a_agent",
+    desc="An agent that communicates with an A2A server",
+    server_url="http://127.0.0.1:8082",
+),
 ```
 
 流式模式与任务轮询：
 
 ```python
-    oxy.A2AClientAgent(
-        name="streaming_a2a_agent",
-        desc="Streaming A2A client",
-        server_url="http://127.0.0.1:8082",
-        streaming=True,
-        enable_task_polling=True,
-        task_poll_interval_seconds=2.0,
-        task_poll_max_wait_seconds=30.0,
-    ),
+oxy.A2AClientAgent(
+    name="streaming_a2a_agent",
+    desc="Streaming A2A client",
+    server_url="http://127.0.0.1:8082",
+    streaming=True,
+    enable_task_polling=True,
+    task_poll_interval_seconds=2.0,
+    task_poll_max_wait_seconds=30.0,
+),
 ```
 
 或使用 `minimal()` 工厂方法：
 
 ```python
-    oxy.A2AClientAgent.minimal(
-        name="quick_a2a",
-        server_url="http://127.0.0.1:8082",
-        streaming=True,
-    ),
+oxy.A2AClientAgent.minimal(
+    name="quick_a2a",
+    server_url="http://127.0.0.1:8082",
+    streaming=True,
+),
 ```

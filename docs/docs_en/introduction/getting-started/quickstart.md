@@ -2,30 +2,30 @@
 
 > Build your first agent, add tools, and orchestrate multiple agents -- all in 5 minutes.
 
-This guide picks up where the [Run the Demo](./demo.md) tutorial left off. By the end you will have a working multi-agent system with tool calling.
-
 ---
 
-## 1. Install
+## Prerequisites
 
-Make sure you have **Python 3.10+** installed. Create and activate a virtual environment, then install OxyGent:
+- **Python 3.10+** installed
+- OxyGent installed (see [Installation Guide](./install.md))
+- An LLM API key (any OpenAI-compatible endpoint: OpenAI, DeepSeek, Qwen, etc.)
 
-```bash
-# conda
-conda create -n oxy_env python==3.10 && conda activate oxy_env
-pip install oxygent
+## 1. Set Environment Variables
 
-# or uv
-uv venv .venv --python 3.10 && source .venv/bin/activate
-uv pip install oxygent
-```
-
-Create a `.env` file in your project root. OxyGent loads it automatically on startup:
+Create a `.env` file in the project root. OxyGent loads it automatically on startup via `python-dotenv`:
 
 ```
 DEFAULT_LLM_API_KEY=your_api_key
 DEFAULT_LLM_BASE_URL=your_base_url
 DEFAULT_LLM_MODEL_NAME=your_model_name
+```
+
+Or export them directly in your terminal:
+
+```bash
+export DEFAULT_LLM_API_KEY="your_api_key"
+export DEFAULT_LLM_BASE_URL="your_base_url"
+export DEFAULT_LLM_MODEL_NAME="your_model_name"
 ```
 
 Any OpenAI-compatible endpoint works (OpenAI, DeepSeek, Qwen, etc.).
@@ -34,7 +34,7 @@ Any OpenAI-compatible endpoint works (OpenAI, DeepSeek, Qwen, etc.).
 
 ## 2. Your First Agent
 
-Create `quickstart.py`:
+Create a file called `quickstart.py`:
 
 ```python
 import asyncio
@@ -80,11 +80,46 @@ Expected output:
 Agent: Hello! I'm a helpful assistant. I can answer questions, help with writing, ...
 ```
 
+Key points:
+
+- `oxy_space` is the component list containing LLMs and Agents.
+- Components reference each other by `name`, e.g. `llm_model="default_llm"`.
+- `is_master=True` marks the entry-point agent -- user messages arrive here first.
+- `MAS` is the runtime container; use `async with` to manage its lifecycle.
+
 `ChatAgent` makes a single LLM call with no tool access. That is useful for simple Q&A, but real work usually requires tools.
 
 ---
 
-## 3. Add a Tool
+## 3. Launch the Web UI
+
+Replace `chat_with_agent` with `start_web_service` to launch the built-in web interface:
+
+```python
+async def main():
+    async with MAS(oxy_space=oxy_space) as mas:
+        await mas.start_web_service(
+            first_query="Hello!",
+            welcome_message="Hi, I'm OxyGent. How can I assist you?",
+        )
+```
+
+Your browser opens `http://127.0.0.1:8080` automatically. You can chat with your agent through the Web UI.
+
+> To change the port, pass `port=8082` to `start_web_service()`, or set it globally with `Config.set_server_port(8082)`.
+
+MAS supports multiple launch modes:
+
+| Mode | Method | Use case |
+|------|--------|----------|
+| Web Service | `start_web_service()` | Web UI + REST API |
+| CLI | `start_cli_mode()` | Interactive terminal chat |
+| Batch | `start_batch_processing(querys)` | Concurrent batch execution |
+| Programmatic | `chat_with_agent(payload)` | Embed into application code |
+
+---
+
+## 4. Add a Tool
 
 Create a `FunctionHub` with a calculator tool, then switch to `ReActAgent` so the agent can reason about when to call it.
 
@@ -96,7 +131,6 @@ from pydantic import Field
 from oxygent import MAS, oxy
 from oxygent.oxy import FunctionHub
 
-# Define a tool collection
 calculator_hub = FunctionHub(name="calculator")
 
 
@@ -162,7 +196,7 @@ Key points:
 
 ---
 
-## 4. Multi-Agent System
+## 5. Multi-Agent System
 
 Add a second agent and wire them together. The master agent decides when to delegate.
 
@@ -233,25 +267,6 @@ Key points:
 
 ---
 
-## 5. Launch the Web UI
-
-Replace `chat_with_agent` with `start_web_service` to get a full chat interface:
-
-```python
-async def main():
-    async with MAS(oxy_space=oxy_space) as mas:
-        await mas.start_web_service(
-            first_query="Hello!",
-            welcome_message="Hi, I'm OxyGent. Ask me anything.",
-        )
-```
-
-Your browser opens `http://127.0.0.1:8080` automatically. You can chat with the multi-agent system through the web UI.
-
-> To change the port, pass `port=8082` to `start_web_service()`.
-
----
-
 ## Next Steps
 
 You now have the core building blocks. Explore further:
@@ -263,8 +278,25 @@ You now have the core building blocks. Explore further:
 - [Distributed Systems](../multi-agent/distributed.md) -- Cross-process agent communication
 - [Configuration](./config.md) -- Global settings, LLM defaults, logging
 
----
+## FAQ
 
-[Previous: Run the Demo](./demo.md)
+### Why do I get a 404 error after starting?
+
+Check that your environment variables are correctly configured. Different models may require different `base_url` formats. See [Selecting an LLM](../agents/select-llm.md) for details.
+
+### How do I get help?
+
+- Submit an issue on GitHub
+- Browse the [full documentation](../readme.md)
+
+[Previous: Install OxyGent](./install.md)
 [Next: Configuration](./config.md)
 [Back to Home](../readme.md)
+
+---
+
+## Related Examples
+
+- [Single Agent Example](../../examples/agents/demo_single_agent.md) -- The simplest ChatAgent configuration
+- [Ollama Local Model Example](../../examples/llms/demo_ollama.md) -- Using a locally deployed model with Ollama
+- [Streaming Chat Agent Example](../../examples/agents/demo_chat_agent_stream.md) -- ChatAgent with streaming output

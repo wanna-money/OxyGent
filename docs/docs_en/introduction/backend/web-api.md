@@ -6,14 +6,14 @@ When you call `mas.start_web_service()`, OxyGent starts a FastAPI server that li
 
 Below are all available API endpoints and data format descriptions.
 
-# Status Code Definitions
+## Status Code Definitions
 ```json
 200: Success
 400: Failure
 500: Server Error
 ```
 
-# Response Structure Definition
+## Response Structure Definition
 ```json
 {
     "code": 200,
@@ -22,7 +22,7 @@ Below are all available API endpoints and data format descriptions.
 }
 ```
 
-# API Definitions
+## API Definitions
 ## Get Agent Architecture
 
 ```json

@@ -74,5 +74,3 @@ if __name__ == "__main__":
 | [API 参考](./api/readme.md) | 详细的类与方法文档 |
 | [示例](./examples/readme.md) | 87 个可运行的示例脚本，按功能分类 |
 | [FAQ](./introduction/faq.md) | 常见问题解答 |
-| [更新日志](./introduction/changelog.md) | 版本历史与发布说明 |
-| [贡献指南](./introduction/contributing.md) | 如何为 OxyGent 做贡献 |

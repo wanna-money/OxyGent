@@ -41,18 +41,18 @@ In the code above, we merge `user_query` and `current_query` using the `update_q
 Then, you need to pass the `update_query` method to the Agent's input processing function `func_process_input`, so that each Agent can use the custom processing logic:
 
 ```python
-    oxy.ReActAgent(
-        name="file_agent",
-        desc="A tool that can operate the file system",
-        tools=["file_tools"],
-        func_process_input=update_query, # assuming you want file_agent to read the original file
-    ),
-    oxy.ReActAgent(
-        name="time_agent",
-        desc="A tool that can get current time",
-        tools=["time_tools"], # you can control the processing method for each agent
-    ),
-    # ...
+oxy.ReActAgent(
+    name="file_agent",
+    desc="A tool that can operate the file system",
+    tools=["file_tools"],
+    func_process_input=update_query, # assuming you want file_agent to read the original file
+),
+oxy.ReActAgent(
+    name="time_agent",
+    desc="A tool that can get current time",
+    tools=["time_tools"], # you can control the processing method for each agent
+),
+# ...
 ```
 ## Complete Runnable Example
 

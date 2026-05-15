@@ -5,25 +5,25 @@
 
 We support setting up the environment via `conda` or `uv`.
 
-+ Create the runtime environment (conda)
+- Create the runtime environment (conda)
 ```bash
-   conda create -n oxy_env python==3.10
-   conda activate oxy_env
+conda create -n oxy_env python==3.10
+conda activate oxy_env
 ```
 Or (uv)
 ```bash
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   uv python install 3.10 
-   uv venv .venv --python 3.10
-   source .venv/bin/activate
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv python install 3.10 
+uv venv .venv --python 3.10
+source .venv/bin/activate
 ```
-+ Install the release package (conda)
+- Install the release package (conda)
 ```bash
-   pip install oxygent
+pip install oxygent
 ```
 Or (uv)
 ```bash
-   uv pip install oxygent
+uv pip install oxygent
 ```
 
 ### Can I Use Other Python Versions?
@@ -39,8 +39,8 @@ No, OxyGent's core is pure Python. However, for a better experience, we recommen
 ### How to Install OxyGent?
 ---
 ```bash
-   pip install oxygent # conda
-   uv pip install oxygent # uv
+pip install oxygent # conda
+uv pip install oxygent # uv
 ```
 
 ### What If the Installation Is Too Slow?
@@ -56,7 +56,7 @@ Or download the `oxygent` folder directly from GitHub and place it in the projec
 OxyGent will prioritize the local package.
 
 
-[Next: Run the Demo](./demo.md)
+[Next: Quickstart](./quickstart.md)
 [Back to Home](../readme.md)
 
 ---

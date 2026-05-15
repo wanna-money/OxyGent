@@ -42,14 +42,14 @@ async def workflow(oxy_request: OxyRequest):
 In this workflow, we first query the time, then perform document analysis, and finally save the computation result. A workflow requires an upper-level Agent for execution. You can use `oxy.WorkflowAgent` to control the workflow:
 
 ```python
-    oxy.WorkflowAgent(
-        name="math_agent",
-        desc="A tool for pi query",
-        sub_agents=["time_agent"],
-        tools=["math_tools"],
-        func_workflow=workflow,
-        is_retain_master_short_memory=True,
-    ),
+oxy.WorkflowAgent(
+    name="math_agent",
+    desc="A tool for pi query",
+    sub_agents=["time_agent"],
+    tools=["math_tools"],
+    func_workflow=workflow,
+    is_retain_master_short_memory=True,
+),
 ```
 For the complete example, please refer to `demo.py`.
 
@@ -74,23 +74,23 @@ The workflow can be broken down into the following steps:
 #### Getting the Time (No Original Input Needed)
 
 ```python
-    time_resp = await oxy_request.call(
-        callee="time_agent", arguments={"query": "What is the current Beijing time?"}
-    )
-    current_time = time_resp.output
+time_resp = await oxy_request.call(
+    callee="time_agent", arguments={"query": "What is the current Beijing time?"}
+)
+current_time = time_resp.output
 ```
 
 #### Analyzing the Document (Requires User's Original Input)
 
 ```python
-    # Use get_query to get the user's original input
-    user_query = oxy_request.get_query(master_level=True)
+# Use get_query to get the user's original input
+user_query = oxy_request.get_query(master_level=True)
 
-    analysis_resp = await oxy_request.call(
-        callee="analyzer",
-        arguments={"query": f"Please analyze the document: {user_query}"},
-    )
-    analysis_result = analysis_resp.output
+analysis_resp = await oxy_request.call(
+    callee="analyzer",
+    arguments={"query": f"Please analyze the document: {user_query}"},
+)
+analysis_result = analysis_resp.output
 ```
 
 #### Writing to File (Requires Output from the Previous Two Steps)
@@ -125,18 +125,18 @@ async def workflow(oxy_request: OxyRequest):
 Use `oxy.WorkflowAgent` to control the entire workflow and specify the sub-agents and required tools:
 
 ```python
-    oxy.WorkflowAgent(
-        name="workflow_agent",
-        desc="Workflow for time retrieval + document analysis + file writing",
-        sub_agents=["file_agent", "time_agent", "analyzer"],
-        func_workflow=workflow,
-        llm_model="default_llm",
-    ),
-    oxy.ReActAgent(
-        name="master_agent",
-        is_master=True,
-        sub_agents=["workflow_agent"],
-    ),
+oxy.WorkflowAgent(
+    name="workflow_agent",
+    desc="Workflow for time retrieval + document analysis + file writing",
+    sub_agents=["file_agent", "time_agent", "analyzer"],
+    func_workflow=workflow,
+    llm_model="default_llm",
+),
+oxy.ReActAgent(
+    name="master_agent",
+    is_master=True,
+    sub_agents=["workflow_agent"],
+),
 ```
 
 The expected output is:

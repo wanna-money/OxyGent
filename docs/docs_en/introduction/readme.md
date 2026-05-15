@@ -29,7 +29,6 @@
 | [Quickstart](./getting-started/quickstart.md)* | Build an agent, add tools, and go multi-agent in 5 minutes |
 | [OxyGent Conceptual Overview](./getting-started/overview.md)* | Core concepts and terminology |
 | [Install OxyGent](./getting-started/install.md)* | Environment setup and installation |
-| [Run the Demo](./getting-started/demo.md) | Quick-start demo |
 | [Configuration](./getting-started/config.md)* | Configure LLM, Agent, Server, and more |
 | [Architecture Overview](./getting-started/architecture.md) | Class hierarchy, request flow, and deployment modes |
 
@@ -107,4 +106,4 @@
 
 > For more hands-on examples, see the [Examples Documentation](../examples/readme.md).
 > 
-> Common questions? Check the [FAQ](./faq.md). Want to contribute? See [Contributing](./contributing.md).
+> Common questions? Check the [FAQ](./faq.md).

@@ -9,26 +9,26 @@ For example, if you need to perform data analysis, text summarization, and error
 You can also set the maximum concurrency for each agent using the `semaphore` parameter.
 
 ```python
-    oxy.ChatAgent( # Agents to run in parallel
-        name="text_summarizer",
-        desc="A tool that can summarize markdown text",
-        prompt=prompts.text_summarizer_prompt,
-    ),
-    oxy.ChatAgent(
-        name="data_analyser",
-        desc="A tool that can summarize echart data",
-        prompt=prompts.data_analyser_prompt,
-    ),
-    oxy.ChatAgent(
-        name="document_checker",
-        desc="A tool that can find problems in document",
-        prompt=prompts.document_checker_prompt,
-    ),
-    oxy.ParallelAgent( # Managing upper-level agent
-        name="analyzer",
-        desc="A tool that analyze markdown document",
-        permitted_tool_name_list=["text_summarizer", "data_analyser", "document_checker"]
-    ),
+oxy.ChatAgent( # Agents to run in parallel
+    name="text_summarizer",
+    desc="A tool that can summarize markdown text",
+    prompt=prompts.text_summarizer_prompt,
+),
+oxy.ChatAgent(
+    name="data_analyser",
+    desc="A tool that can summarize echart data",
+    prompt=prompts.data_analyser_prompt,
+),
+oxy.ChatAgent(
+    name="document_checker",
+    desc="A tool that can find problems in document",
+    prompt=prompts.document_checker_prompt,
+),
+oxy.ParallelAgent( # Managing upper-level agent
+    name="analyzer",
+    desc="A tool that analyze markdown document",
+    permitted_tool_name_list=["text_summarizer", "data_analyser", "document_checker"]
+),
 ```
 
 `ParallelAgent` automatically starts all subagents, performs parallel computation, and ultimately returns the results of all tasks.

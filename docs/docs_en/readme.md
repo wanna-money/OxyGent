@@ -74,5 +74,3 @@ if __name__ == "__main__":
 | [API Reference](./api/readme.md) | Detailed class and method documentation |
 | [Examples](./examples/readme.md) | 87 runnable example scripts organized by feature |
 | [FAQ](./introduction/faq.md) | Common questions and answers |
-| [Changelog](./introduction/changelog.md) | Version history and release notes |
-| [Contributing](./introduction/contributing.md) | How to contribute to OxyGent |

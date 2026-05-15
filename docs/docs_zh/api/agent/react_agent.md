@@ -61,14 +61,14 @@
 `ReActAgent` 的简单用法如下：
 
 ```python
-    oxy.ReActAgent(
-        name="time_agent",
-        desc="A tool that can query the time",
-        tools=["time_tools"],
-        llm_model="default_llm",
-        prompt=SYSTEM_PROMPT,
-        timeout=30,
-        is_multimodal_supported=False,
-        semaphore=2
-    ),
+oxy.ReActAgent(
+    name="time_agent",
+    desc="A tool that can query the time",
+    tools=["time_tools"],
+    llm_model="default_llm",
+    prompt=SYSTEM_PROMPT,
+    timeout=30,
+    is_multimodal_supported=False,
+    semaphore=2
+),
 ```

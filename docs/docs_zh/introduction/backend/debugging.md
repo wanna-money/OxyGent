@@ -40,10 +40,10 @@ async def main():
 ![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/1.png)
 
 界面主页包含以下部分：
-+ **MAS的结构**: 包含所有注册好的智能体和工具
-+ **对话框**: 包含用户和智能体/智能体和智能体之间的所有对话
-+ **思考细节**: 包含智能体内部LLM的思考过程和输出
-+ **文件工具**: 保存和加载MAS的工具
+- **MAS 的结构**：包含所有注册好的智能体和工具
+- **对话框**：包含用户和智能体/智能体和智能体之间的所有对话
+- **思考细节**：包含智能体内部 LLM 的思考过程和输出
+- **文件工具**：保存和加载 MAS 的工具
 
 ![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/2.png)
 

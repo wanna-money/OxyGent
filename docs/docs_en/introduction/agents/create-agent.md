@@ -5,26 +5,26 @@ In OxyGent, a basic agent consists of an [Agent](./agent-types.md) and an intern
 For new users, you can use the `oxy.HttpLLM` method to register an LLM with your `api_key`:
 
 ```python
-    oxy.HttpLLM(
-        name="default_llm",
-        api_key=os.getenv("DEFAULT_LLM_API_KEY"),
-        base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
-        model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
-        llm_params={"temperature": 0.01},
-        semaphore=4, # concurrency limit
-        timeout=240, # maximum execution time
-    ),
+oxy.HttpLLM(
+    name="default_llm",
+    api_key=os.getenv("DEFAULT_LLM_API_KEY"),
+    base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
+    model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
+    llm_params={"temperature": 0.01},
+    semaphore=4, # concurrency limit
+    timeout=240, # maximum execution time
+),
 ```
 > For detailed explanation of the `semaphore` parameter, please refer to the [Parallel](../multi-agent/parallel.md) section.
 
 Next, you can use `oxy.ChatAgent` or `oxy.ReActAgent` to wrap your first agent:
 ```python
-    oxy.ReActAgent(
-        name="master_agent",
-        prompt = master_prompt, # supports custom prompts
-        is_master=True, # set as master
-        llm_model="default_llm",
-    ),
+oxy.ReActAgent(
+    name="master_agent",
+    prompt = master_prompt, # supports custom prompts
+    is_master=True, # set as master
+    llm_model="default_llm",
+),
 ```
 
 For the LLM and agent to take effect, they need to be added to the `oxy_space`.
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-[Previous: Run the Demo](../getting-started/demo.md)
+[Previous: Quickstart](../getting-started/quickstart.md)
 [Next: Chat with an Agent](./chat-with-agent.md)
 [Back to Home](../readme.md)
 

@@ -1,6 +1,6 @@
 # 如何注册一个本地工具？
 
-在OxyGent中，建议通过[function hub](https://github.com/jd-opensource/OxyGent/blob/main/oxygent/oxy/function_tools/function_hub.py)注册本地工具。您也可可以使用MCP注册工具，具体参考[使用MCP自定义工具](./custom-mcp-tools.md)或[使用MCP开源工具](./opensource-mcp-tools.md)。
+在 OxyGent 中，建议通过 [FunctionHub](https://github.com/jd-opensource/OxyGent/blob/main/oxygent/oxy/function_tools/function_hub.py) 注册本地工具。您也可以使用 MCP 注册工具，具体参考[使用 MCP 自定义工具](./custom-mcp-tools.md)或[使用 MCP 开源工具](./opensource-mcp-tools.md)。
 
 ## 步骤 1：创建工具文件
 首先，您可以创建一个新的 `tools.py` 文件，并使用 `FunctionHub` 注册一个工具包：

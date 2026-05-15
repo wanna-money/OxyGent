@@ -53,11 +53,11 @@ if __name__ == "__main__":
 然后您可以使用`oxy.SSEOxyGent`替代原有的time_agent：
 
 ```python
-    oxy.SSEOxyGent(
-        name="time_agent",
-        desc="Remote time query agent",
-        server_url="http://127.0.0.1:8082", # 替换为app_time_agent.py实际所在的位置
-    ),
+oxy.SSEOxyGent(
+    name="time_agent",
+    desc="Remote time query agent",
+    server_url="http://127.0.0.1:8082", # 替换为app_time_agent.py实际所在的位置
+),
 ```
 
 如果您使用localhost，可以使用以下的简单脚本启动分布式服务：

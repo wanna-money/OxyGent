@@ -101,11 +101,11 @@ def json_parser(ori_response: str) -> LLMResponse:
 Then, you can pass this parser to `oxy.ReActAgent`:
 
 ```python
-    oxy.ReActAgent(
-        name="json_agent",
-        desc="A tool that can convert plaintext into json text",
-        func_parse_llm_response=json_parser, # key method
-    ),
+oxy.ReActAgent(
+    name="json_agent",
+    desc="A tool that can convert plaintext into json text",
+    func_parse_llm_response=json_parser, # key method
+),
 ```
 
 ## Processing in MAS
@@ -121,14 +121,14 @@ def format_output(oxy_response: OxyResponse) -> OxyResponse:
 Then inject this processing method into the corresponding Agent:
 
 ```python
-    oxy.ReActAgent(
-        name="master_agent",
-        sub_agents=["time_agent", "file_agent", "math_agent"],
-        is_master=True,
-        func_format_output=format_output, # key method
-        timeout=100,
-        llm_model="default_llm",
-    ),
+oxy.ReActAgent(
+    name="master_agent",
+    sub_agents=["time_agent", "file_agent", "math_agent"],
+    is_master=True,
+    func_format_output=format_output, # key method
+    timeout=100,
+    llm_model="default_llm",
+),
 ```
 ### Notes
 1. **`func_parse_llm_response`**: Used for custom parsing of LLM output. It can handle tool call results or plain text as needed.

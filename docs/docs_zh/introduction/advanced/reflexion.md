@@ -75,23 +75,23 @@ def math_reflexion(response: str, oxy_request: OxyRequest) -> str:
 反思需要指定`oxy.ReActAgent`执行。值得注意的是，如果您要让Master Agent输出反思后的结果，需要为每一层添加反思。
 
 ```python
-    oxy.ReActAgent(
-        name="math_agent",
-        desc="A specialized agent for mathematical problems with advanced reflexion",
-        llm_model="default_llm",
-        func_reflexion=math_reflexion, # 关键参数
-        max_react_rounds=30, # 指定最大重做次数
-        # ...
-    ),
-    # Master agent that coordinates others
-    oxy.ReActAgent(
-        name="master_agent",
-        sub_agents=["basic_agent", "smart_agent", "math_agent"],
-        is_master=True,
-        llm_model="default_llm",
-        func_reflexion=math_reflexion,
-        # ...
-    ),
+oxy.ReActAgent(
+    name="math_agent",
+    desc="A specialized agent for mathematical problems with advanced reflexion",
+    llm_model="default_llm",
+    func_reflexion=math_reflexion, # 关键参数
+    max_react_rounds=30, # 指定最大重做次数
+    # ...
+),
+# Master agent that coordinates others
+oxy.ReActAgent(
+    name="master_agent",
+    sub_agents=["basic_agent", "smart_agent", "math_agent"],
+    is_master=True,
+    llm_model="default_llm",
+    func_reflexion=math_reflexion,
+    # ...
+),
 ```
 
 ## 使用流进行反思
@@ -99,21 +99,21 @@ def math_reflexion(response: str, oxy_request: OxyRequest) -> str:
 我们提供了[流](./preset-flows.md)`oxy.Reflexion`用于一般任务的反思，`oxy.MathReflexion`用于计算任务的反思或验算。您可以使用以下的方法调用：
 
 ```python
-    Reflexion(
-        name="general_reflexion",
-        worker_agent="worker_agent", # 工作智能体
-        reflexion_agent="reflexion_agent", # 反思智能体
-        evaluation_template="...", # 反思模板
-        max_reflexion_rounds=3, # 反思轮数
-    ),
-    
-    MathReflexion(
-        name="math_reflexion", 
-        worker_agent="worker_agent", # 工作智能体
-        reflexion_agent="reflexion_agent", # 反思智能体
-        evaluation_template="...", # 反思模板
-        max_reflexion_rounds=3, # 反思轮数
-    ),
+Reflexion(
+    name="general_reflexion",
+    worker_agent="worker_agent", # 工作智能体
+    reflexion_agent="reflexion_agent", # 反思智能体
+    evaluation_template="...", # 反思模板
+    max_reflexion_rounds=3, # 反思轮数
+),
+
+MathReflexion(
+    name="math_reflexion", 
+    worker_agent="worker_agent", # 工作智能体
+    reflexion_agent="reflexion_agent", # 反思智能体
+    evaluation_template="...", # 反思模板
+    max_reflexion_rounds=3, # 反思轮数
+),
 ```
 
 
@@ -122,12 +122,12 @@ def math_reflexion(response: str, oxy_request: OxyRequest) -> str:
 在一些情况下，您可能希望使用一个智能体而不是固定的方法进行反思。此时您可以指定一个`oxy.ChatAgent`或其他类型的Agent进行反思：
 
 ```python
-    # Reflexion Agent - responsible for evaluating answer quality
-    oxy.ChatAgent(
-        name="reflexion_agent",
-        desc="Reflexion agent responsible for evaluating answer quality and providing improvement suggestions",
-        llm_model="default_llm",
-    ),
+# Reflexion Agent - responsible for evaluating answer quality
+oxy.ChatAgent(
+    name="reflexion_agent",
+    desc="Reflexion agent responsible for evaluating answer quality and providing improvement suggestions",
+    llm_model="default_llm",
+),
 ```
 
 您可以使用一个[工作流](./workflow.md)管理反思过程。以下展示了利用查询更新进行反思的全流程：
@@ -209,13 +209,13 @@ Improvement Suggestions: [If unsatisfactory, provide specific improvement sugges
 最后您需要使用`oxy.WorkflowAgent`管理反思过程：
 
 ```python
-    oxy.WorkflowAgent(
-        name="general_reflexion_agent",
-        desc="Workflow agent that optimizes answer quality through external reflexion",
-        sub_agents=["worker_agent", "reflexion_agent"],
-        func_workflow=reflexion_workflow,
-        llm_model="default_llm",
-    ),
+oxy.WorkflowAgent(
+    name="general_reflexion_agent",
+    desc="Workflow agent that optimizes answer quality through external reflexion",
+    sub_agents=["worker_agent", "reflexion_agent"],
+    func_workflow=reflexion_workflow,
+    llm_model="default_llm",
+),
 ```
 
 [上一章：处理LLM和智能体输出](./handle-output.md)

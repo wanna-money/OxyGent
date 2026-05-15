@@ -5,30 +5,30 @@
 在下面的简单示例中，我们将功能相关的工具使用子智能体（subagent）进行管理。我们推荐新用户使用 oxy.ReActAgent 来调用这些工具：
 
 ```python
-    oxy.ReActAgent(
-        name="file_agent",
-        desc="A tool that can operate the file system",
-        tools=["file_tools"],
-    ),
-    oxy.ReActAgent(
-        name="time_agent",
-        desc="A tool that can get current time",
-        tools=["time_tools"],
-    ),
-    oxy.ReActAgent(
-        name="math_agent",
-        desc="A tool that can do math calculates",
-        tools=["math_tools"],
-    ),
+oxy.ReActAgent(
+    name="file_agent",
+    desc="A tool that can operate the file system",
+    tools=["file_tools"],
+),
+oxy.ReActAgent(
+    name="time_agent",
+    desc="A tool that can get current time",
+    tools=["time_tools"],
+),
+oxy.ReActAgent(
+    name="math_agent",
+    desc="A tool that can do math calculates",
+    tools=["math_tools"],
+),
 ```
 
 接下来，您需要注册一个 **master_agent**，它负责在 MAS 中总调度其他智能体。将其他子智能体声明为 **master_agent** 的 `sub_agents`：
 ```python
-    oxy.ReActAgent(
-        name="master_agent",
-        is_master=True,
-        sub_agents=["file_agent","time_agent","math_agent"],
-    ),
+oxy.ReActAgent(
+    name="master_agent",
+    is_master=True,
+    sub_agents=["file_agent","time_agent","math_agent"],
+),
 ```
 
 OxyGent 的智能体系统结构非常灵活，这意味着您可以注册多层子智能体（subagent），而无需手动管理它们之间的协作关系。

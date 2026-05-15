@@ -46,16 +46,16 @@
 
 `ParallelAgent` 的简单用法如下：
 ```python
-    oxy.ParallelAgent(
-        name="expert_panel",
-        llm_model="default_llm",
-        desc="Expert panel parallel evaluation",
-        permitted_tool_name_list=[
-            "tech_expert",
-            "business_expert",
-            "risk_expert",
-            "legal_expert",
-        ],
-        is_master=True,
-    ),
+oxy.ParallelAgent(
+    name="expert_panel",
+    llm_model="default_llm",
+    desc="Expert panel parallel evaluation",
+    permitted_tool_name_list=[
+        "tech_expert",
+        "business_expert",
+        "risk_expert",
+        "legal_expert",
+    ],
+    is_master=True,
+),
 ```
