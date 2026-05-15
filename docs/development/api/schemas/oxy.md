@@ -1,4 +1,17 @@
-# Oxy Message Class
+# Oxy Schemas
+
+---
+The position of the classes is:
+
+```
+oxygent/schemas/oxy.py
+```
+
+---
+
+## Introduction
+
+This module defines the core data classes used throughout the OxyGent framework for request/response handling and state management. It includes `OxyState` (lifecycle enum), `OxyRequest` (the request object carrying trace, caller/callee, and arguments), `OxyResponse` (the response wrapper), and `OxyOutput` (structured output with attachments).
 
 ## OxyState
 
@@ -42,7 +55,7 @@
 
 ### Methods
 
-| Method                                                     | Coroutine （async） | Return Value  | Purpose (concise)                                                                                       |
+| Method                                                     | Coroutine (async) | Return Value  | Purpose (concise)                                                                                       |
 | ---------------------------------------------------------- | ----------------- | ------------- | ------------------------------------------------------------------------------------------------------- |
 | `session_name` (property)                                  | No                | `str`         | Convenient session key: `"caller__callee"`.                                                             |
 | `set_mas(self, mas)`                                       | No                | `None`        | Attach MAS runtime handle.                                                                              |

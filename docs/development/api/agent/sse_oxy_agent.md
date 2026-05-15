@@ -6,14 +6,19 @@ The position of the class is:
 ```markdown
 [Oxy](./base_oxy.md)
 ├── [BaseFlow](./base_flow.md)
-    └── [BaseAgent](./base_agent.md)
-        ├── [LocalAgent](./local_agent.md)
-        │       ├── [ParallelAgent](./parallel_agent.md)
-        │       ├── [ReActAgent](./react_agent.md)
-        │       ├── [ChatAgent](./chat_agent.md)
-        │       └── [WorkflowAgent](./workflow_agent.md)
-        └── [RemoteAgent](./remote_agent.md)
-                └── [SSEOxyGent](./sse_oxy_agent.md)
+│   └── [BaseAgent](./base_agent.md)
+│       ├── [LocalAgent](./local_agent.md)
+│       │   ├── [ChatAgent](./chat_agent.md)
+│       │   │   └── [RAGAgent](./rag_agent.md)
+│       │   ├── [ReActAgent](./react_agent.md)
+│       │   │   ├── [ShellUseAgent](./shell_use_agent.md)
+│       │   │   └── [SkillAgent](./skill_agent.md)
+│       │   ├── [ParallelAgent](./parallel_agent.md)
+│       │   ├── [WorkflowAgent](./workflow_agent.md)
+│       │   └── [PlanAndSolveAgent](./plan_and_solve_agent.md)
+│       └── [RemoteAgent](./remote_agent.md)
+│           ├── [SSEOxyGent](./sse_oxy_agent.md)
+│           └── [A2AClientAgent](./a2a_client_agent.md)
 └── [BaseTool](../tools/base_tools.md)
 ```
 
@@ -34,7 +39,7 @@ The position of the class is:
 ## Methods
 
 
-| Method                  | Coroutine （async） | Return Value  | Purpose (concise)                                                                                                                                                                               |
+| Method                  | Coroutine (async) | Return Value  | Purpose (concise)                                                                                                                                                                               |
 | ----------------------- | ----------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `init()`                | Yes               | `None`        | Calls the parent `init`, then queries `GET /get_organization` on `server_url` to cache the remote organization tree in `self.org`.                                                              |
 | `_execute(oxy_request)` | Yes               | `OxyResponse` | Opens an **SSE** connection to `POST /sse/chat`, streams tool-call / observation events back to the MAS, accumulates the final answer, and returns it wrapped in an `OxyResponse (COMPLETED)`.  |

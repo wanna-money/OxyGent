@@ -5,20 +5,19 @@ The position of the class is:
 ```markdown
 [BaseDB](../base_db.md)
 ├── [BaseES](../db_es/base_es.md)
-    ├── [JesES](../db_es/jes_es.md)
-    └── [LocalES](../db_es/local_es.md)
+│   ├── [JesES](../db_es/jes_es.md)
+│   ├── [LocalES](../db_es/local_es.md)
+│   └── [MemoryEs](../db_es/memory_es.md)
 ├── [BaseRedis](../db_redis/base_redis.md)
+│   ├── [LocalRedis](../db_redis/local_redis.md)
+│   └── [JimdbApRedis](../db_redis/jimdb_ap_redis.md)
 └── [BaseVectorDB](../db_vector/base_vector_db.md)
     └── [VearchDB](../db_vector/vearch_db.md)
-
-[LocalRedis](../db_redis/local_redis.md)
-[JimdbApRedis](../db_redis/jimdb_ap_redis.md)
-[VectorToolAsync](../db_vector/vearch_db.md)
 ```
 
 ---
 
-## Introduce
+## Introduction
 
 `LocalEs` is a filesystem-based Elasticsearch implementation that simulates a subset of Elasticsearch functionality by persisting documents as JSON files on the local filesystem. It provides robust cross-platform behavior with UTF-8 persistence, atomic file operations, and data safety features. This implementation is designed for development and testing scenarios where a full Elasticsearch instance is not available.
 

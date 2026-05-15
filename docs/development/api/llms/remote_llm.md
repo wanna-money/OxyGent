@@ -5,35 +5,38 @@ The position of the class is:
 
 ```markdown
 [Oxy](../agent/base_oxy.md)
+├── [BaseFlow](../agent/base_flow.md)
 ├── [BaseLLM](./base_llm.md)
-    └── [RemoteLLM](./remote_llm.md)
-        ├──[HttpLLM](./http_llm.md)
-        └──[OpenAILLM](./openai_llm.md)
-├── [BaseTool](../tools/base_tools.md)
-└── [BaseFlow](../agent/base_flow.md)
+│   ├── [RemoteLLM](./remote_llm.md)
+│   │   ├── [HttpLLM](./http_llm.md)
+│   │   └── [OpenAILLM](./openai_llm.md)
+│   ├── [LocalLLM](./local_llm.md)
+│   └── [MockLLM](./mock_llm.md)
+└── [BaseTool](../tools/base_tools.md)
 ```
 
 ---
 
-## Introduce
+## Introduction
 
-`RemoteLLM` is a concrete implementation of `BaseLLM` for communicating with remote Large Language Model APIs. It provides a standardized interface for connecting to remote LLM services, handling API authentication, request formatting, and response parsing for OpenAI-compatible APIs. This class extends the base functionality with specific remote API communication capabilities.
+`RemoteLLM` extends `BaseLLM` for communicating with remote Large Language Model APIs. It provides a standardized interface for connecting to remote LLM services, handling API authentication, request formatting, and response parsing for OpenAI-compatible APIs.
 
 ## Parameters
 
 
-| Parameter | Type / Allowed value | Default | Description |
-| --------- | -------------------- | ------- | ----------- |
-| `api_key` | `Optional[str]` | `None` | The API key for authentication with the remote LLM service |
-| `base_url` | `Optional[str]` | `""` | The base URL endpoint for the remote LLM API (required) |
-| `model_name` | `Optional[str]` | `""` | The specific model name to use for requests (required) |
+| Parameter    | Type / Allowed value                                   | Default | Description                                                                |
+| ------------ | ------------------------------------------------------ | ------- | -------------------------------------------------------------------------- |
+| `api_key`    | `Optional[str]`                                        | `None`  | API key for authentication with the remote LLM service.                    |
+| `base_url`   | `Optional[str]`                                        | `""`    | Base URL endpoint for the remote LLM API (required).                       |
+| `model_name` | `Optional[str]`                                        | `""`    | Model identifier to use for requests (required).                           |
+| `headers`    | `Dict[str, str] \| Callable[[OxyRequest], Dict[str, str]]` | `lambda: {}` | Extra HTTP headers or a callable that returns headers per request.   |
 
 ## Methods
 
 
-| Method | Coroutine (async) | Return Value | Purpose |
-| ------ | ----------------- | ------------ | ------- |
-| `_execute(oxy_request)` | Yes | `OxyResponse` | Execute the remote LLM API request and return response (to be implemented by subclasses) |
+| Method                  | Coroutine (async) | Return Value  | Purpose (concise)                                                                   |
+| ----------------------- | ----------------- | ------------- | ----------------------------------------------------------------------------------- |
+| `_execute(oxy_request)` | Yes               | `OxyResponse` | **Abstract** -- subclasses implement the actual remote API call.                    |
 
 ## Inherited
  Please refer to the [BaseLLM](./base_llm.md) class for inherited parameters and methods.

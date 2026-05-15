@@ -8,7 +8,7 @@ oxygent/config.py
 
 ---
 
-## Introduce
+## Introduction
 
 `Config` is a centralized configuration management class for the OxyGent framework. It provides a hierarchical configuration system that supports environment-specific settings, JSON file loading, and environment variable substitution. The class manages all configuration aspects including app settings, logging, LLM parameters, database connections, server settings, and more.
 
@@ -136,4 +136,18 @@ oxygent/config.py
 | `replace_env_var()` | No | `Any` | Replace environment variables in configuration values |
 
 ## Usage
- 
+
+```python
+from oxygent import Config
+
+# Load from JSON file with environment layering
+Config.load_from_json("config.json", env="prod")
+
+# Programmatic configuration
+Config.set_server_host("0.0.0.0")
+Config.set_server_port(9090)
+Config.set_server_auto_open_webpage(False)
+Config.set_log_path("./logs/app.log")
+Config.set_cache_save_dir("./cache")
+Config.set_agent_llm_model("my_llm")
+```

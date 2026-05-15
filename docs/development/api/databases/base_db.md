@@ -3,22 +3,21 @@
 The position of the class is:
 
 ```markdown
-[BaseDB](../databases/base_db.md)
-├── [BaseES](../databases/db_es/base_es.md)
-    ├── [JesES](../databases/db_es/jes_es.md)
-    └── [LocalES](../databases/db_es/local_es.md)
-├── [BaseRedis](../databases/db_redis/base_redis.md)
-└── [BaseVectorDB](../tools/base_tools.md)
-    └── [VearchDB](../databases/db_vector/vearch_db.md)
-
-[LocalRedis](../databases/db_redis/local_redis.md)
-[JimdbApRedis](../databases/db_redis/jimdb_ap_redis.md)
-[VectorToolAsync](../databases/db_vector/vearch_db.md)
+[BaseDB](./base_db.md)
+├── [BaseES](./db_es/base_es.md)
+│   ├── [JesES](./db_es/jes_es.md)
+│   ├── [LocalES](./db_es/local_es.md)
+│   └── [MemoryEs](./db_es/memory_es.md)
+├── [BaseRedis](./db_redis/base_redis.md)
+│   ├── [LocalRedis](./db_redis/local_redis.md)
+│   └── [JimdbApRedis](./db_redis/jimdb_ap_redis.md)
+└── [BaseVectorDB](./db_vector/base_vector_db.md)
+    └── [VearchDB](./db_vector/vearch_db.md)
 ```
 
 ---
 
-## Introduce
+## Introduction
 
 `BaseDB` is a base class for database services providing common retry and error handling functionality. This class automatically applies retry decorators to all public methods of its subclasses, ensuring robust database operations with configurable retry policies. It serves as a foundation for implementing reliable database connections and operations across different database types.
 

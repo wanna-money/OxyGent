@@ -8,7 +8,7 @@ oxygent/mas.py
 
 ---
 
-## Introduce
+## Introduction
 
 `MAS` (Multi-Agent System) is the main class for the OxyGent Multi-Agent System. It provides a comprehensive framework for managing multiple agents, tools, LLMs, and other components. The MAS handles component registration, database connections, agent organization, and provides both CLI and web service interfaces for interaction.
 

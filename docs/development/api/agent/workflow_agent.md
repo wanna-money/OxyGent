@@ -6,21 +6,26 @@ The position of the class is:
 ```markdown
 [Oxy](./base_oxy.md)
 ├── [BaseFlow](./base_flow.md)
-    └── [BaseAgent](./base_agent.md)
-        ├── [LocalAgent](./local_agent.md)
-        │       ├── [ParallelAgent](./parallel_agent.md)
-        │       ├── [ReActAgent](./react_agent.md)
-        │       ├── [ChatAgent](./chat_agent.md)
-        │       └── [WorkflowAgent](./workflow_agent.md)
-        └── [RemoteAgent](./remote_agent.md)
-                └── [SSEOxyGent](./sse_oxy_agent.md)
+│   └── [BaseAgent](./base_agent.md)
+│       ├── [LocalAgent](./local_agent.md)
+│       │   ├── [ChatAgent](./chat_agent.md)
+│       │   │   └── [RAGAgent](./rag_agent.md)
+│       │   ├── [ReActAgent](./react_agent.md)
+│       │   │   ├── [ShellUseAgent](./shell_use_agent.md)
+│       │   │   └── [SkillAgent](./skill_agent.md)
+│       │   ├── [ParallelAgent](./parallel_agent.md)
+│       │   ├── [WorkflowAgent](./workflow_agent.md)
+│       │   └── [PlanAndSolveAgent](./plan_and_solve_agent.md)
+│       └── [RemoteAgent](./remote_agent.md)
+│           ├── [SSEOxyGent](./sse_oxy_agent.md)
+│           └── [A2AClientAgent](./a2a_client_agent.md)
 └── [BaseTool](../tools/base_tools.md)
 ```
 ---
 
 ## Introduction
 
-`ReActAgent` is the agent implementing the ReAct (Reasoning and Acting) paradigm.
+`WorkflowAgent` is an agent that executes custom workflow functions within the OxyGent framework. It serves as a bridge between the agent system and user-defined workflow logic.
 
 ## Parameters
 

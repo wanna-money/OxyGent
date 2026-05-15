@@ -5,20 +5,19 @@ The position of the class is:
 ```markdown
 [BaseDB](../base_db.md)
 ├── [BaseES](../db_es/base_es.md)
-    ├── [JesES](../db_es/jes_es.md)
-    └── [LocalES](../db_es/local_es.md)
+│   ├── [JesES](../db_es/jes_es.md)
+│   ├── [LocalES](../db_es/local_es.md)
+│   └── [MemoryEs](../db_es/memory_es.md)
 ├── [BaseRedis](../db_redis/base_redis.md)
+│   ├── [LocalRedis](../db_redis/local_redis.md)
+│   └── [JimdbApRedis](../db_redis/jimdb_ap_redis.md)
 └── [BaseVectorDB](../db_vector/base_vector_db.md)
     └── [VearchDB](../db_vector/vearch_db.md)
-
-[LocalRedis](../db_redis/local_redis.md)
-[JimdbApRedis](../db_redis/jimdb_ap_redis.md)
-[VectorToolAsync](../db_vector/vearch_db.md)
 ```
 
 ---
 
-## Introduce
+## Introduction
 
 `JesEs` is a concrete implementation of the BaseEs abstract class for Elasticsearch database operations. It provides full Elasticsearch functionality using the AsyncElasticsearch client with authentication support. The class implements all required abstract methods from BaseEs and includes additional helper methods for index management and document operations.
 

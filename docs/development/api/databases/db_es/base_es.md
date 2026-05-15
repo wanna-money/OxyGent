@@ -5,20 +5,19 @@ The position of the class is:
 ```markdown
 [BaseDB](../base_db.md)
 ├── [BaseES](../db_es/base_es.md)
-    ├── [JesES](../db_es/jes_es.md)
-    └── [LocalES](../db_es/local_es.md)
+│   ├── [JesES](../db_es/jes_es.md)
+│   ├── [LocalES](../db_es/local_es.md)
+│   └── [MemoryEs](../db_es/memory_es.md)
 ├── [BaseRedis](../db_redis/base_redis.md)
+│   ├── [LocalRedis](../db_redis/local_redis.md)
+│   └── [JimdbApRedis](../db_redis/jimdb_ap_redis.md)
 └── [BaseVectorDB](../db_vector/base_vector_db.md)
     └── [VearchDB](../db_vector/vearch_db.md)
-
-[LocalRedis](../db_redis/local_redis.md)
-[JimdbApRedis](../db_redis/jimdb_ap_redis.md)
-[VectorToolAsync](../db_vector/vearch_db.md)
 ```
 
 ---
 
-## Introduce
+## Introduction
 
 `BaseEs` is an abstract base class for Elasticsearch database services. It inherits from BaseDB to get retry functionality and error handling, while defining the essential interface that all Elasticsearch implementations must provide. All methods are abstract and must be implemented by subclasses to provide specific Elasticsearch functionality.
 

@@ -6,15 +6,14 @@ The position of the class is:
 ```markdown
 [BaseDB](../base_db.md)
 ├── [BaseES](../db_es/base_es.md)
-    ├── [JesES](../db_es/jes_es.md)
-    └── [LocalES](../db_es/local_es.md)
+│   ├── [JesES](../db_es/jes_es.md)
+│   ├── [LocalES](../db_es/local_es.md)
+│   └── [MemoryEs](../db_es/memory_es.md)
 ├── [BaseRedis](../db_redis/base_redis.md)
+│   ├── [LocalRedis](../db_redis/local_redis.md)
+│   └── [JimdbApRedis](../db_redis/jimdb_ap_redis.md)
 └── [BaseVectorDB](../db_vector/base_vector_db.md)
     └── [VearchDB](../db_vector/vearch_db.md)
-
-[LocalRedis](../db_redis/local_redis.md)
-[JimdbApRedis](../db_redis/jimdb_ap_redis.md)
-[VectorToolAsync](../db_vector/vearch_db.md)
 ```
 
 ---
@@ -37,7 +36,7 @@ database), providing robust connection handling, automatic retries, and enhanced
 
 ## Methods
 
-| Method                                                                 | Coroutine （async） | Return Value                      | Purpose (concise)                                                      |
+| Method                                                                 | Coroutine (async) | Return Value                      | Purpose (concise)                                                      |
 | ---------------------------------------------------------------------- | ----------------- | --------------------------------- | ---------------------------------------------------------------------- |
 | `__init__(host, port, password)`                                       | No                | `None`                            | Save connection params and create the Redis pool.                      |
 | `_get_redis_connection(self)`                                          | No                | `Redis`                           | Build a Redis connection pool (`Redis.from_url`).                      |

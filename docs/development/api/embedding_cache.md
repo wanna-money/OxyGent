@@ -8,7 +8,7 @@ oxygent/embedding_cache.py
 
 ---
 
-## Introduce
+## Introduction
 
 `EmbeddingCache` is a lightweight, disk-backed cache for text embeddings. The cache stores the MD5 hash of an input string as the key and its corresponding embedding vector as the value. Writing to disk is batched to minimize I/O overhead. It provides both synchronous and asynchronous methods for retrieving cached or freshly computed embeddings.
 

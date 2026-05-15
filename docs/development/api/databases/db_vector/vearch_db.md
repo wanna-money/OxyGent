@@ -6,15 +6,14 @@ The position of the class is:
 ```markdown
 [BaseDB](../base_db.md)
 ├── [BaseES](../db_es/base_es.md)
-    ├── [JesES](../db_es/jes_es.md)
-    └── [LocalES](../db_es/local_es.md)
+│   ├── [JesES](../db_es/jes_es.md)
+│   ├── [LocalES](../db_es/local_es.md)
+│   └── [MemoryEs](../db_es/memory_es.md)
 ├── [BaseRedis](../db_redis/base_redis.md)
+│   ├── [LocalRedis](../db_redis/local_redis.md)
+│   └── [JimdbApRedis](../db_redis/jimdb_ap_redis.md)
 └── [BaseVectorDB](../db_vector/base_vector_db.md)
     └── [VearchDB](../db_vector/vearch_db.md)
-
-[LocalRedis](../db_redis/local_redis.md)
-[JimdbApRedis](../db_redis/jimdb_ap_redis.md)
-[VectorToolAsync](../db_vector/vearch_db.md)
 ```
 
 ---
@@ -25,11 +24,11 @@ The position of the class is:
 
 ## Parameters
 
-| Parameter      | Type / Allowed value | Default             | Description                                                                                              |                                                                                              |
-| -------------- | -------------------- | ------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `config`       | `VearchConfig`       | must be assigned    | Wrapped configuration object created from the input `config` dict (e.g., URLs, space names, model URL).  |                                                                                              |
-| `vearch_tools` | `VectorToolAsync`    | `VectorToolAsync()` | Helper for low-level HTTP calls to Vearch (create/drop space, insert, search).                           |                                                                                              |
-| `emb_func`     | \`Callable           | None\`              | `None`                                                                                                   | Async embedding function set when `embedding_model_url` exists in config; otherwise `None`.  |
+| Parameter      | Type / Allowed value | Default             | Description                                                                                              |
+| -------------- | -------------------- | ------------------- | -------------------------------------------------------------------------------------------------------- |
+| `config`       | `VearchConfig`       | must be assigned    | Wrapped configuration object created from the input `config` dict (e.g., URLs, space names, model URL).  |
+| `vearch_tools` | `VectorToolAsync`    | `VectorToolAsync()` | Helper for low-level HTTP calls to Vearch (create/drop space, insert, search).                           |
+| `emb_func`     | `Callable \| None`   | `None`              | Async embedding function; set when `embedding_model_url` exists in config.                               |
 
 ## Methods
 
