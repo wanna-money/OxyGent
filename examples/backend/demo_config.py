@@ -1,4 +1,13 @@
-"""Demo for using OxyGent with multiple LLMs and an agent."""
+"""Demo: Loading configuration from a JSON file.
+
+Config.load_from_json() merges a "default" profile with an environment-
+specific overlay selected by the `env` parameter (e.g., "dev", "prod").
+At deploy time, set the APP_ENV environment variable to switch profiles
+automatically.
+
+For programmatic production configuration (log paths, server host/port,
+etc.) without a JSON file, see demo_production_config.py.
+"""
 
 import asyncio
 import os

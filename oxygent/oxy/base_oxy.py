@@ -237,9 +237,8 @@ class Oxy(BaseModel, ABC):
         if "properties" in self.input_schema:
             for param_name, param_info in self.input_schema["properties"].items():
                 # Skip system parameters that shouldn't be shown to LLM
-                if param_info.get("description", "No description").startswith(
-                    "SystemArg"
-                ):
+                param_desc = param_info.get("description", "No description")
+                if param_desc.startswith("SystemArg."):
                     self.system_args.append(param_info["description"][10:])
                     continue
                 param_type = param_info.get("type", "string")
