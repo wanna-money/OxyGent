@@ -4,6 +4,18 @@
 
 ---
 
+## 推荐入门
+
+如果你是 OxyGent 新用户，建议先从以下三个示例开始：
+
+| 示例 | 你将学到 |
+|------|---------|
+| [单智能体](./agents/demo_single_agent.md) | 最简 ChatAgent，自定义提示词与钩子 |
+| [ReAct 智能体](./agents/demo_react_agent.md) | 带反思机制的 ReActAgent 与工具调用 |
+| [层级多智能体](./agents/demo_hierarchical_agents.md) | 主从 Agent 架构与任务分发 |
+
+---
+
 ## 分类目录
 
 | 分类 | 示例数 | 说明 |

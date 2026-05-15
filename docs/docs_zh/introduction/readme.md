@@ -1,7 +1,24 @@
 # OxyGent 中文教程
 
 > 本系列文档将指导您使用 OxyGent 逐步搭建多智能体系统（MAS）。
-> 如果您是 OxyGent 的新用户，建议您按顺序阅读文档，尤其是标注 * 的部分。
+
+---
+
+## 选择你的路径
+
+| 你的目标 | 从这里开始 |
+|---------|-----------|
+| 5 分钟构建第一个智能体 | [快速上手](./getting-started/quickstart.md) |
+| 了解核心概念 | [概念总览](./getting-started/overview.md) |
+| 了解架构设计 | [架构总览](./getting-started/architecture.md) |
+| 给智能体添加工具 | [注册本地工具](./tools/register-tool.md) |
+| 使用 MCP 协议工具 | [MCP 开源工具](./tools/opensource-mcp-tools.md) |
+| 构建多智能体系统 | [多智能体系统](./multi-agent/multi-agent-system.md) |
+| 并行运行智能体 | [并行调用](./multi-agent/parallel.md) |
+| 部署为 Web 服务 | [Web API](./backend/web-api.md) |
+| 跨进程连接智能体 | [分布式系统](./multi-agent/distributed.md) |
+| 与 LangChain / LangGraph 互操作 | [A2A 快速上手](./a2a/demo-guide.md) |
+| 生成 SFT 训练数据 | [训练数据](./advanced/training.md) |
 
 ---
 
@@ -9,10 +26,20 @@
 
 | 文档 | 说明 |
 |------|------|
+| [快速上手](./getting-started/quickstart.md)* | 5 分钟内构建智能体、添加工具、编排多智能体 |
 | [OxyGent 概念总览](./getting-started/overview.md)* | 核心概念与术语 |
 | [安装 OxyGent](./getting-started/install.md)* | 环境配置与安装 |
-| [运行 Demo](./getting-started/demo.md)* | 快速运行示例 |
+| [运行 Demo](./getting-started/demo.md) | 快速运行示例 |
 | [设置 Config](./getting-started/config.md)* | 配置 LLM、Agent、Server 等参数 |
+| [架构总览](./getting-started/architecture.md) | 类层次结构、请求流程与部署模式 |
+
+## 概念入门
+
+| 文档 | 说明 |
+|------|------|
+| [什么是 ReAct？](./concepts/what-is-react.md) | ReActAgent 背后的推理+行动模式 |
+| [什么是 MCP？](./concepts/what-is-mcp.md) | 模型上下文协议，跨语言工具集成 |
+| [什么是 A2A？](./concepts/what-is-a2a.md) | Agent-to-Agent 协议，跨框架互操作 |
 
 ## 智能体
 
@@ -79,3 +106,5 @@
 ---
 
 > 更多实战示例请参考 [示例文档](../examples/readme.md)。
+>
+> 常见问题？查看 [FAQ](./faq.md)。想参与贡献？查看 [贡献指南](./contributing.md)。

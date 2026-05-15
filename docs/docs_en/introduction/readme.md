@@ -1,7 +1,24 @@
 # OxyGent Tutorial
 
 > This tutorial series guides you through building multi-agent systems (MAS) with OxyGent step by step.
-> If you are new to OxyGent, we recommend reading the documents in order, especially those marked with *.
+
+---
+
+## Choose Your Path
+
+| Your Goal | Start Here |
+|-----------|-----------|
+| Build your first agent in 5 minutes | [Quickstart](./getting-started/quickstart.md) |
+| Understand core concepts | [Conceptual Overview](./getting-started/overview.md) |
+| Learn the architecture | [Architecture Overview](./getting-started/architecture.md) |
+| Add tools to your agent | [Register a Local Tool](./tools/register-tool.md) |
+| Use MCP protocol tools | [Open-Source MCP Tools](./tools/opensource-mcp-tools.md) |
+| Build a multi-agent system | [Multi-Agent System](./multi-agent/multi-agent-system.md) |
+| Run agents in parallel | [Parallel Execution](./multi-agent/parallel.md) |
+| Deploy as a web service | [Web API](./backend/web-api.md) |
+| Connect agents across processes | [Distributed Systems](./multi-agent/distributed.md) |
+| Interop with LangChain / LangGraph | [A2A Quick Start](./a2a/demo-guide.md) |
+| Generate SFT training data | [Training Data](./advanced/training.md) |
 
 ---
 
@@ -9,10 +26,20 @@
 
 | Document | Description |
 |----------|-------------|
+| [Quickstart](./getting-started/quickstart.md)* | Build an agent, add tools, and go multi-agent in 5 minutes |
 | [OxyGent Conceptual Overview](./getting-started/overview.md)* | Core concepts and terminology |
 | [Install OxyGent](./getting-started/install.md)* | Environment setup and installation |
-| [Run the Demo](./getting-started/demo.md)* | Quick-start demo |
+| [Run the Demo](./getting-started/demo.md) | Quick-start demo |
 | [Configuration](./getting-started/config.md)* | Configure LLM, Agent, Server, and more |
+| [Architecture Overview](./getting-started/architecture.md) | Class hierarchy, request flow, and deployment modes |
+
+## Conceptual Primers
+
+| Document | Description |
+|----------|-------------|
+| [What is ReAct?](./concepts/what-is-react.md) | The Reasoning + Acting pattern behind ReActAgent |
+| [What is MCP?](./concepts/what-is-mcp.md) | Model Context Protocol for cross-language tool integration |
+| [What is A2A?](./concepts/what-is-a2a.md) | Agent-to-Agent protocol for cross-framework interop |
 
 ## Agents
 
@@ -79,3 +106,5 @@
 ---
 
 > For more hands-on examples, see the [Examples Documentation](../examples/readme.md).
+> 
+> Common questions? Check the [FAQ](./faq.md). Want to contribute? See [Contributing](./contributing.md).

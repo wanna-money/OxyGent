@@ -23,7 +23,7 @@ The position of the class is:
 ```
 ---
 
-## Introduce
+## Introduction
 `Oxy` is the abstract base class for all agents and tools in the OxyGent system.
 
 This class defines the core execution lifecycle, permission management,message handling, and data persistence patterns. It provides a unifiedinterface for both local and remote execution with comprehensive logging and error handling capabilities.

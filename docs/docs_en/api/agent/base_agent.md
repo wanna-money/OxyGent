@@ -24,7 +24,7 @@ The position of the class is:
 
 ---
 
-## Introduce
+## Introduction
 
 `BaseAgent` is the base class of all the agents. 
 

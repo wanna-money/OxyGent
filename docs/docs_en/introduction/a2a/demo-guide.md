@@ -104,3 +104,8 @@ Capability Descriptions:
 ## Related Examples
 
 - [A2A Examples Overview](../../examples/a2a/readme.md) -- Complete list of A2A-related examples with instructions
+
+---
+
+[Next: A2A Design & Capabilities](./design.md)
+[Back to Home](../readme.md)

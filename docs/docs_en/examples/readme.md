@@ -4,6 +4,18 @@ This directory contains documentation for all OxyGent example scripts, organized
 
 ---
 
+## Start Here
+
+If you're new to OxyGent, try these three examples first:
+
+| Example | What You'll Learn |
+|---------|------------------|
+| [Single Agent](./agents/demo_single_agent.md) | Minimal ChatAgent with custom prompts and hooks |
+| [ReAct Agent with Tools](./agents/demo_react_agent.md) | ReActAgent with reflexion and tool calling |
+| [Hierarchical Multi-Agent](./agents/demo_hierarchical_agents.md) | Master-sub agent architecture and delegation |
+
+---
+
 ## Categories
 
 | Category | Examples | Description |

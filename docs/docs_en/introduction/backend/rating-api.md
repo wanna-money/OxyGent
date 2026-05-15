@@ -1,4 +1,4 @@
-## Rating Creation and Management
+# Rating Creation and Management
 
 ### 1. Create a Rating (with Comment)
 

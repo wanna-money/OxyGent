@@ -1,4 +1,4 @@
-## How to Perform Retrieval-Augmented Generation?
+# How to Perform Retrieval-Augmented Generation?
 
 OxyGent supports injecting knowledge into prompts via the `knowledge` parameter. Below is a simple RAG example:
 

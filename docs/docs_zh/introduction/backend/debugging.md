@@ -37,7 +37,7 @@ async def main():
 ```
 
 ## 和智能体对话
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/1.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/1.png)
 
 界面主页包含以下部分：
 + **MAS的结构**: 包含所有注册好的智能体和工具
@@ -45,7 +45,7 @@ async def main():
 + **思考细节**: 包含智能体内部LLM的思考过程和输出
 + **文件工具**: 保存和加载MAS的工具
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/2.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/2.png)
 
 您可以在对话框中直接输入查询内容，或是添加图片或视频作为附件。
 
@@ -53,29 +53,29 @@ async def main():
 
 ## 实时监测
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/3.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/3.png)
 
 正在工作的智能体将以高亮形式展示在左侧的MAS结构图中，同时智能体的思考过程和输出将实时展示在对话区域。
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/4.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/4.png)
 
 右上角的debug工具能够回溯MAS运行过程，包括移至开始 `«`, 移至最后 `»`, 单步向前 `<`, 单步向后 `>`和自动重播 `⏵` 。您可以使用这些工具按步骤监测MAS的运行。
 
 ## 查看运行细节
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/5.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/5.png)
 
 点击任意思考过程即可进入智能体详情页，这个页面展示了智能体LLM的参数配置、详细的对话过程和 `json` 格式的元数据，您可以点击页面上方的结构图切换要观察的LLM或工具。
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/6.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/6.png)
 
 ## 调试执行过程
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/7.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/7.png)
 
 您可以通过点击 `View 1 | View 2` 切换详情页的上方视图，查看MAS的性能和各调用过程的生命周期。
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/8.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/8.png)
 
 详情页同样提供单步调试工具。您可以点击 `regenerate` 在任意节点重新生成output。
 

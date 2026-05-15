@@ -37,7 +37,7 @@ If compilation is successful, the command line will display OxyGent's version an
 ```
 
 ## Chatting with Agents
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/1.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/1.png)
 
 The main interface includes the following sections:
 + **MAS Structure**: Contains all registered agents and tools
@@ -45,7 +45,7 @@ The main interface includes the following sections:
 + **Thinking Details**: Contains the internal LLM thinking process and output of agents
 + **File Tools**: Tools for saving and loading MAS
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/2.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/2.png)
 
 You can type your query directly in the chat panel, or add images or videos as attachments.
 
@@ -53,29 +53,29 @@ If you want to send a message directly to a specific agent, you can use `@`.
 
 ## Real-Time Monitoring
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/3.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/3.png)
 
 The currently active agent will be highlighted in the MAS structure diagram on the left side, and the agent's thinking process and output will be displayed in real time in the chat area.
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/4.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/4.png)
 
 The debug tools in the upper right corner allow you to trace back through the MAS execution process, including move to start `<<`, move to end `>>`, step backward `<`, step forward `>`, and auto replay `play`. You can use these tools to monitor the MAS execution step by step.
 
 ## Viewing Execution Details
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/5.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/5.png)
 
 Click on any thinking process to enter the agent detail page. This page displays the agent's LLM parameter configuration, the detailed conversation process, and metadata in `json` format. You can click on the structure diagram at the top of the page to switch between LLMs or tools to observe.
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/6.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/6.png)
 
 ## Debugging the Execution Process
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/7.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/7.png)
 
 You can switch the upper view of the detail page by clicking `View 1 | View 2` to see MAS performance and the lifecycle of each invocation.
 
-![](http://storage.jd.local/ai-gateway-routing/prod_data/oxygent_docs_images/8.png)
+![](http://storage.jd.com/ai-gateway-routing/prod_data/oxygent_docs_images/8.png)
 
 The detail page also provides step-by-step debugging tools. You can click `regenerate` to regenerate the output at any node.
 

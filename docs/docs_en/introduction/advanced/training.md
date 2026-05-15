@@ -1,4 +1,4 @@
-## How to Use OxyGent to Train My Model?
+# How to Use OxyGent to Train My Model?
 
 OxyGent supports automatically storing data from all intermediate nodes to help you generate SFT training samples, and supports the sampling process for GRPO multi-agent joint training. Since the training process is relatively complex, this document provides the simplest example of generating SFT samples, which you can use for the next round of training.
 
@@ -172,6 +172,7 @@ if __name__ == "__main__":
 ```
 
 [Previous: Retrieval-Augmented Generation (RAG)](./rag.md)
+[Next: Debugging](../backend/debugging.md)
 [Back to Home](../readme.md)
 
 ---

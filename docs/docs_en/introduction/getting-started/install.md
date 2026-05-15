@@ -1,4 +1,4 @@
-## How to Install OxyGent?
+# How to Install OxyGent?
 
 ### How to Set Up the Environment?
 ---

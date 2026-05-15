@@ -25,7 +25,7 @@ The position of the class is:
 
 ---
 
-## Introduce
+## Introduction
 
 `BaseFlow` is the base flow module for OxyGent framework.
 
