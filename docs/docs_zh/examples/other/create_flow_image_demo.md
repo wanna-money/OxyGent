@@ -6,6 +6,9 @@
 
 本示例构建了一个交互式流程图助手，能够生成基于 Mermaid 的流程图并在浏览器中显示。它使用主 `ReActAgent` 协调两个子代理：一个用于从文本描述生成流程图 HTML 文件，另一个用于打开已有的流程图文件。应用还搭建了一个自定义 FastAPI 服务器，提供静态文件服务和专用的流程图操作 API 路由。
 
+<img src="https://storage.jd.com/opponent/AI/5.png" width="80%"/>
+<img src="https://storage.jd.com/opponent/AI/6.png" width="80%"/>
+
 ## 前置条件
 
 - 环境变量：`OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL_NAME`（注意：本示例使用 OpenAI 风格的变量名，而非默认的 `DEFAULT_LLM_*` 名称）
@@ -92,6 +95,14 @@ async def main():
 3. 在 FastAPI 应用上挂载静态文件。
 4. 在端口 **8081**（非默认的 8080）上启动 MAS Web 服务，并发送一个初始流程图生成请求。
 
+## 使用方法
+
+1. **默认查询**：程序启动后会自动执行初始流程图生成请求（软件开发流程图）。
+2. **自定义查询**：在 Web 界面输入框中输入流程图描述，例如："生成一个项目管理流程图"、"创建一个用户注册流程图"、"画一个订单处理的流程图"。
+3. **查看结果**：流程图会自动在浏览器中打开，HTML 文件保存在项目目录中。
+4. **编辑和预览**：在流程图页面中可直接编辑 Mermaid 代码，点击"更新预览"按钮实时查看修改效果，支持多种预设模板选择。
+5. **导出图表**：点击"导出 SVG"或"导出 PNG"按钮将流程图导出为对应格式。
+
 ## 核心概念
 
 - **Mermaid.js** -- 一个基于 JavaScript 的图表库，从文本定义渲染图表。生成的流程图是嵌入 HTML 文件中的 Mermaid 语法。
@@ -108,3 +119,17 @@ async def main():
 4. 主代理将请求路由到 `image_gen_agent`，后者调用 `generate_flow_chart` 生成 Mermaid 流程图 HTML 文件。
 5. 生成的流程图自动在浏览器中打开，显示需求分析、设计、编码、测试和部署等阶段。
 6. 用户可以继续交互 -- 要求生成新的流程图、打开已有的流程图，或获取编辑/导出的操作指导。
+
+## 故障排除
+
+1. **API 连接失败**：检查 `.env` 文件中的 API 配置，验证网络连接和 API 服务状态。系统会自动降级到示例流程图。
+2. **端口占用**：默认端口 8081 被占用时，修改 `port` 参数；或使用 `pkill -f create_flow_image_demo.py` 清理进程。
+3. **文件路径问题**：确保有足够的文件系统权限，检查输出目录是否存在。
+4. **静态文件缺失**：系统会自动创建必要的静态文件，如有问题请检查 `create_static_files` 函数执行是否正常。
+
+启用调试模式获取详细日志：
+
+```bash
+export LOG_LEVEL=DEBUG
+python examples/other/create_flow_image_demo.py
+```

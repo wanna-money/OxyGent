@@ -18,7 +18,7 @@ async def main():
             name="skill_agent",
             llm_model="default_llm",
             tools=["view_text_file", "execute_shell_command"],  # required
-            skills=[".oxygent/skills"],  # A single skill folder or parent directory
+            skills=["./skills"],  # A single skill folder or parent directory
         ),
     ]
 

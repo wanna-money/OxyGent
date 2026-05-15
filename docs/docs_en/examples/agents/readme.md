@@ -128,7 +128,7 @@ Demonstrates ShellUseAgent, which connects to a remote host via SSH and executes
 ### Skill Agent
 **File:** `examples/agents/demo_skill_agent.py`
 
-Introduces the SkillAgent, which dynamically loads skill definitions from a directory (`.oxygent/skills`). Skills are reusable, structured task templates that the agent can discover and invoke. The agent is also equipped with file viewing and shell command tools from preset_tools, enabling it to read skill files and execute commands as part of skill execution.
+Introduces the SkillAgent, which dynamically loads skill definitions from a directory (`./skills`). Skills are reusable, structured task templates that the agent can discover and invoke. The agent is also equipped with file viewing and shell command tools from preset_tools, enabling it to read skill files and execute commands as part of skill execution.
 
 **Key Components:** HttpLLM, preset_tools (file_tools, shell_tools), SkillAgent, skills
 

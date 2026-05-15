@@ -128,7 +128,7 @@
 ### 技能 Agent
 **文件:** `examples/agents/demo_skill_agent.py`
 
-介绍了 SkillAgent，它能够从目录（`.oxygent/skills`）中动态加载技能定义。技能是可复用的结构化任务模板，Agent 可以自动发现并调用这些技能。该 Agent 还配备了来自 preset_tools 的文件查看和 Shell 命令工具，使其能够读取技能文件并在技能执行过程中运行命令。
+介绍了 SkillAgent，它能够从目录（`./skills`）中动态加载技能定义。技能是可复用的结构化任务模板，Agent 可以自动发现并调用这些技能。该 Agent 还配备了来自 preset_tools 的文件查看和 Shell 命令工具，使其能够读取技能文件并在技能执行过程中运行命令。
 
 **核心组件:** HttpLLM, preset_tools (file_tools, shell_tools), SkillAgent, skills
 
