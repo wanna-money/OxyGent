@@ -2,6 +2,16 @@
 
 The LLM in OxyGent refers to the traditional LLM form, which supports taking a string as input and outputting a string. You can call models using `oxy.HttpLLM` or `oxy.OpenAILLM`.
 
+## How to Choose an LLM Type?
+
+| Scenario | Recommended Class | Key Parameters |
+|----------|-------------------|----------------|
+| Cloud API (DeepSeek, Qwen, Gemini, etc.) | `oxy.HttpLLM` | `api_key`, `base_url`, `model_name` |
+| OpenAI or OpenAI-compatible API | `oxy.OpenAILLM` | `api_key`, `base_url`, `model_name` |
+| Ollama locally deployed model | `oxy.HttpLLM` | `base_url` (do not pass api_key) |
+| HuggingFace local model | `oxy.LocalLLM` | `model_path`, `device_map` |
+| Testing/Development (no real LLM needed) | `oxy.MockLLM` | `func_mock_process` |
+
 ## Calling General Models
 
 ```python
@@ -62,25 +72,49 @@ If you have deployed a model locally using Ollama, use the following approach:
         timeout=240,
     ),
 ```
-### URL Auto-Completion
+### URL Auto-Completion Rules
 
-OxyGent supports automatic URL completion. The completion logic is roughly as follows:
-```python
-        if is_gemini:                                                    
-            if not url.endswith(":generateContent"):
-                url = f"{url}/models/{self.model_name}:generateContent"
-        elif use_openai:
-            if not url.endswith("/chat/completions"):
-                url = f"{url}/chat/completions"
-        else:
-            if not url.endswith("/api/chat"): # only support ollama
-                url = f"{url}/api/chat"
-```
+| Model Provider | `base_url` Example | Auto-Completed Suffix |
+|---------------|-------------------|----------------------|
+| Gemini | `https://generativelanguage.googleapis.com/v1beta` | `/models/{model_name}:generateContent` |
+| OpenAI Protocol | `https://api.openai.com/v1` | `/chat/completions` |
+| Ollama | `http://localhost:11434` | `/api/chat` |
+
+> If your `base_url` already contains the full path (e.g., ends with `/chat/completions`), OxyGent will not append the suffix again.
+
 Therefore, please note the following. If you encounter a 404 error, it is most likely caused by an incorrect URL:
 - When using Gemini, you can pass the model API directly, e.g., `https://generativelanguage.googleapis.com/v1beta`
 - When using common open-source models (DeepSeek, Qwen), even if the api_key is EMPTY, please include it in the environment variables and pass it to `oxy.HttpLLM`.
 - When using closed-source models based on the OpenAI protocol (ChatGPT), please use `oxy.OpenAILLM`.
 - When using Ollama models, do not pass the `api_key` parameter.
+
+## Using MockLLM for Testing
+
+`oxy.MockLLM` does not call a real LLM API. Instead, it returns a preset mock output. It is suitable for development debugging and unit testing:
+
+```python
+    oxy.MockLLM(
+        name="mock_llm",
+        func_mock_process=lambda oxy_request: "This is a mock response for testing.",
+    ),
+```
+
+`func_mock_process` receives an `OxyRequest` object and returns a string as the simulated LLM output. If this parameter is not provided, it returns `"output"` by default.
+
+## Using Local Models (LocalLLM)
+
+If you need to use a locally deployed HuggingFace model, you can use `oxy.LocalLLM`:
+
+```python
+    oxy.LocalLLM(
+        name="local_llm",
+        model_path="/path/to/your/model",
+        device_map="auto",
+        dtype="bfloat16",
+    ),
+```
+
+> LocalLLM requires additional installation of the `torch` and `transformers` packages.
 
 ## Common Parameter Settings
 OxyGent supports fine-grained model parameter configuration. You can set LLM parameters either at call time or in [Config](../getting-started/config.md). Here are some commonly used parameters:

@@ -44,8 +44,7 @@ import asyncio
 
 from oxygent import MAS, oxy, Config
 import os
-import prompts
-import tools
+from oxygent import preset_tools
 
 Config.set_agent_llm_model("default_llm")
 
@@ -73,7 +72,7 @@ oxy_space = [
             "args": ["--directory", "./mcp_servers", "run", "math_tools.py"],
         },
     ),
-    tools.file_tools,
+    preset_tools.file_tools,
     oxy.ReActAgent(
         name="file_agent",
         desc="A tool that can operate the file system",

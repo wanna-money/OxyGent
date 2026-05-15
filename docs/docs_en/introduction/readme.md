@@ -9,6 +9,7 @@
 
 | Document | Description |
 |----------|-------------|
+| [OxyGent Conceptual Overview](./getting-started/overview.md)* | Core concepts and terminology |
 | [Install OxyGent](./getting-started/install.md)* | Environment setup and installation |
 | [Run the Demo](./getting-started/demo.md)* | Quick-start demo |
 | [Configuration](./getting-started/config.md)* | Configure LLM, Agent, Server, and more |

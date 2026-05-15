@@ -4,6 +4,25 @@ In more complex MAS systems, you may need to update prompts to prevent critical 
 
 OxyGent supports processing prompts through external methods. For example, if you include file content in a prompt and want to ensure that every Agent can read the complete prompt, you can use the `update_query` method to pass the prompt via the query.
 
+## OxyRequest Quick Reference
+
+`func_process_input` receives an `OxyRequest` object. You can use the following methods to access and modify the request content:
+
+| Method | Description |
+|--------|-------------|
+| `get_query()` | Get the query received by the current agent |
+| `get_query(master_level=True)` | Get the user's original query to the master agent |
+| `set_query(text)` | Replace the current query content |
+| `get_short_memory()` | Get the conversation memory of the current agent |
+| `get_short_memory(master_level=True)` | Get the conversation memory of the master agent |
+| `call(callee, arguments)` | Call another agent or tool by name |
+| `send_message(msg)` | Send a streaming message to the frontend |
+| `get_shared_data(key)` | Get trace-level shared data |
+| `set_shared_data(key, value)` | Set trace-level shared data |
+| `get_global_data(key)` | Get MAS-level global data |
+
+> `master_level=True` retrieves data at the master agent level, rather than the current sub-agent's data. This is useful when a sub-agent needs to understand the user's original intent.
+
 ## Example: Updating the Prompt
 ```python
 def update_query(oxy_request: OxyRequest):
@@ -44,8 +63,7 @@ import asyncio
 
 from oxygent import MAS, oxy, Config, OxyRequest
 import os
-import prompts
-import tools
+from oxygent import preset_tools
 
 Config.set_agent_llm_model("default_llm")
 
@@ -74,7 +92,7 @@ oxy_space = [
             "args": ["mcp-server-time", "--local-timezone=Asia/Shanghai"],
         },
     ),
-    tools.file_tools,
+    preset_tools.file_tools,
     oxy.ReActAgent(
         name="file_agent",
         desc="A tool that can operate the file system",
@@ -89,19 +107,19 @@ oxy_space = [
     oxy.ChatAgent(
         name="text_summarizer",
         desc="A tool that can summarize markdown text",
-        prompt=prompts.text_summarizer_prompt,
+        prompt="You are a text summarizer. Please provide a concise summary of the given text.",
         func_process_input=update_query,
     ),
     oxy.ChatAgent(
         name="data_analyser",
         desc="A tool that can summarize echart data",
-        prompt=prompts.data_analyser_prompt,
+        prompt="You are a data analyst. Please analyze the given data and provide insights.",
         func_process_input=update_query,
     ),
     oxy.ChatAgent(
         name="document_checker",
         desc="A tool that can find problems in document",
-        prompt=prompts.document_checker_prompt,
+        prompt="You are a document checker. Please review the document and identify any issues.",
         func_process_input=update_query,
     ),
     oxy.ParallelAgent(

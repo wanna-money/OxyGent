@@ -29,6 +29,12 @@
 
 为了使 LLM 和智能体生效，它们需要被添加到 `oxy_space` 中。
 
+> **关键概念**
+> - **`oxy_space`** 是一个 Python 列表，包含了系统中所有的 LLM、Agent、Tool 组件。组件之间通过 `name` 字符串互相引用。
+> - **`MAS`**（Multi-Agent System）是运行时容器。`async with MAS(oxy_space=...) as mas` 会注册所有组件并建立引用关系。
+> - **`is_master=True`** 标记入口智能体——用户的消息首先到达它，由它决定如何处理或分发给子智能体。
+> - 更多概念请参考 [OxyGent 概念总览](../getting-started/overview.md)。
+
 ## 完整的可运行样例
 
 以下是可运行的完整代码示例：

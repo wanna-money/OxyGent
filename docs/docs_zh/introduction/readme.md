@@ -9,6 +9,7 @@
 
 | 文档 | 说明 |
 |------|------|
+| [OxyGent 概念总览](./getting-started/overview.md)* | 核心概念与术语 |
 | [安装 OxyGent](./getting-started/install.md)* | 环境配置与安装 |
 | [运行 Demo](./getting-started/demo.md)* | 快速运行示例 |
 | [设置 Config](./getting-started/config.md)* | 配置 LLM、Agent、Server 等参数 |

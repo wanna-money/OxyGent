@@ -51,8 +51,7 @@ import asyncio
 
 from oxygent import MAS, oxy, Config
 import os
-import prompts
-import tools
+from oxygent import preset_tools
 
 Config.set_agent_llm_model("default_llm")
 
@@ -80,7 +79,7 @@ oxy_space = [
             "args": ["--directory", "./mcp_servers", "run", "math_tools.py"],
         },
     ),
-    tools.file_tools,
+    preset_tools.file_tools,
     oxy.ReActAgent(
         name="master_agent",
         is_master=True,
@@ -167,6 +166,19 @@ oxy.SSEMCPClient(
     sse_url="http://127.0.0.1:8000/sse"
 ),
 ```
+
+## 3. 使用 StreamableMCPClient
+
+`StreamableMCPClient` 使用更新的 Streamable HTTP 传输协议连接远程 MCP 服务器。这是 MCP 规范中推荐的远程连接方式：
+
+```python
+    oxy.StreamableMCPClient(
+        name="remote_tools",
+        server_url="http://127.0.0.1:8000/mcp",
+    ),
+```
+
+> `StreamableMCPClient` 和 `SSEMCPClient` 的使用方式类似，主要区别在于底层传输协议。如果你的 MCP 服务器支持 Streamable HTTP，优先使用 `StreamableMCPClient`。
 
 [上一章：使用MCP开源工具](./opensource-mcp-tools.md)
 [下一章：管理工具调用](./manage-tools.md)

@@ -47,7 +47,7 @@ oxy_space = [
         semaphore=4,
         timeout=240,
     ),
-    tools.file_tools,
+    preset_tools.file_tools,
     oxy.ReActAgent(
         name="master_agent",
         is_master=True,
@@ -64,8 +64,7 @@ import asyncio
 
 from oxygent import MAS, oxy
 import os
-import prompts
-import tools
+from oxygent import preset_tools
 
 oxy_space = [
     oxy.HttpLLM(
@@ -77,7 +76,7 @@ oxy_space = [
         semaphore=4,
         timeout=240,
     ),
-    tools.file_tools, # 工具包可以整个放入oxy_space
+    preset_tools.file_tools, # 工具包可以整个放入oxy_space
     oxy.ReActAgent(
         name="master_agent",
         is_master=True,

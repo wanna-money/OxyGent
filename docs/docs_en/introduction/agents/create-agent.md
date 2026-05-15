@@ -29,6 +29,12 @@ Next, you can use `oxy.ChatAgent` or `oxy.ReActAgent` to wrap your first agent:
 
 For the LLM and agent to take effect, they need to be added to the `oxy_space`.
 
+> **Key Concepts**
+> - **`oxy_space`** is a Python list containing all LLM, Agent, and Tool components in the system. Components reference each other by their `name` string.
+> - **`MAS`** (Multi-Agent System) is the runtime container. `async with MAS(oxy_space=...) as mas` registers all components and establishes their references.
+> - **`is_master=True`** marks the entry-point agent -- user messages arrive here first, and it decides how to handle or dispatch them to sub-agents.
+> - For more concepts, see the [OxyGent Concepts Overview](../getting-started/overview.md).
+
 ## Complete Runnable Example
 
 Here is a complete runnable code example:

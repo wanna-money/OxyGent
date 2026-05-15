@@ -48,6 +48,13 @@ Built on top of Chat with added [workflow](../advanced/workflow.md) support, thi
     )
 ```
 
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | Required | Agent name |
+| `desc` | str | `""` | Agent description |
+| `func_workflow` | Callable | `None` | Custom workflow function |
+| `sub_agents` | list[str] | `[]` | Names of callable sub-agents |
+
 ## `oxy.ReActAgent`
 
 An agent that supports [planning, execution, observation, and error-correction retry](https://www.promptingguide.ai/zh/techniques/react), suitable for complex tasks and commonly used as a master_agent.
@@ -60,6 +67,17 @@ An agent that supports [planning, execution, observation, and error-correction r
         llm_model="default_llm",
     )
 ```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | Required | Agent name |
+| `desc` | str | `""` | Agent description |
+| `llm_model` | str | `"default_llm"` | LLM model name |
+| `max_react_rounds` | int | `16` | Maximum reasoning-action rounds |
+| `trust_mode` | bool | `False` | Whether to enable Trust Mode for outputting metadata |
+| `is_discard_react_memory` | bool | `True` | Whether to clear reasoning memory on each new query |
+| `func_parse_llm_response` | Callable | `None` | Custom LLM output parsing function |
+| `func_reflexion` | Callable | `None` | Custom reflexion function |
 
 ReActAgent includes some unique configurable parameters, including:
 
@@ -79,6 +97,12 @@ An agent that supports [distributed](../multi-agent/distributed.md) deployment.
     )
 ```
 
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | Required | Agent name |
+| `desc` | str | `""` | Agent description |
+| `server_url` | str | Required | URL of the remote MAS |
+
 ## `oxy.ParallelAgent`
 
 An agent that supports [parallel](../multi-agent/parallel.md) execution.
@@ -90,6 +114,12 @@ An agent that supports [parallel](../multi-agent/parallel.md) execution.
         permitted_tool_name_list=["text_summarizer", "data_analyser", "document_checker"]
     ),
 ```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | Required | Agent name |
+| `desc` | str | `""` | Agent description |
+| `permitted_tool_name_list` | list[str] | `[]` | List of agent/tool names to execute in parallel |
 
 ## `oxy.PlanAndSolveAgent`
 
@@ -103,6 +133,13 @@ A two-stage agent that separates planning from execution. PlanAndSolveAgent coor
         solver="solver_agent",
     )
 ```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | Required | Agent name |
+| `planner` | str | `"planner_agent"` | Planner agent name |
+| `solver` | str | `"executor_agent"` | Solver agent name |
+| `max_replan_rounds` | int | `30` | Maximum re-planning rounds |
 
 ## `oxy.RAGAgent`
 
@@ -122,6 +159,14 @@ An agent that supports Retrieval-Augmented Generation (RAG). It retrieves extern
         llm_model="default_llm",
     )
 ```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | Required | Agent name |
+| `desc` | str | Required | Agent description |
+| `func_retrieve_knowledge` | Callable | Required | Knowledge retrieval function |
+| `knowledge_placeholder` | str | `"knowledge"` | Name of the knowledge placeholder in the prompt |
+| `prompt` | str | Required | Prompt containing the `${knowledge}` placeholder |
 
 ## `oxy.ShellUseAgent`
 
@@ -143,6 +188,13 @@ An agent that connects to remote hosts via SSH and autonomously executes shell c
     )
 ```
 
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | Required | Agent name |
+| `desc` | str | `""` | Agent description |
+| `auth_info` | dict | `{}` | SSH connection parameters (hostname, port, username, password) |
+| `max_react_rounds` | int | `64` | Maximum reasoning-action rounds |
+
 ## `oxy.SkillAgent`
 
 An agent that can dynamically load skill definitions from a directory (e.g., `./skills`). Skills are reusable structured task templates that the agent can automatically discover and invoke.
@@ -155,6 +207,12 @@ An agent that can dynamically load skill definitions from a directory (e.g., `./
         llm_model="default_llm",
     )
 ```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | str | Required | Agent name |
+| `desc` | str | `""` | Agent description |
+| `skills` | list[str] | `None` | List of skill directory paths |
 
 [Previous: Preset Prompts](./select-prompt.md)
 [Next: Register a Tool](../tools/register-tool.md)

@@ -2,6 +2,29 @@
 
 In OxyGent, you can use [Config](https://github.com/jd-opensource/OxyGent/blob/main/oxygent/config.py) to manage your custom settings.
 
+Config is OxyGent's centralized configuration management system. With Config, you can set global defaults (such as the default LLM, default temperature parameters, etc.) to avoid passing the same parameters repeatedly in every component.
+
+Config supports two configuration methods:
+1. **Code configuration**: Set values in code using `Config.set_xxx()` methods
+2. **JSON file configuration**: Load from a file using `Config.load_from_json("config.json")`
+
+JSON file example (`config.json`):
+```json
+{
+  "default": {
+    "llm": {
+      "temperature": 0.2,
+      "timeout": 300
+    },
+    "server": {
+      "port": 8080
+    }
+  }
+}
+```
+
+> JSON configuration supports environment variable substitution: use `${VAR_NAME}` syntax to reference environment variables. It supports environment layering (`default` + environment name), selected via the `APP_ENV` environment variable.
+
 ## 1. Set the LLM Model
 
 If multiple Agents use the same LLM, you can conveniently manage them by setting the LLM so that all Agents use the `llm_name` you specify:
@@ -91,8 +114,7 @@ import asyncio
 
 from oxygent import MAS, oxy, Config
 import os
-import prompts
-import tools
+from oxygent import preset_tools
 
 Config.set_agent_llm_model("default_llm")
 
@@ -106,7 +128,7 @@ oxy_space = [
         semaphore=4,
         timeout=240,
     ),
-    tools.file_tools,
+    preset_tools.file_tools,
     oxy.ReActAgent(
         name="master_agent",
         is_master=True,

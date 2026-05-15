@@ -167,8 +167,7 @@ async def workflow(oxy_request: OxyRequest):
 import asyncio
 from oxygent import MAS, OxyRequest, Config, oxy
 import os
-import tools
-import prompts
+from oxygent import preset_tools
 
 # 设置 LLM 模型
 Config.set_agent_llm_model("default_llm")
@@ -219,7 +218,7 @@ oxy_space = [
             "args": ["mcp-server-time", "--local-timezone=Asia/Shanghai"],
         },
     ),
-    tools.file_tools,
+    preset_tools.file_tools,
     oxy.ReActAgent(
         name="file_agent",
         desc="A tool that can operate the file system",
@@ -233,17 +232,17 @@ oxy_space = [
     oxy.ChatAgent(
         name="text_summarizer",
         desc="A tool that can summarize markdown text",
-        prompt=prompts.text_summarizer_prompt,
+        prompt="You are a text summarizer. Please provide a concise summary of the given text.",
     ),
     oxy.ChatAgent(
         name="data_analyser",
         desc="A tool that can summarize echart data",
-        prompt=prompts.data_analyser_prompt,
+        prompt="You are a data analyst. Please analyze the given data and provide insights.",
     ),
     oxy.ChatAgent(
         name="document_checker",
         desc="文档校验器",
-        prompt=prompts.document_checker_prompt,
+        prompt="You are a document checker. Please review the document and identify any issues.",
     ),
     oxy.ParallelAgent(
         name="analyzer",

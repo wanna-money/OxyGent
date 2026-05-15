@@ -51,8 +51,7 @@ import asyncio
 
 from oxygent import MAS, oxy, Config
 import os
-import prompts
-import tools
+from oxygent import preset_tools
 
 Config.set_agent_llm_model("default_llm")
 
@@ -80,7 +79,7 @@ oxy_space = [
             "args": ["--directory", "./mcp_servers", "run", "math_tools.py"],
         },
     ),
-    tools.file_tools,
+    preset_tools.file_tools,
     oxy.ReActAgent(
         name="master_agent",
         is_master=True,
@@ -167,6 +166,19 @@ oxy.SSEMCPClient(
     sse_url="http://127.0.0.1:8000/sse"
 ),
 ```
+
+## 3. Using StreamableMCPClient
+
+`StreamableMCPClient` connects to remote MCP servers using the newer Streamable HTTP transport protocol. This is the recommended approach for remote connections in the MCP specification:
+
+```python
+    oxy.StreamableMCPClient(
+        name="remote_tools",
+        server_url="http://127.0.0.1:8000/mcp",
+    ),
+```
+
+> `StreamableMCPClient` and `SSEMCPClient` are used in a similar way. The main difference is the underlying transport protocol. If your MCP server supports Streamable HTTP, prefer using `StreamableMCPClient`.
 
 [Previous: Using Open-Source MCP Tools](./opensource-mcp-tools.md)
 [Next: Managing Tool Invocation](./manage-tools.md)
