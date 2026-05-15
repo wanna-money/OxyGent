@@ -75,7 +75,7 @@ def list_operation(
     except ZeroDivisionError:
         raise ValueError("Division by zero encountered in the operation")
     except Exception as e:
-        raise ValueError(f"Error performing {operation}: {str(e)}")
+        raise ValueError(f"Error performing {operation}: {e}")
 
 
 @math_tools.tool(
@@ -160,4 +160,4 @@ def calculate_expression(
     except ZeroDivisionError:
         raise ValueError(f"Division by zero in expression: {expression}")
     except Exception as e:
-        raise ValueError(f"Error evaluating expression '{expression}': {str(e)}")
+        raise ValueError(f"Error evaluating expression '{expression}': {e}")

@@ -329,10 +329,7 @@ class VectorToolAsync(object):
         """
         if "error" in res_json:
             return False
-        if res_json.get("hits", {}).get("total", 0) == 0:
-            return False
-        else:
-            return True
+        return res_json.get("hits", {}).get("total", 0) != 0
 
 
 class VearchDB(BaseVectorDB):
@@ -546,8 +543,7 @@ class VearchDB(BaseVectorDB):
 
             if res.get("msg", "space_notexists") == "success":
                 return True
-            else:
-                return False
+            return False
         except Exception:
             return False
 
@@ -724,8 +720,7 @@ class VearchDB(BaseVectorDB):
             res_df = res_df.loc[res_df["_score"] > threshold]
             tools = res_df["tool_name"].to_list()
             return tools
-        else:
-            return []
+        return []
 
     ##
     ## NOTE:Agent-level methods for table operations
@@ -946,9 +941,9 @@ class EmbeddingModel(object):
                 normalized = combined / norms
                 return normalized
         except httpx.HTTPError as e:
-            raise ValueError(f"HTTP client error: {str(e)}")
+            raise ValueError(f"HTTP client error: {e}")
         except asyncio.TimeoutError:
             raise ValueError("Request timed out")
         except Exception as e:
-            raise ValueError(f"Unexpected error: {str(e)}")
+            raise ValueError(f"Unexpected error: {e}")
         return None

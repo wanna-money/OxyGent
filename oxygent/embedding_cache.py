@@ -72,7 +72,6 @@ async def get_embedding(querys):
         res_lis = []
         for item in output:
             item_output = base64.b64decode(item).decode("utf-8")
-            # res_lis.append(np.array(eval(item_output)))
             res_lis.append(np.array(json.loads(item_output)))
         res_lis = np.concatenate(res_lis)
 

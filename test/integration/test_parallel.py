@@ -4,7 +4,7 @@ import re
 
 import pytest
 
-from examples.agents.parallel_demo import test as parallel_demo_test
+from examples.agents.demo_parallel import main as parallel_demo_test
 
 
 @pytest.mark.asyncio

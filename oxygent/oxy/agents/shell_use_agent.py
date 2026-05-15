@@ -69,12 +69,11 @@ class ShellUseAgent(ReActAgent):
                     output=json_text,
                     ori_response=ori_response,
                 )
-            else:
-                return LLMResponse(
-                    state=LLMState.TOOL_CALL,
-                    output=json_text,
-                    ori_response=ori_response,
-                )
+            return LLMResponse(
+                state=LLMState.TOOL_CALL,
+                output=json_text,
+                ori_response=ori_response,
+            )
         except Exception as e:
             logger.warning(e)
             return LLMResponse(

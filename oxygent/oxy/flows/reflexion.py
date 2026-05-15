@@ -12,7 +12,7 @@ from ..base_flow import BaseFlow
 logger = logging.getLogger(__name__)
 
 
-class ReflectionEvaluation(BaseModel):
+class ReflexionEvaluation(BaseModel):
     """Reflection evaluation result."""
 
     is_satisfactory: bool = Field(description="Whether the answer is satisfactory")
@@ -37,13 +37,13 @@ class Reflexion(BaseFlow):
         )
     )
 
-    func_parse_reflexion_response: Optional[Callable[[str], ReflectionEvaluation]] = (
+    func_parse_reflexion_response: Optional[Callable[[str], ReflexionEvaluation]] = (
         Field(None, exclude=True, description="Reflexion response parser")
     )
 
     # Pydantic parsers
     pydantic_parser_reflexion: PydanticOutputParser = Field(
-        default_factory=lambda: PydanticOutputParser(output_cls=ReflectionEvaluation),
+        default_factory=lambda: PydanticOutputParser(output_cls=ReflexionEvaluation),
         description="Reflexion pydantic parser",
     )
 
@@ -101,7 +101,7 @@ Previous answer: {previous_answer}""",
         """Default worker response parser - just return the response."""
         return response.strip()
 
-    def _default_parse_reflexion_response(self, response: str) -> ReflectionEvaluation:
+    def _default_parse_reflexion_response(self, response: str) -> ReflexionEvaluation:
         """Default reflexion response parser."""
         if self.pydantic_parser_reflexion:
             return self.pydantic_parser_reflexion.parse(response)
@@ -109,7 +109,7 @@ Previous answer: {previous_answer}""",
             # Fallback parsing logic
             return self._parse_reflexion_text(response)
 
-    def _parse_reflexion_text(self, response: str) -> ReflectionEvaluation:
+    def _parse_reflexion_text(self, response: str) -> ReflexionEvaluation:
         """Parse the evaluator LLM response into a satisfaction flag and feedback text."""
         lines = response.split("\n")
 
@@ -131,7 +131,7 @@ Previous answer: {previous_answer}""",
             elif "improvement suggestions:" in line.lower():
                 improvement_suggestions = line.split(":", 1)[-1].strip()
 
-        return ReflectionEvaluation(
+        return ReflexionEvaluation(
             is_satisfactory=is_satisfactory,
             evaluation_reason=evaluation_reason or "No specific reason provided",
             improvement_suggestions=improvement_suggestions,

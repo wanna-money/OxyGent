@@ -672,7 +672,6 @@ class MAS(BaseModel):
         """Check if the oxy_name is an agent."""
         if not oxy_name:
             return False
-        # return self.oxy_name_to_oxy[oxy_name].category == 'agent'
         return isinstance(self.oxy_name_to_oxy[oxy_name], (BaseFlow, BaseAgent))
 
     def init_agent_organization(self):
@@ -1028,7 +1027,7 @@ class MAS(BaseModel):
                     # Fallback for old traces that lack original_payload
                     logger.warning(
                         f"Trace {reference_trace_id} has no original_payload, "
-                        f"falling back to trace-level fields"
+                        "falling back to trace-level fields"
                     )
 
                 # Remove per-execution fields so they are regenerated

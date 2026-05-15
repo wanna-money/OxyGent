@@ -284,7 +284,7 @@ class OxyRequest(BaseModel):
                     )
                     return OxyResponse(
                         state=OxyState.FAILED,
-                        output=f"Error executing tool {oxy.name}: {str(e)}",
+                        output=f"Error executing tool {oxy.name}: {e}",
                     )
 
     async def call(self, **kwargs) -> "OxyResponse":
@@ -424,7 +424,7 @@ class OxyRequest(BaseModel):
             )
             return OxyResponse(
                 state=OxyState.FAILED,
-                output=f"Error executing tool {oxy.name}: {str(e)}",
+                output=f"Error executing tool {oxy.name}: {e}",
             )
 
     async def call_async(self, **kwargs):

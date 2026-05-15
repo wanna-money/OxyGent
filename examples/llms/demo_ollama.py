@@ -1,7 +1,6 @@
-"""gemma_cli_demo.py"""
+"""demo_ollama.py"""
 
 import asyncio
-import os
 
 from oxygent import MAS, oxy
 
@@ -9,7 +8,7 @@ oxy_space = [
     oxy.HttpLLM(
         name="default_llm",
         base_url="http://localhost:11434/api/chat",
-        model_name=os.getenv("DEFAULT_OLLAMA_MODEL"),
+        model_name="ollama_model_name",
     ),
 ]
 

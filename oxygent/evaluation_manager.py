@@ -210,8 +210,8 @@ class EvaluationManager:
             )
 
         except Exception as e:
-            logger.error(f"Failed to create/update rating: {str(e)}")
-            return RatingResponse(success=False, message=f"Rating failed: {str(e)}")
+            logger.error(f"Failed to create/update rating: {e}")
+            return RatingResponse(success=False, message=f"Rating failed: {e}")
 
     async def _check_trace_exists(self, es_client, trace_id: str) -> bool:
         """Check if conversation trace exists.
@@ -666,7 +666,7 @@ class EvaluationManager:
                         )
 
             except Exception as e:
-                error_msg = f"Failed to delete rating records: {str(e)}"
+                error_msg = f"Failed to delete rating records: {e}"
                 result["errors"].append(error_msg)
                 logger.error(error_msg)
 
@@ -695,7 +695,7 @@ class EvaluationManager:
                         )
 
             except Exception as e:
-                error_msg = f"Failed to delete rating statistics: {str(e)}"
+                error_msg = f"Failed to delete rating statistics: {e}"
                 result["errors"].append(error_msg)
                 logger.error(error_msg)
 
@@ -710,7 +710,7 @@ class EvaluationManager:
                 "success": False,
                 "deleted_ratings": 0,
                 "deleted_stats": 0,
-                "errors": [f"Clear failed: {str(e)}"],
+                "errors": [f"Clear failed: {e}"],
             }
 
     async def ensure_rating_indices_with_correct_mapping(self) -> Dict[str, Any]:
@@ -777,7 +777,7 @@ class EvaluationManager:
                 else:
                     result["errors"].append("ES client does not support index creation")
             except Exception as e:
-                error_msg = f"Failed to create rating record index: {str(e)}"
+                error_msg = f"Failed to create rating record index: {e}"
                 result["errors"].append(error_msg)
                 logger.error(error_msg)
 
@@ -799,7 +799,7 @@ class EvaluationManager:
                 else:
                     result["errors"].append("ES client does not support index creation")
             except Exception as e:
-                error_msg = f"Failed to create rating statistics index: {str(e)}"
+                error_msg = f"Failed to create rating statistics index: {e}"
                 result["errors"].append(error_msg)
                 logger.error(error_msg)
 
@@ -814,5 +814,5 @@ class EvaluationManager:
                 "success": False,
                 "rating_index_created": False,
                 "rating_stats_index_created": False,
-                "errors": [f"Operation failed: {str(e)}"],
+                "errors": [f"Operation failed: {e}"],
             }

@@ -130,7 +130,7 @@ class VersionSyncCoordinator:
         """Start ES polling for version updates."""
         logger.info(
             f"Starting ES polling with {self.polling_interval}s interval "
-            f"(configured in live_prompt.es_polling_interval)"
+            "(configured in live_prompt.es_polling_interval)"
         )
 
         self.polling_task = asyncio.create_task(self._es_poller())
@@ -308,7 +308,7 @@ class VersionSyncCoordinator:
         # All retries failed, log warning
         logger.warning(
             f"Failed to fetch {prompt_key} v{new_version} from ES after {max_retries} attempts. "
-            f"Will sync on next ES polling cycle."
+            "Will sync on next ES polling cycle."
         )
 
     def update_local_version(self, prompt_key: str, version: int):

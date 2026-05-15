@@ -61,7 +61,7 @@ def delete_file(
     except PermissionError:
         return f"Error: Permission denied when trying to delete {path}"
     except Exception as e:
-        return f"Error: Failed to delete {path}. Reason: {str(e)}"
+        return f"Error: Failed to delete {path}. Reason: {e}"
 
 
 @file_tools.tool(
@@ -98,9 +98,9 @@ def view_text_file(
     try:
         content = _read_file_with_range(file_path, ranges)
     except ValueError as e:
-        return f"Error: {str(e)}"
+        return f"Error: {e}"
     except Exception as e:
-        return f"Error: Failed to read file: {str(e)}"
+        return f"Error: Failed to read file: {e}"
 
     if ranges is None:
         return f"The content of {file_path}:\n```\n{content}\n```"

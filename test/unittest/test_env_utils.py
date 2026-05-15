@@ -19,7 +19,7 @@ def restore_environ():
     os.environ.update(old)
 
 
-# ---------- get_env / get_env_var -------------------------------------------
+# ---------- get_env -------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -29,32 +29,11 @@ def restore_environ():
         ("ABSENT", None, "default", "default"),
     ],
 )
-def test_get_env_and_get_env_var_str(monkeypatch, key, value, default, expected):
+def test_get_env(monkeypatch, key, value, default, expected):
     if value is not None:
         monkeypatch.setenv(key, value)
 
     assert env_utils.get_env(key, default) == expected
-    assert env_utils.get_env_var(key, str, default) == expected
-
-
-def test_get_env_var_list(monkeypatch):
-    monkeypatch.setenv("LIST_KEY", "a, b ,c")
-    assert env_utils.get_env_var("LIST_KEY", list) == ["a", "b", "c"]
-
-
-# @pytest.mark.parametrize(
-#     "raw, expected_type",
-#     [("abc", list), (["not_str"], str)],
-# )
-# def test_get_env_var_type_error(monkeypatch, raw, expected_type):
-#     monkeypatch.setenv("BAD_KEY", raw if isinstance(raw, str) else "dummy")
-#     with pytest.raises(ValueError):
-#         env_utils.get_env_var("BAD_KEY", expected_type)
-
-
-def test_get_env_var_missing(monkeypatch):
-    with pytest.raises(ValueError):
-        env_utils.get_env_var("NOT_SET", str)
 
 
 # ---------- simple getters --------------------------------------------------

@@ -174,11 +174,9 @@ async def get_node_info(item_id: str):
                 "sort": [{"create_time": {"order": "asc"}}],
             },
         )
-        node_ids = []
-        for data in es_response["hits"]["hits"]:
-            node_ids.append(data["_source"]["node_id"])
+        node_ids = [data["_source"]["node_id"] for data in es_response["hits"]["hits"]]
 
-        if len(node_ids) == 0:
+        if not node_ids:
             return WebResponse(code=400, message="illegal node_id").to_dict()
 
         if trace_id == item_id:
@@ -234,8 +232,6 @@ async def get_node_info(item_id: str):
 async def get_task_info(item_id: str):
     es_client = await get_es_client()
 
-    # es_client.exists(Config.get_app_name() + "_node", doc_id=item_id)
-
     # If item_id is node_id
     es_response = await es_client.search(
         Config.get_app_name() + "_node", {"query": {"term": {"_id": item_id}}}
@@ -258,9 +254,6 @@ async def get_task_info(item_id: str):
     )
     nodes = []
     for data in es_response["hits"]["hits"]:
-        data["_source"]["call_stack"] = data["_source"]["call_stack"]
-        data["_source"]["node_id_stack"] = data["_source"]["node_id_stack"]
-        data["_source"]["pre_node_ids"] = data["_source"]["pre_node_ids"]
         if (
             len(data["_source"]["pre_node_ids"]) == 1
             and data["_source"]["pre_node_ids"][0] == ""
@@ -828,7 +821,7 @@ async def get_agents():
     except Exception as e:
         logger.error(f"Failed to get agents: {e}")
         return WebResponse(
-            code=500, message=f"Failed to get agents: {str(e)}"
+            code=500, message=f"Failed to get agents: {e}"
         ).to_dict()
 
 
@@ -988,7 +981,7 @@ async def debug_rating_stats(trace_id: str):
     except Exception as e:
         error_msg = traceback.format_exc()
         logger.error(f"Debug rating stats error: {error_msg}")
-        return WebResponse(code=500, message=f"Debug query failed: {str(e)}").to_dict()
+        return WebResponse(code=500, message=f"Debug query failed: {e}").to_dict()
 
 
 @router.get("/debug/trace/{trace_id}")
@@ -1017,7 +1010,7 @@ async def debug_trace_info(trace_id: str):
     except Exception as e:
         error_msg = traceback.format_exc()
         logger.error(f"Debug trace info error: {error_msg}")
-        return WebResponse(code=500, message=f"Query failed: {str(e)}").to_dict()
+        return WebResponse(code=500, message=f"Query failed: {e}").to_dict()
 
 
 @router.delete("/rating/clear_all")
@@ -1040,7 +1033,7 @@ async def clear_all_rating_data():
         error_msg = traceback.format_exc()
         logger.error(f"Clear all rating data error: {error_msg}")
         return WebResponse(
-            code=500, message=f"Failed to clear rating data: {str(e)}"
+            code=500, message=f"Failed to clear rating data: {e}"
         ).to_dict()
 
 
@@ -1072,7 +1065,7 @@ async def setup_rating_indices():
         error_msg = traceback.format_exc()
         logger.error(f"Setup rating indices error: {error_msg}")
         return WebResponse(
-            code=500, message=f"Failed to setup indexes: {str(e)}"
+            code=500, message=f"Failed to setup indexes: {e}"
         ).to_dict()
 
 

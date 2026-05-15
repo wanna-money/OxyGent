@@ -179,7 +179,7 @@ class SSEOxyGent(RemoteAgent):
                     )
                     return OxyResponse(
                         state=OxyState.FAILED,
-                        output=f"SSE connection failed after {max_retries} retries: {str(e)}",
+                        output=f"SSE connection failed after {max_retries} retries: {e}",
                     )
 
                 if message_retry is not None:
@@ -206,7 +206,7 @@ class SSEOxyGent(RemoteAgent):
 
             except Exception as e:
                 logger.error(
-                    f"Unexpected error in SSE connection: {str(e)}",
+                    f"Unexpected error in SSE connection: {e}",
                     extra={
                         "trace_id": oxy_request.current_trace_id,
                         "node_id": oxy_request.node_id,
@@ -214,5 +214,5 @@ class SSEOxyGent(RemoteAgent):
                 )
                 return OxyResponse(
                     state=OxyState.FAILED,
-                    output=f"Unexpected error in SSE connection: {str(e)}",
+                    output=f"Unexpected error in SSE connection: {e}",
                 )

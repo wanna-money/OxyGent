@@ -145,20 +145,20 @@ class PlanAndSolve(BaseFlow):
             )
             if self.enable_replanner:
                 # Replanning logic
-                query = """
+                query = f"""
                 The target of user is:
-                {input}
+                {original_query}
 
                 The origin plan is:
-                {plan}
+                {plan_str}
 
                 We have finished the following steps:
                 {past_steps}
 
-                Please update the plan considering the mentioned information. If no more operation is supposed, Use **Response** to answer the user. 
-                Otherwise, please update the plan. The plan should only contain the steps to be executed, and do not 
+                Please update the plan considering the mentioned information. If no more operation is supposed, Use **Response** to answer the user.
+                Otherwise, please update the plan. The plan should only contain the steps to be executed, and do not
                 include the past steps or any other information.
-                """.format(input=original_query, plan=plan_str, past_steps=past_steps)
+                """
                 if self.pydantic_parser_replanner:
                     query = self.pydantic_parser_replanner.format(query)
 

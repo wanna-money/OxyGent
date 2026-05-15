@@ -697,7 +697,7 @@ Arguments:
                     await self._handle_exception(e)
                     attempt += 1
                     logger.warning(
-                        f"Error executing oxy {self.name}: {str(e)}. Attempt {attempt} of {self.retries}.",
+                        f"Error executing oxy {self.name}: {e}. Attempt {attempt} of {self.retries}.",
                         extra={
                             "trace_id": oxy_request.current_trace_id,
                             "node_id": oxy_request.node_id,
@@ -723,7 +723,7 @@ Arguments:
                         )
                         oxy_response = OxyResponse(
                             state=OxyState.FAILED,
-                            output=f"Error executing oxy {self.name}: {str(e)}",
+                            output=f"Error executing oxy {self.name}: {e}",
                         )
 
             oxy_response.oxy_request = oxy_request

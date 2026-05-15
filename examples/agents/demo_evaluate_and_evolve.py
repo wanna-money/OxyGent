@@ -1,5 +1,6 @@
 """Demo for using OxyGent with SFT data review agent."""
 
+import asyncio
 import json
 import os
 import re
@@ -122,6 +123,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    import asyncio
-
     asyncio.run(main())

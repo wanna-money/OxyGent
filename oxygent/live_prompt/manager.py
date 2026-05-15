@@ -701,7 +701,6 @@ async def get_prompt_manager() -> PromptManager:
         prompt_manager = (
             PromptManager()
         )  # Don't pass es_host, let it auto-read from Config
-        # await prompt_manager.init_index()
         try:
             await prompt_manager.start_version_sync()
             _version_sync_started = True

@@ -133,8 +133,7 @@ async def video_to_base64(
     video_bytes = await source_to_bytes(source)
     if len(video_bytes) > max_video_size:
         return source
-    else:
-        return f"{base64_prefix};base64,{base64.b64encode(video_bytes).decode('utf-8')}"
+    return f"{base64_prefix};base64,{base64.b64encode(video_bytes).decode('utf-8')}"
 
 
 def build_url(

@@ -299,7 +299,7 @@ This provides a full prompt engineering review and improvement.
                     result["validated"] = {
                         "meets_constraints": False,
                         "missing_elements": ["Validation error"],
-                        "warnings": [f"Validation failed: {str(e)}"],
+                        "warnings": [f"Validation failed: {e}"],
                     }
             elif result:
                 # Optimized prompt is None or missing
@@ -318,7 +318,7 @@ This provides a full prompt engineering review and improvement.
                 "optimized_prompt": current_prompt,  # Fallback to original
                 "analysis": "Optimization failed, returning original prompt",
                 "improvements": [],
-                "rationale": f"Optimization error: {str(e)}",
+                "rationale": f"Optimization error: {e}",
                 "validation": {
                     "meets_constraints": False,
                     "missing_elements": ["Optimization failed"],
@@ -528,7 +528,7 @@ This provides a full prompt engineering review and improvement.
                 "analysis": "Failed to parse JSON response",
                 "improvements": [],
                 "optimized_prompt": output if output else None,
-                "rationale": f"JSON parsing error: {str(e)}",
+                "rationale": f"JSON parsing error: {e}",
                 "validation": {
                     "meets_constraints": False,
                     "missing_elements": ["JSON parsing failed"],
@@ -542,7 +542,7 @@ This provides a full prompt engineering review and improvement.
                 "analysis": "Failed to parse LLM response",
                 "improvements": [],
                 "optimized_prompt": output if output else None,
-                "rationale": f"Parsing error: {str(e)}",
+                "rationale": f"Parsing error: {e}",
                 "validation": {
                     "meets_constraints": False,
                     "missing_elements": ["Failed to generate optimized prompt"],

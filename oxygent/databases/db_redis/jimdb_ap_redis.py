@@ -38,13 +38,13 @@ def retry_decorator(func):
         try:
             return await func(self, *args, **kwargs)
         except (ConnectionError, ConnectionResetError, TimeoutError) as e:
-            logger.error(f"Reconnect for Connection Error in {func.__name__}: {str(e)}")
+            logger.error(f"Reconnect for Connection Error in {func.__name__}: {e}")
             # Close current connection and retry
             await self.close()
             self.redis_pool = self._get_redis_connection()
             return await func(self, *args, **kwargs)
         except Exception as e:
-            logger.error(f"Error in {func.__name__}: {str(e)}")
+            logger.error(f"Error in {func.__name__}: {e}")
             logger.error(traceback.format_exc())
             return None
 
@@ -79,7 +79,7 @@ class JimdbApRedis:
         try:
             self.redis_pool = self._get_redis_connection()
         except Exception as e:
-            logger.error(f"Error while creating Redis pool: {str(e)}")
+            logger.error(f"Error while creating Redis pool: {e}")
             logger.error(traceback.format_exc())
 
     def _get_redis_connection(self):
@@ -92,7 +92,6 @@ class JimdbApRedis:
             f"redis://{self.host}:{self.port}/{self.db}",
             password=self.password,
             max_connections=5,
-            # decode_responses=True,  # Automatic decoding (disabled)
             health_check_interval=30,
         )
 
