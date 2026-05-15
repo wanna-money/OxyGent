@@ -24,21 +24,7 @@ jobs:
             const body = context.payload.issue.body?.toLowerCase() || '';
             
             // List of sensitive keywords in both Chinese and English
-            const blockKeywords = [
-              // Chinese keywords
-              '刷星', '刷赞', '买星', '买赞', '虚假star', '假星', 
-              '可疑账号', '刷热度', '买热度', 'basinarapprowayl',
-              '刷issue', '刷评论', '买issue', '买评论', '虚假issue', '假issue',
-              '刷贡献', '买贡献', '贡献造假', 'issue 刷量', '评论 刷量',
-              
-              // English keywords
-              'star farming', 'buy star', 'fake star', 'fake stars',
-              'artificial stars', 'star manipulation', 'buy github stars',
-              'suspicious account', 'bot accounts', 'issue farming',
-              'comment spam', 'spam comments', 'fake issue', 'fake issues',
-              'buy issue', 'buy issues', 'buy comments', 'contribution fraud',
-              'activity farming', 'gaming the system'
-            ];
+            const blockKeywords = [];
             
             // Check if the title or body contains any of the sensitive keywords
             const shouldBlock = blockKeywords.some(keyword => 
