@@ -87,26 +87,7 @@ def test_deepcopy_resets_parallel_ids(base_request):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# ❹ retry_execute
-# ──────────────────────────────────────────────────────────────────────────────
-@pytest.mark.asyncio
-async def test_retry_execute_success(base_request):
-    oxy = DummyOxy("ok_tool")
-    resp = await base_request.retry_execute(oxy)
-    assert resp.state is OxyState.COMPLETED
-
-
-@pytest.mark.asyncio
-async def test_retry_execute_failure(base_request):
-    oxy = DummyOxy("bad_tool", succeed=False)
-    oxy.retries = 2
-    oxy.delay = 0.01
-    resp = await base_request.retry_execute(oxy)
-    assert resp.state is OxyState.FAILED
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# ❺ call()
+# ❹ call()
 # ──────────────────────────────────────────────────────────────────────────────
 @pytest.mark.asyncio
 async def test_call_permission_ok(mas_env):

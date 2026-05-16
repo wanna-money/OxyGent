@@ -246,47 +246,6 @@ class OxyRequest(BaseModel):
                 )
         return new_instance
 
-    async def retry_execute(self, oxy, oxy_request=None) -> "OxyResponse":
-        """Execute an oxy with automatic retries.
-
-        Retries
-        -------
-        Controlled by `oxy.retries` and `oxy.delay`.
-
-        Returns:
-            OxyResponse: Completed or FAILED after exhausting retries.
-        """
-        if oxy_request is None:
-            oxy_request = self
-        attempt = 0
-        while attempt < oxy.retries:
-            try:
-                return await oxy.execute(oxy_request)
-            except Exception as e:
-                attempt += 1
-                logger.warning(
-                    f"Error executing oxy: {e}. Attempt {attempt} of {oxy.retries}.",
-                    extra={
-                        "trace_id": oxy_request.current_trace_id,
-                        "node_id": oxy_request.node_id,
-                    },
-                )
-                if attempt < oxy.retries:
-                    await asyncio.sleep(oxy.delay)
-                else:
-                    error_msg = traceback.format_exc()
-                    logger.warning(
-                        f"Max retries reached. Failing. {error_msg}",
-                        extra={
-                            "trace_id": oxy_request.current_trace_id,
-                            "node_id": oxy_request.node_id,
-                        },
-                    )
-                    return OxyResponse(
-                        state=OxyState.FAILED,
-                        output=f"Error executing tool {oxy.name}: {e}",
-                    )
-
     async def call(self, **kwargs) -> "OxyResponse":
         """Invoke another oxy or tool.
 

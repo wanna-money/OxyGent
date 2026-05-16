@@ -63,7 +63,6 @@ oxygent/schemas/oxy.py
 | `has_oxy(self, oxy_name)`                                  | 否           | `bool`        | 检查 MAS 注册表中是否存在指定 Oxy。                                                                     |
 | `__deepcopy__(self, memo)`                                 | 否           | `OxyRequest`  | 自定义深拷贝，保留 MAS/shared\_data 并重置并行信息。                                                    |
 | `clone_with(self, **kwargs)`                               | 否           | `OxyRequest`  | 深拷贝后原子性地覆盖指定字段。                                                                          |
-| `retry_execute(self, oxy, oxy_request=None)`               | 是           | `OxyResponse` | 使用 `oxy.retries`/`oxy.delay` 进行带重试和退避的执行。                                                 |
 | `call(self, **kwargs)`                                     | 是           | `OxyResponse` | 带覆盖参数的克隆、权限检查、超时保护、`retrieve_tools` 特殊处理，然后执行。                              |
 | `start(self)`                                              | 是           | `OxyResponse` | 入口：使用当前请求执行目标 callee 的 `execute`。                                                        |
 | `send_message(self, message)`                              | 是           | `None`        | 通过 MAS/Redis 向前端推送结构化事件。                                                                   |

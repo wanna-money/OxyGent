@@ -385,29 +385,37 @@ class MAS(BaseModel):
 
         # Create core indices
         await self.es_client.create_index(
-            app + "_trace", self._trace_index_schema(settings),
+            app + "_trace",
+            self._trace_index_schema(settings),
         )
         if Config.get_message_is_stored():
             await self.es_client.create_index(
-                app + "_message", self._message_index_schema(settings),
+                app + "_message",
+                self._message_index_schema(settings),
             )
         await self.es_client.create_index(
-            app + "_node", self._node_index_schema(settings),
+            app + "_node",
+            self._node_index_schema(settings),
         )
         await self.es_client.create_index(
-            app + "_history", self._history_index_schema(settings),
+            app + "_history",
+            self._history_index_schema(settings),
         )
         await self.es_client.create_index(
-            app + "_prompt", self._prompt_index_schema(settings),
+            app + "_prompt",
+            self._prompt_index_schema(settings),
         )
         await self.es_client.create_index(
-            app + "_prompt_history", self._prompt_history_index_schema(settings),
+            app + "_prompt_history",
+            self._prompt_history_index_schema(settings),
         )
         await self.es_client.create_index(
-            app + "_rating", self._rating_index_schema(settings),
+            app + "_rating",
+            self._rating_index_schema(settings),
         )
         await self.es_client.create_index(
-            app + "_rating_stats", self._rating_stats_index_schema(settings),
+            app + "_rating_stats",
+            self._rating_stats_index_schema(settings),
         )
 
         # init redis client
@@ -898,7 +906,7 @@ class MAS(BaseModel):
                         )
                     )
                     self.add_background_task(current_trace_id, save_message_task)
-                    self.stream_dict[node_id].clear()
+                    self.stream_dict.pop(node_id, None)
             else:
                 save_message_task = asyncio.create_task(
                     self.es_client.index(
@@ -1537,6 +1545,8 @@ class MAS(BaseModel):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
             intercepted_response = self.func_interceptor(payload)
+            if asyncio.iscoroutine(intercepted_response):
+                intercepted_response = await intercepted_response
             if intercepted_response is not None:
                 return intercepted_response
             oxy_response = await self.chat_with_agent(payload=payload)
@@ -1550,6 +1560,8 @@ class MAS(BaseModel):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
             intercepted_response = self.func_interceptor(payload)
+            if asyncio.iscoroutine(intercepted_response):
+                intercepted_response = await intercepted_response
             if intercepted_response is not None:
                 return intercepted_response
             current_trace_id = payload["current_trace_id"]
@@ -1572,6 +1584,8 @@ class MAS(BaseModel):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
             intercepted_response = self.func_interceptor(payload)
+            if asyncio.iscoroutine(intercepted_response):
+                intercepted_response = await intercepted_response
             if intercepted_response is not None:
                 return intercepted_response
 
@@ -1596,6 +1610,8 @@ class MAS(BaseModel):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
             intercepted_response = self.func_interceptor(payload)
+            if asyncio.iscoroutine(intercepted_response):
+                intercepted_response = await intercepted_response
             if intercepted_response is not None:
                 return intercepted_response
             trace_id = payload["trace_id"]

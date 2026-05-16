@@ -63,7 +63,6 @@ This module defines the core data classes used throughout the OxyGent framework 
 | `has_oxy(self, oxy_name)`                                  | No                | `bool`        | Check if an oxy exists in MAS registry.                                                                 |
 | `__deepcopy__(self, memo)`                                 | No                | `OxyRequest`  | Custom deep copy preserving MAS/shared\_data and resetting parallel info.                               |
 | `clone_with(self, **kwargs)`                               | No                | `OxyRequest`  | Deep-copy then override selected fields atomically.                                                     |
-| `retry_execute(self, oxy, oxy_request=None)`               | Yes               | `OxyResponse` | Execute with retries and backoff using `oxy.retries`/`oxy.delay`.                                       |
 | `call(self, **kwargs)`                                     | Yes               | `OxyResponse` | Clone with overrides, permission-check, timeout-guard, special-cases `retrieve_tools`, then execute.    |
 | `start(self)`                                              | Yes               | `OxyResponse` | Entry: run the target callee’s `execute` with this request.                                             |
 | `send_message(self, message)`                              | Yes               | `None`        | Push a structured event to the frontend via MAS/Redis.                                                  |
