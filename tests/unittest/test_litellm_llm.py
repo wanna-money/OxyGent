@@ -1,0 +1,300 @@
+"""Unit tests for LiteLLMLLM."""
+
+import types
+from unittest import mock
+
+import pytest
+
+from oxygent.schemas import OxyRequest, OxyResponse, OxyState
+
+
+@pytest.fixture(autouse=True)
+def config_patch(monkeypatch):
+    monkeypatch.setattr(
+        "oxygent.oxy.llms.base_llm.Config.get_llm_config",
+        lambda **kwargs: {},
+        raising=True,
+    )
+
+
+@pytest.fixture(autouse=True)
+def litellm_stub(monkeypatch):
+    """Install a fake litellm module so tests run without the real package."""
+    fake = types.ModuleType("litellm")
+    fake.acompletion = mock.AsyncMock(name="litellm.acompletion")
+    monkeypatch.setitem(__import__("sys").modules, "litellm", fake)
+    return fake
+
+
+@pytest.fixture(autouse=True)
+def mock_send_message(monkeypatch):
+    sent = []
+    mock_fn = mock.AsyncMock(
+        side_effect=lambda *a, **kw: sent.append(a[0] if a else kw)
+    )
+    monkeypatch.setattr(
+        "oxygent.schemas.oxy.OxyRequest.send_message", mock_fn, raising=True
+    )
+    return sent
+
+
+@pytest.fixture
+def llm(monkeypatch):
+    async def passthrough(self, req: OxyRequest):
+        return req.arguments["messages"]
+
+    monkeypatch.setattr(
+        "oxygent.oxy.llms.base_llm.BaseLLM._get_messages",
+        passthrough,
+        raising=True,
+    )
+
+    from oxygent.oxy.llms.litellm_llm import LiteLLMLLM
+
+    return LiteLLMLLM(
+        name="litellm_test",
+        model_name="anthropic/claude-sonnet-4-20250514",
+        api_key="sk-test-key",
+        llm_params={"temperature": 0.7},
+    )
+
+
+@pytest.fixture
+def llm_no_key(monkeypatch):
+    async def passthrough(self, req):
+        return req.arguments["messages"]
+
+    monkeypatch.setattr(
+        "oxygent.oxy.llms.base_llm.BaseLLM._get_messages",
+        passthrough,
+        raising=True,
+    )
+
+    from oxygent.oxy.llms.litellm_llm import LiteLLMLLM
+
+    return LiteLLMLLM(
+        name="litellm_nokey",
+        model_name="openai/gpt-4o",
+    )
+
+
+@pytest.fixture
+def oxy_request():
+    return OxyRequest(
+        arguments={
+            "messages": [{"role": "user", "content": "Hello"}],
+        },
+        caller="tester",
+        caller_category="agent",
+        current_trace_id="trace-litellm",
+    )
+
+
+class _FakeChoice:
+    def __init__(self, content=None, reasoning_content=None):
+        self.delta = mock.MagicMock()
+        if reasoning_content is not None:
+            self.delta.reasoning_content = reasoning_content
+            if content is None:
+                del self.delta.content
+        if content is not None:
+            self.delta.content = content
+            if reasoning_content is None:
+                del self.delta.reasoning_content
+
+
+class _FakeChunk:
+    def __init__(self, choices=None, usage=None):
+        self.choices = choices or []
+        self.usage = usage
+
+
+@pytest.mark.asyncio
+async def test_streaming_success(llm, oxy_request, litellm_stub, mock_send_message):
+    """Streaming completion returns correct output and sends stream messages."""
+    chunks = [
+        _FakeChunk(choices=[_FakeChoice(content="Hi")]),
+        _FakeChunk(choices=[_FakeChoice(content=" there")]),
+        _FakeChunk(
+            choices=[],
+            usage=mock.MagicMock(
+                prompt_tokens=10, completion_tokens=5, total_tokens=15
+            ),
+        ),
+    ]
+
+    async def fake_acompletion(**kwargs):
+        async def gen():
+            for c in chunks:
+                yield c
+
+        return gen()
+
+    litellm_stub.acompletion = fake_acompletion
+
+    resp = await llm._execute(oxy_request)
+
+    assert resp.state is OxyState.COMPLETED
+    assert resp.output == "Hi there"
+
+
+@pytest.mark.asyncio
+async def test_non_streaming(llm, oxy_request, litellm_stub):
+    """Non-streaming completion returns content directly."""
+    oxy_request.arguments["stream"] = False
+
+    fake_resp = mock.MagicMock()
+    fake_resp.choices = [mock.MagicMock()]
+    fake_resp.choices[0].message.content = "Result: 4"
+    fake_resp.usage = mock.MagicMock(
+        prompt_tokens=8, completion_tokens=3, total_tokens=11
+    )
+
+    litellm_stub.acompletion = mock.AsyncMock(return_value=fake_resp)
+
+    resp = await llm._execute(oxy_request)
+
+    assert resp.state is OxyState.COMPLETED
+    assert resp.output == "Result: 4"
+
+
+@pytest.mark.asyncio
+async def test_api_key_forwarded(llm, oxy_request, litellm_stub):
+    """api_key is included in the litellm.acompletion call when set."""
+    oxy_request.arguments["stream"] = False
+
+    fake_resp = mock.MagicMock()
+    fake_resp.choices = [mock.MagicMock()]
+    fake_resp.choices[0].message.content = "ok"
+    fake_resp.usage = None
+
+    captured = {}
+
+    async def capture(**kwargs):
+        captured.update(kwargs)
+        return fake_resp
+
+    litellm_stub.acompletion = capture
+
+    await llm._execute(oxy_request)
+
+    assert captured["api_key"] == "sk-test-key"
+    assert captured["model"] == "anthropic/claude-sonnet-4-20250514"
+    assert captured["drop_params"] is True
+
+
+@pytest.mark.asyncio
+async def test_api_key_omitted_when_unset(llm_no_key, oxy_request, litellm_stub):
+    """When api_key is None, it should not be in the payload."""
+    oxy_request.arguments["stream"] = False
+
+    fake_resp = mock.MagicMock()
+    fake_resp.choices = [mock.MagicMock()]
+    fake_resp.choices[0].message.content = "ok"
+    fake_resp.usage = None
+
+    captured = {}
+
+    async def capture(**kwargs):
+        captured.update(kwargs)
+        return fake_resp
+
+    litellm_stub.acompletion = capture
+
+    await llm_no_key._execute(oxy_request)
+
+    assert "api_key" not in captured
+
+
+@pytest.mark.asyncio
+async def test_base_url_forwarded(monkeypatch, oxy_request, litellm_stub):
+    """base_url is passed as api_base to litellm when set."""
+
+    async def passthrough(self, req):
+        return req.arguments["messages"]
+
+    monkeypatch.setattr(
+        "oxygent.oxy.llms.base_llm.BaseLLM._get_messages",
+        passthrough,
+        raising=True,
+    )
+
+    from oxygent.oxy.llms.litellm_llm import LiteLLMLLM
+
+    llm = LiteLLMLLM(
+        name="proxy_llm",
+        model_name="openai/gpt-4o",
+        base_url="http://localhost:4000",
+    )
+
+    oxy_request.arguments["stream"] = False
+
+    fake_resp = mock.MagicMock()
+    fake_resp.choices = [mock.MagicMock()]
+    fake_resp.choices[0].message.content = "ok"
+    fake_resp.usage = None
+
+    captured = {}
+
+    async def capture(**kwargs):
+        captured.update(kwargs)
+        return fake_resp
+
+    litellm_stub.acompletion = capture
+
+    await llm._execute(oxy_request)
+
+    assert captured["api_base"] == "http://localhost:4000"
+
+
+@pytest.mark.asyncio
+async def test_drop_params_default_true(llm, oxy_request, litellm_stub):
+    """drop_params defaults to True in the payload."""
+    oxy_request.arguments["stream"] = False
+
+    fake_resp = mock.MagicMock()
+    fake_resp.choices = [mock.MagicMock()]
+    fake_resp.choices[0].message.content = "ok"
+    fake_resp.usage = None
+
+    captured = {}
+
+    async def capture(**kwargs):
+        captured.update(kwargs)
+        return fake_resp
+
+    litellm_stub.acompletion = capture
+
+    await llm._execute(oxy_request)
+
+    assert captured["drop_params"] is True
+
+
+@pytest.mark.asyncio
+async def test_llm_params_merged(llm, oxy_request, litellm_stub):
+    """llm_params (e.g. temperature) are merged into the payload."""
+    oxy_request.arguments["stream"] = False
+
+    fake_resp = mock.MagicMock()
+    fake_resp.choices = [mock.MagicMock()]
+    fake_resp.choices[0].message.content = "ok"
+    fake_resp.usage = None
+
+    captured = {}
+
+    async def capture(**kwargs):
+        captured.update(kwargs)
+        return fake_resp
+
+    litellm_stub.acompletion = capture
+
+    await llm._execute(oxy_request)
+
+    assert captured["temperature"] == 0.7
+
+
+def test_factory_registration():
+    """LiteLLMLLM is registered in OxyFactory."""
+    from oxygent.oxy_factory import OxyFactory
+
+    assert "LiteLLMLLM" in OxyFactory._creators
