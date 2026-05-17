@@ -7,7 +7,8 @@ from .agents import (
     ShellUseAgent,
     SkillAgent,
     SSEOxyGent,
-    WorkflowAgent, A2AClientAgent,
+    WorkflowAgent,
+    A2AClientAgent,
 )
 from .api_tools import HttpTool
 from .bank_tools import BankClient, BankTool
