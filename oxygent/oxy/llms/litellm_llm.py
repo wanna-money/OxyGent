@@ -15,7 +15,7 @@ from .base_llm import BaseLLM
 logger = logging.getLogger(__name__)
 
 
-class LiteLLMLLM(BaseLLM):
+class LiteLLM(BaseLLM):
     """LLM provider via LiteLLM -- supports 100+ providers through a unified API.
 
     Uses ``litellm.acompletion`` under the hood, which accepts the same
@@ -52,7 +52,7 @@ class LiteLLMLLM(BaseLLM):
             import litellm
         except ImportError:
             raise ImportError(
-                "litellm is required for LiteLLMLLM. "
+                "litellm is required for LiteLLM. "
                 "Install it with: pip install litellm"
             )
 

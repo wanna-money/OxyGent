@@ -8,7 +8,7 @@ import asyncio
 from oxygent import MAS, oxy
 
 oxy_space = [
-    oxy.LiteLLMLLM(
+    oxy.LiteLLM(
         name="default_llm",
         model_name="anthropic/claude-sonnet-4-20250514",
         # api_key="sk-...",         # or set ANTHROPIC_API_KEY env var

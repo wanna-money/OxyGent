@@ -1,4 +1,4 @@
-"""Unit tests for LiteLLMLLM."""
+"""Unit tests for LiteLLM."""
 
 import types
 from unittest import mock
@@ -49,9 +49,9 @@ def llm(monkeypatch):
         raising=True,
     )
 
-    from oxygent.oxy.llms.litellm_llm import LiteLLMLLM
+    from oxygent.oxy.llms.litellm_llm import LiteLLM
 
-    return LiteLLMLLM(
+    return LiteLLM(
         name="litellm_test",
         model_name="anthropic/claude-sonnet-4-20250514",
         api_key="sk-test-key",
@@ -70,9 +70,9 @@ def llm_no_key(monkeypatch):
         raising=True,
     )
 
-    from oxygent.oxy.llms.litellm_llm import LiteLLMLLM
+    from oxygent.oxy.llms.litellm_llm import LiteLLM
 
-    return LiteLLMLLM(
+    return LiteLLM(
         name="litellm_nokey",
         model_name="openai/gpt-4o",
     )
@@ -219,9 +219,9 @@ async def test_base_url_forwarded(monkeypatch, oxy_request, litellm_stub):
         raising=True,
     )
 
-    from oxygent.oxy.llms.litellm_llm import LiteLLMLLM
+    from oxygent.oxy.llms.litellm_llm import LiteLLM
 
-    llm = LiteLLMLLM(
+    llm = LiteLLM(
         name="proxy_llm",
         model_name="openai/gpt-4o",
         base_url="http://localhost:4000",
@@ -294,7 +294,7 @@ async def test_llm_params_merged(llm, oxy_request, litellm_stub):
 
 
 def test_factory_registration():
-    """LiteLLMLLM is registered in OxyFactory."""
+    """LiteLLM is registered in OxyFactory."""
     from oxygent.oxy_factory import OxyFactory
 
-    assert "LiteLLMLLM" in OxyFactory._creators
+    assert "LiteLLM" in OxyFactory._creators
