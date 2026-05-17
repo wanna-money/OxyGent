@@ -1,11 +1,10 @@
 """Unit tests for LiteLLM."""
 
-import types
 from unittest import mock
 
 import pytest
 
-from oxygent.schemas import OxyRequest, OxyResponse, OxyState
+from oxygent.schemas import OxyRequest, OxyState
 
 
 @pytest.fixture(autouse=True)
@@ -15,15 +14,6 @@ def config_patch(monkeypatch):
         lambda **kwargs: {},
         raising=True,
     )
-
-
-@pytest.fixture(autouse=True)
-def litellm_stub(monkeypatch):
-    """Install a fake litellm module so tests run without the real package."""
-    fake = types.ModuleType("litellm")
-    fake.acompletion = mock.AsyncMock(name="litellm.acompletion")
-    monkeypatch.setitem(__import__("sys").modules, "litellm", fake)
-    return fake
 
 
 @pytest.fixture(autouse=True)
@@ -110,7 +100,7 @@ class _FakeChunk:
 
 
 @pytest.mark.asyncio
-async def test_streaming_success(llm, oxy_request, litellm_stub, mock_send_message):
+async def test_streaming_success(monkeypatch, llm, oxy_request, mock_send_message):
     """Streaming completion returns correct output and sends stream messages."""
     chunks = [
         _FakeChunk(choices=[_FakeChoice(content="Hi")]),
@@ -130,7 +120,9 @@ async def test_streaming_success(llm, oxy_request, litellm_stub, mock_send_messa
 
         return gen()
 
-    litellm_stub.acompletion = fake_acompletion
+    monkeypatch.setattr(
+        "oxygent.oxy.llms.litellm_llm.litellm.acompletion", fake_acompletion
+    )
 
     resp = await llm._execute(oxy_request)
 
@@ -139,7 +131,7 @@ async def test_streaming_success(llm, oxy_request, litellm_stub, mock_send_messa
 
 
 @pytest.mark.asyncio
-async def test_non_streaming(llm, oxy_request, litellm_stub):
+async def test_non_streaming(monkeypatch, llm, oxy_request):
     """Non-streaming completion returns content directly."""
     oxy_request.arguments["stream"] = False
 
@@ -150,7 +142,10 @@ async def test_non_streaming(llm, oxy_request, litellm_stub):
         prompt_tokens=8, completion_tokens=3, total_tokens=11
     )
 
-    litellm_stub.acompletion = mock.AsyncMock(return_value=fake_resp)
+    monkeypatch.setattr(
+        "oxygent.oxy.llms.litellm_llm.litellm.acompletion",
+        mock.AsyncMock(return_value=fake_resp),
+    )
 
     resp = await llm._execute(oxy_request)
 
@@ -159,7 +154,7 @@ async def test_non_streaming(llm, oxy_request, litellm_stub):
 
 
 @pytest.mark.asyncio
-async def test_api_key_forwarded(llm, oxy_request, litellm_stub):
+async def test_api_key_forwarded(monkeypatch, llm, oxy_request):
     """api_key is included in the litellm.acompletion call when set."""
     oxy_request.arguments["stream"] = False
 
@@ -174,7 +169,7 @@ async def test_api_key_forwarded(llm, oxy_request, litellm_stub):
         captured.update(kwargs)
         return fake_resp
 
-    litellm_stub.acompletion = capture
+    monkeypatch.setattr("oxygent.oxy.llms.litellm_llm.litellm.acompletion", capture)
 
     await llm._execute(oxy_request)
 
@@ -184,7 +179,7 @@ async def test_api_key_forwarded(llm, oxy_request, litellm_stub):
 
 
 @pytest.mark.asyncio
-async def test_api_key_omitted_when_unset(llm_no_key, oxy_request, litellm_stub):
+async def test_api_key_omitted_when_unset(monkeypatch, llm_no_key, oxy_request):
     """When api_key is None, it should not be in the payload."""
     oxy_request.arguments["stream"] = False
 
@@ -199,7 +194,7 @@ async def test_api_key_omitted_when_unset(llm_no_key, oxy_request, litellm_stub)
         captured.update(kwargs)
         return fake_resp
 
-    litellm_stub.acompletion = capture
+    monkeypatch.setattr("oxygent.oxy.llms.litellm_llm.litellm.acompletion", capture)
 
     await llm_no_key._execute(oxy_request)
 
@@ -207,7 +202,7 @@ async def test_api_key_omitted_when_unset(llm_no_key, oxy_request, litellm_stub)
 
 
 @pytest.mark.asyncio
-async def test_base_url_forwarded(monkeypatch, oxy_request, litellm_stub):
+async def test_base_url_forwarded(monkeypatch, oxy_request):
     """base_url is passed as api_base to litellm when set."""
 
     async def passthrough(self, req):
@@ -240,7 +235,7 @@ async def test_base_url_forwarded(monkeypatch, oxy_request, litellm_stub):
         captured.update(kwargs)
         return fake_resp
 
-    litellm_stub.acompletion = capture
+    monkeypatch.setattr("oxygent.oxy.llms.litellm_llm.litellm.acompletion", capture)
 
     await llm._execute(oxy_request)
 
@@ -248,7 +243,7 @@ async def test_base_url_forwarded(monkeypatch, oxy_request, litellm_stub):
 
 
 @pytest.mark.asyncio
-async def test_drop_params_default_true(llm, oxy_request, litellm_stub):
+async def test_drop_params_default_true(monkeypatch, llm, oxy_request):
     """drop_params defaults to True in the payload."""
     oxy_request.arguments["stream"] = False
 
@@ -263,7 +258,7 @@ async def test_drop_params_default_true(llm, oxy_request, litellm_stub):
         captured.update(kwargs)
         return fake_resp
 
-    litellm_stub.acompletion = capture
+    monkeypatch.setattr("oxygent.oxy.llms.litellm_llm.litellm.acompletion", capture)
 
     await llm._execute(oxy_request)
 
@@ -271,7 +266,7 @@ async def test_drop_params_default_true(llm, oxy_request, litellm_stub):
 
 
 @pytest.mark.asyncio
-async def test_llm_params_merged(llm, oxy_request, litellm_stub):
+async def test_llm_params_merged(monkeypatch, llm, oxy_request):
     """llm_params (e.g. temperature) are merged into the payload."""
     oxy_request.arguments["stream"] = False
 
@@ -286,7 +281,7 @@ async def test_llm_params_merged(llm, oxy_request, litellm_stub):
         captured.update(kwargs)
         return fake_resp
 
-    litellm_stub.acompletion = capture
+    monkeypatch.setattr("oxygent.oxy.llms.litellm_llm.litellm.acompletion", capture)
 
     await llm._execute(oxy_request)
 

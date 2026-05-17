@@ -7,6 +7,7 @@ etc.) through a single unified interface via the LiteLLM library.
 import logging
 from typing import Optional
 
+import litellm
 from pydantic import Field
 
 from ...schemas import OxyRequest, OxyResponse, OxyState
@@ -23,9 +24,6 @@ class LiteLLM(BaseLLM):
     the ``model_name`` prefix (e.g. ``anthropic/claude-sonnet-4-20250514``,
     ``openai/gpt-4o``, ``bedrock/anthropic.claude-3``).
 
-    The ``litellm`` package must be installed separately::
-
-        pip install litellm
     """
 
     api_key: Optional[str] = Field(
@@ -48,14 +46,6 @@ class LiteLLM(BaseLLM):
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Execute a request via litellm.acompletion."""
-        try:
-            import litellm
-        except ImportError:
-            raise ImportError(
-                "litellm is required for LiteLLM. "
-                "Install it with: pip install litellm"
-            )
-
         messages = await self._get_messages(oxy_request)
         payload = {
             "messages": messages,
