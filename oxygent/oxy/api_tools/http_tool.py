@@ -63,4 +63,5 @@ class HttpTool(BaseTool):
                 http_response = await client.request(
                     method, self.url, params=params, headers=self.headers
                 )
+            http_response.raise_for_status()
             return OxyResponse(state=OxyState.COMPLETED, output=http_response.text)

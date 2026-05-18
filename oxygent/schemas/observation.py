@@ -1,12 +1,7 @@
-import logging
-from typing import List
-
 from pydantic import BaseModel, Field
 
 from ..utils.common_utils import to_json
 from .oxy import OxyOutput, OxyResponse
-
-logger = logging.getLogger(__name__)
 
 
 class ExecResult(BaseModel):
@@ -19,7 +14,7 @@ class ExecResult(BaseModel):
 class Observation(BaseModel):
     """Observation for multimodal."""
 
-    exec_results: List[ExecResult] = Field(
+    exec_results: list[ExecResult] = Field(
         default_factory=list, description="List of individual tool execution results"
     )
 

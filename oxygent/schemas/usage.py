@@ -2,7 +2,7 @@
 
 from enum import Enum
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field
 
 
 class EstimationMethod(str, Enum):
@@ -27,10 +27,10 @@ class TokenUsage(BaseModel):
         estimation_method: Method used for token counting.
     """
 
-    input_tokens: int = 0
-    output_tokens: int = 0
-    cached_tokens: int = 0
-    reasoning_tokens: int = 0
+    input_tokens: int = Field(default=0, ge=0)
+    output_tokens: int = Field(default=0, ge=0)
+    cached_tokens: int = Field(default=0, ge=0)
+    reasoning_tokens: int = Field(default=0, ge=0)
     model_name: str = ""
     estimation_method: EstimationMethod = EstimationMethod.EXACT
 

@@ -4,7 +4,7 @@ Defines BankTool, an individual tool entry registered from a bank server.
 """
 
 import logging
-from typing import Dict, Literal
+from typing import Literal
 
 import httpx
 from pydantic import AnyUrl, Field
@@ -22,12 +22,12 @@ class BankTool(BaseBank):
         "", description="URL of the bank server endpoint for this tool"
     )
     method: Literal["GET", "POST"] = Field(
-        "GET", description="HTTP method used when invoking this tool"
+        "POST", description="HTTP method used when invoking this tool"
     )
     is_permission_required: bool = Field(
         True, description="Whether permission is required for execution"
     )
-    headers: Dict[str, str] = Field(
+    headers: dict[str, str] = Field(
         default_factory=dict, description="Extra HTTP headers"
     )
     is_retrievable: bool = Field(
@@ -38,12 +38,13 @@ class BankTool(BaseBank):
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Invoke this tool through its parent BankClient."""
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                str(self.server_url),
-                headers=self.headers,
-                timeout=self.timeout,
-                json=oxy_request.arguments,
-            )
+            kwargs = {"headers": self.headers, "timeout": self.timeout}
+            if self.method.upper() == "GET":
+                kwargs["params"] = oxy_request.arguments
+            else:
+                kwargs["json"] = oxy_request.arguments
+            response = await client.request(self.method, str(self.server_url), **kwargs)
+            response.raise_for_status()
             return OxyResponse(
                 state=OxyState.COMPLETED,
                 output=response.text,

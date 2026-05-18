@@ -20,20 +20,18 @@ oxy_space = [
         desc="A tool that can query the time",
         prompt="You are a time management assistant. Help users with time-related queries.",
         tools=["time_tools"],
-        use_live_prompt=False  # 关闭动态提示词，且prompt为空，则使用系统默认提示词
+        use_live_prompt=False,  # 关闭动态提示词，且prompt为空，则使用系统默认提示词
     ),
     preset_tools.file_tools,
-
     # 只使用代码中的提示词
     oxy.ReActAgent(
         name="file_agent",
         desc="A tool that can operate the file system",
         tools=["file_tools"],
         prompt="You are a file system assistant. Help users with file operations safely and efficiently.",
-        use_live_prompt=False # 关闭动态提示词，则使用代码中的 prompt 参数
+        use_live_prompt=False,  # 关闭动态提示词，则使用代码中的 prompt 参数
     ),
     preset_tools.math_tools,
-
     # 使用 动态提示词
     oxy.ReActAgent(
         name="math_agent",
@@ -41,7 +39,7 @@ oxy_space = [
         tools=["math_tools"],
         prompt="You are a math assistant. Help users with mathematical calculations.",
     ),
-     # 使用 动态提示词
+    # 使用 动态提示词
     oxy.ReActAgent(
         is_master=True,
         name="master_agent",
@@ -51,7 +49,7 @@ oxy_space = [
 ]
 
 
-async def main():#
+async def main():
     async with MAS(oxy_space=oxy_space) as mas:
         await mas.start_web_service(
             first_query="What time is it now? Please save it into time.txt."

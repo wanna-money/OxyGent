@@ -10,7 +10,7 @@ Run:
 import asyncio
 import json
 
-from oxygent import Config, MAS, OxyRequest, oxy
+from oxygent import MAS, Config, OxyRequest, oxy
 
 SERVER_URL = "http://127.0.0.1:8090/a2a"
 
@@ -51,7 +51,7 @@ async def main():
         )
     ]
 
-    async with (MAS(oxy_space=oxy_space) as mas):
+    async with MAS(oxy_space=oxy_space) as mas:
         response = await call_once(mas, "1+1等于几")
         task_id = response.extra.get("task_id")
         print(response.output)
