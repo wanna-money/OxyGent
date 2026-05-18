@@ -1,4 +1,5 @@
 from .agents import (
+    A2AClientAgent,
     ChatAgent,
     ParallelAgent,
     PlanAndSolveAgent,
@@ -7,7 +8,7 @@ from .agents import (
     ShellUseAgent,
     SkillAgent,
     SSEOxyGent,
-    WorkflowAgent, A2AClientAgent,
+    WorkflowAgent,
 )
 from .api_tools import HttpTool
 from .bank_tools import BankClient, BankTool

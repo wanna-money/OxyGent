@@ -25,23 +25,25 @@ VIDEO_EXTENSIONS = ("mp4", "avi", "mov", "wmv", "flv", "webm", "mkv")
 
 # HTTP headers to exclude when forwarding requests between agents.
 # Used by SSEOxyAgent and A2AClientAgent to strip browser/proxy headers.
-EXCLUDED_HEADERS = frozenset({
-    "host",
-    "connection",
-    "sec-ch-ua",
-    "sec-ch-ua-mobile",
-    "sec-ch-ua-platform",
-    "user-agent",
-    "referer",
-    "accept-encoding",
-    "accept-language",
-    "cache-control",
-    "sec-fetch-site",
-    "sec-fetch-mode",
-    "sec-fetch-dest",
-    "accept",
-    "content-length",
-})
+EXCLUDED_HEADERS = frozenset(
+    {
+        "host",
+        "connection",
+        "sec-ch-ua",
+        "sec-ch-ua-mobile",
+        "sec-ch-ua-platform",
+        "user-agent",
+        "referer",
+        "accept-encoding",
+        "accept-language",
+        "cache-control",
+        "sec-fetch-site",
+        "sec-fetch-mode",
+        "sec-fetch-dest",
+        "accept",
+        "content-length",
+    }
+)
 
 
 def get_timestamp():

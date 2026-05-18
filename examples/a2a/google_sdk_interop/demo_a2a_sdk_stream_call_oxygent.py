@@ -8,12 +8,18 @@ Run:
 """
 
 import asyncio
-import json
 from uuid import uuid4
 
 import httpx
 from a2a.client import A2ACardResolver, A2AClient
-from a2a.types import MessageSendParams, SendStreamingMessageRequest, Message, Task, TaskStatusUpdateEvent, TaskArtifactUpdateEvent
+from a2a.types import (
+    Message,
+    MessageSendParams,
+    SendStreamingMessageRequest,
+    Task,
+    TaskArtifactUpdateEvent,
+    TaskStatusUpdateEvent,
+)
 from a2a.utils.message import get_message_text
 from a2a.utils.parts import get_text_parts
 
@@ -59,7 +65,9 @@ async def main() -> None:
         payload = {
             "message": {
                 "role": "user",
-                "parts": [{"kind": "text", "text": "请分三点介绍 OxyGent A2A 流式能力"}],
+                "parts": [
+                    {"kind": "text", "text": "请分三点介绍 OxyGent A2A 流式能力"}
+                ],
                 "messageId": uuid4().hex,
             },
             "metadata": {},
@@ -83,10 +91,10 @@ async def main() -> None:
             result = getattr(root, "result", None)
             text = extract_text(result)
             if text:
-                delta = text[len(emitted):] if text.startswith(emitted) else text
+                delta = text[len(emitted) :] if text.startswith(emitted) else text
                 emitted = text if text.startswith(emitted) else (emitted + text)
                 if delta:
-                    print(delta, end='')
+                    print(delta, end="")
 
             # print raw chunk for debugging/compat check
             # print("[chunk]", json.dumps(chunk.model_dump(mode="json", exclude_none=True), ensure_ascii=False))

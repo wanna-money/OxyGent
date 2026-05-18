@@ -54,7 +54,9 @@ class A2AInMemoryStore:
     ) -> dict[str, Any]:
         """Build and cache task snapshot in memory."""
         state_value = (
-            state.value if isinstance(state, TaskState) else str(state or TaskState.unknown.value)
+            state.value
+            if isinstance(state, TaskState)
+            else str(state or TaskState.unknown.value)
         )
         if state_value == "pending":
             state_value = TaskState.submitted.value

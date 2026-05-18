@@ -1,14 +1,12 @@
-import os
+from unittest.mock import MagicMock, patch
+
 import pytest
-import subprocess
-import tempfile
-from unittest.mock import patch, MagicMock
 
 from oxygent.preset_tools.shell_tools import run_shell_command
 
 
 @pytest.mark.asyncio
-@patch('subprocess.run')
+@patch("subprocess.run")
 async def test_run_shell_command_success(mock_run):
     """Test successful shell command execution"""
     mock_result = MagicMock()
@@ -24,13 +22,13 @@ async def test_run_shell_command_success(mock_run):
         encoding="utf8",
         shell=True,
         text=True,
-        cwd=None
+        cwd=None,
     )
     assert result == "line1\nline2\nline3\nline4\nline5"
 
 
 @pytest.mark.asyncio
-@patch('subprocess.run')
+@patch("subprocess.run")
 async def test_run_shell_command_with_tail(mock_run):
     """Test shell command execution with custom tail value"""
     mock_result = MagicMock()
@@ -44,7 +42,7 @@ async def test_run_shell_command_with_tail(mock_run):
 
 
 @pytest.mark.asyncio
-@patch('subprocess.run')
+@patch("subprocess.run")
 async def test_run_shell_command_with_base_dir(mock_run):
     """Test shell command execution with custom base directory"""
     mock_result = MagicMock()
@@ -61,13 +59,13 @@ async def test_run_shell_command_with_base_dir(mock_run):
         encoding="utf8",
         shell=True,
         text=True,
-        cwd=test_dir
+        cwd=test_dir,
     )
     assert result == "success"
 
 
 @pytest.mark.asyncio
-@patch('subprocess.run')
+@patch("subprocess.run")
 async def test_run_shell_command_error(mock_run):
     """Test shell command execution with error"""
     mock_result = MagicMock()
@@ -81,7 +79,7 @@ async def test_run_shell_command_error(mock_run):
 
 
 @pytest.mark.asyncio
-@patch('subprocess.run')
+@patch("subprocess.run")
 async def test_run_shell_command_exception(mock_run):
     """Test shell command execution with exception"""
     mock_run.side_effect = Exception("Subprocess failed")
@@ -92,7 +90,7 @@ async def test_run_shell_command_exception(mock_run):
 
 
 @pytest.mark.asyncio
-@patch('subprocess.run')
+@patch("subprocess.run")
 async def test_run_shell_command_empty_output(mock_run):
     """Test shell command execution with empty output"""
     mock_result = MagicMock()
@@ -106,7 +104,7 @@ async def test_run_shell_command_empty_output(mock_run):
 
 
 @pytest.mark.asyncio
-@patch('subprocess.run')
+@patch("subprocess.run")
 async def test_run_shell_command_single_line(mock_run):
     """Test shell command execution with single line output"""
     mock_result = MagicMock()
@@ -120,7 +118,7 @@ async def test_run_shell_command_single_line(mock_run):
 
 
 @pytest.mark.asyncio
-@patch('subprocess.run')
+@patch("subprocess.run")
 async def test_run_shell_command_large_tail(mock_run):
     """Test shell command execution with tail larger than output lines"""
     mock_result = MagicMock()
@@ -134,7 +132,7 @@ async def test_run_shell_command_large_tail(mock_run):
 
 
 @pytest.mark.asyncio
-@patch('subprocess.run')
+@patch("subprocess.run")
 async def test_run_shell_command_zero_tail(mock_run):
     """Test shell command execution with zero tail"""
     mock_result = MagicMock()

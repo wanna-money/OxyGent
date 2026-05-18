@@ -132,7 +132,9 @@ class A2AServerGateway(BaseModel):
         return rpc_error(req_id, code, message)
 
     @staticmethod
-    def _build_message_event(text: str, task_id: str, context_id: str) -> dict[str, Any]:
+    def _build_message_event(
+        text: str, task_id: str, context_id: str
+    ) -> dict[str, Any]:
         return build_message_event(text, task_id, context_id)
 
     def _effective_target(self) -> str:
@@ -239,7 +241,9 @@ class A2AServerGateway(BaseModel):
         from sse_starlette.sse import EventSourceResponse
 
         router = APIRouter(prefix=self.a2a_base_path, tags=["a2a"])
-        logger.info("A2A router initialized", extra={"a2a_base_path": self.a2a_base_path})
+        logger.info(
+            "A2A router initialized", extra={"a2a_base_path": self.a2a_base_path}
+        )
 
         @router.get("/.well-known/agent.json")
         async def get_agent_card(request: Request):
@@ -352,7 +356,9 @@ class A2AServerGateway(BaseModel):
             )
 
             if self._store.is_running(task_id):
-                logger.info("A2A stream task already running", extra={"task_id": task_id})
+                logger.info(
+                    "A2A stream task already running", extra={"task_id": task_id}
+                )
                 running_task = self._store.get_task(task_id)
                 if running_task:
                     yield self._build_message_event(
@@ -404,14 +410,18 @@ class A2AServerGateway(BaseModel):
 
             redis_key = f"{self.mas.message_prefix}:{self.mas.name}:{task_id}"
             mas_task = asyncio.create_task(
-                self.mas.chat_with_agent(payload=payload_for_mas, send_msg_key=redis_key)
+                self.mas.chat_with_agent(
+                    payload=payload_for_mas, send_msg_key=redis_key
+                )
             )
             emitted = ""
             final_answer = ""
             last_snapshot_chars = 0
             last_snapshot_time = time.monotonic()
             try:
-                async for sse_msg in self.mas._process_redis_messages(redis_key, task_id):
+                async for sse_msg in self.mas._process_redis_messages(
+                    redis_key, task_id
+                ):
                     if sse_msg.get("event", "message") == "close":
                         break
                     data = sse_msg.get("data")
@@ -529,7 +539,10 @@ class A2AServerGateway(BaseModel):
         async def run_resubscribe(task_id: str):
             task = await run_get_task(task_id)
             message = (
-                task.get("status", {}).get("message", {}).get("parts", [{}])[0].get("text", "")
+                task.get("status", {})
+                .get("message", {})
+                .get("parts", [{}])[0]
+                .get("text", "")
             )
             context_id = task.get("contextId", "")
             return message, context_id
@@ -551,7 +564,9 @@ class A2AServerGateway(BaseModel):
 
         async def handle_unified_post(payload: dict[str, Any]):
             if not isinstance(payload, dict):
-                raise HTTPException(status_code=400, detail="payload must be a JSON object")
+                raise HTTPException(
+                    status_code=400, detail="payload must be a JSON object"
+                )
 
             method = payload.get("method")
             req_id = payload.get("id")
@@ -575,24 +590,38 @@ class A2AServerGateway(BaseModel):
                         async for event in run_send_message_stream(
                             params if isinstance(params, dict) else {}
                         ):
-                            yield {"data": json.dumps(self._rpc_ok(req_id, event), ensure_ascii=False)}
+                            yield {
+                                "data": json.dumps(
+                                    self._rpc_ok(req_id, event), ensure_ascii=False
+                                )
+                            }
 
                     return EventSourceResponse(stream_gen())
 
                 try:
                     if method == "tasks/get":
                         task_id = params.get("id") or params.get("taskId")
-                        return self._rpc_ok(req_id, await run_get_task(str(task_id or "")))
+                        return self._rpc_ok(
+                            req_id, await run_get_task(str(task_id or ""))
+                        )
                     if method == "tasks/cancel":
                         task_id = params.get("id") or params.get("taskId")
-                        return self._rpc_ok(req_id, await run_cancel_task(str(task_id or "")))
+                        return self._rpc_ok(
+                            req_id, await run_cancel_task(str(task_id or ""))
+                        )
                     if method == "tasks/resubscribe":
                         task_id = params.get("id") or params.get("taskId")
                         msg, context_id = await run_resubscribe(str(task_id or ""))
 
                         async def resub_stream_gen():
-                            event = self._build_message_event(str(msg), str(task_id), context_id)
-                            yield {"data": json.dumps(self._rpc_ok(req_id, event), ensure_ascii=False)}
+                            event = self._build_message_event(
+                                str(msg), str(task_id), context_id
+                            )
+                            yield {
+                                "data": json.dumps(
+                                    self._rpc_ok(req_id, event), ensure_ascii=False
+                                )
+                            }
 
                         return EventSourceResponse(resub_stream_gen())
                 except ValueError as e:
@@ -608,7 +637,9 @@ class A2AServerGateway(BaseModel):
                     )
                     return self._rpc_error(req_id, -32004, str(e))
                 except Exception as e:
-                    logger.exception("A2A JSON-RPC unexpected error", extra={"method": method})
+                    logger.exception(
+                        "A2A JSON-RPC unexpected error", extra={"method": method}
+                    )
                     return self._rpc_error(req_id, -32000, str(e))
 
                 return self._rpc_error(req_id, -32601, f"method `{method}` not found")
@@ -641,7 +672,9 @@ class A2AServerGateway(BaseModel):
                 if action == "resubscribe":
                     msg, context_id = await run_resubscribe(str(task_id or ""))
                     return {
-                        "event": self._build_message_event(str(msg), str(task_id), context_id)
+                        "event": self._build_message_event(
+                            str(msg), str(task_id), context_id
+                        )
                     }
             except ValueError as e:
                 logger.warning(

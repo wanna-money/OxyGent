@@ -13,7 +13,9 @@ from oxygent.preset_tools.time_tools import convert_time, get_current_time
 @pytest.mark.asyncio
 async def test_get_current_time_default():
     result = await get_current_time(timezone=None)
-    assert "CST" in result or "Asia" in result or re.search(r"\d{4}-\d{2}-\d{2}", result)
+    assert (
+        "CST" in result or "Asia" in result or re.search(r"\d{4}-\d{2}-\d{2}", result)
+    )
 
 
 @pytest.mark.asyncio

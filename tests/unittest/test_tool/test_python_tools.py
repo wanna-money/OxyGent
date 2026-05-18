@@ -29,8 +29,8 @@ async def test_with_others():
     code = "result = test_var * 2"
     custom_globals = {"test_var": 10}
     output = await run_python_code(
-        code, variable_to_return="result",
-        safe_globals=custom_globals)
+        code, variable_to_return="result", safe_globals=custom_globals
+    )
     assert output == "20"
     code = "message = 'Hello World'"
     output = await run_python_code(code, variable_to_return="message")

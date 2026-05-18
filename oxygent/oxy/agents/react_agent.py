@@ -292,7 +292,7 @@ class ReActAgent(LocalAgent):
         except Exception as e:
             logger.warning(e)
             return LLMResponse(
-                state=LLMState.ERROR_PARSE, output=e, ori_response=ori_response
+                state=LLMState.ERROR_PARSE, output=str(e), ori_response=ori_response
             )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:

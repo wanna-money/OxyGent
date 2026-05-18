@@ -54,7 +54,10 @@ def build_task(text: str, task_id: str, context_id: str) -> dict[str, Any]:
         "kind": "task",
         "id": task_id,
         "contextId": context_id,
-        "status": {"state": "completed", "message": build_message(text, task_id, context_id)},
+        "status": {
+            "state": "completed",
+            "message": build_message(text, task_id, context_id),
+        },
         "artifacts": [
             {
                 "artifactId": str(uuid4()),

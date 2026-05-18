@@ -54,7 +54,7 @@ def parse_llm_response(
             )
     except Exception as e:
         return LLMResponse(
-            state=LLMState.ERROR_PARSE, output=e, ori_response=ori_response
+            state=LLMState.ERROR_PARSE, output=str(e), ori_response=ori_response
         )
 
 

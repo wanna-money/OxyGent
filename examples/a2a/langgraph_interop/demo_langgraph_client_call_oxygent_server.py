@@ -17,8 +17,7 @@ try:
     from langgraph.graph import END, StateGraph
 except Exception as e:  # pragma: no cover
     raise RuntimeError(
-        "Missing dependency `langgraph`. Install it first, e.g.:\n"
-        "pip install langgraph"
+        "Missing dependency `langgraph`. Install it first, e.g.:\npip install langgraph"
     ) from e
 
 
@@ -34,7 +33,7 @@ class GraphState(TypedDict):
 
 
 def extract_task_text(task: dict) -> str:
-    status_msg = (((task or {}).get("status") or {}).get("message") or {})
+    status_msg = ((task or {}).get("status") or {}).get("message") or {}
     parts = status_msg.get("parts", [])
     if parts and isinstance(parts[0], dict):
         txt = parts[0].get("text")
@@ -50,7 +49,9 @@ def extract_task_text(task: dict) -> str:
     return ""
 
 
-async def send_a2a(query: str, context_id: str = "", task_id: str = "") -> tuple[dict, str]:
+async def send_a2a(
+    query: str, context_id: str = "", task_id: str = ""
+) -> tuple[dict, str]:
     message = {
         "kind": "message",
         "messageId": "lg-" + query[:8],
@@ -78,7 +79,9 @@ async def send_a2a(query: str, context_id: str = "", task_id: str = "") -> tuple
 
 async def call_node(state: GraphState) -> GraphState:
     task, answer = await send_a2a(
-        state["query"], context_id=state.get("context_id", ""), task_id=state.get("task_id", "")
+        state["query"],
+        context_id=state.get("context_id", ""),
+        task_id=state.get("task_id", ""),
     )
     return {
         "query": state["query"],
@@ -98,7 +101,13 @@ graph = builder.compile()
 
 async def main():
     turn1 = await graph.ainvoke(
-        {"query": "哪个数字最大，直接回答：1、5、7", "answer": "", "context_id": "", "task_id": "", "raw_task": {}}
+        {
+            "query": "哪个数字最大，直接回答：1、5、7",
+            "answer": "",
+            "context_id": "",
+            "task_id": "",
+            "raw_task": {},
+        }
     )
     print("\n[turn1 raw]", json.dumps(turn1["raw_task"], ensure_ascii=False))
     print("[turn1]", turn1["answer"])
@@ -106,4 +115,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

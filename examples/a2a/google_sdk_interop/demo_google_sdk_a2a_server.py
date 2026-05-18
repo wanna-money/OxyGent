@@ -63,12 +63,19 @@ def build_agent_card() -> AgentCard:
 class SimpleA2AHandler:
     """Simple handler for non-stream and stream message calls."""
 
-    async def on_message_send(self, params: MessageSendParams, *args: Any, **kwargs: Any) -> Message:
+    async def on_message_send(
+        self, params: MessageSendParams, *args: Any, **kwargs: Any
+    ) -> Message:
         query = get_message_text(params.message) or ""
         context_id = params.message.context_id
         task_id = params.message.task_id
         answer = f"Google SDK A2A server reply: I received your question: {query}"
-        logger.info("on_message_send context_id=%s task_id=%s query=%s", context_id, task_id, query)
+        logger.info(
+            "on_message_send context_id=%s task_id=%s query=%s",
+            context_id,
+            task_id,
+            query,
+        )
         return Message(
             messageId=uuid.uuid4().hex,
             role=Role.agent,

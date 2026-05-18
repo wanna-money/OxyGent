@@ -7,7 +7,7 @@ Run:
 import asyncio
 import os
 
-from oxygent import Config, MAS, oxy
+from oxygent import MAS, Config, oxy
 
 PORT = 8090
 A2A_BASE_PATH = "/a2a"

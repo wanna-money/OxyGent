@@ -3,13 +3,11 @@ import json
 import logging
 
 import aiohttp
-
-from ...utils.common_utils import EXCLUDED_HEADERS
 import httpx
 from pydantic import Field
 
 from ...schemas import OxyRequest, OxyResponse, OxyState
-from ...utils.common_utils import build_url
+from ...utils.common_utils import EXCLUDED_HEADERS, build_url
 from ...utils.sse_utils import iter_sse_events
 from .remote_agent import RemoteAgent
 

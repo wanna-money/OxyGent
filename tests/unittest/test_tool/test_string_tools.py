@@ -4,7 +4,11 @@ import json
 
 import pytest
 
-from oxygent.preset_tools.string_tools import extract_emails, extract_urls, validate_email
+from oxygent.preset_tools.string_tools import (
+    extract_emails,
+    extract_urls,
+    validate_email,
+)
 
 
 # ──────────────────────────────────────────────────────────────────────────────

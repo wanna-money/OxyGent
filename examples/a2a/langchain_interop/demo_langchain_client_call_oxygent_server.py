@@ -25,7 +25,7 @@ BASE_URL = "http://127.0.0.1:8090/a2a"
 
 
 def extract_task_text(task: dict) -> str:
-    status_msg = (((task or {}).get("status") or {}).get("message") or {})
+    status_msg = ((task or {}).get("status") or {}).get("message") or {}
     parts = status_msg.get("parts", [])
     if parts and isinstance(parts[0], dict):
         txt = parts[0].get("text")
@@ -42,7 +42,10 @@ def extract_task_text(task: dict) -> str:
 
 
 async def send_once(
-    client: httpx.AsyncClient, query: str, context_id: str | None = None, task_id: str | None = None
+    client: httpx.AsyncClient,
+    query: str,
+    context_id: str | None = None,
+    task_id: str | None = None,
 ):
     message = {
         "kind": "message",
@@ -81,4 +84,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

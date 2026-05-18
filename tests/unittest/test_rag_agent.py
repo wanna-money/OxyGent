@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from oxygent.oxy.agents.rag_agent import RAGAgent
-from oxygent.schemas import OxyRequest, OxyResponse, OxyState
+from oxygent.schemas import OxyRequest
 
 
 # ──────────────────────────────────────────────────────────────────────────────

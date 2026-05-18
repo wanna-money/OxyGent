@@ -26,7 +26,9 @@ class DummyMAS:
 
     def add_background_task(self, trace_id, task):
         self.background_tasks.setdefault(trace_id, set()).add(task)
-        task.add_done_callback(lambda t: self.background_tasks.get(trace_id, set()).discard(t))
+        task.add_done_callback(
+            lambda t: self.background_tasks.get(trace_id, set()).discard(t)
+        )
 
     async def send_message(self, message, redis_key, group_id=""):
         self.last_msg = (redis_key, message)

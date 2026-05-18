@@ -13,7 +13,6 @@ from oxygent.utils.token_utils import (
     build_token_usage,
 )
 
-
 # ---------------------------------------------------------------------------
 # TokenUsage schema
 # ---------------------------------------------------------------------------
@@ -316,9 +315,7 @@ class TestTokenAggregation:
         try:
             Config.set_token_tracking_enabled(False)
             req = MagicMock(shared_data={})
-            aggregate_token_usage(
-                req, TokenUsage(input_tokens=100, output_tokens=50)
-            )
+            aggregate_token_usage(req, TokenUsage(input_tokens=100, output_tokens=50))
             assert "_metrics" not in req.shared_data
         finally:
             Config.set_token_tracking_enabled(original)
@@ -335,9 +332,7 @@ class TestAfterExecute:
         from oxygent.oxy.llms.base_llm import BaseLLM
 
         req = MagicMock(shared_data={})
-        token_usage = TokenUsage(
-            input_tokens=10, output_tokens=5, model_name="gpt-4o"
-        )
+        token_usage = TokenUsage(input_tokens=10, output_tokens=5, model_name="gpt-4o")
         resp = OxyResponse(
             state=OxyState.COMPLETED,
             output="hello",

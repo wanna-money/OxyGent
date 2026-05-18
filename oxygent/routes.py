@@ -820,9 +820,7 @@ async def get_agents():
 
     except Exception as e:
         logger.error(f"Failed to get agents: {e}")
-        return WebResponse(
-            code=500, message=f"Failed to get agents: {e}"
-        ).to_dict()
+        return WebResponse(code=500, message=f"Failed to get agents: {e}").to_dict()
 
 
 # ---------------------------------------------------------------------------
@@ -922,7 +920,9 @@ async def get_current_rating(trace_id: str, erp: str = None):
         return WebResponse(
             data={
                 "trace_id": trace_id,
-                "current_rating": current_rating.model_dump() if current_rating else None,
+                "current_rating": current_rating.model_dump()
+                if current_rating
+                else None,
             }
         ).to_dict()
 
@@ -1064,9 +1064,7 @@ async def setup_rating_indices():
     except Exception as e:
         error_msg = traceback.format_exc()
         logger.error(f"Setup rating indices error: {error_msg}")
-        return WebResponse(
-            code=500, message=f"Failed to setup indexes: {e}"
-        ).to_dict()
+        return WebResponse(code=500, message=f"Failed to setup indexes: {e}").to_dict()
 
 
 @router.get("/history_with_ratings")
