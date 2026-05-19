@@ -75,11 +75,19 @@ class SSEMCPClient(BaseMCPClient):
                         tools_response = await session.list_tools()
                         self.add_tools(tools_response)
         except Exception as e:
-            logger.error(f"Error initializing SSE server '{self.name}' (url={self.sse_url}): {e}", exc_info=True)
+            logger.error(
+                f"Error initializing SSE server '{self.name}' (url={self.sse_url}): {e}",
+                exc_info=True,
+            )
             await self.cleanup()
             raise Exception(f"Server {self.name} error")
 
-    async def call_tool(self, tool_name: str, arguments: dict[str, Any], headers: Optional[dict[str, str]] = None) -> Any:
+    async def call_tool(
+        self,
+        tool_name: str,
+        arguments: dict[str, Any],
+        headers: Optional[dict[str, str]] = None,
+    ) -> Any:
         """Open a fresh SSE connection and invoke the named tool with arguments."""
         async with sse_client(
             build_url(self.sse_url), headers=headers, timeout=self.timeout

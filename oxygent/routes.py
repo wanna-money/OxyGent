@@ -318,7 +318,10 @@ async def call(item: Item):
         oxy_response = await oxy.execute(OxyRequest(arguments=item.arguments))
         return WebResponse(data={"output": oxy_response.output}).to_dict()
     except Exception as e:
-        logger.error(f"Call error for class_name={item.class_attr.get('class_name', 'unknown')}: {e}", exc_info=True)
+        logger.error(
+            f"Call error for class_name={item.class_attr.get('class_name', 'unknown')}: {e}",
+            exc_info=True,
+        )
         return WebResponse(code=500, message="遇到问题").to_dict()
 
 
@@ -531,7 +534,9 @@ async def create_prompt(request: PromptCreateRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create prompt '{request.prompt_key}': {e}", exc_info=True)
+        logger.error(
+            f"Failed to create prompt '{request.prompt_key}': {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -664,7 +669,9 @@ async def search_prompts(
             success=True, message="Successfully searched prompts", data=results
         )
     except Exception as e:
-        logger.error(f"Failed to search prompts with keyword='{keyword}': {e}", exc_info=True)
+        logger.error(
+            f"Failed to search prompts with keyword='{keyword}': {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -686,7 +693,9 @@ async def get_prompt_history(prompt_key: str):
             success=True, message="Successfully retrieved prompt history", data=history
         )
     except Exception as e:
-        logger.error(f"Failed to get prompt history for {prompt_key}: {e}", exc_info=True)
+        logger.error(
+            f"Failed to get prompt history for {prompt_key}: {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -771,7 +780,10 @@ async def get_prompt_version(prompt_key: str, version: int):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get version {version} of prompt {prompt_key}: {e}", exc_info=True)
+        logger.error(
+            f"Failed to get version {version} of prompt {prompt_key}: {e}",
+            exc_info=True,
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -861,7 +873,9 @@ async def create_rating(rating_request: RatingRequest, request: Request):
     except Exception as e:
         logger.error(
             "Create rating error for trace_id=%s: %s",
-            rating_request.trace_id if hasattr(rating_request, "trace_id") else "unknown",
+            rating_request.trace_id
+            if hasattr(rating_request, "trace_id")
+            else "unknown",
             e,
             exc_info=True,
         )
@@ -896,7 +910,9 @@ async def get_rating_stats(trace_id: str):
             ).to_dict()
 
     except Exception as e:
-        logger.error(f"Get rating stats error for trace_id={trace_id}: {e}", exc_info=True)
+        logger.error(
+            f"Get rating stats error for trace_id={trace_id}: {e}", exc_info=True
+        )
         return WebResponse(
             code=500, message="Failed to get rating statistics"
         ).to_dict()
@@ -928,7 +944,9 @@ async def get_current_rating(trace_id: str, erp: Optional[str] = None):
         ).to_dict()
 
     except Exception as e:
-        logger.error(f"Get current rating error for trace_id={trace_id}: {e}", exc_info=True)
+        logger.error(
+            f"Get current rating error for trace_id={trace_id}: {e}", exc_info=True
+        )
         return WebResponse(code=500, message="Failed to get current rating").to_dict()
 
 
@@ -961,7 +979,9 @@ async def get_rating_history(trace_id: str, erp: Optional[str] = None):
         ).to_dict()
 
     except Exception as e:
-        logger.error(f"Get rating history error for trace_id={trace_id}: {e}", exc_info=True)
+        logger.error(
+            f"Get rating history error for trace_id={trace_id}: {e}", exc_info=True
+        )
         return WebResponse(code=500, message="Failed to get rating history").to_dict()
 
 
@@ -1159,7 +1179,9 @@ async def get_history_with_ratings(
                     groups_metadata_dict[group_id]["latest_create_time"] = create_time
 
             except Exception as hit_error:
-                logger.warning(f"Error processing trace hit: {hit_error}", exc_info=True)
+                logger.warning(
+                    f"Error processing trace hit: {hit_error}", exc_info=True
+                )
                 continue
 
         groups_metadata = list(groups_metadata_dict.values())
@@ -1313,8 +1335,7 @@ async def get_history_with_ratings(
 
     except Exception as e:
         logger.error(
-            "Get history with ratings error (page=%s, rating_filter=%s, search_term=%s): %s",
-            page, rating_filter, search_term, e,
+            f"Get history with ratings error (page={page}, rating_filter={rating_filter}, search_term={search_term}): {e}",
             exc_info=True,
         )
         return WebResponse(
@@ -1367,7 +1388,9 @@ async def rebuild_rating_stats(trace_id: str):
         ).to_dict()
 
     except Exception as e:
-        logger.error(f"Rebuild rating stats error for trace_id={trace_id}: {e}", exc_info=True)
+        logger.error(
+            f"Rebuild rating stats error for trace_id={trace_id}: {e}", exc_info=True
+        )
         return WebResponse(code=500, message="Failed to rebuild statistics").to_dict()
 
 
@@ -1393,7 +1416,9 @@ async def delete_rating(rating_id: str):
             return WebResponse(code=404, message="Rating record not found").to_dict()
 
     except Exception as e:
-        logger.error(f"Delete rating error for rating_id={rating_id}: {e}", exc_info=True)
+        logger.error(
+            f"Delete rating error for rating_id={rating_id}: {e}", exc_info=True
+        )
         return WebResponse(code=500, message="Failed to delete rating").to_dict()
 
 

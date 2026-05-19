@@ -84,7 +84,9 @@ async def get_embedding(querys: list[str] | tuple[str, ...]) -> Optional[np.ndar
         return res_lis
 
     except Exception as e:
-        logger.error(f"Failed to get embeddings for {len(querys)} texts: {e}", exc_info=True)
+        logger.error(
+            f"Failed to get embeddings for {len(querys)} texts: {e}", exc_info=True
+        )
 
 
 class EmbeddingCache:
@@ -134,7 +136,9 @@ class EmbeddingCache:
                 pickle.dump(self.data, f)
             self.count = 0
         except Exception as e:
-            logger.error(f"Failed to save embedding cache to {self.file}: {e}", exc_info=True)
+            logger.error(
+                f"Failed to save embedding cache to {self.file}: {e}", exc_info=True
+            )
 
     # ---------------------------------------------------------------------
     # Public API
@@ -157,7 +161,9 @@ class EmbeddingCache:
         else:
             return await self._get_single(key)
 
-    async def _get_multiple(self, keys: list[str] | tuple[str, ...] | set[str]) -> np.ndarray:
+    async def _get_multiple(
+        self, keys: list[str] | tuple[str, ...] | set[str]
+    ) -> np.ndarray:
         feature_list = []
         texts = []
 
@@ -203,5 +209,7 @@ class EmbeddingCache:
     def __enter__(self) -> "EmbeddingCache":
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:  # autosave on exit
+    def __exit__(
+        self, exc_type: Any, exc_val: Any, exc_tb: Any
+    ) -> None:  # autosave on exit
         self.save()

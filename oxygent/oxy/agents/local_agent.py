@@ -350,7 +350,9 @@ class LocalAgent(BaseAgent):
                 short_memory.add_message(Message.assistant_message(memory["answer"]))
         return short_memory
 
-    async def _get_llm_tool_desc_list(self, oxy_request: OxyRequest, query: str) -> list[str]:
+    async def _get_llm_tool_desc_list(
+        self, oxy_request: OxyRequest, query: str
+    ) -> list[str]:
         """Get tool descriptions for LLM context based on configuration and query.
 
         This method handles different tool retrieval strategies:

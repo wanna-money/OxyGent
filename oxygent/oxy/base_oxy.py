@@ -27,7 +27,9 @@ from ..utils.common_utils import (
 logger = logging.getLogger(__name__)
 
 
-def _serialize_data_for_es(data: dict[str, Any], schema_getter: Callable[[], dict[str, Any]]) -> Any:
+def _serialize_data_for_es(
+    data: dict[str, Any], schema_getter: Callable[[], dict[str, Any]]
+) -> Any:
     """Serialize shared_data or group_data for ES storage.
 
     If a schema is configured (via *schema_getter*), only the keys present in
@@ -286,7 +288,9 @@ Arguments:
             },
         )
 
-    async def _request_interceptor(self, oxy_request: OxyRequest) -> Optional[OxyResponse]:
+    async def _request_interceptor(
+        self, oxy_request: OxyRequest
+    ) -> Optional[OxyResponse]:
         """Intercept the request for restart/replay scenarios.
 
         When a reference_trace_id and restart_node_id are present, queries ES

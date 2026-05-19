@@ -168,9 +168,7 @@ def calculate_expression(
             f"Invalid mathematical expression in calculate_expression: {expression!r} ({e})"
         )
     except ZeroDivisionError:
-        raise ValueError(
-            f"Division by zero in calculate_expression: {expression!r}"
-        )
+        raise ValueError(f"Division by zero in calculate_expression: {expression!r}")
     except Exception as e:
         raise ValueError(
             f"Error in calculate_expression(expression={expression!r}): {e}"

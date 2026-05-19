@@ -98,7 +98,9 @@ def view_text_file(
     try:
         content = _read_file_with_range(file_path, ranges)
     except ValueError as e:
-        return f"Error in view_text_file(file_path={file_path!r}, ranges={ranges!r}): {e}"
+        return (
+            f"Error in view_text_file(file_path={file_path!r}, ranges={ranges!r}): {e}"
+        )
     except Exception as e:
         return f"Error: Failed to read file '{file_path}' (ranges={ranges!r}): {e}"
 

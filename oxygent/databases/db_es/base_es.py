@@ -26,7 +26,9 @@ class BaseEs(BaseDB, ABC):
     """
 
     @abstractmethod
-    async def create_index(self, index_name: str, body: dict[str, Any]) -> dict[str, Any]:
+    async def create_index(
+        self, index_name: str, body: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create a new index in Elasticsearch with the specified configuration.
 
         Args:

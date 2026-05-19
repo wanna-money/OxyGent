@@ -37,7 +37,9 @@ def retry_decorator(func: Callable) -> Callable:
         try:
             return await func(self, *args, **kwargs)
         except (ConnectionError, ConnectionResetError, TimeoutError) as e:
-            logger.error(f"Reconnect for Connection Error in {func.__name__}: {e}", exc_info=True)
+            logger.error(
+                f"Reconnect for Connection Error in {func.__name__}: {e}", exc_info=True
+            )
             # Close current connection and retry
             await self.close()
             self.redis_pool = self._get_redis_connection()
@@ -103,7 +105,9 @@ class JimdbApRedis:
             await self.redis_pool.connection_pool.disconnect()
 
     @retry_decorator
-    async def set(self, key: str, value: str, ex: int = 86400) -> Optional[bool]:  # Key-value expiration time is 1 day
+    async def set(
+        self, key: str, value: str, ex: int = 86400
+    ) -> Optional[bool]:  # Key-value expiration time is 1 day
         """Set a key-value pair with expiration time.
 
         NOTE: all of the following functions would call self.execute_command() to execute the command,
@@ -144,7 +148,9 @@ class JimdbApRedis:
         return await self.redis_pool.exists(key)
 
     @retry_decorator
-    async def mset(self, items: dict[str, str], ex: Optional[int] = None) -> Optional[bool]:
+    async def mset(
+        self, items: dict[str, str], ex: Optional[int] = None
+    ) -> Optional[bool]:
         """
         Multiple set: Set multiple key-value pairs in a single operation.
 
@@ -252,7 +258,9 @@ class JimdbApRedis:
             results = await pipe.execute()
             return results[0]
 
-    async def rpop(self, key: str) -> Optional[bytes]:  # Non-blocking pop from the right end of the list
+    async def rpop(
+        self, key: str
+    ) -> Optional[bytes]:  # Non-blocking pop from the right end of the list
         """Remove and return the last element of a list.
 
         Args:
@@ -263,7 +271,9 @@ class JimdbApRedis:
         """
         return await self.redis_pool.rpop(key)
 
-    async def brpop(self, key: str, timeout: int = 1) -> Optional[bytes]:  # Waiting for 1 sec for default
+    async def brpop(
+        self, key: str, timeout: int = 1
+    ) -> Optional[bytes]:  # Waiting for 1 sec for default
         """Blocking pop operation that removes and returns the last element of a list.
 
         NOTE: Since JimDB doesn't support brpop, this implementation simulates
@@ -285,7 +295,9 @@ class JimdbApRedis:
             return await self.redis_pool.rpop(key)
 
     @retry_decorator
-    async def lrange(self, key: str, start: int = 0, end: int = -1) -> Optional[list[bytes]]:
+    async def lrange(
+        self, key: str, start: int = 0, end: int = -1
+    ) -> Optional[list[bytes]]:
         """Get a range of elements from a list.
 
         NOTE: Elements added later appear at the beginning of the list

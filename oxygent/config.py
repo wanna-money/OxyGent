@@ -146,7 +146,9 @@ class Config:
     }
 
     @classmethod
-    def load_from_json(cls, path: str = "./config.json", env: Optional[str] = None) -> None:
+    def load_from_json(
+        cls, path: str = "./config.json", env: Optional[str] = None
+    ) -> None:
         with open(path, "r", encoding="utf-8") as f:
             all_cfg = json.load(f)
         if not env:
@@ -171,7 +173,9 @@ class Config:
             cls._config[module][key] = value
 
     @classmethod
-    def get_module_config(cls, module: str, key: Optional[str] = None, default: Any = None) -> Any:
+    def get_module_config(
+        cls, module: str, key: Optional[str] = None, default: Any = None
+    ) -> Any:
         mod_cfg = cls._config.get(module, {})
         if key is None:
             return mod_cfg
@@ -256,7 +260,9 @@ class Config:
         return cls.get_module_config("log", "level_file")
 
     @classmethod
-    def set_log_color_is_on_background(cls, color_is_on_background: bool = True) -> None:
+    def set_log_color_is_on_background(
+        cls, color_is_on_background: bool = True
+    ) -> None:
         cls.set_module_config("log", "color_is_on_background", color_is_on_background)
 
     @classmethod
@@ -304,7 +310,9 @@ class Config:
         return cls.get_module_config("log", "is_detailed_tool_call")
 
     @classmethod
-    def set_log_is_detailed_observation(cls, is_detailed_observation: bool = True) -> None:
+    def set_log_is_detailed_observation(
+        cls, is_detailed_observation: bool = True
+    ) -> None:
         cls.set_module_config("log", "is_detailed_observation", is_detailed_observation)
 
     @classmethod
@@ -431,7 +439,9 @@ class Config:
         return cls.get_module_config("message", "is_show_in_terminal")
 
     @classmethod
-    def set_message_is_send_full_arguments(cls, is_send_full_arguments: bool = True) -> None:
+    def set_message_is_send_full_arguments(
+        cls, is_send_full_arguments: bool = True
+    ) -> None:
         cls.set_module_config(
             "message", "is_send_full_arguments", is_send_full_arguments
         )
@@ -613,7 +623,9 @@ class Config:
         return cls.get_module_config("server", "workers")
 
     @classmethod
-    def set_server_allow_origins(cls, allow_origins: Optional[list[str]] = None) -> None:
+    def set_server_allow_origins(
+        cls, allow_origins: Optional[list[str]] = None
+    ) -> None:
         if allow_origins is None:
             allow_origins = ["*"]
         cls.set_module_config("server", "allow_origins", allow_origins)

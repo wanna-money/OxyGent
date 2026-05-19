@@ -206,7 +206,9 @@ class MAS(BaseModel):
             set_global_mas_instance(self)
             logger.debug("Registered MAS instance globally for API access")
         except Exception as e:
-            logger.warning(f"Failed to register MAS instance globally: {e}", exc_info=True)
+            logger.warning(
+                f"Failed to register MAS instance globally: {e}", exc_info=True
+            )
 
         return self
 
@@ -798,7 +800,9 @@ class MAS(BaseModel):
             )
             return False
 
-    async def call(self, callee: str, arguments: dict[str, Any], **kwargs: Any) -> OxyResponse:
+    async def call(
+        self, callee: str, arguments: dict[str, Any], **kwargs: Any
+    ) -> OxyResponse:
         """Invoke an *Oxy* component directly and return its output.
 
         Args:
@@ -938,7 +942,9 @@ class MAS(BaseModel):
                 del self.feedback_dict[channel_id]
 
     @staticmethod
-    def _parse_dict_field(raw_value: Any, field_name: str = "dict field") -> dict[str, Any]:
+    def _parse_dict_field(
+        raw_value: Any, field_name: str = "dict field"
+    ) -> dict[str, Any]:
         """Parse a raw value from ES into a dict.
 
         Handles str (JSON), dict, or other types gracefully.
@@ -1135,8 +1141,14 @@ class MAS(BaseModel):
                 )
             return oxy_response
         except Exception as e:
-            callee = oxy_request.callee if oxy_request else payload.get("callee", "unknown")
-            trace_id = oxy_request.current_trace_id if oxy_request else payload.get("current_trace_id", "unknown")
+            callee = (
+                oxy_request.callee if oxy_request else payload.get("callee", "unknown")
+            )
+            trace_id = (
+                oxy_request.current_trace_id
+                if oxy_request
+                else payload.get("current_trace_id", "unknown")
+            )
             query_preview = str(payload.get("query", ""))[:200] if payload else "N/A"
             logger.error(
                 f"Error in chat_with_agent (callee={callee}, trace_id={trace_id}, query={query_preview!r}): {e}",
@@ -1177,7 +1189,9 @@ class MAS(BaseModel):
     # FastAPI + SSE web service (unedited original docstring preserved)
     # ------------------------------------------------------------------
 
-    async def _process_redis_messages(self, redis_key: str, current_trace_id: str) -> AsyncIterator[dict[str, Any]]:
+    async def _process_redis_messages(
+        self, redis_key: str, current_trace_id: str
+    ) -> AsyncIterator[dict[str, Any]]:
         """Consume messages from Redis and yield them as SSE events."""
         while True:
             bytes_msg = await self.redis_client.rpop(redis_key)
@@ -1217,7 +1231,9 @@ class MAS(BaseModel):
                 # Send message
                 yield sse_message_dict
 
-    async def event_stream(self, redis_key: str, current_trace_id: str, task: asyncio.Task) -> AsyncIterator[dict[str, Any]]:
+    async def event_stream(
+        self, redis_key: str, current_trace_id: str, task: asyncio.Task
+    ) -> AsyncIterator[dict[str, Any]]:
         """Generate an SSE event stream for the given trace."""
         try:
             task.add_done_callback(
@@ -1236,7 +1252,9 @@ class MAS(BaseModel):
             self.active_tasks[current_trace_id].cancel()
             raise
 
-    async def yield_async_message(self, redis_key: str, current_trace_id: str) -> AsyncIterator[dict[str, Any]]:
+    async def yield_async_message(
+        self, redis_key: str, current_trace_id: str
+    ) -> AsyncIterator[dict[str, Any]]:
         """Yield async messages for the given trace from the Redis queue."""
         try:
             async for message in self._process_redis_messages(
@@ -1688,7 +1706,9 @@ class MAS(BaseModel):
     # Batch helper
     # ------------------------------------------------------------------
 
-    async def start_batch_processing(self, querys: list[str], return_trace_id: bool = False) -> list[Any]:
+    async def start_batch_processing(
+        self, querys: list[str], return_trace_id: bool = False
+    ) -> list[Any]:
         """Execute a batch of queries concurrently.
 
         Args:

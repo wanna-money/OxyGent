@@ -206,7 +206,10 @@ class TokenEstimator:
             logger.debug("tiktoken not installed, using character-based estimation")
             return None
         except Exception as e:
-            logger.debug(f"Failed to get tiktoken encoder for model '{normalized_name}': {e}", exc_info=True)
+            logger.debug(
+                f"Failed to get tiktoken encoder for model '{normalized_name}': {e}",
+                exc_info=True,
+            )
             return None
 
     @classmethod

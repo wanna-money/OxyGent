@@ -156,7 +156,10 @@ class EvaluationManager:
             )
 
     async def create_rating(
-        self, rating_request: RatingRequest, request: Any = None, user_id: Optional[str] = None
+        self,
+        rating_request: RatingRequest,
+        request: Any = None,
+        user_id: Optional[str] = None,
     ) -> RatingResponse:
         """Create a new rating record (multiple rating records allowed per conversation).
 

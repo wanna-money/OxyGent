@@ -26,7 +26,9 @@ class VersionSyncCoordinator:
         polling_interval: Interval in seconds for ES polling
     """
 
-    def __init__(self, prompt_manager: Any, polling_interval: Optional[int] = None) -> None:
+    def __init__(
+        self, prompt_manager: Any, polling_interval: Optional[int] = None
+    ) -> None:
         """Initialize the version sync coordinator.
 
         Args:
@@ -238,7 +240,10 @@ class VersionSyncCoordinator:
                         self._pending_updates[prompt_key].discard(v)
 
         except Exception as e:
-            logger.error(f"Failed to handle version update for {prompt_key} v{new_version}: {e}", exc_info=True)
+            logger.error(
+                f"Failed to handle version update for {prompt_key} v{new_version}: {e}",
+                exc_info=True,
+            )
 
     async def _fetch_from_es_with_retry(
         self, prompt_key: str, new_version: int, max_retries: int = 3
@@ -327,7 +332,9 @@ class VersionSyncCoordinator:
 version_sync_coordinator = None
 
 
-async def get_version_sync_coordinator(prompt_manager: Any = None) -> VersionSyncCoordinator:
+async def get_version_sync_coordinator(
+    prompt_manager: Any = None,
+) -> VersionSyncCoordinator:
     """Get the global version sync coordinator instance.
 
     Args:

@@ -173,7 +173,10 @@ class BaseMCPClient(BaseTool):
                 await self._exit_stack.aclose()
             except asyncio.CancelledError:
                 # TODO cleanup(): Operation was cancelled
-                logger.error(f"MCP client cleanup was cancelled for server '{self.name}'", exc_info=True)
+                logger.error(
+                    f"MCP client cleanup was cancelled for server '{self.name}'",
+                    exc_info=True,
+                )
             except Exception as e:
                 # Suppress cleanup exceptions to prevent cascading failures
                 logger.warning(

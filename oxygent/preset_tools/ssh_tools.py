@@ -1,10 +1,9 @@
 """SSH remote execution tools for OxyGent agents."""
 
 import asyncio
+from typing import Optional
 
 from pydantic import Field
-
-from typing import Optional
 
 from .. import OxyRequest
 from ..utils.common_utils import clean_ansi_codes

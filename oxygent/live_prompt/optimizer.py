@@ -295,7 +295,10 @@ This provides a full prompt engineering review and improvement.
                         result["optimized_prompt"], agent_type
                     )
                 except Exception as e:
-                    logger.warning(f"Validation failed for agent_type '{agent_type}': {e}", exc_info=True)
+                    logger.warning(
+                        f"Validation failed for agent_type '{agent_type}': {e}",
+                        exc_info=True,
+                    )
                     result["validated"] = {
                         "meets_constraints": False,
                         "missing_elements": ["Validation error"],
@@ -312,7 +315,10 @@ This provides a full prompt engineering review and improvement.
             return result
 
         except Exception as e:
-            logger.error(f"Error during prompt optimization for agent_type '{agent_type}', strategy '{optimization_strategy}': {e}", exc_info=True)
+            logger.error(
+                f"Error during prompt optimization for agent_type '{agent_type}', strategy '{optimization_strategy}': {e}",
+                exc_info=True,
+            )
             return {
                 "error": str(e),
                 "optimized_prompt": current_prompt,  # Fallback to original
@@ -447,7 +453,10 @@ This provides a full prompt engineering review and improvement.
             return result
 
         except Exception as e:
-            logger.error(f"Error executing LLM optimization with model '{self.llm_model}': {e}", exc_info=True)
+            logger.error(
+                f"Error executing LLM optimization with model '{self.llm_model}': {e}",
+                exc_info=True,
+            )
             raise
 
     def _parse_optimization_result(self, output: str) -> dict[str, Any]:

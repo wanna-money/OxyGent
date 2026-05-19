@@ -33,7 +33,9 @@ class PlanAndSolveAgent(LocalAgent):
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Run the plan-and-solve loop: plan, execute steps, evaluate, replan if needed."""
 
-        async def answer(past_steps_str: str, short_memory: Any, original_query: str) -> OxyResponse:
+        async def answer(
+            past_steps_str: str, short_memory: Any, original_query: str
+        ) -> OxyResponse:
             temp_memory = Memory()
             temp_memory.add_message(
                 Message.system_message(
