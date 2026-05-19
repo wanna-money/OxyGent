@@ -75,7 +75,7 @@ class SSEMCPClient(BaseMCPClient):
                         tools_response = await session.list_tools()
                         self.add_tools(tools_response)
         except Exception as e:
-            logger.error(f"Error initializing server {self.name}: {e}")
+            logger.error(f"Error initializing SSE server '{self.name}' (url={self.sse_url}): {e}", exc_info=True)
             await self.cleanup()
             raise Exception(f"Server {self.name} error")
 

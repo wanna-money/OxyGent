@@ -627,12 +627,14 @@ class A2AServerGateway(BaseModel):
                 except ValueError as e:
                     logger.warning(
                         "A2A JSON-RPC validation error",
+                        exc_info=True,
                         extra={"method": method, "error": str(e)},
                     )
                     return self._rpc_error(req_id, -32602, str(e))
                 except LookupError as e:
                     logger.warning(
                         "A2A JSON-RPC lookup error",
+                        exc_info=True,
                         extra={"method": method, "error": str(e)},
                     )
                     return self._rpc_error(req_id, -32004, str(e))
@@ -679,18 +681,21 @@ class A2AServerGateway(BaseModel):
             except ValueError as e:
                 logger.warning(
                     "A2A plain POST validation error",
+                    exc_info=True,
                     extra={"action": action, "error": str(e)},
                 )
                 raise HTTPException(status_code=400, detail=str(e))
             except LookupError as e:
                 logger.warning(
                     "A2A plain POST lookup error",
+                    exc_info=True,
                     extra={"action": action, "error": str(e)},
                 )
                 raise HTTPException(status_code=404, detail=str(e))
             except RuntimeError as e:
                 logger.warning(
                     "A2A plain POST runtime error",
+                    exc_info=True,
                     extra={"action": action, "error": str(e)},
                 )
                 raise HTTPException(status_code=500, detail=str(e))

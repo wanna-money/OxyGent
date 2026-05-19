@@ -101,15 +101,20 @@ class HttpLLM(RemoteLLM):
                             break
                         try:
                             chunk = json.loads(line)
-                        except json.JSONDecodeError:
+                        except json.JSONDecodeError as e:
+                            logger.warning(
+                                f"Failed to decode streaming chunk as JSON from {url}: {e} | line: {line[:200]}",
+                                exc_info=True,
+                            )
                             continue
                         except Exception as e:
                             logger.error(
-                                e,
+                                f"Unexpected error parsing streaming chunk from {url}: {e} | line: {line[:200]}",
                                 extra={
                                     "trace_id": oxy_request.current_trace_id,
                                     "node_id": oxy_request.node_id,
                                 },
+                                exc_info=True,
                             )
                             continue
                         # Extract usage from final chunk

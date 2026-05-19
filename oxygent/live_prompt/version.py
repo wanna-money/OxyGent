@@ -154,7 +154,7 @@ class VersionSyncCoordinator:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"ES polling error: {e}")
+                logger.error(f"ES polling error: {e}", exc_info=True)
                 await asyncio.sleep(self.polling_interval)
 
     async def _check_es_versions(self) -> None:
@@ -187,7 +187,7 @@ class VersionSyncCoordinator:
                     await self._handle_version_update(prompt_key, remote_version)
 
         except Exception as e:
-            logger.error(f"Error checking ES versions: {e}")
+            logger.error(f"Error checking ES versions: {e}", exc_info=True)
 
     async def _handle_version_update(self, prompt_key: str, new_version: int) -> None:
         """Handle a version update for a prompt with concurrency control.
@@ -238,7 +238,7 @@ class VersionSyncCoordinator:
                         self._pending_updates[prompt_key].discard(v)
 
         except Exception as e:
-            logger.error(f"Failed to handle version update for {prompt_key}: {e}")
+            logger.error(f"Failed to handle version update for {prompt_key} v{new_version}: {e}", exc_info=True)
 
     async def _fetch_from_es_with_retry(
         self, prompt_key: str, new_version: int, max_retries: int = 3
@@ -296,7 +296,8 @@ class VersionSyncCoordinator:
 
             except Exception as e:
                 logger.error(
-                    f"Error fetching {prompt_key} from ES (attempt {attempt + 1}): {e}"
+                    f"Error fetching {prompt_key} from ES (attempt {attempt + 1}): {e}",
+                    exc_info=True,
                 )
 
             # Wait before retry (exponential backoff: 0.5s, 1s, 2s)

@@ -86,7 +86,7 @@ async def test_run_shell_command_exception(mock_run):
 
     result = await run_shell_command(["test"])
 
-    assert result == "Error: Subprocess failed"
+    assert result == "Error running shell command ['test']: Subprocess failed"
 
 
 @pytest.mark.asyncio

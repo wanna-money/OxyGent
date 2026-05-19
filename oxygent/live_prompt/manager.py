@@ -133,7 +133,7 @@ class PromptManager:
                         body=history_doc,
                     )
                 except Exception as e:
-                    logger.warning(f"Failed to save history for {prompt_key}: {e}")
+                    logger.warning(f"Failed to save history for {prompt_key}: {e}", exc_info=True)
 
                 # Update existing record
                 doc["created_at"] = existing.get("created_at")
@@ -161,7 +161,7 @@ class PromptManager:
                 logger.info(f"✓ Persisted to ES: {prompt_key} (phase 2)")
             except Exception as es_error:
                 # ES write failed - rollback cache to maintain consistency
-                logger.error(f"ES write failed for {prompt_key}: {es_error}")
+                logger.error(f"ES write failed for {prompt_key}: {es_error}", exc_info=True)
                 logger.warning("Rolling back cache to previous state")
 
                 async with self._cache_lock:
@@ -187,7 +187,7 @@ class PromptManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to save prompt {prompt_key}: {e}")
+            logger.error(f"Failed to save prompt {prompt_key}: {e}", exc_info=True)
             return False
 
     async def get_prompt(
@@ -246,7 +246,7 @@ class PromptManager:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to get prompt {prompt_key}: {e}")
+            logger.error(f"Failed to get prompt {prompt_key}: {e}", exc_info=True)
             return None
 
     async def clear_cache(self, prompt_key: Optional[str] = None) -> None:
@@ -345,7 +345,7 @@ class PromptManager:
             return histories
 
         except Exception as e:
-            logger.error(f"Failed to get prompt history for {prompt_key}: {e}")
+            logger.error(f"Failed to get prompt history for {prompt_key}: {e}", exc_info=True)
             return []
 
     async def revert_to_version(self, prompt_key: str, target_version: int) -> bool:
@@ -508,7 +508,7 @@ class PromptManager:
             return results
 
         except Exception as e:
-            logger.error(f"Failed to list prompts: {e}")
+            logger.error(f"Failed to list prompts: {e}", exc_info=True)
             return []
 
     async def delete_prompt(self, prompt_key: str) -> bool:
@@ -530,7 +530,7 @@ class PromptManager:
                 )
                 logger.info(f"Deleted from ES: {prompt_key}")
             except Exception as es_error:
-                logger.error(f"ES delete failed for {prompt_key}: {es_error}")
+                logger.error(f"ES delete failed for {prompt_key}: {es_error}", exc_info=True)
                 # Don't clear cache if ES delete fails
                 # This prevents data resurrection on restart
                 raise  # Re-raise to trigger outer exception handler
@@ -544,7 +544,7 @@ class PromptManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to delete prompt {prompt_key}: {e}")
+            logger.error(f"Failed to delete prompt {prompt_key}: {e}", exc_info=True)
             # Cache remains unchanged - consistent with ES state
             return False
 
@@ -614,7 +614,7 @@ class PromptManager:
             return results
 
         except Exception as e:
-            logger.error(f"Failed to search prompts: {e}")
+            logger.error(f"Failed to search prompts with keyword '{keyword}': {e}", exc_info=True)
             return []
 
     async def _update_local_version_tracker(self, prompt_key: str, version: int) -> None:
@@ -649,7 +649,7 @@ class PromptManager:
                 await coordinator.start()
                 logger.info("Version synchronization started")
         except Exception as e:
-            logger.error(f"Failed to start version synchronization: {e}")
+            logger.error(f"Failed to start version synchronization: {e}", exc_info=True)
 
     async def stop_version_sync(self) -> None:
         """Stop version synchronization.
@@ -661,7 +661,7 @@ class PromptManager:
                 await self._version_sync_coordinator.stop()
                 logger.info("Version synchronization stopped")
             except Exception as e:
-                logger.error(f"Error stopping version synchronization: {e}")
+                logger.error(f"Error stopping version synchronization: {e}", exc_info=True)
 
     async def close(self) -> None:
         """Close the database connection.
@@ -702,7 +702,7 @@ async def get_prompt_manager() -> PromptManager:
             _version_sync_started = True
             logger.info("Version sync auto-started with PromptManager")
         except Exception as e:
-            logger.error(f"Failed to auto-start version sync: {e}")
+            logger.error(f"Failed to auto-start version sync: {e}", exc_info=True)
 
     return prompt_manager
 
@@ -726,7 +726,7 @@ async def close_prompt_manager() -> None:
             await prompt_manager.close()
             logger.info("Prompt manager closed successfully")
         except Exception as e:
-            logger.error(f"Error closing prompt manager: {e}")
+            logger.error(f"Error closing prompt manager: {e}", exc_info=True)
         finally:
             prompt_manager = None
 
@@ -756,7 +756,7 @@ async def get_dynamic_prompt(
             prompt_key, fallback_content, use_cache=use_cache
         )
     except Exception as e:
-        logger.error(f"Failed to get dynamic prompt {prompt_key}: {e}")
+        logger.error(f"Failed to get dynamic prompt {prompt_key}: {e}", exc_info=True)
         return fallback_content
 
 
@@ -799,6 +799,6 @@ async def resolve_prompt_from_es(
             return ""
 
     except Exception as e:
-        logger.error(f"Failed to resolve hot prompt for {prompt_key}: {e}")
+        logger.error(f"Failed to resolve hot prompt for {prompt_key}: {e}", exc_info=True)
         # Return default prompt or empty string on error
         return default_prompt if default_prompt else ""

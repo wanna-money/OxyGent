@@ -290,7 +290,10 @@ class ReActAgent(LocalAgent):
                     ori_response=ori_response,
                 )
         except Exception as e:
-            logger.warning(e)
+            logger.warning(
+                f"Unexpected error parsing LLM response: {e} | response text: {ori_response[:500]}",
+                exc_info=True,
+            )
             return LLMResponse(
                 state=LLMState.ERROR_PARSE, output=str(e), ori_response=ori_response
             )
@@ -392,7 +395,11 @@ class ReActAgent(LocalAgent):
                                     r'"trust_mode"\s*:\s*(\d+)', oxy_response.output
                                 ).group(1)
                             )
-                        except (AttributeError, ValueError):
+                        except (AttributeError, ValueError) as e:
+                            logger.warning(
+                                f"Failed to extract trust_mode from response output: {e} | output text: {oxy_response.output[:200]}",
+                                exc_info=True,
+                            )
                             llm_response.output["trust_mode"] = 0
 
                     if self.trust_mode or (

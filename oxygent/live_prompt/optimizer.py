@@ -222,7 +222,7 @@ This provides a full prompt engineering review and improvement.
             return llm_instances
 
         except Exception as e:
-            logger.debug(f"Error getting LLM instances: {e}")
+            logger.debug(f"Error getting LLM instances: {e}", exc_info=True)
             return []
 
     async def optimize(
@@ -295,7 +295,7 @@ This provides a full prompt engineering review and improvement.
                         result["optimized_prompt"], agent_type
                     )
                 except Exception as e:
-                    logger.warning(f"Validation failed: {e}")
+                    logger.warning(f"Validation failed for agent_type '{agent_type}': {e}", exc_info=True)
                     result["validated"] = {
                         "meets_constraints": False,
                         "missing_elements": ["Validation error"],
@@ -312,7 +312,7 @@ This provides a full prompt engineering review and improvement.
             return result
 
         except Exception as e:
-            logger.error(f"Error during prompt optimization: {e}")
+            logger.error(f"Error during prompt optimization for agent_type '{agent_type}', strategy '{optimization_strategy}': {e}", exc_info=True)
             return {
                 "error": str(e),
                 "optimized_prompt": current_prompt,  # Fallback to original
@@ -447,7 +447,7 @@ This provides a full prompt engineering review and improvement.
             return result
 
         except Exception as e:
-            logger.error(f"Error executing LLM optimization: {e}")
+            logger.error(f"Error executing LLM optimization with model '{self.llm_model}': {e}", exc_info=True)
             raise
 
     def _parse_optimization_result(self, output: str) -> dict[str, Any]:
@@ -523,7 +523,7 @@ This provides a full prompt engineering review and improvement.
 
         except json.JSONDecodeError as e:
             # JSON parsing failed, return raw output
-            logger.warning(f"Failed to parse JSON from LLM output: {e}")
+            logger.warning(f"Failed to parse JSON from LLM output: {e}", exc_info=True)
             return {
                 "analysis": "Failed to parse JSON response",
                 "improvements": [],
@@ -536,7 +536,7 @@ This provides a full prompt engineering review and improvement.
                 },
             }
         except Exception as e:
-            logger.error(f"Error parsing optimization result: {e}")
+            logger.error(f"Error parsing optimization result: {e}", exc_info=True)
             # Return structured error response
             return {
                 "analysis": "Failed to parse LLM response",

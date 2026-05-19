@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """Get environment variables."""
 
+import logging
 import os
 import socket
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def get_env(key: str, default_val: Any = None) -> Any:
@@ -29,7 +32,8 @@ def get_env_for_run_attr() -> int:
     """Get http service run attr Use in bin/start.sh, only for backups here :return:"""
     try:
         return int(get_env(key="RUN_ATTR", default_val=-1))
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Failed to parse RUN_ATTR as int: {e}", exc_info=True)
         return -1
 
 
@@ -66,7 +70,8 @@ def get_local_ip() -> str:
     try:
         hostname = socket.gethostname()
         local_ip = socket.gethostbyname(hostname)
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Failed to resolve local IP from hostname: {e}", exc_info=True)
         local_ip = "127.0.0.1"
     return local_ip
 

@@ -34,5 +34,8 @@ def run_python_code(
         else:
             return "successfully run python code"
     except Exception as e:
-        logger.error(f"Error running python code: {e}")
+        logger.error(
+            f"Error in run_python_code (variable_to_return={variable_to_return!r}): {e}",
+            exc_info=True,
+        )
         return f"Error running python code: {e}"

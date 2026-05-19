@@ -142,6 +142,7 @@ def extract_delta_from_sse_data(data: Any, parse_delta: bool = True) -> str:
         try:
             parsed_data = json.loads(data)
         except Exception:
+            # Non-JSON string data is valid SSE content; return as-is
             return data
 
     if not isinstance(parsed_data, dict):

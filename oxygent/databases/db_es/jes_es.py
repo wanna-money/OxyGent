@@ -13,20 +13,32 @@ logger = logging.getLogger(__name__)
 class JesEs(BaseEs):
     """Elasticsearch client using the JES (JD Elasticsearch Service) backend."""
 
-    def __init__(self, hosts: str, user: str, password: str, maxsize: int = 200, timeout: int = 60) -> None:
+    def __init__(
+        self,
+        hosts: str,
+        user: str,
+        password: str,
+        maxsize: int = 200,
+        timeout: int = 60,
+    ) -> None:
         try:
             self.client = Elasticsearch(
                 hosts, http_auth=(user, password), maxsize=maxsize, timeout=timeout
             )
         except Exception as e:
-            logger.error(e)
+            logger.error(
+                f"Failed to initialize Elasticsearch client (hosts={hosts}): {e}",
+                exc_info=True,
+            )
             self.client = None
 
     async def _run_sync(self, func: Callable, *args: Any, **kwargs: Any) -> Any:
         """Run a synchronous function in a separate thread."""
         return await asyncio.to_thread(func, *args, **kwargs)
 
-    async def create_index(self, index_name: str, body: dict[str, Any]) -> Optional[dict[str, Any]]:
+    async def create_index(
+        self, index_name: str, body: dict[str, Any]
+    ) -> Optional[dict[str, Any]]:
         """Create a new index in Elasticsearch with the specified configuration.
 
         Args:
@@ -66,7 +78,9 @@ class JesEs(BaseEs):
         """
         return await self._run_sync(self.client.indices.exists, index=index_name)
 
-    async def _create_new_index(self, index_name: str, body: dict[str, Any]) -> dict[str, Any]:
+    async def _create_new_index(
+        self, index_name: str, body: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create new index.
 
         Args:
@@ -80,13 +94,17 @@ class JesEs(BaseEs):
             self.client.indices.create, index=index_name, body=body
         )
 
-    async def index(self, index_name: str, doc_id: str, body: dict[str, Any]) -> dict[str, Any]:
+    async def index(
+        self, index_name: str, doc_id: str, body: dict[str, Any]
+    ) -> dict[str, Any]:
         """Index a document into the specified table."""
         return await self._run_sync(
             self.client.index, index=index_name, id=doc_id, body=body
         )
 
-    async def update(self, index_name: str, doc_id: str, body: dict[str, Any]) -> dict[str, Any]:
+    async def update(
+        self, index_name: str, doc_id: str, body: dict[str, Any]
+    ) -> dict[str, Any]:
         """Update a document by ID."""
         return await self._run_sync(
             self.client.update, index=index_name, id=doc_id, body={"doc": body}

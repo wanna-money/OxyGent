@@ -353,7 +353,8 @@ class OxyRequest(BaseModel):
             return oxy_response
         except asyncio.TimeoutError:
             logger.warning(
-                f"Task {caller_oxy.name} -> {oxy.name} was timeouted",
+                f"Task {caller_oxy.name} -> {oxy.name} timed out after {oxy.timeout}s",
+                exc_info=True,
                 extra={
                     "trace_id": oxy_request.current_trace_id,
                     "node_id": oxy_request.node_id,
@@ -365,6 +366,7 @@ class OxyRequest(BaseModel):
         except asyncio.CancelledError:
             logger.error(
                 f"Task {caller_oxy.name} -> {oxy.name} was cancelled",
+                exc_info=True,
                 extra={
                     "trace_id": oxy_request.current_trace_id,
                     "node_id": oxy_request.node_id,

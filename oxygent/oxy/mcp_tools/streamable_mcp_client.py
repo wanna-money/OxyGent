@@ -48,7 +48,7 @@ class StreamableMCPClient(BaseMCPClient):
                     if hasattr(self._session, "add_middleware"):
                         self._session.add_middleware(mw)
                     else:
-                        logger.warning("middleware %s is ignored", mw)
+                        logger.warning(f"middleware {mw} is ignored")
 
                 await self._session.initialize()
                 if is_fetch_tools:
@@ -64,11 +64,19 @@ class StreamableMCPClient(BaseMCPClient):
                         tools_response = await session.list_tools()
                         self.add_tools(tools_response)
         except Exception as e:
-            logger.error("Error initializing server %s: %s", self.name, e)
+            logger.error(
+                f"Error initializing streamable-HTTP server '{self.name}' (url={self.server_url}): {e}",
+                exc_info=True,
+            )
             await self.cleanup()
             raise Exception(f"Server {self.name} error") from e
 
-    async def call_tool(self, tool_name: str, arguments: dict[str, Any], headers: Optional[dict[str, str]] = None) -> Any:
+    async def call_tool(
+        self,
+        tool_name: str,
+        arguments: dict[str, Any],
+        headers: Optional[dict[str, str]] = None,
+    ) -> Any:
         """Open a fresh streamable-HTTP connection and invoke the named tool with arguments."""
         async with streamablehttp_client(
             build_url(self.server_url), headers=headers, timeout=self.timeout

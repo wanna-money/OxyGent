@@ -129,7 +129,10 @@ class EvaluationManager:
 
             return request.client.host if request.client else None
         except Exception as e:
-            logger.warning(f"Failed to get client IP: {e}")
+            logger.warning(
+                f"_get_client_ip: Failed to get client IP from request: {e}",
+                exc_info=True,
+            )
             return None
 
     async def _refresh_index(self, es_client: Any, index_name: str) -> None:
@@ -147,7 +150,10 @@ class EvaluationManager:
             elif hasattr(es_client, "refresh_index"):
                 await es_client.refresh_index(index_name)
         except Exception as e:
-            logger.warning(f"Failed to refresh index {index_name}: {e}")
+            logger.warning(
+                f"_refresh_index: Failed to refresh index '{index_name}': {e}",
+                exc_info=True,
+            )
 
     async def create_rating(
         self, rating_request: RatingRequest, request: Any = None, user_id: Optional[str] = None
@@ -210,7 +216,11 @@ class EvaluationManager:
             )
 
         except Exception as e:
-            logger.error(f"Failed to create/update rating: {e}")
+            logger.error(
+                f"create_rating: Failed to create rating for trace_id={rating_request.trace_id}, "
+                f"rating_type={rating_request.rating_type}: {e}",
+                exc_info=True,
+            )
             return RatingResponse(success=False, message=f"Rating failed: {e}")
 
     async def _check_trace_exists(self, es_client: Any, trace_id: str) -> bool:
@@ -240,7 +250,10 @@ class EvaluationManager:
 
             return exists
         except Exception as e:
-            logger.warning(f"Failed to check trace existence: {e}", exc_info=True)
+            logger.warning(
+                f"_check_trace_exists: Failed to check trace existence for trace_id={trace_id}: {e}",
+                exc_info=True,
+            )
             # If check fails, return True to allow rating to continue
             return True
 
@@ -313,7 +326,7 @@ class EvaluationManager:
 
         except Exception as e:
             logger.error(
-                f"Failed to update rating stats for trace_id={trace_id}: {e}",
+                f"_update_rating_stats: Failed to update rating stats for trace_id={trace_id}: {e}",
                 exc_info=True,
             )
             # Return empty stats to avoid crash
@@ -347,7 +360,10 @@ class EvaluationManager:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to get rating stats for {trace_id}: {e}")
+            logger.error(
+                f"get_rating_stats: Failed to get rating stats for trace_id={trace_id}: {e}",
+                exc_info=True,
+            )
             return None
 
     async def get_ratings_for_traces(
@@ -385,7 +401,10 @@ class EvaluationManager:
             return result
 
         except Exception as e:
-            logger.error(f"Failed to get ratings for traces: {e}", exc_info=True)
+            logger.error(
+                f"get_ratings_for_traces: Failed to get ratings for {len(trace_ids)} trace_ids: {e}",
+                exc_info=True,
+            )
             return {}
 
     async def get_rating_history(
@@ -433,7 +452,8 @@ class EvaluationManager:
 
         except Exception as e:
             logger.error(
-                f"Failed to get rating history for {trace_id}: {e}", exc_info=True
+                f"get_rating_history: Failed to get rating history for trace_id={trace_id}, erp={erp}: {e}",
+                exc_info=True,
             )
             return []
 
@@ -486,7 +506,8 @@ class EvaluationManager:
 
         except Exception as e:
             logger.error(
-                f"Failed to get rating histories for traces: {e}", exc_info=True
+                f"get_rating_histories_for_traces: Failed to get rating histories for {len(trace_ids)} trace_ids: {e}",
+                exc_info=True,
             )
             return {}
 
@@ -531,7 +552,10 @@ class EvaluationManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to delete rating {rating_id}: {e}")
+            logger.error(
+                f"delete_rating: Failed to delete rating for rating_id={rating_id}: {e}",
+                exc_info=True,
+            )
             return False
 
     async def get_overall_rating_stats(self, days: int = 7) -> dict[str, Any]:
@@ -616,7 +640,10 @@ class EvaluationManager:
             }
 
         except Exception as e:
-            logger.error(f"Failed to get overall rating stats: {e}")
+            logger.error(
+                f"get_overall_rating_stats: Failed to get overall rating stats for days={days}: {e}",
+                exc_info=True,
+            )
             return {
                 "total_ratings": 0,
                 "like_count": 0,
@@ -666,9 +693,9 @@ class EvaluationManager:
                         )
 
             except Exception as e:
-                error_msg = f"Failed to delete rating records: {e}"
+                error_msg = f"clear_all_rating_data: Failed to delete rating records from index '{self.rating_index}': {e}"
                 result["errors"].append(error_msg)
-                logger.error(error_msg)
+                logger.error(error_msg, exc_info=True)
 
             # Delete all rating statistics
             try:
@@ -695,9 +722,9 @@ class EvaluationManager:
                         )
 
             except Exception as e:
-                error_msg = f"Failed to delete rating statistics: {e}"
+                error_msg = f"clear_all_rating_data: Failed to delete rating statistics from index '{self.rating_stats_index}': {e}"
                 result["errors"].append(error_msg)
-                logger.error(error_msg)
+                logger.error(error_msg, exc_info=True)
 
             if result["errors"]:
                 result["success"] = False
@@ -705,7 +732,11 @@ class EvaluationManager:
             return result
 
         except Exception as e:
-            logger.error(f"Failed to clear rating data: {e}", exc_info=True)
+            logger.error(
+                f"clear_all_rating_data: Failed to clear rating data "
+                f"(rating_index='{self.rating_index}', stats_index='{self.rating_stats_index}'): {e}",
+                exc_info=True,
+            )
             return {
                 "success": False,
                 "deleted_ratings": 0,
@@ -777,9 +808,9 @@ class EvaluationManager:
                 else:
                     result["errors"].append("ES client does not support index creation")
             except Exception as e:
-                error_msg = f"Failed to create rating record index: {e}"
+                error_msg = f"ensure_rating_indices_with_correct_mapping: Failed to create rating record index '{self.rating_index}': {e}"
                 result["errors"].append(error_msg)
-                logger.error(error_msg)
+                logger.error(error_msg, exc_info=True)
 
             # Create rating statistics index
             try:
@@ -799,9 +830,9 @@ class EvaluationManager:
                 else:
                     result["errors"].append("ES client does not support index creation")
             except Exception as e:
-                error_msg = f"Failed to create rating statistics index: {e}"
+                error_msg = f"ensure_rating_indices_with_correct_mapping: Failed to create rating statistics index '{self.rating_stats_index}': {e}"
                 result["errors"].append(error_msg)
-                logger.error(error_msg)
+                logger.error(error_msg, exc_info=True)
 
             if result["errors"]:
                 result["success"] = False
@@ -809,7 +840,11 @@ class EvaluationManager:
             return result
 
         except Exception as e:
-            logger.error(f"Failed to ensure index mapping: {e}", exc_info=True)
+            logger.error(
+                f"ensure_rating_indices_with_correct_mapping: Failed to ensure index mapping "
+                f"(rating_index='{self.rating_index}', stats_index='{self.rating_stats_index}'): {e}",
+                exc_info=True,
+            )
             return {
                 "success": False,
                 "rating_index_created": False,

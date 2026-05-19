@@ -37,7 +37,7 @@ def retry_decorator(func: Callable) -> Callable:
         try:
             return await func(self, *args, **kwargs)
         except (ConnectionError, ConnectionResetError, TimeoutError) as e:
-            logger.error(f"Reconnect for Connection Error in {func.__name__}: {e}")
+            logger.error(f"Reconnect for Connection Error in {func.__name__}: {e}", exc_info=True)
             # Close current connection and retry
             await self.close()
             self.redis_pool = self._get_redis_connection()

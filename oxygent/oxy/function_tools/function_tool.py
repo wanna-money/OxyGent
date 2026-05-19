@@ -135,5 +135,10 @@ class FunctionTool(BaseTool):
             result = await self.func_process(**func_kwargs)
             return OxyResponse(state=OxyState.COMPLETED, output=result)
         except Exception as e:
-            logger.error(f"Error in function tool {self.name}: {e}", exc_info=True)
+            func_name = getattr(self.func_process, "__name__", repr(self.func_process))
+            logger.error(
+                f"Error in function tool '{self.name}' (func={func_name}, "
+                f"arguments={oxy_request.arguments}): {e}",
+                exc_info=True,
+            )
             return OxyResponse(state=OxyState.FAILED, output=str(e))

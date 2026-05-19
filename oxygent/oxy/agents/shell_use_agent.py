@@ -76,7 +76,10 @@ class ShellUseAgent(ReActAgent):
                 ori_response=ori_response,
             )
         except Exception as e:
-            logger.warning(e)
+            logger.warning(
+                f"Unexpected error parsing shell LLM response: {e} | response text: {ori_response[:500]}",
+                exc_info=True,
+            )
             return LLMResponse(
                 state=LLMState.ERROR_PARSE, output=str(e), ori_response=ori_response
             )

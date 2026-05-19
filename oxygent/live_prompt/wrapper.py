@@ -55,7 +55,7 @@ class DynamicAgentManager:
             return len(live_prompt_agents) > 0
 
         except Exception as e:
-            logger.error(f"Live prompt registration failed: {e}")
+            logger.error(f"Live prompt registration failed: {e}", exc_info=True)
             return False
 
     def _agent_uses_live_prompts(self, agent_instance: Any) -> bool:
@@ -75,7 +75,7 @@ class DynamicAgentManager:
             return True
 
         except Exception as e:
-            logger.warning(f"Error checking if agent uses live prompts: {e}")
+            logger.warning(f"Error checking if agent uses live prompts: {e}", exc_info=True)
             return False
 
     async def update_agent_prompt(self, agent_name: str) -> bool:
@@ -134,12 +134,11 @@ class DynamicAgentManager:
                 return False
 
         except ConnectionError as e:
-            logger.error(f"Connection error updating prompt for {agent_name}: {e}")
+            logger.error(f"Connection error updating prompt for {agent_name}: {e}", exc_info=True)
             logger.info("Will retry on next hot reload request")
             return False
         except Exception as e:
-            logger.error(f"Failed to update prompt for {agent_name}: {e}")
-            logger.debug("Detailed traceback for prompt update failure", exc_info=True)
+            logger.error(f"Failed to update prompt for {agent_name}: {e}", exc_info=True)
             return False
 
     async def update_all_prompts(self) -> dict[str, bool]:
@@ -285,7 +284,7 @@ async def auto_save_agent_prompts_to_database(mas_instance: Any) -> None:
                     logger.warning(f"Failed to save prompt for {agent_name}")
 
             except Exception as e:
-                logger.error(f"Error saving prompt for {agent_name}: {e}")
+                logger.error(f"Error saving prompt for {agent_name}: {e}", exc_info=True)
 
         if saved_count > 0:
             logger.info(f"Auto-saved {saved_count} agent prompts to database")

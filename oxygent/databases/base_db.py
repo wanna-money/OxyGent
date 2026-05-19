@@ -20,7 +20,9 @@ class BaseDB:
     subclasses, ensuring robust database operations with configurable retry policies.
     """
 
-    def try_decorator(max_retries: int = 1, delay_between_retries: float = 0.1) -> Callable:
+    def try_decorator(
+        max_retries: int = 1, delay_between_retries: float = 0.1
+    ) -> Callable:
         """Decorator factory that creates a retry mechanism for database operations.
 
         This decorator will automatically retry failed operations up to a specified number
@@ -51,7 +53,10 @@ class BaseDB:
                     try:
                         return await func(*args, **kwargs)
                     except Exception as e:
-                        logger.error(e)
+                        logger.error(
+                            f"Failed to execute {func.__qualname__} (attempt {retries + 1}/{max_retries}): {e}",
+                            exc_info=True,
+                        )
                         retries += 1
                         if retries < max_retries:
                             await asyncio.sleep(delay_between_retries)

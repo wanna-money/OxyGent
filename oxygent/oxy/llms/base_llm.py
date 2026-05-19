@@ -253,11 +253,12 @@ class BaseLLM(Oxy):
                 pass
             except Exception as e:
                 logger.error(
-                    e,
+                    f"Unexpected error extracting think message from LLM output (model={self.name}, caller={oxy_request.caller}): {e}",
                     extra={
                         "trace_id": oxy_request.current_trace_id,
                         "node_id": oxy_request.node_id,
                     },
+                    exc_info=True,
                 )
 
     async def _after_execute(self, oxy_response: OxyResponse) -> OxyResponse:
@@ -281,7 +282,9 @@ class BaseLLM(Oxy):
                 payload[k] = v
         return payload
 
-    def _build_token_usage(self, usage_data: Any, messages: list[dict[str, Any]], output: str) -> TokenUsage:
+    def _build_token_usage(
+        self, usage_data: Any, messages: list[dict[str, Any]], output: str
+    ) -> TokenUsage:
         """Build TokenUsage with fallback to estimation.
 
         Delegates to ``token_utils.build_token_usage``.

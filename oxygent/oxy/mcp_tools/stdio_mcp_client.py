@@ -44,7 +44,7 @@ class StdioMCPClient(BaseMCPClient):
                     os.makedirs(target_dir, exist_ok=True)
                     logger.info(f"Created directory: {target_dir}")
                 except Exception as e:
-                    logger.warning(f"Could not create directory {target_dir}: {e}")
+                    logger.warning(f"Could not create directory {target_dir}: {e}", exc_info=True)
 
         if args[0] == "--directory" and args[2] == "run":
             mcp_tool_file = os.path.join(args[1], args[3])
@@ -79,11 +79,11 @@ class StdioMCPClient(BaseMCPClient):
                 await self.list_tools()
         except FileNotFoundError as e:
             # Re-raise specific validation errors without wrapping
-            logger.error(f"Validation error for server {self.name}: {e}")
+            logger.error(f"Validation error for stdio server '{self.name}' (command={self.params.get('command')}): {e}", exc_info=True)
             await self.cleanup()
             raise
         except Exception as e:
-            logger.error(f"Error initializing server {self.name}: {e}")
+            logger.error(f"Error initializing stdio server '{self.name}' (command={self.params.get('command')}): {e}", exc_info=True)
             await self.cleanup()
             raise Exception(f"Server {self.name} error")
 

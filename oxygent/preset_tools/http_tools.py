@@ -34,7 +34,10 @@ def http_get(
                 ensure_ascii=False,
             )
     except Exception as e:
-        return json.dumps({"error": str(e)}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"http_get failed for url={url!r}, params={params!r}: {e}"},
+            ensure_ascii=False,
+        )
 
 
 @http_tools.tool(
@@ -66,7 +69,10 @@ def http_post(
                 ensure_ascii=False,
             )
     except Exception as e:
-        return json.dumps({"error": str(e)}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"http_post failed for url={url!r}: {e}"},
+            ensure_ascii=False,
+        )
 
 
 async def main() -> None:

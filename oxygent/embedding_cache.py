@@ -84,7 +84,7 @@ async def get_embedding(querys: list[str] | tuple[str, ...]) -> Optional[np.ndar
         return res_lis
 
     except Exception as e:
-        logger.error(e)
+        logger.error(f"Failed to get embeddings for {len(querys)} texts: {e}", exc_info=True)
 
 
 class EmbeddingCache:
@@ -134,7 +134,7 @@ class EmbeddingCache:
                 pickle.dump(self.data, f)
             self.count = 0
         except Exception as e:
-            logger.error("Failed to save embedding cache", e)
+            logger.error(f"Failed to save embedding cache to {self.file}: {e}", exc_info=True)
 
     # ---------------------------------------------------------------------
     # Public API

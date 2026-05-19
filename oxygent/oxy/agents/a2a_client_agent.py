@@ -457,10 +457,8 @@ class A2AClientAgent(RemoteAgent):
                     "poll_error": str(e),
                 }
                 logger.warning(
-                    "Task polling failed agent=%s task_id=%s error=%s",
-                    self.name,
-                    task_id,
-                    e,
+                    f"Task polling failed agent={self.name} task_id={task_id} target_url={getattr(self._card, 'url', self.server_url)} error={e}",
+                    exc_info=True,
                 )
                 break
             if final_task:

@@ -225,7 +225,8 @@ class LocalAgent(BaseAgent):
                 return True
         except Exception as e:
             logger.error(
-                f"Failed to reload prompt for agent '{self.name}' with key '{self.prompt_key}': {e}"
+                f"Failed to reload prompt for agent '{self.name}' with key '{self.prompt_key}': {e}",
+                exc_info=True,
             )
             return False
 
@@ -253,7 +254,8 @@ class LocalAgent(BaseAgent):
                 )
             except Exception as e:
                 logger.warning(
-                    f"Failed to resolve dynamic prompt for agent '{self.name}' with key '{self.prompt_key}': {e}"
+                    f"Failed to resolve dynamic prompt for agent '{self.name}' with key '{self.prompt_key}': {e}",
+                    exc_info=True,
                 )
                 self._resolved_prompt = self.prompt if self.prompt else ""
         else:

@@ -105,7 +105,10 @@ def _load_metadata_from_file(skill_path: Path) -> Optional[SkillMetadata]:
         return SkillMetadata.from_frontmatter(frontmatter, skill_path)
 
     except Exception as e:
-        logger.warning(f"Failed to load skill metadata from {skill_path}: {e}")
+        logger.warning(
+            f"Failed to load skill metadata from {skill_path}: {e}",
+            exc_info=True,
+        )
         return None
 
 
@@ -289,8 +292,11 @@ class SkillAgent(ReActAgent):
                             rel_parts = skill_file.relative_to(skill_path).parts
                             if any(p in non_skill_subdirs for p in rel_parts[1:-1]):
                                 continue
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.warning(
+                                f"[SkillAgent] Agent '{self.name}': Failed to compute relative path for skill file '{skill_file}': {e}",
+                                exc_info=True,
+                            )
 
                         metadata = _load_metadata_from_file(skill_file)
                         if metadata and metadata.name:

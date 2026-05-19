@@ -206,7 +206,7 @@ class MAS(BaseModel):
             set_global_mas_instance(self)
             logger.debug("Registered MAS instance globally for API access")
         except Exception as e:
-            logger.warning(f"Failed to register MAS instance globally: {e}")
+            logger.warning(f"Failed to register MAS instance globally: {e}", exc_info=True)
 
         return self
 
@@ -336,7 +336,7 @@ class MAS(BaseModel):
             await setup_dynamic_agents(self)
             logger.debug("Dynamic agent management initialized")
         except Exception as e:
-            logger.warning(f"Failed to setup dynamic agents: {e}")
+            logger.warning(f"Failed to setup dynamic agents: {e}", exc_info=True)
         logger.info("=" * 64)
 
     async def cleanup_servers(self) -> None:
@@ -356,7 +356,7 @@ class MAS(BaseModel):
             try:
                 await asyncio.gather(*cleanup_tasks, return_exceptions=False)
             except Exception as e:
-                logger.warning(f"Warning during final cleanup: {e}")
+                logger.warning(f"Warning during final cleanup: {e}", exc_info=True)
 
     async def init_db(self) -> None:
         """Es --- (table_name: key)
@@ -793,7 +793,8 @@ class MAS(BaseModel):
             return True
         except Exception as e:
             logger.error(
-                f"Failed to set attribute [{attr_key}] for oxy [{oxy_name}]: {e}"
+                f"Failed to set attribute [{attr_key}] for oxy [{oxy_name}]: {e}",
+                exc_info=True,
             )
             return False
 
@@ -947,7 +948,8 @@ class MAS(BaseModel):
                 return json.loads(raw_value)
             except json.JSONDecodeError:
                 logger.warning(
-                    f"Failed to parse {field_name} from string, using empty dict"
+                    f"Failed to parse {field_name} from string (raw value: {raw_value!r}), using empty dict",
+                    exc_info=True,
                 )
                 return {}
         elif isinstance(raw_value, dict):
@@ -1132,8 +1134,14 @@ class MAS(BaseModel):
                     group_id=oxy_request.group_id,
                 )
             return oxy_response
-        except Exception:
-            logger.error("Error in chat_with_agent", exc_info=True)
+        except Exception as e:
+            callee = oxy_request.callee if oxy_request else payload.get("callee", "unknown")
+            trace_id = oxy_request.current_trace_id if oxy_request else payload.get("current_trace_id", "unknown")
+            query_preview = str(payload.get("query", ""))[:200] if payload else "N/A"
+            logger.error(
+                f"Error in chat_with_agent (callee={callee}, trace_id={trace_id}, query={query_preview!r}): {e}",
+                exc_info=True,
+            )
             raise
         finally:
             if oxy_request:
@@ -1281,7 +1289,7 @@ class MAS(BaseModel):
             try:
                 a2a_router = a2a_server_agent.build_router()
             except Exception as e:
-                logger.warning(f"Failed to build auto A2A router: {e}")
+                logger.warning(f"Failed to build auto A2A router: {e}", exc_info=True)
                 a2a_router = None
             prefix = getattr(a2a_router, "prefix", "")
             if a2a_router and prefix not in existing_prefixes:
@@ -1513,6 +1521,10 @@ class MAS(BaseModel):
                     try:
                         payload = json.loads(params["payload"])
                     except Exception as e:
+                        logger.warning(
+                            f"Failed to parse GET payload parameter as JSON (raw value: {params.get('payload', '')!r}): {e}",
+                            exc_info=True,
+                        )
                         return WebResponse(
                             code=400, message=f"can not convert data into JSON: {e}"
                         ).to_dict()

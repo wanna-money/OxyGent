@@ -75,9 +75,15 @@ def list_operation(
     try:
         return [op_func(a, b) for a, b in zip(list1, list2)]
     except ZeroDivisionError:
-        raise ValueError("Division by zero encountered in the operation")
+        raise ValueError(
+            f"Division by zero encountered in list_operation(operation={operation!r}, "
+            f"list1={list1!r}, list2={list2!r})"
+        )
     except Exception as e:
-        raise ValueError(f"Error performing {operation}: {e}")
+        raise ValueError(
+            f"Error performing list_operation(operation={operation!r}, "
+            f"list1={list1!r}, list2={list2!r}): {e}"
+        )
 
 
 @math_tools.tool(
@@ -157,9 +163,15 @@ def calculate_expression(
 
         return f"{clean_expression}={result}"
 
-    except SyntaxError:
-        raise ValueError(f"Invalid mathematical expression: {expression}")
+    except SyntaxError as e:
+        raise ValueError(
+            f"Invalid mathematical expression in calculate_expression: {expression!r} ({e})"
+        )
     except ZeroDivisionError:
-        raise ValueError(f"Division by zero in expression: {expression}")
+        raise ValueError(
+            f"Division by zero in calculate_expression: {expression!r}"
+        )
     except Exception as e:
-        raise ValueError(f"Error evaluating expression '{expression}': {e}")
+        raise ValueError(
+            f"Error in calculate_expression(expression={expression!r}): {e}"
+        )

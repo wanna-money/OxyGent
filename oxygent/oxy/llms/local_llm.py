@@ -26,8 +26,12 @@ class LocalLLM(BaseLLM):
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer
         except ImportError as e:
+            logger.error(
+                f"LocalLLM '{self.name}' failed to import required packages (torch/transformers): {e}",
+                exc_info=True,
+            )
             raise ImportError(
-                "LocalLLM requires 'torch' and 'transformers' packages."
+                f"LocalLLM '{self.name}' requires 'torch' and 'transformers' packages. "
                 "Please install them using 'pip install torch transformers einops transformers_stream_generator accelerate'"
             ) from e
 

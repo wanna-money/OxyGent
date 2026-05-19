@@ -79,7 +79,7 @@ class LocalEs(BaseEs):
         except UnicodeDecodeError:
             pass  # Will fallback.
         except json.JSONDecodeError:
-            logger.error("JSON corrupted (utf‑8) → %s", path)
+            logger.error(f"JSON corrupted (utf‑8) → {path}", exc_info=True)
             return None  # unrecoverable corruption
 
         # b) fallback – system code‑page
@@ -89,14 +89,14 @@ class LocalEs(BaseEs):
                 raw = await f.read()
             data = json.loads(raw)
         except (UnicodeDecodeError, json.JSONDecodeError):
-            logger.error("JSON corrupted (%s) → %s", fallback_enc, path)
+            logger.error(f"JSON corrupted ({fallback_enc}) → {path}", exc_info=True)
             return None
 
         # c) successful fallback – migrate
         try:
             await self._write_json_atomic(path, data)
         except Exception as err:  # noqa: BLE001 – non‑critical
-            logger.warning("Could not rewrite %s as UTF‑8: %s", path, err)
+            logger.warning(f"Could not rewrite {path} as UTF‑8: {err}", exc_info=True)
         return data
 
     # ------------------------------------------------------------------
@@ -166,15 +166,22 @@ class LocalEs(BaseEs):
             try:
                 # Best-effort backup: copy the newly-persisted state.
                 await self._write_json_atomic(backup_path, data)
-            except Exception:  # noqa: BLE001 – backup is non-critical
-                pass
+            except Exception as e:  # noqa: BLE001 – backup is non-critical
+                logger.debug(
+                    f"Failed to write backup for index {index_name}: {e}",
+                    exc_info=True,
+                )
 
         return {"_id": doc_id, "result": "updated" if update_mode else "created"}
 
-    async def index(self, index_name: str, doc_id: str, body: dict[str, Any]) -> dict[str, str]:
+    async def index(
+        self, index_name: str, doc_id: str, body: dict[str, Any]
+    ) -> dict[str, str]:
         return await self.insert(index_name, doc_id, body, update_mode=False)
 
-    async def update(self, index_name: str, doc_id: str, body: dict[str, Any]) -> dict[str, str]:
+    async def update(
+        self, index_name: str, doc_id: str, body: dict[str, Any]
+    ) -> dict[str, str]:
         return await self.insert(index_name, doc_id, body, update_mode=True)
 
     async def exists(self, index_name: str, doc_id: str) -> bool:
@@ -232,8 +239,11 @@ class LocalEs(BaseEs):
             await self._write_json_atomic(data_path, data)
             try:
                 await self._write_json_atomic(backup_path, data)
-            except Exception:  # noqa: BLE001 – backup is non-critical
-                pass
+            except Exception as e:  # noqa: BLE001 – backup is non-critical
+                logger.debug(
+                    f"Failed to write backup for index {index_name} after update_by_node_id: {e}",
+                    exc_info=True,
+                )
 
             return {"_id": target_doc_id, "result": "updated"}
 
@@ -262,8 +272,11 @@ class LocalEs(BaseEs):
             await self._write_json_atomic(data_path, data)
             try:
                 await self._write_json_atomic(backup_path, data)
-            except Exception:  # noqa: BLE001 – backup is non-critical
-                pass
+            except Exception as e:  # noqa: BLE001 – backup is non-critical
+                logger.debug(
+                    f"Failed to write backup for index {index_name} after delete: {e}",
+                    exc_info=True,
+                )
 
             return {"_id": doc_id, "result": "deleted"}
 
