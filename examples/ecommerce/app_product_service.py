@@ -9,7 +9,7 @@ Config.set_server_port(8080)
 
 oxy_space = [
     oxy.HttpLLM(
-        name="default_name",
+        name="default_llm",
         api_key=os.getenv("DEFAULT_LLM_API_KEY"),
         base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
         model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
@@ -37,7 +37,7 @@ oxy_space = [
         name="product_agent",
         is_master=True,
         tools=["product_db", "inventory_tools"],
-        llm_model="default_name",
+        llm_model="default_llm",
     ),
 ]
 

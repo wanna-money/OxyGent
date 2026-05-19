@@ -23,7 +23,6 @@ import json
 import logging
 import os
 import re
-import traceback
 from datetime import datetime
 from typing import Any, Optional
 
@@ -222,8 +221,7 @@ async def get_node_info(item_id: str):
                 return WebResponse(data=node_data).to_dict()
 
     except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(error_msg)
+        logger.error("Get node info error", exc_info=True)
         return WebResponse(code=500, message="遇到问题").to_dict()
 
 
@@ -320,8 +318,7 @@ async def call(item: Item):
         oxy_response = await oxy.execute(OxyRequest(arguments=item.arguments))
         return WebResponse(data={"output": oxy_response.output}).to_dict()
     except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(error_msg)
+        logger.error("Call error", exc_info=True)
         return WebResponse(code=500, message="遇到问题").to_dict()
 
 
@@ -861,8 +858,7 @@ async def create_rating(rating_request: RatingRequest, request: Request):
             return WebResponse(code=400, message=result.message, data={}).to_dict()
 
     except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Create rating error: {error_msg}")
+        logger.error("Create rating error", exc_info=True)
         return WebResponse(code=500, message="Rating operation failed").to_dict()
 
 
@@ -894,8 +890,7 @@ async def get_rating_stats(trace_id: str):
             ).to_dict()
 
     except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Get rating stats error: {error_msg}")
+        logger.error("Get rating stats error", exc_info=True)
         return WebResponse(
             code=500, message="Failed to get rating statistics"
         ).to_dict()
@@ -927,8 +922,7 @@ async def get_current_rating(trace_id: str, erp: Optional[str] = None):
         ).to_dict()
 
     except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Get current rating error: {error_msg}")
+        logger.error("Get current rating error", exc_info=True)
         return WebResponse(code=500, message="Failed to get current rating").to_dict()
 
 
@@ -961,8 +955,7 @@ async def get_rating_history(trace_id: str, erp: Optional[str] = None):
         ).to_dict()
 
     except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Get rating history error: {error_msg}")
+        logger.error("Get rating history error", exc_info=True)
         return WebResponse(code=500, message="Failed to get rating history").to_dict()
 
 
@@ -979,8 +972,7 @@ async def debug_rating_stats(trace_id: str):
             }
         ).to_dict()
     except Exception as e:
-        error_msg = traceback.format_exc()
-        logger.error(f"Debug rating stats error: {error_msg}")
+        logger.error("Debug rating stats error", exc_info=True)
         return WebResponse(code=500, message=f"Debug query failed: {e}").to_dict()
 
 
@@ -1008,8 +1000,7 @@ async def debug_trace_info(trace_id: str):
             }
         ).to_dict()
     except Exception as e:
-        error_msg = traceback.format_exc()
-        logger.error(f"Debug trace info error: {error_msg}")
+        logger.error("Debug trace info error", exc_info=True)
         return WebResponse(code=500, message=f"Query failed: {e}").to_dict()
 
 
@@ -1030,8 +1021,7 @@ async def clear_all_rating_data():
                 message=f"Partial clearing failed, errors: {', '.join(result['errors'])}",
             ).to_dict()
     except Exception as e:
-        error_msg = traceback.format_exc()
-        logger.error(f"Clear all rating data error: {error_msg}")
+        logger.error("Clear all rating data error", exc_info=True)
         return WebResponse(
             code=500, message=f"Failed to clear rating data: {e}"
         ).to_dict()
@@ -1062,8 +1052,7 @@ async def setup_rating_indices():
                 message=f"Failed to setup indexes, errors: {', '.join(result['errors'])}",
             ).to_dict()
     except Exception as e:
-        error_msg = traceback.format_exc()
-        logger.error(f"Setup rating indices error: {error_msg}")
+        logger.error("Setup rating indices error", exc_info=True)
         return WebResponse(code=500, message=f"Failed to setup indexes: {e}").to_dict()
 
 
@@ -1317,10 +1306,7 @@ async def get_history_with_ratings(
         ).to_dict()
 
     except Exception:
-        import traceback
-
-        error_msg = traceback.format_exc()
-        logger.error(f"Get history with ratings error: {error_msg}")
+        logger.error("Get history with ratings error", exc_info=True)
         return WebResponse(
             code=500, message="Failed to get conversation history"
         ).to_dict()
@@ -1341,8 +1327,7 @@ async def get_rating_analytics(days: int = 7):
         return WebResponse(data=stats).to_dict()
 
     except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Get rating analytics error: {error_msg}")
+        logger.error("Get rating analytics error", exc_info=True)
         return WebResponse(code=500, message="Failed to get rating analytics").to_dict()
 
 
@@ -1372,8 +1357,7 @@ async def rebuild_rating_stats(trace_id: str):
         ).to_dict()
 
     except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Rebuild rating stats error: {error_msg}")
+        logger.error("Rebuild rating stats error", exc_info=True)
         return WebResponse(code=500, message="Failed to rebuild statistics").to_dict()
 
 
@@ -1399,8 +1383,7 @@ async def delete_rating(rating_id: str):
             return WebResponse(code=404, message="Rating record not found").to_dict()
 
     except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Delete rating error: {error_msg}")
+        logger.error("Delete rating error", exc_info=True)
         return WebResponse(code=500, message="Failed to delete rating").to_dict()
 
 
@@ -1529,7 +1512,5 @@ async def optimize_prompt(request: PromptOptimizeRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to optimize prompt {request.prompt_key}: {e}")
-        error_msg = traceback.format_exc()
-        logger.error(error_msg)
+        logger.error("Failed to optimize prompt %s", request.prompt_key, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

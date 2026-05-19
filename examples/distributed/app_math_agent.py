@@ -29,7 +29,7 @@ async def workflow(oxy_request: OxyRequest):
 
 oxy_space = [
     oxy.HttpLLM(
-        name="default_name",
+        name="default_llm",
         api_key=os.getenv("DEFAULT_LLM_API_KEY"),
         base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
         model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
@@ -55,7 +55,7 @@ oxy_space = [
         sub_agents=["time_agent"],
         tools=["math_tools"],
         func_workflow=workflow,
-        llm_model="default_name",
+        llm_model="default_llm",
     ),
 ]
 

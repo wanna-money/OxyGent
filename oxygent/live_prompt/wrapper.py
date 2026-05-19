@@ -139,9 +139,7 @@ class DynamicAgentManager:
             return False
         except Exception as e:
             logger.error(f"Failed to update prompt for {agent_name}: {e}")
-            import traceback
-
-            logger.debug(traceback.format_exc())
+            logger.debug("Detailed traceback for prompt update failure", exc_info=True)
             return False
 
     async def update_all_prompts(self) -> dict[str, bool]:
@@ -295,10 +293,7 @@ async def auto_save_agent_prompts_to_database(mas_instance: Any) -> None:
             logger.info(f"⏭Skipped {skipped_count} existing prompts")
 
     except Exception as e:
-        logger.error(f"Failed to auto-save agent prompts: {e}")
-        import traceback
-
-        traceback.print_exc()
+        logger.error(f"Failed to auto-save agent prompts: {e}", exc_info=True)
 
 
 # Convenient hot-reload functions

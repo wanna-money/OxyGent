@@ -8,7 +8,6 @@ operations with size limits and expiration management.
 import asyncio
 import json
 import logging
-import traceback
 from functools import wraps
 from typing import Any, Callable, Optional, Union
 
@@ -44,8 +43,7 @@ def retry_decorator(func: Callable) -> Callable:
             self.redis_pool = self._get_redis_connection()
             return await func(self, *args, **kwargs)
         except Exception as e:
-            logger.error(f"Error in {func.__name__}: {e}")
-            logger.error(traceback.format_exc())
+            logger.error(f"Error in {func.__name__}: {e}", exc_info=True)
             return None
 
     return wrapper
@@ -79,8 +77,7 @@ class JimdbApRedis:
         try:
             self.redis_pool = self._get_redis_connection()
         except Exception as e:
-            logger.error(f"Error while creating Redis pool: {e}")
-            logger.error(traceback.format_exc())
+            logger.error(f"Error while creating Redis pool: {e}", exc_info=True)
 
     def _get_redis_connection(self) -> Any:
         """Create and configure a Redis connection pool.

@@ -46,7 +46,7 @@ Config.set_server_port(8082)
 
 | 组件 | 类型 | 用途 |
 |---|---|---|
-| `default_name` | `HttpLLM` | 共享的 LLM 后端，`temperature=0.01`，`semaphore=4`。 |
+| `default_llm` | `HttpLLM` | 共享的 LLM 后端，`temperature=0.01`，`semaphore=4`。 |
 | `time_tools` | `StdioMCPClient` | 通过 `uvx` 启动 `mcp-server-time` MCP 服务器，时区设置为 `Asia/Shanghai`。提供时间相关的工具（获取当前时间、时区转换等）。 |
 | `time_agent` | `ReActAgent` | 本服务的主代理。使用 `time_tools` 通过 LLM 驱动的 Reason-Act 循环来回答时间查询。 |
 

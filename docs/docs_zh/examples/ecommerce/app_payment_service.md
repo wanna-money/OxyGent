@@ -45,7 +45,7 @@ Config.set_server_port(8082)
 
 | 组件 | 类型 | 用途 |
 |---|---|---|
-| `default_name` | `HttpLLM` | 共享的 LLM 后端，`temperature=0.01`，`semaphore=4`。 |
+| `default_llm` | `HttpLLM` | 共享的 LLM 后端，`temperature=0.01`，`semaphore=4`。 |
 | `payment_tools` | `StdioMCPClient` | 通过 `uv` 运行 `mcp_servers/payment_tools.py`。提供两个工具：`query_payment_status`（通过支付 ID 或订单 ID 查询支付详情）和 `get_payment_methods`（列出支持的支付方式及其费率和限额）。 |
 | `payment_service` | `ReActAgent` | 本服务的主代理（`is_master=True`）。使用 `payment_tools` 通过 LLM 驱动的推理来回答支付相关查询。 |
 

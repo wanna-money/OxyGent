@@ -9,7 +9,6 @@ import asyncio
 import inspect
 import json
 import logging
-import traceback
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Optional
 
@@ -703,7 +702,8 @@ Arguments:
                         },
                     )
                     logger.error(
-                        traceback.format_exc(),
+                        f"Error executing oxy {self.name}",
+                        exc_info=True,
                         extra={
                             "trace_id": oxy_request.current_trace_id,
                             "node_id": oxy_request.node_id,
@@ -712,9 +712,9 @@ Arguments:
                     if attempt < self.retries:
                         await asyncio.sleep(self.delay)
                     else:
-                        error_msg = traceback.format_exc()
                         logger.error(
-                            f"Max retries reached. Failed. {error_msg}",
+                            "Max retries reached. Failed.",
+                            exc_info=True,
                             extra={
                                 "trace_id": oxy_request.current_trace_id,
                                 "node_id": oxy_request.node_id,

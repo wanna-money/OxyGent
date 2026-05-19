@@ -45,7 +45,7 @@ Config.set_server_port(8083)
 
 | 组件 | 类型 | 用途 |
 |---|---|---|
-| `default_name` | `HttpLLM` | 共享的 LLM 后端，`temperature=0.01`，`semaphore=4`。 |
+| `default_llm` | `HttpLLM` | 共享的 LLM 后端，`temperature=0.01`，`semaphore=4`。 |
 | `logistics_tools` | `StdioMCPClient` | 通过 `uv` 运行 `mcp_servers/logistics_tools.py`。提供：`track_package`（按运单号跟踪）和 `track_by_order`（按订单号跟踪）。使用内存中的模拟数据。 |
 | `delivery_tools` | `StdioMCPClient` | 通过 `uv` 运行 `mcp_servers/delivery_tools.py`。提供：`get_delivery_info`（按订单号查询配送详情）和 `get_delivery_methods`（根据城市和重量查询可用的物流方式及费用计算）。 |
 | `logistics_agent` | `ReActAgent` | 本服务的主代理（`is_master=True`）。使用 `logistics_tools` 和 `delivery_tools` 通过 LLM 驱动的推理来回答物流和配送查询。 |

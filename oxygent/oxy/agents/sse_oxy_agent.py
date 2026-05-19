@@ -29,8 +29,7 @@ class SSEOxyGent(RemoteAgent):
             response = await client.get(build_url(self.server_url, "/get_organization"))
             self.org = response.json()["data"]["organization"]
 
-        if self.desc == "":
-            async with httpx.AsyncClient() as client:
+            if self.desc == "":
                 response = await client.get(
                     build_url(self.server_url, "/get_description")
                 )
@@ -66,11 +65,11 @@ class SSEOxyGent(RemoteAgent):
         url = build_url(self.server_url, "/sse/chat")
         answer = ""
 
+        raw_headers = oxy_request.get_shared_data("_headers") or {}
         headers = {
-            k: v
-            for k, v in oxy_request.get_shared_data("_headers", {}).items()
-            if k.lower() not in EXCLUDED_HEADERS
+            k: v for k, v in raw_headers.items() if k.lower() not in EXCLUDED_HEADERS
         }
+
         headers.update(
             {
                 "Accept": "text/event-stream",
@@ -84,6 +83,7 @@ class SSEOxyGent(RemoteAgent):
 
         retry_count = 0
         last_retry_delay = None
+        message_retry = None
 
         while retry_count <= max_retries:
             try:
@@ -155,7 +155,7 @@ class SSEOxyGent(RemoteAgent):
                                         )
                                 except json.JSONDecodeError:
                                     await oxy_request.send_message(
-                                        data,
+                                        message_data,
                                         event=message_event,
                                         id=message_id,
                                         retry=message_retry,

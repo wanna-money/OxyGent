@@ -48,7 +48,7 @@ Sets the app name to `order-service` and binds to port **8081**.
 
 | Component | Type | Purpose |
 |---|---|---|
-| `default_name` | `HttpLLM` | Shared LLM backend with `temperature=0.01` and `semaphore=4`. |
+| `default_llm` | `HttpLLM` | Shared LLM backend with `temperature=0.01` and `semaphore=4`. |
 | `order_tools` | `StdioMCPClient` | Runs `mcp_servers/order_tools.py` via `uv`. Provides three tools: `query_order` (order details by ID), `query_user_orders` (all orders for a user), and `cancel_order` (cancel with reason and timestamp). |
 | `payment_service` | `SSEOxyGent` | Remote proxy to the payment service on port 8082. Allows the order agent to delegate payment-related queries (payment status, payment methods) to the payment microservice. |
 | `order_agent` | `ReActAgent` | The master agent (`is_master=True`) for this service. Uses `order_tools` for order management and can delegate to `payment_service` for payment queries. |

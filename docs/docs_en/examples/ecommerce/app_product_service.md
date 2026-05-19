@@ -45,7 +45,7 @@ Sets the app name to `product-service` and binds to port **8080**.
 
 | Component | Type | Purpose |
 |---|---|---|
-| `default_name` | `HttpLLM` | Shared LLM backend with `temperature=0.01` and `semaphore=4`. |
+| `default_llm` | `HttpLLM` | Shared LLM backend with `temperature=0.01` and `semaphore=4`. |
 | `product_db` | `StdioMCPClient` | Runs `mcp_servers/product_tools.py` via `uv`. Provides: `get_product_info` (product details by ID or name) and `get_products_by_category` (list products in a category). Mock catalog has 3 products: Product A (Electronics, 5999), Product B (Computing Devices, 12999), Product C (Accessories, 899). |
 | `inventory_tools` | `StdioMCPClient` | Runs `mcp_servers/inventory_tools.py` via `uv`. Provides six tools: `check_inventory`, `check_stock_availability`, `release_reserved_stock`, `get_low_stock_products`, `get_inventory_by_warehouse`, and `get_restock_suggestions`. Tracks stock across four warehouses. |
 | `product_agent` | `ReActAgent` | The master agent (`is_master=True`) for this service. Uses both `product_db` and `inventory_tools` to handle all product and inventory queries through LLM-driven reasoning. |

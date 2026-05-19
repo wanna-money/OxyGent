@@ -14,7 +14,6 @@ import copy
 import logging
 import os
 import time
-import traceback
 from enum import Enum, auto
 from functools import partial
 from typing import Any, Optional, Union
@@ -338,7 +337,7 @@ class OxyRequest(BaseModel):
         for system_arg in oxy.system_args:
             if system_arg in oxy_request.arguments:
                 continue
-            oxy_request.arguments[system_arg] = system_arg_dict[system_arg]
+            oxy_request.arguments[system_arg] = system_arg_dict.get(system_arg, "")
         # Execute the oxy
         try:
             oxy_response = await asyncio.wait_for(
@@ -373,9 +372,9 @@ class OxyRequest(BaseModel):
             )
             raise
         except Exception as e:
-            error_msg = traceback.format_exc()
             logger.error(
-                f"Error executing oxy {oxy.name}: {error_msg}",
+                f"Error executing oxy {oxy.name}",
+                exc_info=True,
                 extra={
                     "trace_id": oxy_request.current_trace_id,
                     "node_id": oxy_request.node_id,
@@ -445,9 +444,10 @@ class OxyRequest(BaseModel):
     def get_query(self, master_level: bool = False) -> str:
         """Get the query text from the arguments."""
         md_attachments = []
+        _STATIC_PREFIX = "../static"
         for i, attachment in enumerate(self.arguments.get("attachments", [])):
-            if attachment.startswith("../static/"):
-                attachment = f"{Config.get_cache_save_dir()}/uploads{attachment[9:]}"
+            if attachment.startswith(_STATIC_PREFIX):
+                attachment = f"{Config.get_cache_save_dir()}/uploads{attachment.removeprefix(_STATIC_PREFIX)}"
             is_image_flag = "!" if is_image(attachment) else ""
             attachment_base_name = os.path.basename(attachment)
             md_attachments.append(
@@ -552,7 +552,9 @@ class OxyRequest(BaseModel):
     async def break_task(self) -> None:
         """Signal task cancellation for the current trace."""
         await self.send_message(message="done", event="close")
-        self.mas.active_tasks[self.current_trace_id].cancel()
+        task = self.mas.active_tasks.get(self.current_trace_id)
+        if task:
+            task.cancel()
 
     async def get_feedback_stream(self, channel_id: Optional[str] = None) -> Any:
         """Get the feedback stream channel for interactive responses."""

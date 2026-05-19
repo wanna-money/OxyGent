@@ -386,11 +386,9 @@ class PromptManager:
 
             except Exception as e:
                 logger.error(
-                    f"Version {target_version} not found for {prompt_key}: {e}"
+                    f"Version {target_version} not found for {prompt_key}: {e}",
+                    exc_info=True,
                 )
-                import traceback
-
-                traceback.print_exc()
                 return False
 
             # Clear cache before reverting to ensure fresh data
@@ -420,11 +418,9 @@ class PromptManager:
 
         except Exception as e:
             logger.error(
-                f"Failed to revert {prompt_key} to version {target_version}: {e}"
+                f"Failed to revert {prompt_key} to version {target_version}: {e}",
+                exc_info=True,
             )
-            import traceback
-
-            traceback.print_exc()
             return False
 
     async def list_prompts(

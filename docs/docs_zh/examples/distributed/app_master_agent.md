@@ -50,7 +50,7 @@ python -m examples.distributed.app_master_agent
 
 | 组件 | 类型 | 用途 |
 |---|---|---|
-| `default_name` | `HttpLLM` | 所有本地代理共享的 LLM 后端。`temperature` 设为 0.01 以获得近乎确定性的输出。`semaphore=4` 限制并发 LLM 调用数。 |
+| `default_llm` | `HttpLLM` | 所有本地代理共享的 LLM 后端。`temperature` 设为 0.01 以获得近乎确定性的输出。`semaphore=4` 限制并发 LLM 调用数。 |
 | `file_tools` | `StdioMCPClient` | 通过 `npx` 启动 `@modelcontextprotocol/server-filesystem` MCP 服务器，作用域限定在 `./local_file` 目录。提供文件系统读写工具。 |
 | `master_agent` | `ReActAgent` | 顶层代理（`is_master=True`）。根据用户意图将查询路由到 `file_agent` 或 `math_agent`。 |
 | `file_agent` | `ReActAgent` | 使用 `file_tools` 处理本地文件查询的子代理。 |

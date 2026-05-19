@@ -50,7 +50,7 @@ The `oxy_space` list registers four components:
 
 | Component | Type | Purpose |
 |---|---|---|
-| `default_name` | `HttpLLM` | LLM backend shared by all local agents. `temperature` is set to 0.01 for near-deterministic output. `semaphore=4` limits concurrent LLM calls. |
+| `default_llm` | `HttpLLM` | LLM backend shared by all local agents. `temperature` is set to 0.01 for near-deterministic output. `semaphore=4` limits concurrent LLM calls. |
 | `file_tools` | `StdioMCPClient` | Launches the `@modelcontextprotocol/server-filesystem` MCP server via `npx`, scoped to the `./local_file` directory. Provides file-system read/write tools. |
 | `master_agent` | `ReActAgent` | The top-level agent (`is_master=True`). Routes user queries to either `file_agent` or `math_agent` based on intent. |
 | `file_agent` | `ReActAgent` | A sub-agent that handles local file queries using `file_tools`. |

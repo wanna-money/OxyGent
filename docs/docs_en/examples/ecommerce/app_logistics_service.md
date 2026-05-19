@@ -45,7 +45,7 @@ Sets the app name to `logistics-service` and binds to port **8083**.
 
 | Component | Type | Purpose |
 |---|---|---|
-| `default_name` | `HttpLLM` | Shared LLM backend with `temperature=0.01` and `semaphore=4`. |
+| `default_llm` | `HttpLLM` | Shared LLM backend with `temperature=0.01` and `semaphore=4`. |
 | `logistics_tools` | `StdioMCPClient` | Runs `mcp_servers/logistics_tools.py` via `uv`. Provides: `track_package` (track by tracking number) and `track_by_order` (track by order ID). Uses in-memory mock data for shipments. |
 | `delivery_tools` | `StdioMCPClient` | Runs `mcp_servers/delivery_tools.py` via `uv`. Provides: `get_delivery_info` (delivery details by order ID) and `get_delivery_methods` (available shipping methods by city and weight with cost calculation). |
 | `logistics_agent` | `ReActAgent` | The master agent (`is_master=True`) for this service. Uses both `logistics_tools` and `delivery_tools` to answer logistics and delivery queries through LLM-driven reasoning. |

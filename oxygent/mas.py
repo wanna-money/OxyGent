@@ -21,7 +21,6 @@ import copy
 import json
 import os
 import time
-import traceback
 from collections import OrderedDict
 from typing import Any, AsyncIterator, Callable, Optional
 
@@ -1134,7 +1133,7 @@ class MAS(BaseModel):
                 )
             return oxy_response
         except Exception:
-            logger.error(traceback.format_exc())
+            logger.error("Error in chat_with_agent", exc_info=True)
             raise
         finally:
             if oxy_request:
