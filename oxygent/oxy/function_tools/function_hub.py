@@ -8,12 +8,15 @@ It supports both synchronous and asynchronous functions with automatic conversio
 import asyncio
 import concurrent.futures
 import functools
+import logging
 from typing import Any, Callable
 
 from pydantic import Field
 
 from ..base_tool import BaseTool
 from .function_tool import FunctionTool
+
+logger = logging.getLogger(__name__)
 
 
 class FunctionHub(BaseTool):
@@ -104,6 +107,15 @@ class FunctionHub(BaseTool):
 
     async def cleanup(self) -> None:
         """Clean up resources, including the thread pool."""
-        if self._thread_pool:
-            self._thread_pool.shutdown(wait=True)
-            self._thread_pool = None
+        if self._thread_pool is not None:
+            try:
+                await asyncio.get_running_loop().run_in_executor(
+                    None, self._thread_pool.shutdown, True
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Error shutting down FunctionHub thread pool for '{self.name}': {e}",
+                    exc_info=True,
+                )
+            finally:
+                self._thread_pool = None

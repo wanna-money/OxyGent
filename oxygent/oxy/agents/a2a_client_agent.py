@@ -239,6 +239,21 @@ class A2AClientAgent(RemoteAgent):
             extra={"agent": self.name, "card_url": getattr(self._card, "url", "")},
         )
 
+    async def cleanup(self) -> None:
+        """Close the HTTP client and release connection pool resources."""
+        if self._http_client is not None:
+            try:
+                await self._http_client.aclose()
+            except Exception as e:
+                logger.warning(
+                    f"Error closing HTTP client for A2AClientAgent '{self.name}': {e}",
+                    exc_info=True,
+                )
+            finally:
+                self._http_client = None
+                self._client = None
+                self._card = None
+
     @staticmethod
     def _task_state(task: Task | None) -> str:
         if not task or not task.status:

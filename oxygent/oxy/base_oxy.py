@@ -260,6 +260,14 @@ Arguments:
         """Perform async initialization. Rebuilds the LLM-facing description."""
         self._set_desc_for_llm()
 
+    async def cleanup(self) -> None:
+        """Release resources acquired during init().
+
+        Subclasses that allocate external resources (connections, thread pools,
+        child processes, etc.) should override this method.  The default
+        implementation is a no-op.
+        """
+
     async def _pre_process(self, oxy_request: OxyRequest) -> OxyRequest:
         """Pre-process the request before execution."""
         if not oxy_request.node_id:

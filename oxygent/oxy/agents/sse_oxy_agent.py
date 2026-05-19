@@ -24,18 +24,30 @@ class SSEOxyGent(RemoteAgent):
     async def init(self) -> None:
         """Initialize the SSE remote agent connection."""
         await super().init()
-
-        async with httpx.AsyncClient() as client:
-            response = await client.get(build_url(self.server_url, "/get_organization"))
-            self.org = response.json()["data"]["organization"]
-
-            if self.desc == "":
+        try:
+            async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    build_url(self.server_url, "/get_description")
+                    build_url(self.server_url, "/get_organization")
                 )
-                if response.json().get("code") == 200:
-                    self.desc = response.json()["data"]["description"]
-        self._set_desc_for_llm()
+                self.org = response.json()["data"]["organization"]
+
+                if self.desc == "":
+                    response = await client.get(
+                        build_url(self.server_url, "/get_description")
+                    )
+                    if response.json().get("code") == 200:
+                        self.desc = response.json()["data"]["description"]
+            self._set_desc_for_llm()
+        except Exception as e:
+            logger.error(
+                f"Failed to initialize SSEOxyGent '{self.name}' "
+                f"(url={self.server_url}): {e}",
+                exc_info=True,
+            )
+            raise RuntimeError(
+                f"Failed to initialize SSEOxyGent '{self.name}' "
+                f"at {self.server_url}: {e}"
+            ) from e
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Forward the request to the remote SSE endpoint and stream the response."""

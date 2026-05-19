@@ -123,8 +123,16 @@ class EmbeddingCache:
         """Load the on-disk cache if it exists; otherwise, return an empty dict."""
         if not os.path.exists(self.file):
             return dict()
-        with open(self.file, "rb") as f:
-            return pickle.load(f)
+        try:
+            with open(self.file, "rb") as f:
+                return pickle.load(f)
+        except Exception as e:
+            logger.warning(
+                f"Failed to load embedding cache from {self.file}, "
+                f"starting with empty cache: {e}",
+                exc_info=True,
+            )
+            return dict()
 
     # TODO: save embeddings
     def save(self) -> None:

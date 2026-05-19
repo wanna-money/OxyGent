@@ -43,7 +43,7 @@ oxygent/mas.py
 | `init_all_oxy()` | 是 | `None` | 初始化所有已注册的 Oxy 对象 |
 | `batch_init_oxy()` | 是 | `None` | 批量初始化指定类型的 Oxy 对象 |
 | `create_vearch_table()` | 是 | `None` | 为工具创建 Vearch 表 |
-| `cleanup_servers()` | 是 | `None` | 优雅地关闭远程服务器/客户端 |
+| `cleanup_all()` | 是 | `None` | 优雅地释放所有已注册 Oxy 组件持有的资源 |
 | `add_oxy()` | 否 | `None` | 注册单个 Oxy 对象 |
 | `add_oxy_list()` | 否 | `None` | 注册一组 Oxy 对象 |
 | `call()` | 是 | `Any` | 直接调用一个 Oxy 组件并返回其输出 |

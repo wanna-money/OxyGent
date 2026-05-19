@@ -740,7 +740,7 @@ async def close_prompt_manager() -> None:
                 logger.info("Version sync stopped during shutdown")
 
             await prompt_manager.close()
-            logger.info("Prompt manager closed successfully")
+            logger.debug("Prompt manager closed successfully")
         except Exception as e:
             logger.error(f"Error closing prompt manager: {e}", exc_info=True)
         finally:

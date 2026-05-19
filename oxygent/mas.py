@@ -41,7 +41,6 @@ from .oxy.agents.remote_agent import RemoteAgent
 from .oxy.base_flow import BaseFlow
 from .oxy.base_tool import BaseTool
 from .oxy.llms.base_llm import BaseLLM
-from .oxy.mcp_tools.base_mcp_client import BaseMCPClient
 from .routes import router
 from .schemas import OxyRequest, OxyResponse, SSEMessage, WebResponse
 from .utils.common_utils import (
@@ -213,17 +212,41 @@ class MAS(BaseModel):
         return self
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        async def _safe(coro, label: str) -> None:
+            try:
+                await coro
+                logger.info(f"✓ {label} shutdown completed.")
+            except Exception as e:
+                logger.warning(f"Error during shutdown ({label}): {e}", exc_info=True)
+
+        logger.info("=" * 64)
+        logger.info("🔒 OxyGent MAS Application Shutdown Initiated")
+        logger.info("=" * 64)
+
+        # 1. Wait for background tasks
         all_tasks = [t for tasks in self.background_tasks.values() for t in tasks]
         if all_tasks:
-            await asyncio.gather(*all_tasks)
+            await _safe(
+                asyncio.gather(*all_tasks, return_exceptions=True),
+                "background tasks",
+            )
+
+        # 2. Tear down resources — each step runs regardless of prior failures
+        from .live_prompt import close_prompt_manager
+
+        await _safe(close_prompt_manager(), "prompt manager")
+
+        if self.es_client:
+            await _safe(self.es_client.close(), "ES client")
+
+        if self.redis_client:
+            await _safe(self.redis_client.close(), "Redis client")
+
+        await _safe(self.cleanup_all(), "oxy cleanup")
+
         logger.info("=" * 64)
         logger.info("🪂 OxyGent MAS Application Exit")
         logger.info("=" * 64)
-        if self.es_client:
-            await self.es_client.close()
-        if self.redis_client:
-            await self.redis_client.close()
-        await self.cleanup_servers()
 
     def add_background_task(self, trace_id: str, task: asyncio.Task) -> None:
         """Register a background task under the given trace_id."""
@@ -341,24 +364,21 @@ class MAS(BaseModel):
             logger.warning(f"Failed to setup dynamic agents: {e}", exc_info=True)
         logger.info("=" * 64)
 
-    async def cleanup_servers(self) -> None:
-        """Gracefully shut down remote servers/clients.
+    async def cleanup_all(self) -> None:
+        """Gracefully release resources held by all registered Oxy components.
 
-        The method concurrently calls ``cleanup()`` on every
-        :class:`BaseMCPClient` that has been registered.  It is automatically
-        invoked by :func:`__aexit__`.
+        Calls ``cleanup()`` on every registered :class:`Oxy` instance.
+        Each cleanup is invoked individually so that a failure in one
+        component does not prevent others from releasing their resources.
         """
-        cleanup_tasks = []
-        for oxy in self.oxy_name_to_oxy.values():
-            if not isinstance(oxy, BaseMCPClient):
-                continue
-            cleanup_tasks.append(asyncio.create_task(oxy.cleanup()))
-
-        if cleanup_tasks:
+        for oxy_name, oxy in self.oxy_name_to_oxy.items():
             try:
-                await asyncio.gather(*cleanup_tasks, return_exceptions=False)
+                await oxy.cleanup()
             except Exception as e:
-                logger.warning(f"Warning during final cleanup: {e}", exc_info=True)
+                logger.warning(
+                    f"Error during cleanup of oxy '{oxy_name}': {e}",
+                    exc_info=True,
+                )
 
     async def init_db(self) -> None:
         """Es --- (table_name: key)
@@ -635,21 +655,59 @@ class MAS(BaseModel):
             class_types: List of class types to initialize (e.g., BaseLLM, BaseTool, BaseAgent).
 
         NOTE:
-            Initialize all oxy objects of the specified class types,
+            Initialize all oxy objects of the specified class types.
+            If any init fails, already-initialized oxy objects of the same
+            batch are cleaned up before the exception propagates.
         """
-        tasks = []
-        for oxy_name in list(self.oxy_name_to_oxy.keys()):
-            oxy = self.oxy_name_to_oxy[oxy_name]
-            if not isinstance(oxy, class_type):
-                continue
+        targets = [
+            (name, oxy)
+            for name, oxy in self.oxy_name_to_oxy.items()
+            if isinstance(oxy, class_type)
+        ]
+        for _name, oxy in targets:
             oxy.set_mas(self)
-            task = oxy.init()
-            if Config.get_tool_is_concurrent_init():
-                tasks.append(task)
-            else:
-                await task
-        if tasks:
-            await asyncio.gather(*tasks)
+
+        initialized_names: list[str] = []
+        if Config.get_tool_is_concurrent_init():
+            results = await asyncio.gather(
+                *(oxy.init() for _name, oxy in targets),
+                return_exceptions=True,
+            )
+            first_error = None
+            for (name, _oxy), result in zip(targets, results):
+                if isinstance(result, Exception):
+                    logger.error(
+                        f"Failed to initialize oxy '{name}': {result}", exc_info=result
+                    )
+                    if first_error is None:
+                        first_error = result
+                else:
+                    initialized_names.append(name)
+            if first_error is not None:
+                for name in initialized_names:
+                    try:
+                        await self.oxy_name_to_oxy[name].cleanup()
+                    except Exception as ce:
+                        logger.warning(
+                            f"Error during rollback cleanup of oxy '{name}': {ce}",
+                            exc_info=True,
+                        )
+                raise first_error
+        else:
+            try:
+                for name, oxy in targets:
+                    await oxy.init()
+                    initialized_names.append(name)
+            except Exception:
+                for name in initialized_names:
+                    try:
+                        await self.oxy_name_to_oxy[name].cleanup()
+                    except Exception as ce:
+                        logger.warning(
+                            f"Error during rollback cleanup of oxy '{name}': {ce}",
+                            exc_info=True,
+                        )
+                raise
 
     async def init_all_oxy(self) -> None:
         """Initializing all tools and agents assign values of agent.tools to each

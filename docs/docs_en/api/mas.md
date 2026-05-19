@@ -43,7 +43,7 @@ oxygent/mas.py
 | `init_all_oxy()` | Yes | `None` | Initialize all registered Oxy objects |
 | `batch_init_oxy()` | Yes | `None` | Batch initialize oxy objects of specified types |
 | `create_vearch_table()` | Yes | `None` | Create Vearch tables for tools |
-| `cleanup_servers()` | Yes | `None` | Gracefully shut down remote servers/clients |
+| `cleanup_all()` | Yes | `None` | Gracefully release resources held by all registered Oxy components |
 | `add_oxy()` | No | `None` | Register a single Oxy object |
 | `add_oxy_list()` | No | `None` | Register a list of Oxy objects |
 | `call()` | Yes | `Any` | Invoke an Oxy component directly and return its output |

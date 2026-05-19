@@ -4,7 +4,12 @@ Provides real-time prompt management and hot-reload functionality for OxyGent ag
 """
 
 # Core ES-based prompt management
-from .manager import PromptManager, get_dynamic_prompt, get_prompt_manager
+from .manager import (
+    PromptManager,
+    close_prompt_manager,
+    get_dynamic_prompt,
+    get_prompt_manager,
+)
 
 # Prompt optimization
 from .optimizer import PromptOptimizer, get_prompt_optimizer
@@ -30,6 +35,7 @@ __all__ = [
     # Core ES-based prompt management
     "get_prompt_manager",
     "get_dynamic_prompt",
+    "close_prompt_manager",
     "PromptManager",
     # Hot-reload functionality
     "setup_dynamic_agents",

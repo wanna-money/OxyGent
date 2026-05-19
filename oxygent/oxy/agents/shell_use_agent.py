@@ -32,14 +32,45 @@ class ShellUseAgent(ReActAgent):
 
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(**self.auth_info)
+        try:
+            client.connect(**self.auth_info)
+        except Exception as e:
+            logger.error(
+                f"Failed to establish SSH connection for '{self.name}': {e}",
+                exc_info=True,
+            )
+            client.close()
+            raise
+
         ssh_channel = client.invoke_shell()
 
         await asyncio.sleep(1)
         if ssh_channel.recv_ready():
             output = ssh_channel.recv(4096).decode()
             self.mas.global_data["hello_terminal"] = clean_ansi_codes(output)
+        self.mas.global_data["ssh_client"] = client
         self.mas.global_data["ssh_channel"] = ssh_channel
+
+    async def cleanup(self) -> None:
+        """Close the SSH channel and client connection."""
+        channel = self.mas.global_data.pop("ssh_channel", None) if self.mas else None
+        client = self.mas.global_data.pop("ssh_client", None) if self.mas else None
+        try:
+            if channel is not None:
+                channel.close()
+        except Exception as e:
+            logger.warning(
+                f"Error closing SSH channel for '{self.name}': {e}",
+                exc_info=True,
+            )
+        try:
+            if client is not None:
+                client.close()
+        except Exception as e:
+            logger.warning(
+                f"Error closing SSH client for '{self.name}': {e}",
+                exc_info=True,
+            )
 
     def _parse_llm_response(
         self, ori_response: str, oxy_request: OxyRequest = None

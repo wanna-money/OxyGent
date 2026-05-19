@@ -124,7 +124,8 @@ class JesEs(BaseEs):
 
     async def close(self) -> None:
         """Close the Elasticsearch connection."""
-        return await self._run_sync(self.client.close)
+        if self.client is not None:
+            return await self._run_sync(self.client.close)
 
 
 async def main() -> None:
