@@ -39,11 +39,11 @@ This module defines the core data classes used throughout the OxyGent framework 
 | `mas`                      | `Optional[Any]`              | `None`                         | Handle to the MAS runtime (not dumped).     |
 | `caller`                   | `Optional[str]`              | `"user"`                       | Name of the caller oxy.                     |
 | `callee`                   | `Optional[str]`              | `""`                           | Name of the callee oxy.                     |
-| `call_stack`               | `List[str]`                  | `["user"]`                     | Stack of caller names.                      |
-| `node_id_stack`            | `List[str]`                  | `[""]`                         | Stack of node ids.                          |
+| `call_stack`               | `list[str]`                  | `["user"]`                     | Stack of caller names.                      |
+| `node_id_stack`            | `list[str]`                  | `[""]`                         | Stack of node ids.                          |
 | `father_node_id`           | `Optional[str]`              | `""`                           | Parent node id.                             |
-| `pre_node_ids`             | `Optional[List[str] \| str]` | `[]`                           | Predecessor node ids.                       |
-| `latest_node_ids`          | `Optional[List[str] \| str]` | `[]`                           | Latest parallel node ids.                   |
+| `pre_node_ids`             | `Optional[list[str] \| str]` | `[]`                           | Predecessor node ids.                       |
+| `latest_node_ids`          | `Optional[list[str] \| str]` | `[]`                           | Latest parallel node ids.                   |
 | `caller_category`          | `Optional[str]`              | `"user"`                       | Category of caller (user/agent/tool).       |
 | `callee_category`          | `Optional[str]`              | `""`                           | Category of callee.                         |
 | `node_id`                  | `Optional[str]`              | `""`                           | Current node id.                            |

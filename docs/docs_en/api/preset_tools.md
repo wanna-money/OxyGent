@@ -34,7 +34,7 @@ The `preset_tools` package provides 10 built-in `FunctionHub` collections that c
 | `write_file`    | No    | `path: str`, `content: str`                   | `str`   | Create or overwrite a file.                  |
 | `read_file`     | No    | `path: str`                                   | `str`   | Read and return a file's content.            |
 | `delete_file`   | No    | `path: str`                                   | `str`   | Delete a file or directory recursively.      |
-| `view_text_file`| No    | `file_path: str`, `ranges: Optional[List[int]]` | `str` | View file content with line numbers and optional line range. |
+| `view_text_file`| No    | `file_path: str`, `ranges: Optional[list[int]]` | `str` | View file content with line numbers and optional line range. |
 
 ---
 
@@ -87,7 +87,7 @@ The `preset_tools` package provides 10 built-in `FunctionHub` collections that c
 
 | Tool                    | Async | Parameters                                                 | Return | Purpose                                                    |
 | ----------------------- | ----- | ---------------------------------------------------------- | ------ | ---------------------------------------------------------- |
-| `run_shell_command`     | No    | `args: List[str]`, `tail: int = 10`, `base_dir: Optional[str]` | `str` | Run a shell command synchronously; return last `tail` lines. |
+| `run_shell_command`     | No    | `args: list[str]`, `tail: int = 10`, `base_dir: Optional[str]` | `str` | Run a shell command synchronously; return last `tail` lines. |
 | `execute_shell_command` | Yes   | `command: str`, `timeout: int = 300`                       | `str`  | Run a shell command asynchronously with timeout support.    |
 
 ---

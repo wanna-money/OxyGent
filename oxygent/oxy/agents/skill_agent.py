@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -39,7 +39,7 @@ from .react_agent import ReActAgent
 logger = logging.getLogger(__name__)
 
 
-def _parse_simple_frontmatter(lines: List[str]) -> Dict[str, str]:
+def _parse_simple_frontmatter(lines: list[str]) -> dict[str, str]:
     """Parse simple key-value frontmatter (no nested structures).
 
     Supports basic 'key: value' format only.
@@ -142,7 +142,7 @@ class SkillAgent(ReActAgent):
         >>> # Agent will discover skills from both paths
     """
 
-    skills: Optional[List[str]] = Field(
+    skills: Optional[list[str]] = Field(
         default=None,
         description="List of skill directory paths to load skills from. "
         "Each path can be a skill folder with SKILL.md or a parent "
@@ -155,7 +155,7 @@ class SkillAgent(ReActAgent):
     )
 
     # Internal state (private attributes, not Pydantic fields)
-    _skills_metadata: Dict[str, SkillMetadata] = {}
+    _skills_metadata: dict[str, SkillMetadata] = {}
 
     @property
     def skills_count(self) -> int:
@@ -167,7 +167,7 @@ class SkillAgent(ReActAgent):
         return len(self._skills_metadata)
 
     @property
-    def skill_names(self) -> List[str]:
+    def skill_names(self) -> list[str]:
         """Names of all discovered skills.
 
         Returns:

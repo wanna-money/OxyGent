@@ -29,7 +29,7 @@
 | `api_key`    | `Optional[str]`                                            | `None`        | 用于远程 LLM 服务认证的 API 密钥。                                |
 | `base_url`   | `Optional[str]`                                            | `""`          | 远程 LLM API 的基础 URL 端点（必填）。                            |
 | `model_name` | `Optional[str]`                                            | `""`          | 用于请求的模型标识符（必填）。                                     |
-| `headers`    | `Dict[str, str] \| Callable[[OxyRequest], Dict[str, str]]` | `lambda: {}`  | 额外的 HTTP 请求头，或按请求返回请求头的可调用对象。                |
+| `headers`    | `dict[str, str] \| Callable[[OxyRequest], dict[str, str]]` | `lambda: {}`  | 额外的 HTTP 请求头，或按请求返回请求头的可调用对象。                |
 
 ## 方法
 

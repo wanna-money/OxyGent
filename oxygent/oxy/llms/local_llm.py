@@ -20,7 +20,7 @@ class LocalLLM(BaseLLM):
     device_map: str = Field("auto")
     dtype: str = Field("bfloat16")
 
-    async def init(self):
+    async def init(self) -> None:
         """Load the model and tokenizer from the configured path."""
         try:
             import torch

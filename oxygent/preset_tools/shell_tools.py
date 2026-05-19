@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import subprocess
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -15,7 +15,7 @@ shell_tools = FunctionHub(name="shell_tools")
 
 @shell_tools.tool(description="Run a shell command and return the output or error.")
 def run_shell_command(
-    args: List[str] = Field(description="command arguments"),
+    args: list[str] = Field(description="command arguments"),
     tail: int = 10,
     base_dir: Optional[str] = None,
 ) -> str:

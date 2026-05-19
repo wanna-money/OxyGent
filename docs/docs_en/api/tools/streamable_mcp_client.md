@@ -33,7 +33,7 @@ The position of the class is:
 | Parameter     | Type / Allowed value | Default | Description                                              |
 | ------------- | -------------------- | ------- | -------------------------------------------------------- |
 | `server_url`  | `AnyUrl`             | `""`    | URL of the MCP server's streamable-HTTP endpoint.        |
-| `middlewares` | `List[Any]`          | `[]`    | Client-side MCP middlewares for request processing.      |
+| `middlewares` | `list[Any]`          | `[]`    | Client-side MCP middlewares for request processing.      |
 
 ## Methods
 

@@ -33,7 +33,7 @@ The position of the class is:
 
 | Parameter | Type / Allowed value  | Default              | Description                                                                                                                         |
 | --------- | --------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `skills`  | `Optional[List[str]]` | `None`               | List of skill directory paths. Each path can point to a folder with `SKILL.md` or a parent directory containing skill subfolders.   |
+| `skills`  | `Optional[list[str]]` | `None`               | List of skill directory paths. Each path can point to a folder with `SKILL.md` or a parent directory containing skill subfolders.   |
 | `prompt`  | `Optional[str]`       | `SYSTEM_PROMPT_SKILLS` | Overrides the default prompt with a skill-aware system prompt containing a `${skill_list}` placeholder.                           |
 
 ## Methods
@@ -52,7 +52,7 @@ The position of the class is:
 | Property       | Type        | Description                                   |
 | -------------- | ----------- | --------------------------------------------- |
 | `skills_count` | `int`       | Number of unique skills discovered.           |
-| `skill_names`  | `List[str]` | Sorted list of all discovered skill names.    |
+| `skill_names`  | `list[str]` | Sorted list of all discovered skill names.    |
 
 ## Inherited
  Please refer to the [ReActAgent](./react_agent.md) class for inherited parameters and methods.

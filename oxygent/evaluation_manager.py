@@ -6,7 +6,7 @@ Provides storage, query, and statistical functions for conversation evaluation d
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .config import Config
 from .databases.db_es import JesEs, LocalEs
@@ -31,7 +31,7 @@ class EvaluationManager:
     - Aggregated analysis of rating data
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize evaluation manager."""
         self.db_factory = DBFactory()
         self.app_name = Config.get_app_name()
@@ -56,7 +56,7 @@ class EvaluationManager:
             last_updated=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
         )
 
-    def _get_hits_total(self, response: Optional[Dict[str, Any]]) -> int:
+    def _get_hits_total(self, response: Optional[dict[str, Any]]) -> int:
         """Get total number of hits from ES query response, compatible with different ES versions.
 
         Args:
@@ -85,7 +85,7 @@ class EvaluationManager:
         hits_list = hits.get("hits", [])
         return len(hits_list)
 
-    async def _get_es_client(self):
+    async def _get_es_client(self) -> Any:
         """Get Elasticsearch client - supports both JesEs and LocalEs.
 
         Returns:
@@ -108,7 +108,7 @@ class EvaluationManager:
         )
         return self.db_factory.get_instance(LocalEs)
 
-    def _get_client_ip(self, request) -> Optional[str]:
+    def _get_client_ip(self, request: Any) -> Optional[str]:
         """Get client IP address from request.
 
         Args:
@@ -132,7 +132,7 @@ class EvaluationManager:
             logger.warning(f"Failed to get client IP: {e}")
             return None
 
-    async def _refresh_index(self, es_client, index_name: str) -> None:
+    async def _refresh_index(self, es_client: Any, index_name: str) -> None:
         """Refresh ES index to ensure data is immediately searchable.
 
         Args:
@@ -150,7 +150,7 @@ class EvaluationManager:
             logger.warning(f"Failed to refresh index {index_name}: {e}")
 
     async def create_rating(
-        self, rating_request: RatingRequest, request=None, user_id: Optional[str] = None
+        self, rating_request: RatingRequest, request: Any = None, user_id: Optional[str] = None
     ) -> RatingResponse:
         """Create a new rating record (multiple rating records allowed per conversation).
 
@@ -213,7 +213,7 @@ class EvaluationManager:
             logger.error(f"Failed to create/update rating: {e}")
             return RatingResponse(success=False, message=f"Rating failed: {e}")
 
-    async def _check_trace_exists(self, es_client, trace_id: str) -> bool:
+    async def _check_trace_exists(self, es_client: Any, trace_id: str) -> bool:
         """Check if conversation trace exists.
 
         Args:
@@ -245,7 +245,7 @@ class EvaluationManager:
             return True
 
     async def _update_rating_stats(
-        self, es_client, trace_id: str, known_rating_type: Optional[str] = None
+        self, es_client: Any, trace_id: str, known_rating_type: Optional[str] = None
     ) -> RatingStats:
         """Update rating statistics by aggregating all rating records.
 
@@ -351,15 +351,15 @@ class EvaluationManager:
             return None
 
     async def get_ratings_for_traces(
-        self, trace_ids: List[str]
-    ) -> Dict[str, RatingStats]:
+        self, trace_ids: list[str]
+    ) -> dict[str, RatingStats]:
         """Batch retrieve rating statistics for multiple conversations.
 
         Args:
             trace_ids: List of conversation trace IDs
 
         Returns:
-            Dict[str, RatingStats]: Mapping from trace_id to rating statistics
+            dict[str, RatingStats]: Mapping from trace_id to rating statistics
         """
         try:
             es_client = await self._get_es_client()
@@ -390,7 +390,7 @@ class EvaluationManager:
 
     async def get_rating_history(
         self, trace_id: str, erp: Optional[str] = None
-    ) -> List[ConversationRating]:
+    ) -> list[ConversationRating]:
         """Get all rating history records for a conversation.
 
         Args:
@@ -398,7 +398,7 @@ class EvaluationManager:
             erp: ERP system identifier for filtering specific ERP ratings (optional)
 
         Returns:
-            List[ConversationRating]: List of rating records sorted by creation time (descending)
+            list[ConversationRating]: List of rating records sorted by creation time (descending)
         """
         try:
             es_client = await self._get_es_client()
@@ -438,15 +438,15 @@ class EvaluationManager:
             return []
 
     async def get_rating_histories_for_traces(
-        self, trace_ids: List[str]
-    ) -> Dict[str, List[ConversationRating]]:
+        self, trace_ids: list[str]
+    ) -> dict[str, list[ConversationRating]]:
         """Batch retrieve rating history records for multiple conversations.
 
         Args:
             trace_ids: List of conversation trace IDs
 
         Returns:
-            Dict[str, List[ConversationRating]]: Mapping from trace_id to list of rating history records
+            dict[str, list[ConversationRating]]: Mapping from trace_id to list of rating history records
         """
         try:
             es_client = await self._get_es_client()
@@ -534,14 +534,14 @@ class EvaluationManager:
             logger.error(f"Failed to delete rating {rating_id}: {e}")
             return False
 
-    async def get_overall_rating_stats(self, days: int = 7) -> Dict[str, Any]:
+    async def get_overall_rating_stats(self, days: int = 7) -> dict[str, Any]:
         """Get overall rating statistics.
 
         Args:
             days: Number of days to include in statistics
 
         Returns:
-            Dict[str, Any]: Overall statistics information
+            dict[str, Any]: Overall statistics information
         """
         try:
             from datetime import datetime, timedelta
@@ -626,11 +626,11 @@ class EvaluationManager:
                 "error": str(e),
             }
 
-    async def clear_all_rating_data(self) -> Dict[str, Any]:
+    async def clear_all_rating_data(self) -> dict[str, Any]:
         """Clear all rating data (including rating records and statistics).
 
         Returns:
-            Dict[str, Any]: Cleanup result
+            dict[str, Any]: Cleanup result
         """
         try:
             es_client = await self._get_es_client()
@@ -713,11 +713,11 @@ class EvaluationManager:
                 "errors": [f"Clear failed: {e}"],
             }
 
-    async def ensure_rating_indices_with_correct_mapping(self) -> Dict[str, Any]:
+    async def ensure_rating_indices_with_correct_mapping(self) -> dict[str, Any]:
         """Ensure rating-related indices exist with correct field mappings.
 
         Returns:
-            Dict[str, Any]: Operation result
+            dict[str, Any]: Operation result
         """
         try:
             es_client = await self._get_es_client()

@@ -177,7 +177,7 @@ class A2AClientAgent(RemoteAgent):
             card_path = f"{card_path}?{query_str}"
         return server_url, card_path
 
-    async def init(self):
+    async def init(self) -> None:
         """Initialize A2A card resolver and SDK client."""
         await super().init()
         server_url, card_path = self._resolve_card_endpoint()

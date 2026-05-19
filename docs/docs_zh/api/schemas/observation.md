@@ -26,7 +26,7 @@ oxygent/schemas/observation.py
 
 | 参数           | 类型               | 默认值  | 描述                                 |
 | -------------- | ------------------ | ------- | ------------------------------------ |
-| `exec_results` | `List[ExecResult]` | `[]`    | 各工具执行结果的列表。               |
+| `exec_results` | `list[ExecResult]` | `[]`    | 各工具执行结果的列表。               |
 
 ### 方法
 

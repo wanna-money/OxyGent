@@ -9,7 +9,7 @@ through stdin/stdout pipes.
 import logging
 import os
 import shutil
-from typing import Any
+from typing import Any, Optional
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -51,7 +51,7 @@ class StdioMCPClient(BaseMCPClient):
             if not os.path.exists(mcp_tool_file):
                 raise FileNotFoundError(f"{mcp_tool_file} does not exist.")
 
-    async def init(self, is_fetch_tools=True) -> None:
+    async def init(self, is_fetch_tools: bool = True) -> None:
         """Initialize the stdio connection to the MCP server process.
 
         Spawns an external process (such as a Node.js script) that acts as an MCP server,
@@ -87,14 +87,14 @@ class StdioMCPClient(BaseMCPClient):
             await self.cleanup()
             raise Exception(f"Server {self.name} error")
 
-    async def call_tool(self, tool_name, arguments, headers=None):
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any], headers: Optional[dict[str, str]] = None) -> Any:
         server_params = await self.get_server_params()
         async with stdio_client(server_params) as streams:
             async with ClientSession(*streams) as session:
                 await session.initialize()
                 return await session.call_tool(tool_name, arguments)
 
-    async def get_server_params(self):
+    async def get_server_params(self) -> StdioServerParameters:
         command = (
             shutil.which("npx")
             if self.params["command"] == "npx"

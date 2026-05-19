@@ -4,6 +4,8 @@ import asyncio
 
 from pydantic import Field
 
+from typing import Optional
+
 from .. import OxyRequest
 from ..utils.common_utils import clean_ansi_codes
 from . import FunctionHub
@@ -14,8 +16,8 @@ ssh_tools = FunctionHub(name="ssh_tools", timeout=600)
 @ssh_tools.tool(description="a tool for control the ubuntu terminal")
 async def ssh_tool(
     shell_command: str = Field(description="The shell command to execute"),
-    oxy_request: OxyRequest = None,
-):
+    oxy_request: Optional[OxyRequest] = None,
+) -> str:
     ssh_channel = oxy_request.get_global_data("ssh_channel")
     ssh_channel.send(f"{shell_command}\n")
 

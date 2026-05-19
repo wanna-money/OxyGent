@@ -9,7 +9,7 @@ import asyncio
 import json
 import time
 from collections import deque
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 from ...config import Config
 
@@ -28,9 +28,9 @@ class LocalRedis:
     - Value type validation and conversion
     """
 
-    def __init__(self, *, yield_on_ops: bool = True):
-        self.data: Dict[str, deque] = {}
-        self.expiry: Dict[str, float] = {}
+    def __init__(self, *, yield_on_ops: bool = True) -> None:
+        self.data: dict[str, deque] = {}
+        self.expiry: dict[str, float] = {}
         self.default_expire_time = Config.get_redis_expire_time()
         self.default_list_max_size = Config.get_redis_max_size()
         self.default_list_max_length = Config.get_redis_max_length() * 1024
@@ -136,7 +136,7 @@ class LocalRedis:
             await asyncio.sleep(0)
         return None
 
-    def _check_expiry(self, key: str):
+    def _check_expiry(self, key: str) -> None:
         """Check if a key has expired and remove it if necessary.
 
         Args:
@@ -146,7 +146,7 @@ class LocalRedis:
             del self.data[key]
             del self.expiry[key]
 
-    async def close(self):
+    async def close(self) -> None:
         # Async for interface compatibility
         if self._yield_on_ops:
             await asyncio.sleep(0)

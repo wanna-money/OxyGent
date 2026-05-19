@@ -6,7 +6,7 @@ MCP servers to clients, ideal for streaming responses and live updates.
 """
 
 import logging
-from typing import Any, List
+from typing import Any, Optional
 
 from mcp import ClientSession
 from mcp.client.sse import sse_client
@@ -27,11 +27,11 @@ class SSEMCPClient(BaseMCPClient):
     """
 
     sse_url: AnyUrl = Field("", description="URL of the MCP server's SSE endpoint")
-    middlewares: List[Any] = Field(
+    middlewares: list[Any] = Field(
         default_factory=list, description="Client-side MCP middlewares"
     )
 
-    async def init(self, is_fetch_tools=True) -> None:
+    async def init(self, is_fetch_tools: bool = True) -> None:
         """Initialize the SSE connection to the MCP server.
 
         Establishes a Server-Sent Events connection to the MCP server, creates a client
@@ -79,7 +79,7 @@ class SSEMCPClient(BaseMCPClient):
             await self.cleanup()
             raise Exception(f"Server {self.name} error")
 
-    async def call_tool(self, tool_name, arguments, headers=None):
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any], headers: Optional[dict[str, str]] = None) -> Any:
         """Open a fresh SSE connection and invoke the named tool with arguments."""
         async with sse_client(
             build_url(self.sse_url), headers=headers, timeout=self.timeout

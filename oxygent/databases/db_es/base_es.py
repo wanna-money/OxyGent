@@ -26,7 +26,7 @@ class BaseEs(BaseDB, ABC):
     """
 
     @abstractmethod
-    async def create_index(self, index_name, body):
+    async def create_index(self, index_name: str, body: dict[str, Any]) -> dict[str, Any]:
         """Create a new index in Elasticsearch with the specified configuration.
 
         Args:
@@ -42,7 +42,7 @@ class BaseEs(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def index(self, index_name, doc_id, body):
+    async def index(self, index_name: str, doc_id: str, body: dict[str, Any]) -> None:
         """Index a document in Elasticsearch.
 
         This method adds or updates a document in the specified index with the given ID.
@@ -61,12 +61,12 @@ class BaseEs(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def update(self, index_name, doc_id, body):
+    async def update(self, index_name: str, doc_id: str, body: dict[str, Any]) -> None:
         """Update a document by ID. Subclasses must implement this."""
         pass
 
     @abstractmethod
-    async def search(self, index_name, body):
+    async def search(self, index_name: str, body: dict[str, Any]) -> dict[str, Any]:
         """Execute a search query against an Elasticsearch index.
 
         Args:
@@ -82,7 +82,7 @@ class BaseEs(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def exists(self, index_name, doc_id):
+    async def exists(self, index_name: str, doc_id: str) -> bool:
         """Check if a document exists in the specified index.
 
         Args:
@@ -98,7 +98,7 @@ class BaseEs(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def close(self):
+    async def close(self) -> None:
         """Close the Elasticsearch client connection and clean up resources.
 
         This method should be called when the ES client is no longer needed

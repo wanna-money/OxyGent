@@ -8,6 +8,7 @@ It supports both synchronous and asynchronous functions with automatic conversio
 import asyncio
 import concurrent.futures
 import functools
+from typing import Any, Callable
 
 from pydantic import Field
 
@@ -26,23 +27,23 @@ class FunctionHub(BaseTool):
             and execution functions. Format: {name: (description, async_func)}
     """
 
-    func_dict: dict = Field(
+    func_dict: dict[str, tuple[str, Callable[..., Any]]] = Field(
         default_factory=dict, description="Registry of functions and their metadata"
     )
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         """Initialize the FunctionHub with thread pool support."""
         super().__init__(**data)
-        self._thread_pool = None  # Private attribute for thread pool
+        self._thread_pool: concurrent.futures.ThreadPoolExecutor | None = None
 
     @property
-    def thread_pool(self):
+    def thread_pool(self) -> concurrent.futures.ThreadPoolExecutor:
         """Lazy initialization of thread pool."""
         if self._thread_pool is None:
             self._thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=4)
         return self._thread_pool
 
-    async def init(self):
+    async def init(self) -> None:
         """Initialize the hub by creating FunctionTool instances for all registered
         functions.
 
@@ -60,7 +61,7 @@ class FunctionHub(BaseTool):
             function_tool.set_mas(self.mas)
             self.mas.add_oxy(function_tool)
 
-    def tool(self, description):
+    def tool(self, description: str) -> Callable[..., Callable[..., Any]]:
         """Decorator for registering functions as tools.
 
         This decorator automatically converts both synchronous and asynchronous
@@ -101,7 +102,7 @@ class FunctionHub(BaseTool):
 
         return decorator
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Clean up resources, including the thread pool."""
         if self._thread_pool:
             self._thread_pool.shutdown(wait=True)

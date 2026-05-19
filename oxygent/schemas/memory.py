@@ -3,7 +3,7 @@ Message and Memory Schemas
 ========================
 """
 
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -33,11 +33,11 @@ class Message(BaseModel):
 
     role: Literal["system", "user", "assistant", "tool"] = Field(...)
     content: Optional[Union[str, list, dict]] = Field(default=None)
-    tool_calls: Optional[List[ToolCall]] = Field(default=None)
+    tool_calls: Optional[list[ToolCall]] = Field(default=None)
     name: Optional[str] = Field(default=None)
     tool_call_id: Optional[str] = Field(default=None)
 
-    def __add__(self, other) -> List["Message"]:
+    def __add__(self, other: Any) -> list["Message"]:
         """Enable Message + list or Message + Message composition."""
         if isinstance(other, list):
             return [self] + other
@@ -48,7 +48,7 @@ class Message(BaseModel):
                 f"unsupported operand type(s) for +: '{type(self).__name__}' and '{type(other).__name__}'"
             )
 
-    def __radd__(self, other) -> List["Message"]:
+    def __radd__(self, other: Any) -> list["Message"]:
         """Support list concatenation with Message objects."""
         if isinstance(other, list):
             return other + [self]
@@ -97,7 +97,9 @@ class Message(BaseModel):
         return cls(role="assistant", content=content)
 
     @classmethod
-    def tool_message(cls, content: str, name, tool_call_id: str) -> "Message":
+    def tool_message(
+        cls, content: str, name: Optional[str], tool_call_id: str
+    ) -> "Message":
         """Create a tool message."""
         return cls(role="tool", content=content, name=name, tool_call_id=tool_call_id)
 
@@ -107,8 +109,8 @@ class Message(BaseModel):
 
     @classmethod
     def from_tool_calls(
-        cls, tool_calls: List[Any], content: Union[str, List[str]] = "", **kwargs
-    ):
+        cls, tool_calls: list[Any], content: Union[str, list[str]] = "", **kwargs: Any
+    ) -> "Message":
         """Create ToolCallsMessage from raw tool calls.
 
         Args:
@@ -128,7 +130,7 @@ class Message(BaseModel):
     # ----------------------------------------------------------------
 
     @staticmethod
-    def dict_list_to_messages(dict_list: list[dict[str, Any]]) -> List["Message"]:
+    def dict_list_to_messages(dict_list: list[dict[str, Any]]) -> list["Message"]:
         """Convert a list of dicts to a list of messages."""
         lookup = {
             "system": Message.system_message,
@@ -152,14 +154,14 @@ class Message(BaseModel):
 class Memory(BaseModel):
     """Fixed-size sliding window of recent chat messages."""
 
-    messages: List[Message] = Field(default_factory=list)
+    messages: list[Message] = Field(default_factory=list)
     max_messages: int = Field(default=50)
 
     def add_message(self, message: Message) -> None:
         """Add a message to memory."""
         self.messages.append(message)
 
-    def add_messages(self, messages: List[Message]) -> None:
+    def add_messages(self, messages: list[Message]) -> None:
         """Add multiple messages to memory."""
         self.messages.extend(messages)
 
@@ -167,11 +169,13 @@ class Memory(BaseModel):
         """Drop all stored messages."""
         self.messages.clear()
 
-    def get_recent_messages(self, n: int) -> List[Message]:
+    def get_recent_messages(self, n: int) -> list[Message]:
         """Get n most recent messages."""
         return self.messages[-n:]
 
-    def to_dict_list(self, short_memory_size=None) -> List[dict]:
+    def to_dict_list(
+        self, short_memory_size: Optional[int] = None
+    ) -> list[dict[str, Any]]:
         """Convert messages to list of dicts (with trimming first)."""
         if short_memory_size is None:
             short_memory_size = self.max_messages // 2

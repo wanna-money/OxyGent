@@ -26,8 +26,8 @@ The position of the class is:
 
 | Parameter               | Type / Allowed value | Default | Description                                          |
 | ----------------------- | -------------------- | ------- | ---------------------------------------------------- |
-| `data`                  | `Dict[str, deque]`   | `{}`    | In-memory store mapping keys to deques for list ops. |
-| `expiry`                | `Dict[str, float]`   | `{}`    | Epoch-seconds TTL per key for auto-expiration.       |
+| `data`                  | `dict[str, deque]`   | `{}`    | In-memory store mapping keys to deques for list ops. |
+| `expiry`                | `dict[str, float]`   | `{}`    | Epoch-seconds TTL per key for auto-expiration.       |
 | `default_expire_time`   | `int`                | `86400` | Default time-to-live (seconds).                      |
 | `default_list_max_size` | `int`                | `10`    | Default maximum list length for new deques.          |
 

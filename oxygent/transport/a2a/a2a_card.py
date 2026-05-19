@@ -55,7 +55,7 @@ def build_skills_from_org(
     org = mas.agent_organization or {}
     skills: list[dict[str, Any]] = []
 
-    def walk(node: dict[str, Any], path: list[str] | None = None):
+    def walk(node: dict[str, Any], path: list[str] | None = None) -> None:
         if not isinstance(node, dict):
             return
         curr_path = (path or []) + [node.get("name", "")]

@@ -7,6 +7,7 @@ such as retry mechanisms and error handling for database operations.
 import asyncio
 import functools
 import logging
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class BaseDB:
     subclasses, ensuring robust database operations with configurable retry policies.
     """
 
-    def try_decorator(max_retries=1, delay_between_retries=0.1):
+    def try_decorator(max_retries: int = 1, delay_between_retries: float = 0.1) -> Callable:
         """Decorator factory that creates a retry mechanism for database operations.
 
         This decorator will automatically retry failed operations up to a specified number
@@ -33,9 +34,9 @@ class BaseDB:
             Callable: A decorator function that can be applied to async methods
         """
 
-        def decorator(func):
+        def decorator(func: Callable) -> Callable:
             @functools.wraps(func)
-            async def wrapper(*args, **kwargs):
+            async def wrapper(*args: Any, **kwargs: Any) -> Any:
                 """Wrapper function that implements the retry logic.
 
                 Args:
@@ -60,7 +61,7 @@ class BaseDB:
 
         return decorator
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """Class method called when a class is subclassed from BaseDB.
 
         This method automatically applies the retry decorator to all public methods

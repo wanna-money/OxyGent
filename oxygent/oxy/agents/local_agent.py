@@ -10,7 +10,7 @@ import copy
 import json
 import logging
 import re
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import Field
 
@@ -77,18 +77,18 @@ class LocalAgent(BaseAgent):
         "tools_description",
         description="Placeholder key in the prompt template for injecting tool descriptions",
     )
-    sub_agents: Optional[list] = Field(
+    sub_agents: Optional[list[Any]] = Field(
         default_factory=list,
         description="Names of other agents this agent can delegate to (hierarchy support).",
     )
-    tools: Optional[list] = Field(
+    tools: Optional[list[Any]] = Field(
         default_factory=list, description="Tools available to this agent."
     )
-    except_tools: Optional[list] = Field(
+    except_tools: Optional[list[str]] = Field(
         default_factory=list, description="Tools explicitly forbidden to this agent."
     )
 
-    banks: Optional[list] = Field(
+    banks: Optional[list[Any]] = Field(
         default_factory=list, description="Banks available to this agent."
     )
 
@@ -127,13 +127,13 @@ class LocalAgent(BaseAgent):
 
     team_size: int = Field(1, description="Number of instances for team execution")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
         if not self.llm_model:
             raise Exception(f"agent {self.name} not set llm_model")
 
-    def _init_available_tool_name_list(self):
+    def _init_available_tool_name_list(self) -> None:
         """Initialize the list of tools(sub-agents, MCP tools, function tools and
         function hubs) available to this agent.
 
@@ -179,7 +179,7 @@ class LocalAgent(BaseAgent):
             else:
                 logger.warning(f"Unknown bank type: {type(oxy)}")
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo: dict[int, Any]) -> "LocalAgent":
         """Deep copy this agent, preserving non-copyable async primitives."""
         # Extract all fields from the current instance
         fields = self.model_dump()
@@ -229,7 +229,7 @@ class LocalAgent(BaseAgent):
             )
             return False
 
-    async def init(self):
+    async def init(self) -> None:
         """Initialize the agent and set up team-based execution if configured.
 
         This method performs agent initialization including tool setup and creates
@@ -303,7 +303,7 @@ class LocalAgent(BaseAgent):
             self.mas.oxy_name_to_oxy[self.name] = parallel_agent
 
     async def _get_history(
-        self, oxy_request: OxyRequest, is_get_user_master_session=False
+        self, oxy_request: OxyRequest, is_get_user_master_session: bool = False
     ) -> Memory:
         """Retrieve conversation history from Elasticsearch.
 
@@ -348,7 +348,7 @@ class LocalAgent(BaseAgent):
                 short_memory.add_message(Message.assistant_message(memory["answer"]))
         return short_memory
 
-    async def _get_llm_tool_desc_list(self, oxy_request: OxyRequest, query: str) -> str:
+    async def _get_llm_tool_desc_list(self, oxy_request: OxyRequest, query: str) -> list[str]:
         """Get tool descriptions for LLM context based on configuration and query.
 
         This method handles different tool retrieval strategies:
@@ -426,7 +426,7 @@ class LocalAgent(BaseAgent):
                     llm_tool_desc_list.append(oxy_response.output)
         return llm_tool_desc_list
 
-    def _build_instruction(self, arguments) -> str:
+    def _build_instruction(self, arguments: dict[str, Any]) -> str:
         """Build instruction prompt by substituting template variables.
 
         Args:

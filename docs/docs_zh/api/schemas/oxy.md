@@ -39,11 +39,11 @@ oxygent/schemas/oxy.py
 | `mas`                      | `Optional[Any]`              | `None`                         | MAS 运行时句柄（不会被序列化）。             |
 | `caller`                   | `Optional[str]`              | `"user"`                       | 调用方 Oxy 的名称。                          |
 | `callee`                   | `Optional[str]`              | `""`                           | 被调用方 Oxy 的名称。                        |
-| `call_stack`               | `List[str]`                  | `["user"]`                     | 调用方名称栈。                               |
-| `node_id_stack`            | `List[str]`                  | `[""]`                         | 节点 ID 栈。                                 |
+| `call_stack`               | `list[str]`                  | `["user"]`                     | 调用方名称栈。                               |
+| `node_id_stack`            | `list[str]`                  | `[""]`                         | 节点 ID 栈。                                 |
 | `father_node_id`           | `Optional[str]`              | `""`                           | 父节点 ID。                                  |
-| `pre_node_ids`             | `Optional[List[str] \| str]` | `[]`                           | 前驱节点 ID。                                |
-| `latest_node_ids`          | `Optional[List[str] \| str]` | `[]`                           | 最新的并行节点 ID。                          |
+| `pre_node_ids`             | `Optional[list[str] \| str]` | `[]`                           | 前驱节点 ID。                                |
+| `latest_node_ids`          | `Optional[list[str] \| str]` | `[]`                           | 最新的并行节点 ID。                          |
 | `caller_category`          | `Optional[str]`              | `"user"`                       | 调用方类别（user/agent/tool）。              |
 | `callee_category`          | `Optional[str]`              | `""`                           | 被调用方类别。                               |
 | `node_id`                  | `Optional[str]`              | `""`                           | 当前节点 ID。                                |

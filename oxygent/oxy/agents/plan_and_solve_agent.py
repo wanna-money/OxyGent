@@ -5,6 +5,7 @@ execution, and replanning."""
 
 import json
 import logging
+from typing import Any
 
 from pydantic import Field
 
@@ -23,7 +24,7 @@ class PlanAndSolveAgent(LocalAgent):
     planner_agent: str = Field("planner_agent", description="planner agent name")
     executor_agent: str = Field("executor_agent", description="executor agent name")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the plan-and-solve agent."""
         super().__init__(**kwargs)
 
@@ -32,7 +33,7 @@ class PlanAndSolveAgent(LocalAgent):
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Run the plan-and-solve loop: plan, execute steps, evaluate, replan if needed."""
 
-        async def answer(past_steps_str, short_memory, original_query):
+        async def answer(past_steps_str: str, short_memory: Any, original_query: str) -> OxyResponse:
             temp_memory = Memory()
             temp_memory.add_message(
                 Message.system_message(

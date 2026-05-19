@@ -284,7 +284,7 @@ extract_pdf_images(
 
 ```python
 merge_pdfs(
-    pdf_paths: List[str],           # List of PDF files
+    pdf_paths: list[str],           # List of PDF files
     output_path: str,               # Output file path
     include_bookmarks: bool = True  # Whether to preserve bookmarks
 ) -> str
@@ -307,7 +307,7 @@ result = merge_pdfs(
 ```python
 split_pdf(
     path: str,
-    split_ranges: List[str],  # Split range list
+    split_ranges: list[str],  # Split range list
     output_dir: str,
     name_prefix: str = "split"
 ) -> str

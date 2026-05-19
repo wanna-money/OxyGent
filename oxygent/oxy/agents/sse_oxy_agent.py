@@ -21,7 +21,7 @@ class SSEOxyGent(RemoteAgent):
         True, description="Whether to share the call stack with the agent."
     )
 
-    async def init(self):
+    async def init(self) -> None:
         """Initialize the SSE remote agent connection."""
         await super().init()
 

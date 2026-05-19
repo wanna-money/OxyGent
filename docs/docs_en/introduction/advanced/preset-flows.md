@@ -27,7 +27,7 @@ Below, we use OxyGent's preset `PlanAndSolve` flow as an example to demonstrate 
 | `executor_agent_name` | `str` | `"executor_agent"` | Name of the agent responsible for executing each step |
 | `enable_replanner` | `bool` | `False` | Whether to dynamically adjust the plan after each step |
 | `max_replan_rounds` | `int` | `30` | Maximum number of execution/replanning rounds |
-| `pre_plan_steps` | `List[str]` | `None` | Predefined plan steps (skips the planning phase) |
+| `pre_plan_steps` | `list[str]` | `None` | Predefined plan steps (skips the planning phase) |
 | `llm_model` | `str` | `"default_llm"` | Fallback LLM model name |
 
 ### Usage Example

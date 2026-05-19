@@ -29,7 +29,7 @@ The demo starts a web service with the default query: "Search for 'Wuhan weather
 ### Configuration
 
 ```python
-def load_config() -> Dict[str, Any]:
+def load_config() -> dict[str, Any]:
 ```
 
 A helper function that loads and validates required environment variables. Raises a `ValueError` if any are missing, providing clear error messages. `Config.set_agent_llm_model("default_llm")` sets the global default LLM.

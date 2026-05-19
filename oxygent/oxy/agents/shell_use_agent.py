@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Any
 
 from pydantic import Field
 
@@ -21,9 +22,9 @@ logger = logging.getLogger(__name__)
 class ShellUseAgent(ReActAgent):
     """ReAct-style agent that uses shell/SSH tools to accomplish tasks."""
 
-    auth_info: dict = Field(default_factory=dict)
+    auth_info: dict[str, Any] = Field(default_factory=dict)
 
-    async def init(self):
+    async def init(self) -> None:
         """Async initialization for the shell-use agent."""
         await super().init()
 
@@ -83,7 +84,7 @@ class ShellUseAgent(ReActAgent):
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Run the ReAct loop using shell/SSH tool invocations."""
 
-        def mock_receive_email(query):
+        def mock_receive_email(query: str) -> str:
             return f"python3 receive_email.py Bob\n{query}\nvboxuser@ubuntu:~$ "
 
         oxy_request.set_query(mock_receive_email(oxy_request.get_query()))

@@ -6,7 +6,7 @@ across multiple instances using ES polling strategy.
 
 import asyncio
 import logging
-from typing import Dict
+from typing import Any, Optional
 
 from ..config import Config
 
@@ -26,7 +26,7 @@ class VersionSyncCoordinator:
         polling_interval: Interval in seconds for ES polling
     """
 
-    def __init__(self, prompt_manager, polling_interval: int = None):
+    def __init__(self, prompt_manager: Any, polling_interval: Optional[int] = None) -> None:
         """Initialize the version sync coordinator.
 
         Args:
@@ -44,15 +44,15 @@ class VersionSyncCoordinator:
         self.use_es_polling = False
         self.polling_task = None
         self._is_running = False
-        self._local_versions: Dict[str, int] = {}  # Track local versions
-        self._pending_updates: Dict[
-            str, set
+        self._local_versions: dict[str, int] = {}  # Track local versions
+        self._pending_updates: dict[
+            str, set[int]
         ] = {}  # Track pending updates: {prompt_key: {version, ...}}
 
         # Detect ES polling availability
         self._detect_sync_mechanisms()
 
-    def _detect_sync_mechanisms(self):
+    def _detect_sync_mechanisms(self) -> None:
         """Detect ES polling availability based on configuration."""
         # Check ES configuration
         es_config = Config.get_es_config()
@@ -84,7 +84,7 @@ class VersionSyncCoordinator:
                 "Cache consistency across instances is not guaranteed."
             )
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the version sync coordinator.
 
         Initializes ES polling based on configuration.
@@ -104,7 +104,7 @@ class VersionSyncCoordinator:
 
         logger.info("Version sync coordinator started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the version sync coordinator.
 
         Cleans up ES polling tasks.
@@ -120,13 +120,13 @@ class VersionSyncCoordinator:
 
         logger.info("Version sync coordinator stopped")
 
-    def _initialize_local_versions(self):
+    def _initialize_local_versions(self) -> None:
         """Initialize local version tracking from current cache."""
         cache_snapshot = dict(self.prompt_manager._prompt_cache)
         for prompt_key, prompt_data in cache_snapshot.items():
             self._local_versions[prompt_key] = prompt_data.get("version", 1)
 
-    async def _start_es_polling(self):
+    async def _start_es_polling(self) -> None:
         """Start ES polling for version updates."""
         logger.info(
             f"Starting ES polling with {self.polling_interval}s interval "
@@ -135,7 +135,7 @@ class VersionSyncCoordinator:
 
         self.polling_task = asyncio.create_task(self._es_poller())
 
-    async def _stop_es_polling(self):
+    async def _stop_es_polling(self) -> None:
         """Stop ES polling task."""
         if self.polling_task:
             self.polling_task.cancel()
@@ -145,7 +145,7 @@ class VersionSyncCoordinator:
                 pass
             logger.info("ES polling stopped")
 
-    async def _es_poller(self):
+    async def _es_poller(self) -> None:
         """Poll ES for version updates."""
         while self._is_running and self.use_es_polling:
             try:
@@ -157,7 +157,7 @@ class VersionSyncCoordinator:
                 logger.error(f"ES polling error: {e}")
                 await asyncio.sleep(self.polling_interval)
 
-    async def _check_es_versions(self):
+    async def _check_es_versions(self) -> None:
         """Check ES for version updates and update local cache if needed."""
         try:
             # Get all prompts from ES
@@ -189,7 +189,7 @@ class VersionSyncCoordinator:
         except Exception as e:
             logger.error(f"Error checking ES versions: {e}")
 
-    async def _handle_version_update(self, prompt_key: str, new_version: int):
+    async def _handle_version_update(self, prompt_key: str, new_version: int) -> None:
         """Handle a version update for a prompt with concurrency control.
 
         Prevents duplicate updates, version rollback, and out-of-order updates.
@@ -242,7 +242,7 @@ class VersionSyncCoordinator:
 
     async def _fetch_from_es_with_retry(
         self, prompt_key: str, new_version: int, max_retries: int = 3
-    ):
+    ) -> None:
         """Fetch prompt from ES with retry logic to handle ES refresh delay.
 
         Args:
@@ -311,7 +311,7 @@ class VersionSyncCoordinator:
             "Will sync on next ES polling cycle."
         )
 
-    def update_local_version(self, prompt_key: str, version: int):
+    def update_local_version(self, prompt_key: str, version: int) -> None:
         """Update local version tracker (called after saving prompt).
 
         Args:
@@ -326,7 +326,7 @@ class VersionSyncCoordinator:
 version_sync_coordinator = None
 
 
-async def get_version_sync_coordinator(prompt_manager=None) -> VersionSyncCoordinator:
+async def get_version_sync_coordinator(prompt_manager: Any = None) -> VersionSyncCoordinator:
     """Get the global version sync coordinator instance.
 
     Args:
@@ -348,7 +348,7 @@ async def get_version_sync_coordinator(prompt_manager=None) -> VersionSyncCoordi
     return version_sync_coordinator
 
 
-async def start_version_sync(prompt_manager=None):
+async def start_version_sync(prompt_manager: Any = None) -> None:
     """Start the version sync coordinator.
 
     Args:
@@ -358,7 +358,7 @@ async def start_version_sync(prompt_manager=None):
     await coordinator.start()
 
 
-async def stop_version_sync():
+async def stop_version_sync() -> None:
     """Stop the version sync coordinator."""
     global version_sync_coordinator
 

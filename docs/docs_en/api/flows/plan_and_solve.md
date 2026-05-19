@@ -28,7 +28,7 @@ The position of the class is:
 | -------------------------------- | -------------------- | ------------------------------------ | ------------------------------------------------------------------ |
 | `max_replan_rounds`              | `int`                | `30`                                 | Maximum number of replanning iterations allowed.                   |
 | `planner_agent_name`             | `str`                | `"planner_agent"`                    | Name of the agent used to generate plans.                          |
-| `pre_plan_steps`                 | `List[str]`          | `None`                               | Pre-defined plan steps to use instead of generating new ones.      |
+| `pre_plan_steps`                 | `list[str]`          | `None`                               | Pre-defined plan steps to use instead of generating new ones.      |
 | `enable_replanner`               | `bool`               | `False`                              | Whether to enable dynamic replanning during execution.             |
 | `replanner_agent_name`           | `str`                | `"replanner_agent"`                  | Name of the agent used for replanning on failure.                  |
 | `executor_agent_name`            | `str`                | `"executor_agent"`                   | Name of the agent that executes individual plan steps.             |

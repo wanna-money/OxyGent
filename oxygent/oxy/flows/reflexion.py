@@ -1,7 +1,7 @@
 """Reflexion Flow for OxyGent"""
 
 import logging
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from pydantic import BaseModel, Field
 
@@ -79,7 +79,7 @@ Previous answer: {previous_answer}""",
         description="Template for improvement query",
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the Reflexion flow with worker and evaluator agents."""
         super().__init__(**kwargs)
 
@@ -242,7 +242,7 @@ Please provide the best possible final answer considering all the feedback above
 class MathReflexion(Reflexion):
     """Math-specific Reflexion flow with numeric answer comparison."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         # Set default agents for math problems
         if "worker_agent" not in kwargs:
             kwargs["worker_agent"] = "math_expert_agent"

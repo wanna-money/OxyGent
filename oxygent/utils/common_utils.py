@@ -8,7 +8,7 @@ import logging
 import re
 from datetime import datetime
 from io import BytesIO
-from typing import Any, Dict, Union
+from typing import Any, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import aiofiles
@@ -46,12 +46,12 @@ EXCLUDED_HEADERS = frozenset(
 )
 
 
-def get_timestamp():
+def get_timestamp() -> float:
     """Return the current UNIX timestamp in milliseconds."""
     return datetime.now().timestamp() * 1000
 
 
-def get_format_time():
+def get_format_time() -> str:
     """Return current time as 'yyyy-MM-dd HH:mm:ss.SSSSSSSSS' with nanosecond precision."""
     now = datetime.now()
     nano_str = "{:09d}".format(now.microsecond * 1000)
@@ -59,12 +59,12 @@ def get_format_time():
     return current_time
 
 
-def chunk_list(lst, chunk_size=2):
+def chunk_list(lst: list, chunk_size: int = 2) -> list[list]:
     """Split a list into chunks of the given size."""
     return [lst[i : i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 
-def extract_first_json(text):
+def extract_first_json(text: str) -> str:
     """Extract the first JSON object from text, stripping markdown fences if present."""
     matches = re.findall(r"```[\n]*json(.*?)```", text, re.DOTALL)
     json_texts = [match.strip() for match in matches]
@@ -87,7 +87,7 @@ def extract_json_str(text: str) -> str:
     return match.group()
 
 
-async def source_to_bytes(source: str):
+async def source_to_bytes(source: str) -> bytes:
     """Read a URL or local file path and return its raw bytes."""
     if source.startswith("http"):
         async with httpx.AsyncClient() as client:
@@ -100,12 +100,12 @@ async def source_to_bytes(source: str):
 
 
 async def image_to_base64(
-    source: str, max_image_pixels: int = 10000000, base64_prefix="data:image"
+    source: str, max_image_pixels: int = 10000000, base64_prefix: str = "data:image"
 ) -> str:
     """Convert an image from a URL or file to a base64-encoded data URI."""
     image_bytes = await source_to_bytes(source)
 
-    def process_image(image_bytes):
+    def process_image(image_bytes: bytes) -> bytes:
         with Image.open(BytesIO(image_bytes)) as img:
             width, height = img.size
             current_pixels = width * height
@@ -129,7 +129,9 @@ async def image_to_base64(
 
 # 512 * 1024 * 1024 bytes == 512MB
 async def video_to_base64(
-    source: str, max_video_size: int = 512 * 1024 * 1024, base64_prefix="data:video"
+    source: str,
+    max_video_size: int = 512 * 1024 * 1024,
+    base64_prefix: str = "data:video",
 ) -> str:
     """Convert a video to a base64-encoded data URI if under the size limit."""
     video_bytes = await source_to_bytes(source)
@@ -139,7 +141,7 @@ async def video_to_base64(
 
 
 def build_url(
-    base_url: Union[AnyUrl, str], path: str = "", query_params: Dict[str, Any] = None
+    base_url: Union[AnyUrl, str], path: str = "", query_params: dict[str, Any] = None
 ) -> str:
     """Convert base_url to a URL object, append path, and append query parameters."""
     parsed = urlparse(str(base_url))
@@ -156,7 +158,13 @@ def build_url(
     return urlunparse(parsed._replace(path=final_path, query=final_query))
 
 
-def print_tree(node, prefix="", is_root=True, is_last=True, logger=None):
+def print_tree(
+    node: dict[str, Any],
+    prefix: str = "",
+    is_root: bool = True,
+    is_last: bool = True,
+    logger: Any = None,
+) -> None:
     """Recursively print a tree structure with box-drawing branch connectors."""
     # Print branch symbol
     branch = "└── " if is_last else "├── "
@@ -179,7 +187,7 @@ def print_tree(node, prefix="", is_root=True, is_last=True, logger=None):
         print_tree(child, prefix + extension, False, child_is_last, logger)
 
 
-def filter_json_types(d):
+def filter_json_types(d: dict[str, Any]) -> dict[str, Any]:
     """Filter a dict, replacing non-JSON-serializable values with '...'."""
     result = {}
     for k, v in d.items():
@@ -190,7 +198,7 @@ def filter_json_types(d):
     return result
 
 
-def msgpack_preprocess(obj):
+def msgpack_preprocess(obj: Any) -> Any:
     """Recursively convert an object into msgpack-serializable types."""
     # The 3 types of objects that can be serialized by msgpack
     if obj is None or isinstance(obj, (bool, int, float, str, bytes)):
@@ -206,7 +214,7 @@ def msgpack_preprocess(obj):
         return str(obj)
 
 
-def get_md5(arg_str):
+def get_md5(arg_str: str) -> str:
     """Return the MD5 hex digest of a UTF-8 encoded string."""
     md5 = hashlib.md5()
     md5.update(arg_str.encode("utf-8"))
@@ -214,24 +222,24 @@ def get_md5(arg_str):
     return md5_value
 
 
-def to_json(obj):
+def to_json(obj: Any) -> str:
     """Serialize an object to a JSON string, passing strings through unchanged."""
     if isinstance(obj, str):
         return obj
     return json.dumps(obj, ensure_ascii=False, default=str)
 
 
-def generate_uuid(length=16):
+def generate_uuid(length: int = 16) -> str:
     """Generate a short random UUID string of the given length."""
     return shortuuid.ShortUUID().random(length=length)
 
 
-def is_image(source):
+def is_image(source: str) -> bool:
     """Return True if the source path has a recognized image file extension."""
     return source.split(".")[-1] in IMAGE_EXTENSIONS
 
 
-def parse_mixed_string(s):
+def parse_mixed_string(s: Any) -> Any:
     """Parse a markdown-style string into a list of typed content segments."""
     if not isinstance(s, str):
         return s
@@ -278,7 +286,7 @@ def parse_mixed_string(s):
     return results
 
 
-def clean_ansi_codes(text):
+def clean_ansi_codes(text: str) -> str:
     """Remove ANSI escape sequences from a string."""
     ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
     return ansi_escape.sub("", text)

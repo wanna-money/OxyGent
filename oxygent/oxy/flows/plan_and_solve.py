@@ -5,7 +5,7 @@ execute each step via a worker agent, evaluate results, and replan if needed.
 """
 
 import logging
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class Plan(BaseModel):
     """A structured execution plan containing ordered steps."""
 
-    steps: List[str] = Field(
+    steps: list[str] = Field(
         description="different steps to follow, should be in sorted order"
     )
 
@@ -49,7 +49,7 @@ class PlanAndSolve(BaseFlow):
     planner_agent_name: str = Field(
         "planner_agent", description="Name of the agent used to generate plans"
     )
-    pre_plan_steps: List[str] = Field(
+    pre_plan_steps: Optional[list[str]] = Field(
         None, description="Predefined steps to prepend before the generated plan"
     )
 
@@ -86,7 +86,7 @@ class PlanAndSolve(BaseFlow):
         description="replanner pydantic parser",
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the Plan-and-Solve flow."""
         super().__init__(**kwargs)
 

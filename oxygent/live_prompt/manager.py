@@ -9,7 +9,7 @@ The system automatically falls back to LocalEs when Elasticsearch is unavailable
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from ..config import Config
 from ..databases.db_es import JesEs, LocalEs
@@ -31,7 +31,7 @@ class PromptManager:
         db_client: The database client instance (JesEs or LocalEs).
     """
 
-    def __init__(self, es_host: str = None, index_name: str = None):
+    def __init__(self, es_host: Optional[str] = None, index_name: Optional[str] = None) -> None:
         """Initialize the prompt manager.
 
         Args:
@@ -67,7 +67,7 @@ class PromptManager:
         agent_type: str = "",
         version: int = 1,
         is_active: bool = True,
-        tags: List[str] = None,
+        tags: Optional[list[str]] = None,
         created_by: str = "user",
     ) -> bool:
         """Save or update a prompt with version history and concurrency control.
@@ -192,7 +192,7 @@ class PromptManager:
 
     async def get_prompt(
         self, prompt_key: str, use_cache: bool = True
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """Retrieve a prompt by its key.
 
         Fetches prompt data from the database and updates the local cache.
@@ -249,7 +249,7 @@ class PromptManager:
             logger.error(f"Failed to get prompt {prompt_key}: {e}")
             return None
 
-    async def clear_cache(self, prompt_key: str = None):
+    async def clear_cache(self, prompt_key: Optional[str] = None) -> None:
         """Clear cache for specific key or all keys.
 
         Args:
@@ -285,7 +285,7 @@ class PromptManager:
             return prompt_data["prompt_content"]
         return fallback_content
 
-    async def get_prompt_history(self, prompt_key: str) -> List[Dict[str, Any]]:
+    async def get_prompt_history(self, prompt_key: str) -> list[dict[str, Any]]:
         """Get prompt version history.
 
         Retrieves the version history for a specific prompt, sorted by version
@@ -429,11 +429,11 @@ class PromptManager:
 
     async def list_prompts(
         self,
-        category: str = None,
-        agent_type: str = None,
-        is_active: bool = None,
-        tags: List[str] = None,
-    ) -> List[Dict[str, Any]]:
+        category: Optional[str] = None,
+        agent_type: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        tags: Optional[list[str]] = None,
+    ) -> list[dict[str, Any]]:
         """List prompts with optional filtering.
 
         Retrieves all prompts matching the specified criteria. Supports filtering
@@ -553,8 +553,8 @@ class PromptManager:
             return False
 
     async def search_prompts(
-        self, keyword: str, category: str = None
-    ) -> List[Dict[str, Any]]:
+        self, keyword: str, category: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """Search prompts by keyword with optional category filter.
 
         Performs full-text search across prompt fields including key, description,
@@ -621,7 +621,7 @@ class PromptManager:
             logger.error(f"Failed to search prompts: {e}")
             return []
 
-    async def _update_local_version_tracker(self, prompt_key: str, version: int):
+    async def _update_local_version_tracker(self, prompt_key: str, version: int) -> None:
         """Update local version tracker for ES polling synchronization.
 
         Args:
@@ -637,7 +637,7 @@ class PromptManager:
         except Exception as e:
             logger.debug(f"Failed to update local version tracker: {e}")
 
-    async def start_version_sync(self):
+    async def start_version_sync(self) -> None:
         """Start version synchronization for multi-instance cache consistency.
 
         This method should be called after initializing the PromptManager to enable
@@ -655,7 +655,7 @@ class PromptManager:
         except Exception as e:
             logger.error(f"Failed to start version synchronization: {e}")
 
-    async def stop_version_sync(self):
+    async def stop_version_sync(self) -> None:
         """Stop version synchronization.
 
         This method should be called when shutting down the application.
@@ -667,7 +667,7 @@ class PromptManager:
             except Exception as e:
                 logger.error(f"Error stopping version synchronization: {e}")
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the database connection.
 
         Properly closes the underlying database client connection to free resources.
@@ -711,7 +711,7 @@ async def get_prompt_manager() -> PromptManager:
     return prompt_manager
 
 
-async def close_prompt_manager():
+async def close_prompt_manager() -> None:
     """Close the global prompt manager and clean up resources.
 
     This function should be called when the application is shutting down

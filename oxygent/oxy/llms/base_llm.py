@@ -9,7 +9,7 @@ import copy
 import json
 import logging
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import aiofiles
 from pydantic import Field
@@ -58,7 +58,7 @@ class BaseLLM(Oxy):
         default_factory=Config.get_llm_timeout, description="Timeout in seconds."
     )
 
-    llm_params: dict = Field(
+    llm_params: dict[str, Any] = Field(
         default_factory=dict, description="Additional provider-specific LLM parameters"
     )
     is_send_think: bool = Field(
@@ -101,7 +101,7 @@ class BaseLLM(Oxy):
         default=False, description="Whether to omit the system prompt from the LLM call"
     )
 
-    async def _get_messages(self, oxy_request: OxyRequest):
+    async def _get_messages(self, oxy_request: OxyRequest) -> list[dict[str, Any]]:
         """Build the message list for the LLM call.
 
         Merges the system prompt, parses multimodal content (text, image, video, file),
@@ -220,7 +220,7 @@ class BaseLLM(Oxy):
         """Execute the LLM request."""
         raise NotImplementedError("This method is not yet implemented")
 
-    async def _post_send_message(self, oxy_response: OxyResponse):
+    async def _post_send_message(self, oxy_response: OxyResponse) -> None:
         """Send think messages to the frontend after response generation.
 
         Extracts and forwards thinking process messages to the frontend if
@@ -281,7 +281,7 @@ class BaseLLM(Oxy):
                 payload[k] = v
         return payload
 
-    def _build_token_usage(self, usage_data, messages: list, output: str):
+    def _build_token_usage(self, usage_data: Any, messages: list[dict[str, Any]], output: str) -> TokenUsage:
         """Build TokenUsage with fallback to estimation.
 
         Delegates to ``token_utils.build_token_usage``.

@@ -1,7 +1,7 @@
 """Streamable-HTTP MCP client implementation."""
 
 import logging
-from typing import Any, List
+from typing import Any, Optional
 
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
@@ -19,11 +19,11 @@ class StreamableMCPClient(BaseMCPClient):
     server_url: AnyUrl = Field(
         "", description="URL of the MCP server's streamable-HTTP endpoint"
     )
-    middlewares: List[Any] = Field(
+    middlewares: list[Any] = Field(
         default_factory=list, description="Client-side MCP middlewares"
     )
 
-    async def init(self, is_fetch_tools=True) -> None:
+    async def init(self, is_fetch_tools: bool = True) -> None:
         """Initialize the HTTP streaming connection to the MCP server.
 
         Args:
@@ -68,7 +68,7 @@ class StreamableMCPClient(BaseMCPClient):
             await self.cleanup()
             raise Exception(f"Server {self.name} error") from e
 
-    async def call_tool(self, tool_name, arguments, headers=None):
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any], headers: Optional[dict[str, str]] = None) -> Any:
         """Open a fresh streamable-HTTP connection and invoke the named tool with arguments."""
         async with streamablehttp_client(
             build_url(self.server_url), headers=headers, timeout=self.timeout

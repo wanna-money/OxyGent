@@ -1,5 +1,7 @@
 """Math utility tools for OxyGent agents."""
 
+from typing import Any
+
 from pydantic import Field
 
 from oxygent.oxy import FunctionHub
@@ -26,12 +28,12 @@ def calc_pi(prec: int = Field(description="how many decimal places")) -> float:
     description="A tool that applies a binary operation to corresponding elements of two lists."
 )
 def list_operation(
-    list1: list = Field(description="The first list"),
-    list2: list = Field(description="The second list"),
+    list1: list[Any] = Field(description="The first list"),
+    list2: list[Any] = Field(description="The second list"),
     operation: str = Field(
         description="The operation to perform: 'add', 'subtract', 'multiply', 'divide', 'power', 'mod'"
     ),
-) -> list:
+) -> list[Any]:
     """
     Apply a binary operation element-wise between two lists.
 
@@ -111,7 +113,7 @@ def calculate_expression(
         ast.UAdd: operator.pos,
     }
 
-    def safe_eval(node):
+    def safe_eval(node: Any) -> Any:
         """Safely evaluate an AST node."""
         if isinstance(node, ast.Constant):  # Python 3.8+
             return node.value

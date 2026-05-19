@@ -23,7 +23,7 @@ import os
 import time
 import traceback
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, AsyncIterator, Callable, Optional
 
 import msgpack
 from elasticsearch import AsyncElasticsearch
@@ -64,12 +64,12 @@ class MAS(BaseModel):
 
     name: str = Field("", description="Identifier for the mas.")
 
-    default_oxy_space: list = Field(
+    default_oxy_space: list[Oxy] = Field(
         default_factory=list,
         description="Built-in core Oxy components always registered",
     )
 
-    oxy_space: list = Field(
+    oxy_space: list[Oxy] = Field(
         default_factory=list,
         description="User-provided Oxy instances to register at startup",
     )
@@ -92,7 +92,7 @@ class MAS(BaseModel):
         description="Welcome message displayed to users on session start",
     )
 
-    agent_organization: dict = Field(
+    agent_organization: dict[str, Any] = Field(
         default_factory=dict,
         description="Hierarchical tree of agents and their callable tools",
     )
@@ -108,15 +108,15 @@ class MAS(BaseModel):
     )
 
     lock: bool = Field(False, description="Global lock flag to pause new requests")
-    active_tasks: dict = Field(
+    active_tasks: dict[str, asyncio.Task] = Field(
         default_factory=dict,
         description="Currently running task futures keyed by trace_id",
     )
-    background_tasks: dict = Field(
+    background_tasks: dict[str, set[asyncio.Task]] = Field(
         default_factory=dict,
         description="Background asyncio tasks keyed by trace_id",
     )
-    event_dict: dict = Field(
+    event_dict: dict[str, asyncio.Event] = Field(
         default_factory=dict,
         description="Asyncio events for coordinating task completion",
     )
@@ -125,7 +125,7 @@ class MAS(BaseModel):
         "oxygent", description="Prefix for Redis message queue keys"
     )
 
-    global_data: dict = Field(
+    global_data: dict[str, Any] = Field(
         default_factory=dict,
         description="Application-scoped public data shared across all traces",
     )
@@ -147,26 +147,26 @@ class MAS(BaseModel):
         description="Hook to transform outgoing messages before sending",
     )
 
-    routers: list = Field(
+    routers: list[Any] = Field(
         default_factory=list,
         description="Additional FastAPI routers to mount on the web server",
     )
-    middlewares: list = Field(
+    middlewares: list[Any] = Field(
         default_factory=list,
         description="Additional ASGI middlewares for the web server",
     )
-    mounts: list = Field(
+    mounts: list[dict[str, Any]] = Field(
         default_factory=list, description="Additional ASGI mounts for the web server"
     )
 
-    stream_dict: dict[str, list] = Field(
+    stream_dict: dict[str, list[str]] = Field(
         default_factory=dict, description="SSE stream buffers keyed by trace_id"
     )
     feedback_dict: dict[str, asyncio.Queue] = Field(
         default_factory=dict,
         description="Feedback queues keyed by trace_id for interactive responses",
     )
-    channel_id_dict: dict[str, list] = Field(
+    channel_id_dict: dict[str, list[str]] = Field(
         default_factory=dict,
         description="Channel IDs used by each trace for message routing",
     )
@@ -178,7 +178,7 @@ class MAS(BaseModel):
     a2a_target_agent_name: str = Field("")
     a2a_base_path: str = Field("/a2a")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Construct a new :class:`MAS`.
 
         Args:
@@ -197,7 +197,7 @@ class MAS(BaseModel):
         else:
             self.name = Config.get_app_name()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "MAS":
         await self.init()
 
         # Register this MAS instance globally for API access
@@ -211,7 +211,7 @@ class MAS(BaseModel):
 
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         all_tasks = [t for tasks in self.background_tasks.values() for t in tasks]
         if all_tasks:
             await asyncio.gather(*all_tasks)
@@ -224,12 +224,12 @@ class MAS(BaseModel):
             await self.redis_client.close()
         await self.cleanup_servers()
 
-    def add_background_task(self, trace_id: str, task: asyncio.Task):
+    def add_background_task(self, trace_id: str, task: asyncio.Task) -> None:
         """Register a background task under the given trace_id."""
         self.background_tasks.setdefault(trace_id, set()).add(task)
         task.add_done_callback(lambda t: self._discard_background_task(trace_id, t))
 
-    def _discard_background_task(self, trace_id: str, task: asyncio.Task):
+    def _discard_background_task(self, trace_id: str, task: asyncio.Task) -> None:
         """Remove a finished task from its trace_id bucket."""
         bucket = self.background_tasks.get(trace_id)
         if bucket is not None:
@@ -237,25 +237,25 @@ class MAS(BaseModel):
             if not bucket:
                 del self.background_tasks[trace_id]
 
-    async def await_background_tasks(self, trace_id: str):
+    async def await_background_tasks(self, trace_id: str) -> None:
         """Wait for all background tasks belonging to *trace_id* to finish."""
         tasks = self.background_tasks.get(trace_id)
         if tasks:
             await asyncio.gather(*tasks)
 
     @classmethod
-    async def create(cls, **kwargs):
+    async def create(cls, **kwargs: Any) -> "MAS":
         self = cls(**kwargs)
         await self.init()
         return self
 
-    def show_banner(self):
+    def show_banner(self) -> None:
         """Print the OxyGent ASCII art banner."""
         from .banner import oxygent_slant as banner_str
 
         print(banner_str[1:-1])
 
-    def show_mas_info(self):
+    def show_mas_info(self) -> None:
         """Print basic MAS configuration info."""
         import platform
         from datetime import datetime
@@ -272,7 +272,7 @@ class MAS(BaseModel):
         logger.info(f"Start Time   : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("=" * 64)
 
-    def add_oxy(self, oxy: Oxy):
+    def add_oxy(self, oxy: Oxy) -> None:
         """Register a single Oxy object.
 
         Args:
@@ -286,7 +286,7 @@ class MAS(BaseModel):
             raise Exception(f"oxy [{oxy.name}] already exists.")
         self.oxy_name_to_oxy[oxy.name] = oxy
 
-    def add_oxy_list(self, oxy_list: list[Oxy]):
+    def add_oxy_list(self, oxy_list: list[Oxy]) -> None:
         """Register a list of Oxy objects.
 
         Args:
@@ -295,7 +295,7 @@ class MAS(BaseModel):
         for oxy in oxy_list:
             self.add_oxy(oxy)
 
-    async def init(self):
+    async def init(self) -> None:
         """Initialize the MAS. This coroutine performs all necessary setup steps to
         prepare the MAS for operation.
 
@@ -359,7 +359,7 @@ class MAS(BaseModel):
             except Exception as e:
                 logger.warning(f"Warning during final cleanup: {e}")
 
-    async def init_db(self):
+    async def init_db(self) -> None:
         """Es --- (table_name: key)
 
         {app_name}_trace: trace_id: record trace of each call
@@ -627,7 +627,7 @@ class MAS(BaseModel):
             "settings": settings,
         }
 
-    async def batch_init_oxy(self, *class_type):
+    async def batch_init_oxy(self, *class_type: type) -> None:
         """Batch initialize oxy objects of specified types asynchronously.
 
         Args:
@@ -650,13 +650,13 @@ class MAS(BaseModel):
         if tasks:
             await asyncio.gather(*tasks)
 
-    async def init_all_oxy(self):
+    async def init_all_oxy(self) -> None:
         """Initializing all tools and agents assign values of agent.tools to each
         agent."""
         await self.batch_init_oxy(BaseLLM, BaseTool)
         await self.batch_init_oxy(BaseFlow, BaseAgent)
 
-    def init_master_agent_name(self):
+    def init_master_agent_name(self) -> None:
         """Initialize the master agent name.
 
         This method iterates through all registered Oxy objects and checks if they are
@@ -676,13 +676,13 @@ class MAS(BaseModel):
     # ------------------------------------------------------------------
     # Organisation helpers
     # ------------------------------------------------------------------
-    def is_agent(self, oxy_name):
+    def is_agent(self, oxy_name: str) -> bool:
         """Check if the oxy_name is an agent."""
         if not oxy_name:
             return False
         return isinstance(self.oxy_name_to_oxy[oxy_name], (BaseFlow, BaseAgent))
 
-    def init_agent_organization(self):
+    def init_agent_organization(self) -> None:
         """Build the agent organization tree structure, including tools."""
 
         def add_tools(agent_organization: list, agent_names: list, path: list = None):
@@ -721,7 +721,7 @@ class MAS(BaseModel):
 
         self.agent_organization = agent_organization[0]
 
-    def show_org(self):
+    def show_org(self) -> None:
         """Display the agent organization tree."""
         logger.info("🌐 OxyGent MAS Organization Structure Overview")
         logger.info("=" * 64)
@@ -732,7 +732,7 @@ class MAS(BaseModel):
     # Optional Vearch integration
     # ------------------------------------------------------------------
 
-    async def create_vearch_table(self):
+    async def create_vearch_table(self) -> None:
         """Link to the vearch database and create tables for tools."""
         tool_list = []
         for tool_name, tool in self.oxy_name_to_oxy.items():
@@ -756,7 +756,7 @@ class MAS(BaseModel):
     # Misc. public helpers
     # ------------------------------------------------------------------
 
-    async def wait_next(self):
+    async def wait_next(self) -> None:
         """Block execution until :attr:`lock` becomes ``False``.
 
         This coroutine is particularly useful in *step‑debug* or *demo* modes where a
@@ -770,7 +770,7 @@ class MAS(BaseModel):
             else:
                 return
 
-    def set_oxy_attr(self, oxy_name, attr_key, attr_value):
+    def set_oxy_attr(self, oxy_name: str, attr_key: str, attr_value: Any) -> bool:
         """Dynamically mutate a component attribute at runtime.
 
         Args:
@@ -798,7 +798,7 @@ class MAS(BaseModel):
             )
             return False
 
-    async def call(self, callee, arguments, **kwargs):
+    async def call(self, callee: str, arguments: dict[str, Any], **kwargs: Any) -> OxyResponse:
         """Invoke an *Oxy* component directly and return its output.
 
         Args:
@@ -825,7 +825,7 @@ class MAS(BaseModel):
 
     async def send_message(
         self, sse_message: SSEMessage, redis_key: str, group_id: str = ""
-    ):
+    ) -> None:
         """Push *message* onto a capped Redis list.
 
         The data is MsgPack‑encoded before being stored.  At most **10** items
@@ -931,14 +931,14 @@ class MAS(BaseModel):
             bytes_msg = msgpack.packb(msgpack_preprocess(sse_message.to_sse()))
             await self.redis_client.lpush(redis_key, bytes_msg)
 
-    def clear_queues(self, trace_id):
+    def clear_queues(self, trace_id: str) -> None:
         """Clear all Redis message queues for active traces."""
         for channel_id in self.channel_id_dict.get(trace_id, []):
             if channel_id in self.feedback_dict:
                 del self.feedback_dict[channel_id]
 
     @staticmethod
-    def _parse_dict_field(raw_value, field_name: str = "dict field") -> dict:
+    def _parse_dict_field(raw_value: Any, field_name: str = "dict field") -> dict[str, Any]:
         """Parse a raw value from ES into a dict.
 
         Handles str (JSON), dict, or other types gracefully.
@@ -957,7 +957,7 @@ class MAS(BaseModel):
 
     async def chat_with_agent(
         self,
-        payload: dict = None,
+        payload: Optional[dict[str, Any]] = None,
         send_msg_key: str = "",
     ) -> OxyResponse:
         """Top‑level helper that forwards a *chat query* into the MAS.
@@ -1144,7 +1144,7 @@ class MAS(BaseModel):
     # Interactive CLI helper
     # ------------------------------------------------------------------
 
-    async def start_cli_mode(self, first_query=None):
+    async def start_cli_mode(self, first_query: Optional[str] = None) -> None:
         """Start an interactive CLI REPL for chatting with agents."""
         from_trace_id = ""
         if first_query:
@@ -1170,7 +1170,7 @@ class MAS(BaseModel):
     # FastAPI + SSE web service (unedited original docstring preserved)
     # ------------------------------------------------------------------
 
-    async def _process_redis_messages(self, redis_key, current_trace_id):
+    async def _process_redis_messages(self, redis_key: str, current_trace_id: str) -> AsyncIterator[dict[str, Any]]:
         """Consume messages from Redis and yield them as SSE events."""
         while True:
             bytes_msg = await self.redis_client.rpop(redis_key)
@@ -1210,7 +1210,7 @@ class MAS(BaseModel):
                 # Send message
                 yield sse_message_dict
 
-    async def event_stream(self, redis_key, current_trace_id, task):
+    async def event_stream(self, redis_key: str, current_trace_id: str, task: asyncio.Task) -> AsyncIterator[dict[str, Any]]:
         """Generate an SSE event stream for the given trace."""
         try:
             task.add_done_callback(
@@ -1229,7 +1229,7 @@ class MAS(BaseModel):
             self.active_tasks[current_trace_id].cancel()
             raise
 
-    async def yield_async_message(self, redis_key, current_trace_id):
+    async def yield_async_message(self, redis_key: str, current_trace_id: str) -> AsyncIterator[dict[str, Any]]:
         """Yield async messages for the given trace from the Redis queue."""
         try:
             async for message in self._process_redis_messages(
@@ -1245,19 +1245,19 @@ class MAS(BaseModel):
 
     async def start_web_service(
         self,
-        first_query=None,
-        welcome_message=None,
-        host=None,
-        port=None,
-        routers=None,
-        middlewares=None,
-        mounts=None,
-        shared_data=None,
-        group_data=None,
+        first_query: Optional[str] = None,
+        welcome_message: Optional[str] = None,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        routers: Optional[list[APIRouter]] = None,
+        middlewares: Optional[list[Any]] = None,
+        mounts: Optional[list[dict[str, Any]]] = None,
+        shared_data: Optional[dict[str, Any]] = None,
+        group_data: Optional[dict[str, Any]] = None,
         enable_a2a_server: bool | None = None,
         a2a_target_agent_name: str | None = None,
         a2a_base_path: str | None = None,
-    ):
+    ) -> None:
         """Start the FastAPI + SSE service (see original inline documentation)."""
         self.routers.extend(routers or [])
         self.middlewares.extend(middlewares or [])
@@ -1309,7 +1309,7 @@ class MAS(BaseModel):
         from fastapi.staticfiles import StaticFiles
         from sse_starlette.sse import EventSourceResponse
 
-        def get_banks_from_router(router: APIRouter) -> List[Dict[str, Any]]:
+        def get_banks_from_router(router: APIRouter) -> list[dict[str, Any]]:
             banks = []
             for route in router.routes:
                 if isinstance(route, APIRoute) and "bank" in getattr(route, "tags", []):
@@ -1677,7 +1677,7 @@ class MAS(BaseModel):
     # Batch helper
     # ------------------------------------------------------------------
 
-    async def start_batch_processing(self, querys, return_trace_id=False):
+    async def start_batch_processing(self, querys: list[str], return_trace_id: bool = False) -> list[Any]:
         """Execute a batch of queries concurrently.
 
         Args:
@@ -1719,9 +1719,9 @@ class MAS(BaseModel):
 class BankRouter(APIRouter):
     """FastAPI router that exposes bank tools as HTTP endpoints."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(tags=["bank"], *args, **kwargs)
 
-    def set_mas(self, mas: MAS):
+    def set_mas(self, mas: MAS) -> None:
         """Bind the MAS instance to this bank router."""
         self.mas = mas

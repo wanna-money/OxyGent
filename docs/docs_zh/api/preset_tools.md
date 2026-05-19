@@ -34,7 +34,7 @@ oxygent/preset_tools/
 | `write_file`    | 否    | `path: str`, `content: str`                   | `str`   | 创建或覆盖文件。                  |
 | `read_file`     | 否    | `path: str`                                   | `str`   | 读取并返回文件内容。            |
 | `delete_file`   | 否    | `path: str`                                   | `str`   | 递归删除文件或目录。      |
-| `view_text_file`| 否    | `file_path: str`, `ranges: Optional[List[int]]` | `str` | 查看文件内容，显示行号，支持可选行范围。 |
+| `view_text_file`| 否    | `file_path: str`, `ranges: Optional[list[int]]` | `str` | 查看文件内容，显示行号，支持可选行范围。 |
 
 ---
 
@@ -87,7 +87,7 @@ oxygent/preset_tools/
 
 | 工具                    | 异步 | 参数                                                 | 返回值 | 用途                                                    |
 | ----------------------- | ----- | ---------------------------------------------------------- | ------ | ---------------------------------------------------------- |
-| `run_shell_command`     | 否    | `args: List[str]`, `tail: int = 10`, `base_dir: Optional[str]` | `str` | 同步运行 Shell 命令；返回最后 `tail` 行。 |
+| `run_shell_command`     | 否    | `args: list[str]`, `tail: int = 10`, `base_dir: Optional[str]` | `str` | 同步运行 Shell 命令；返回最后 `tail` 行。 |
 | `execute_shell_command` | 是   | `command: str`, `timeout: int = 300`                       | `str`  | 异步运行 Shell 命令，支持超时。    |
 
 ---

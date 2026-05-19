@@ -44,13 +44,13 @@
 | `get(self, key)`                                                       | 是               | `Optional[bytes]`                 | 获取键的值。                                                |
 | `exists(self, key)`                                                    | 是               | `Optional[int]`                   | 检查键是否存在。                                            |
 | `mset(self, items, ex=None)`                                           | 是               | `Optional[bool]`                  | 批量设置多个键（可选统一 TTL）。                       |
-| `mget(self, keys)`                                                     | 是               | `Optional[List[Optional[bytes]]]` | 批量获取多个键。                                             |
+| `mget(self, keys)`                                                     | 是               | `Optional[list[Optional[bytes]]]` | 批量获取多个键。                                             |
 | `delete(self, key)`                                                    | 是               | `Optional[int]`                   | 删除一个键。                                                          |
 | `expire(self, key, ex)`                                                | 是               | `Optional[bool]`                  | 设置键的 TTL；当 `ex` 为 `None` 时返回 `True`。                   |
 | `lpush(self, key, *values, ex=86400, max_size=1024, max_length=20240)` | 是               | `int`                             | 左推入并支持值截断、列表修剪和 TTL，使用 pipeline 执行。  |
 | `rpop(self, key)`                                                      | 是               | `Optional[bytes]`                 | 弹出列表的最后一个元素。                                        |
 | `brpop(self, key, timeout=1)`                                          | 是               | `Optional[bytes]`                 | 为 JimDB 模拟的阻塞弹出（`rpop`、sleep、再 `rpop`）。           |
-| `lrange(self, key, start=0, end=-1)`                                   | 是               | `Optional[List[bytes]]`           | 返回列表的一个切片（由于 `lpush`，顺序为 LIFO）。                        |
+| `lrange(self, key, start=0, end=-1)`                                   | 是               | `Optional[list[bytes]]`           | 返回列表的一个切片（由于 `lpush`，顺序为 LIFO）。                        |
 | `lrem(self, key, count, value)`                                        | 是               | `Optional[int]`                   | 移除等于 `value` 的元素。                                      |
 | `lindex(self, key, index)`                                             | 是               | `Optional[bytes]`                 | 通过索引获取列表元素。                                             |
 | `llen(self, key)`                                                      | 是               | `Optional[int]`                   | 获取列表长度。                                                       |

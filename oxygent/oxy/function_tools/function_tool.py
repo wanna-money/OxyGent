@@ -7,7 +7,7 @@ function signatures and handles execution with proper error handling.
 
 import logging
 from inspect import Parameter, signature
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from pydantic import Field
 from pydantic.fields import FieldInfo
@@ -42,14 +42,14 @@ class FunctionTool(BaseTool):
         False, description="Whether this tool needs oxy_request parameter"
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the function tool and extract input schema from function
         signature."""
         super().__init__(**kwargs)
         self.input_schema = self._extract_input_schema(self.func_process)
         self._set_desc_for_llm()
 
-    def _extract_input_schema(self, func):
+    def _extract_input_schema(self, func: Callable[..., Any]) -> dict[str, Any]:
         """Extract input schema from function signature.
 
         Args:

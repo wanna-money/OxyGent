@@ -8,7 +8,7 @@ and tool execution through the Model Context Protocol standard.
 import asyncio
 import logging
 from contextlib import AsyncExitStack
-from typing import Any, Dict
+from typing import Any, Optional
 
 import anyio
 from mcp import ClientSession
@@ -33,11 +33,11 @@ class BaseMCPClient(BaseTool):
         included_tool_name_list: List of tool names discovered from the MCP server.
     """
 
-    included_tool_name_list: list = Field(
+    included_tool_name_list: list[str] = Field(
         default_factory=list,
         description="Tool names discovered and registered from the MCP server",
     )
-    headers: Dict[str, str] = Field(
+    headers: dict[str, str] = Field(
         default_factory=dict, description="Extra HTTP headers"
     )
     is_dynamic_headers: bool = Field(
@@ -52,14 +52,14 @@ class BaseMCPClient(BaseTool):
         description="Whether to reuse the MCP connection across tool calls",
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the MCP client with necessary resources.
 
         Sets up the client session, cleanup mechanisms, and context managers for proper
         resource management throughout the client lifecycle.
         """
         super().__init__(**kwargs)
-        self._session: ClientSession = None
+        self._session: Optional[ClientSession] = None
         self._cleanup_lock: asyncio.Lock = asyncio.Lock()
         self._exit_stack: AsyncExitStack = AsyncExitStack()
         self._stdio_context: Any = None
@@ -75,7 +75,7 @@ class BaseMCPClient(BaseTool):
         tools_response = await self._session.list_tools()
         self.add_tools(tools_response)
 
-    def add_tools(self, tools_response) -> None:
+    def add_tools(self, tools_response: Any) -> None:
         """Register MCPTool instances dynamically based on the tools_response from the server."""
         params = self.model_dump(
             exclude={

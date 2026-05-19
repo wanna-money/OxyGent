@@ -74,7 +74,7 @@ class BaseAgent(BaseFlow):
 
         return oxy_request
 
-    async def _pre_save_data(self, oxy_request: OxyRequest):
+    async def _pre_save_data(self, oxy_request: OxyRequest) -> None:
         """Save preliminary trace data before processing the request.
 
         This method persists initial trace information to Elasticsearch for
@@ -116,7 +116,7 @@ class BaseAgent(BaseFlow):
             else:
                 logger.warning(f"Save {oxy_request.callee} pre trace data error")
 
-    async def _post_save_data(self, oxy_response: OxyResponse):
+    async def _post_save_data(self, oxy_response: OxyResponse) -> None:
         """Save complete trace and history data after processing the request.
 
         This method updates the trace record with the response output and

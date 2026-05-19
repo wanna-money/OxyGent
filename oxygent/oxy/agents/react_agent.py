@@ -9,7 +9,7 @@ import asyncio
 import json
 import logging
 import re
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from pydantic import Field
 
@@ -90,7 +90,7 @@ class ReActAgent(LocalAgent):
         None, exclude=True, description="Function to perform reflexion on responses"
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the ReAct agent with appropriate prompt and parsing function."""
         super().__init__(**kwargs)
 
@@ -124,7 +124,7 @@ class ReActAgent(LocalAgent):
         return None
 
     async def _get_history(
-        self, oxy_request: OxyRequest, is_get_user_master_session=False
+        self, oxy_request: OxyRequest, is_get_user_master_session: bool = False
     ) -> Memory:
         """Retrieve conversation history with intelligent memory management.
 

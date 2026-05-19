@@ -81,7 +81,7 @@ class A2AServerGateway(BaseModel):
 
     _store: A2AInMemoryStore = PrivateAttr(default_factory=A2AInMemoryStore)
 
-    def set_mas(self, mas):
+    def set_mas(self, mas: Any) -> None:
         """Bind MAS runtime and sync default target to master agent."""
         self.mas = mas
         master_name = getattr(mas, "master_agent_name", "") if mas else ""
@@ -236,7 +236,7 @@ class A2AServerGateway(BaseModel):
         )
         return answer, trace_id, group_id
 
-    def build_router(self):
+    def build_router(self) -> APIRouter:
         """Build FastAPI router exposing A2A-compatible endpoints."""
         from sse_starlette.sse import EventSourceResponse
 

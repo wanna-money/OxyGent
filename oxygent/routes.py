@@ -25,7 +25,7 @@ import os
 import re
 import traceback
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import aiofiles
 from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-async def get_es_client():
+async def get_es_client() -> Any:
     """Get Elasticsearch client based on configuration.
 
     Returns:
@@ -268,8 +268,8 @@ async def get_task_info(item_id: str):
 
 
 class Item(BaseModel):
-    class_attr: dict
-    arguments: dict
+    class_attr: dict[str, Any]
+    arguments: dict[str, Any]
 
 
 @router.post("/call")
@@ -416,7 +416,7 @@ class PromptCreateRequest(BaseModel):
     category: str = "custom"
     agent_type: str = ""
     is_active: bool = True
-    tags: List[str] = []
+    tags: list[str] = []
     created_by: str = "user"
 
 
@@ -425,7 +425,7 @@ class PromptUpdateRequest(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = None
     agent_type: Optional[str] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
     is_active: Optional[bool] = None
 
 
@@ -440,7 +440,7 @@ class PromptResponse(BaseModel):
     created_at: str
     updated_at: str
     created_by: str
-    tags: List[str]
+    tags: list[str]
 
 
 class PromptApiResponse(BaseModel):
@@ -785,7 +785,7 @@ async def get_prompt_version(prompt_key: str, version: int):
 _global_mas_instance = None
 
 
-def set_global_mas_instance(mas_instance):
+def set_global_mas_instance(mas_instance: Any) -> None:
     """Set global MAS instance for API access"""
     global _global_mas_instance
     _global_mas_instance = mas_instance
@@ -902,7 +902,7 @@ async def get_rating_stats(trace_id: str):
 
 
 @router.get("/rating/{trace_id}/current")
-async def get_current_rating(trace_id: str, erp: str = None):
+async def get_current_rating(trace_id: str, erp: Optional[str] = None):
     """Get current rating record for a specific conversation.
 
     Args:
@@ -933,7 +933,7 @@ async def get_current_rating(trace_id: str, erp: str = None):
 
 
 @router.get("/rating/{trace_id}/history")
-async def get_rating_history(trace_id: str, erp: str = None):
+async def get_rating_history(trace_id: str, erp: Optional[str] = None):
     """Get all rating history records for a specific conversation.
 
     Each conversation can have multiple rating records, returned in descending order by creation time.

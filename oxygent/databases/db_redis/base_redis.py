@@ -6,6 +6,7 @@ from BaseDB and providing the interface contract for Redis operations.
 
 import logging
 from abc import ABC, abstractmethod
+from typing import Any, Optional
 
 from oxygent.databases.base_db import BaseDB
 
@@ -27,7 +28,7 @@ class BaseRedis(BaseDB, ABC):
     """
 
     @abstractmethod
-    async def set(self, key: str, value: str, ex: int = None):
+    async def set(self, key: str, value: str, ex: Optional[int] = None) -> None:
         """Set a key-value pair with optional expiration time.
 
         Args:
@@ -41,7 +42,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def get(self, key: str):
+    async def get(self, key: str) -> Optional[str]:
         """Get the value associated with a key.
 
         Args:
@@ -53,7 +54,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def exists(self, key: str):
+    async def exists(self, key: str) -> bool:
         """Check if a key exists in the database.
 
         Args:
@@ -65,7 +66,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def mset(self, items: dict, ex: int = None):
+    async def mset(self, items: dict[str, str], ex: Optional[int] = None) -> None:
         """Set multiple key-value pairs in a single operation.
 
         Args:
@@ -78,7 +79,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def mget(self, keys: list):
+    async def mget(self, keys: list[str]) -> list[Optional[str]]:
         """Get multiple values for the given keys in a single operation.
 
         Args:
@@ -90,7 +91,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def close(self):
+    async def close(self) -> None:
         """Close the Redis client connection and clean up resources.
 
         This method should be called when the Redis client is no longer needed
@@ -102,7 +103,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def delete(self, key: str):
+    async def delete(self, key: str) -> None:
         """Delete a key from the database.
 
         Args:
@@ -114,7 +115,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def lpush(self, key: str, *values: list):
+    async def lpush(self, key: str, *values: Any) -> None:
         """Push one or more values to the left (head) of a list.
 
         Args:
@@ -127,7 +128,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def brpop(self, key: str, timeout: int = 1):
+    async def brpop(self, key: str, timeout: int = 1) -> Optional[tuple[str, str]]:
         """Blocking pop operation that removes and returns the last element of a list.
 
         This is a blocking operation that waits for an element to be available
@@ -143,7 +144,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def lrange(self, key: str, start: int = 0, end: int = -1):
+    async def lrange(self, key: str, start: int = 0, end: int = -1) -> list[str]:
         """Get a range of elements from a list.
 
         Args:
@@ -157,7 +158,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def expire(self, key: str, ex: int):
+    async def expire(self, key: str, ex: int) -> None:
         """Set an expiration time for a key.
 
         Args:
@@ -170,7 +171,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def llen(self, key: str):
+    async def llen(self, key: str) -> int:
         """Get the length of a list.
 
         Args:
@@ -182,7 +183,7 @@ class BaseRedis(BaseDB, ABC):
         pass
 
     @abstractmethod
-    async def ltrim(self, key: str, start: int, end: int):
+    async def ltrim(self, key: str, start: int, end: int) -> None:
         """Trim a list to keep only elements within the specified range.
 
         Args:

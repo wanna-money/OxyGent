@@ -2,7 +2,7 @@
 
 import os
 import shutil
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -70,7 +70,7 @@ def delete_file(
 )
 def view_text_file(
     file_path: str,
-    ranges: Optional[List[int]] = None,
+    ranges: Optional[list[int]] = None,
 ) -> str:
     """View the file content in the specified range with line numbers.
 
@@ -108,7 +108,7 @@ def view_text_file(
         return f"The content of {file_path} in lines {ranges[0]}-{ranges[1]}:\n```\n{content}\n```"
 
 
-def _read_file_with_range(file_path: str, ranges: Optional[List[int]] = None) -> str:
+def _read_file_with_range(file_path: str, ranges: Optional[list[int]] = None) -> str:
     """Read file content with optional line range.
 
     Args:

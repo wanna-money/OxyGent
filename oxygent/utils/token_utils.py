@@ -1,7 +1,7 @@
 """Token estimation and usage parsing utilities."""
 
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Optional
 
 from ..config import Config
 from ..schemas.usage import EstimationMethod, TokenUsage
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _to_dict(obj) -> dict:
+def _to_dict(obj: Any) -> dict[str, Any]:
     """Convert a dict, Pydantic model, or plain object to a flat dict.
 
     - dict → returned as-is
@@ -50,7 +50,7 @@ def _to_dict(obj) -> dict:
 
 
 def build_token_usage(
-    usage_data, messages: list, output: str, model_name: str
+    usage_data: Any, messages: list[dict[str, Any]], output: str, model_name: str
 ) -> TokenUsage:
     """Build TokenUsage from API usage data, with fallback to estimation.
 
@@ -122,7 +122,7 @@ def build_token_usage(
 # ---------------------------------------------------------------------------
 
 
-def aggregate_token_usage(oxy_request, usage: TokenUsage) -> None:
+def aggregate_token_usage(oxy_request: Any, usage: TokenUsage) -> None:
     """Aggregate token usage to session level in shared_data.
 
     Args:
@@ -180,7 +180,7 @@ def aggregate_token_usage(oxy_request, usage: TokenUsage) -> None:
 class TokenEstimator:
     """Utility class for estimating token counts when API doesn't provide usage."""
 
-    _encoder_cache: Dict[str, object] = {}
+    _encoder_cache: dict[str, object] = {}
 
     @classmethod
     def get_encoder(cls, model_name: str) -> Optional[object]:
@@ -223,7 +223,7 @@ class TokenEstimator:
 
     @classmethod
     def estimate_messages_tokens(
-        cls, messages: List[Dict], model_name: str = "default"
+        cls, messages: list[dict[str, Any]], model_name: str = "default"
     ) -> int:
         """Estimate token count for a list of messages.
 
@@ -254,7 +254,7 @@ class TokenEstimator:
 
     @classmethod
     def estimate_usage(
-        cls, messages: List[Dict], output: str, model_name: str
+        cls, messages: list[dict[str, Any]], output: str, model_name: str
     ) -> TokenUsage:
         """Estimate full request token usage."""
         has_tiktoken = cls.get_encoder(model_name) is not None

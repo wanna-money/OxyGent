@@ -28,7 +28,7 @@ from ..utils.common_utils import (
 logger = logging.getLogger(__name__)
 
 
-def _serialize_data_for_es(data: dict, schema_getter) -> Any:
+def _serialize_data_for_es(data: dict[str, Any], schema_getter: Callable[[], dict[str, Any]]) -> Any:
     """Serialize shared_data or group_data for ES storage.
 
     If a schema is configured (via *schema_getter*), only the keys present in
@@ -56,13 +56,13 @@ def ensure_async(func: Callable) -> Callable:
     if inspect.iscoroutinefunction(func):
         return func
 
-    async def async_wrapper(*args, **kwargs):
+    async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
         return func(*args, **kwargs)
 
     return async_wrapper
 
 
-async def default_async_identity(x):
+async def default_async_identity(x: Any) -> Any:
     """Default async identity function that returns input unchanged."""
     return x
 
@@ -93,7 +93,7 @@ class Oxy(BaseModel, ABC):
     input_schema: dict[str, Any] = Field(
         default_factory=dict, description="Input schema definition"
     )
-    system_args: list = Field(
+    system_args: list[str] = Field(
         default_factory=list,
         description="System-level arguments extracted from input_schema",
     )
@@ -103,10 +103,10 @@ class Oxy(BaseModel, ABC):
 
     is_permission_required: bool = Field(False, description="Whether needs permission")
     is_save_data: bool = Field(True, description="Whether to save data")
-    permitted_tool_name_list: list = Field(
+    permitted_tool_name_list: list[str] = Field(
         default_factory=list, description="List of tools this entity can call"
     )
-    permitted_oxy: list = Field(
+    permitted_oxy: list[str] = Field(
         default_factory=list, description="Additional tool permissions"
     )
 
@@ -177,7 +177,7 @@ class Oxy(BaseModel, ABC):
         description="Delay in seconds between retries",
     )
 
-    preceding_oxy: Optional[list] = Field(
+    preceding_oxy: Optional[list[str]] = Field(
         default_factory=list,
         description="A list of oxy names that must be called before the current oxy.",
     )
@@ -193,7 +193,7 @@ class Oxy(BaseModel, ABC):
         self._set_desc_for_llm()
         self.permitted_oxy.extend(self.preceding_oxy)
 
-    def _ensure_async_functions(self):
+    def _ensure_async_functions(self) -> None:
         """Ensure all function fields are async. Convert sync functions to async if needed."""
         func_fields = [
             "func_process_input",
@@ -210,28 +210,28 @@ class Oxy(BaseModel, ABC):
                 async_func = ensure_async(func)
                 object.__setattr__(self, field_name, async_func)
 
-    def model_post_init(self, __context):
+    def model_post_init(self, __context: Any) -> None:
         """Auto-populate class_name from the actual class if not explicitly set."""
         if self.class_name is None:
             object.__setattr__(self, "class_name", self.__class__.__name__)
 
-    def set_mas(self, mas):
+    def set_mas(self, mas: Any) -> None:
         """Bind this Oxy instance to a MAS runtime container."""
         self.mas = mas
 
-    def add_permitted_tool(self, tool_name: str):
+    def add_permitted_tool(self, tool_name: str) -> None:
         """Add a tool to the permitted tools list."""
         if tool_name in self.permitted_tool_name_list:
             logger.warning(f"Tool {tool_name} already exists.")
         else:
             self.permitted_tool_name_list.append(tool_name)
 
-    def add_permitted_tools(self, tool_names: list):
+    def add_permitted_tools(self, tool_names: list[str]) -> None:
         """Add multiple tools to the permitted tools list."""
         for tool_name in tool_names:
             self.add_permitted_tool(tool_name)
 
-    def _set_desc_for_llm(self):
+    def _set_desc_for_llm(self) -> None:
         """Generate LLM-friendly description from input schema."""
         args_desc = []
         if "properties" in self.input_schema:
@@ -255,7 +255,7 @@ Arguments:
 {chr(10).join(args_desc)}
 """
 
-    async def init(self):
+    async def init(self) -> None:
         """Perform async initialization. Rebuilds the LLM-facing description."""
         self._set_desc_for_llm()
 
@@ -271,7 +271,7 @@ Arguments:
         oxy_request = await self.func_process_input(oxy_request)
         return oxy_request
 
-    async def _pre_log(self, oxy_request: OxyRequest):
+    async def _pre_log(self, oxy_request: OxyRequest) -> None:
         """Log the tool call information."""
         query = (
             oxy_request.arguments.get("query", "...")
@@ -287,7 +287,7 @@ Arguments:
             },
         )
 
-    async def _request_interceptor(self, oxy_request: OxyRequest):
+    async def _request_interceptor(self, oxy_request: OxyRequest) -> Optional[OxyResponse]:
         """Intercept the request for restart/replay scenarios.
 
         When a reference_trace_id and restart_node_id are present, queries ES
@@ -391,7 +391,7 @@ Arguments:
                     },
                 )
 
-    async def _pre_save_data(self, oxy_request: OxyRequest):
+    async def _pre_save_data(self, oxy_request: OxyRequest) -> None:
         """Persist the initial node record to ES before execution starts."""
         if not self.is_save_data:
             return
@@ -430,7 +430,7 @@ Arguments:
         """Format input arguments for execution."""
         return await self.func_format_input(oxy_request)
 
-    async def _pre_send_message(self, oxy_request: OxyRequest):
+    async def _pre_send_message(self, oxy_request: OxyRequest) -> None:
         """Send tool call message to frontend if enabled."""
         # Send tool_call message to frontend
         if self.is_send_tool_call:
@@ -476,7 +476,7 @@ Arguments:
         """Core execution logic. Subclasses must implement this method."""
         pass
 
-    async def _handle_exception(self, e):
+    async def _handle_exception(self, e: Exception) -> None:
         """Hook for subclass-specific exception handling during retries."""
         pass
 
@@ -488,7 +488,7 @@ Arguments:
         """Apply the output processing function to the response."""
         return await self.func_process_output(oxy_response)
 
-    async def _post_log(self, oxy_response: OxyResponse):
+    async def _post_log(self, oxy_response: OxyResponse) -> None:
         """Log the execution result."""
         obs = oxy_response.output if self.is_detailed_observation else "..."
         oxy_request = oxy_response.oxy_request
@@ -501,7 +501,7 @@ Arguments:
             },
         )
 
-    async def _post_save_data(self, oxy_response: OxyResponse):
+    async def _post_save_data(self, oxy_response: OxyResponse) -> None:
         """Save execution data to Elasticsearch for logging and training."""
         if not self.is_save_data:
             return
@@ -550,7 +550,7 @@ Arguments:
             oxy_response.output = self.friendly_error_text
         return oxy_response
 
-    async def _post_send_message(self, oxy_response: OxyResponse):
+    async def _post_send_message(self, oxy_response: OxyResponse) -> None:
         """Send observation and answer messages to frontend if enabled."""
         oxy_request = oxy_response.oxy_request
 
@@ -733,7 +733,7 @@ Arguments:
             if self.mas:
                 oxy_request.update_time = get_format_time()
 
-                async def _post_save_data_task(oxy_response):
+                async def _post_save_data_task(oxy_response: OxyResponse) -> None:
                     await event.wait()
                     await self._post_save_data(oxy_response)
 

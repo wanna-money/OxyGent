@@ -55,7 +55,7 @@ oxy.OpenAILLM(
 - **Dynamic config merging**: Configuration is merged from multiple sources with the following priority: request params (highest) > instance LLM params > global LLM config.
 - **Unified response format**: Provides unified `OxyResponse` format handling for both streaming and non-streaming responses.
 
-**Additional parameter**: `headers` — accepts `Dict[str, str]` or `Callable[[OxyRequest], Dict[str, str]]` for passing extra HTTP request headers.
+**Additional parameter**: `headers` — accepts `dict[str, str]` or `Callable[[OxyRequest], dict[str, str]]` for passing extra HTTP request headers.
 
 ## Calling Ollama-Deployed Models
 

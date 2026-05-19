@@ -3,12 +3,15 @@
 Caches computed embeddings to avoid redundant embedding API calls.
 """
 
+from __future__ import annotations
+
 import base64
 import hashlib
 import json
 import logging
 import os
 import pickle
+from typing import Any, Optional
 
 import httpx
 import numpy as np
@@ -19,7 +22,7 @@ from .config import Config
 logger = logging.getLogger(__name__)
 
 
-async def get_embedding(querys):
+async def get_embedding(querys: list[str] | tuple[str, ...]) -> Optional[np.ndarray]:
     """Retrieve L2-normalised embeddings for a batch of input texts.
 
     The routine wraps an asynchronous HTTP request to the embedding service
@@ -96,7 +99,7 @@ class EmbeddingCache:
         ...     vec = await cache.get("hello world")
     """
 
-    def __init__(self, save_batch=1000):
+    def __init__(self, save_batch: int = 1000) -> None:
         """Create a new cache instance and eagerly load any persisted data.
 
         Args:
@@ -110,20 +113,20 @@ class EmbeddingCache:
         self.data = self.load()
 
     @staticmethod
-    def get_md5(key):
+    def get_md5(key: str) -> str:
         """Return the 32‑character MD5 hex digest for *key*."""
         return hashlib.md5(key.encode("utf-8")).hexdigest()
 
-    def load(self):
-        """Load the on‑disk cache if it exists; otherwise, return an empty dict."""
+    def load(self) -> dict[str, Any]:
+        """Load the on-disk cache if it exists; otherwise, return an empty dict."""
         if not os.path.exists(self.file):
             return dict()
         with open(self.file, "rb") as f:
             return pickle.load(f)
 
     # TODO: save embeddings
-    def save(self):
-        """Persist the in‑memory cache to disk (no‑op if nothing new)."""
+    def save(self) -> None:
+        """Persist the in-memory cache to disk (no-op if nothing new)."""
         if not self.count:
             return
         try:
@@ -137,24 +140,24 @@ class EmbeddingCache:
     # Public API
     # ---------------------------------------------------------------------
 
-    def is_in(self, key):
+    def is_in(self, key: str) -> bool:
         return self.get_md5(key) in self.data
 
-    def set(self, key, value):
+    def set(self, key: str, value: Any) -> None:
         self.data[self.get_md5(key)] = value
         self.count += 1
         if self.count % self.save_batch == 0:
             self.save()
             self.count = 0
 
-    async def get(self, key):
+    async def get(self, key: str | list[str] | tuple[str, ...] | set[str]) -> Any:
         """Return cached or freshly computed embeddings."""
         if isinstance(key, (list, tuple, set)):
             return await self._get_multiple(key)
         else:
             return await self._get_single(key)
 
-    async def _get_multiple(self, keys):
+    async def _get_multiple(self, keys: list[str] | tuple[str, ...] | set[str]) -> np.ndarray:
         feature_list = []
         texts = []
 
@@ -176,7 +179,7 @@ class EmbeddingCache:
 
         return np.array(feature_list)
 
-    async def _get_single(self, key):
+    async def _get_single(self, key: str) -> Any:
         key_md5 = self.get_md5(key)
         if key_md5 in self.data:
             return self.data[key_md5]
@@ -184,21 +187,21 @@ class EmbeddingCache:
         self.set(key, feature)
         return feature
 
-    async def _get_or_queue(self, key, texts):
+    async def _get_or_queue(self, key: str, texts: list[str]) -> Optional[Any]:
         key_md5 = self.get_md5(key)
         if key_md5 in self.data:
             return self.data[key_md5]
         texts.append(key)
         return None
 
-    async def _embed_and_cache(self, texts):
+    async def _embed_and_cache(self, texts: list[str]) -> Any:
         features = await get_embedding(texts)
         for content, feature in zip(texts, features):
             self.set(content, feature)
         return features
 
-    def __enter__(self):
+    def __enter__(self) -> "EmbeddingCache":
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):  # autosave on exit
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:  # autosave on exit
         self.save()

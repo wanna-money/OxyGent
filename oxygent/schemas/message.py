@@ -17,7 +17,7 @@ class SSEMessage(BaseModel):
     data: Any = Field("", description="Message payload")
     retry: int = Field(3000, description="Client reconnection interval in milliseconds")
 
-    def to_sse(self):
+    def to_sse(self) -> dict[str, Any]:
         """Serialize this message to SSE wire format."""
         return {
             "id": self.id,

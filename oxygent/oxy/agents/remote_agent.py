@@ -1,4 +1,5 @@
 import copy
+from typing import Any
 
 from pydantic import AnyUrl, Field, field_validator
 
@@ -18,20 +19,20 @@ class RemoteAgent(BaseAgent):
     """
 
     server_url: AnyUrl = Field()
-    org: dict = Field(default_factory=dict)
+    org: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("server_url")
-    def check_protocol(cls, v):
+    def check_protocol(cls, v: Any) -> Any:
         """Pydantic field validator that ensures the protocol is supported."""
         if v.scheme not in ("http", "https"):
             raise ValueError("server_url must start with http:// or https://")
         return v
 
-    def get_org(self):
+    def get_org(self) -> dict[str, Any]:
         """Return the organization tree for this remote agent."""
 
         # Mark child nodes as remote
-        def update_children(children):
+        def update_children(children: list[dict[str, Any]]) -> list[dict[str, Any]]:
             """Recursively mark all child nodes as remote."""
             for node in children:
                 node["is_remote"] = True

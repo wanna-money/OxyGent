@@ -65,7 +65,7 @@ This module defines the data models for the conversation quality evaluation syst
 | `create_time`    | `str`                             | (required) | Creation time.                       |
 | `from_trace_id`  | `Optional[str]`                   | `None`     | Source conversation ID.              |
 | `rating_stats`   | `Optional[RatingStats]`           | `None`     | Aggregated rating statistics.        |
-| `rating_history`  | `Optional[List[ConversationRating]]` | `None` | Complete rating history records.     |
+| `rating_history`  | `Optional[list[ConversationRating]]` | `None` | Complete rating history records.     |
 
 ## RatingResponse (BaseModel)
 

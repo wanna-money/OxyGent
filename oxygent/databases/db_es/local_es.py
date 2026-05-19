@@ -20,7 +20,7 @@ import json
 import locale
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import aiofiles
 import aiofiles.os
@@ -51,7 +51,7 @@ class LocalEs(BaseEs):
     def _mapping_path(self, index_name: str) -> str:
         return os.path.join(self.data_dir, f"{index_name}_mapping.json")
 
-    async def _write_json_atomic(self, path: str, data: Dict[str, Any]) -> None:
+    async def _write_json_atomic(self, path: str, data: dict[str, Any]) -> None:
         """Write *data* to *path* atomically, UTF‑8 encoded."""
         async with tempfile.NamedTemporaryFile(
             mode="w", delete=False, dir=self.data_dir, suffix=".tmp", encoding="utf-8"
@@ -68,7 +68,7 @@ class LocalEs(BaseEs):
     # Encoding‑aware read helper (returns **None** on unrecoverable corruption)
     # ------------------------------------------------------------------
 
-    async def _read_json_safe(self, path: str) -> Optional[Dict[str, Any]]:
+    async def _read_json_safe(self, path: str) -> Optional[dict[str, Any]]:
         if not await aiofiles.os.path.exists(path):
             return {}
 
@@ -171,17 +171,17 @@ class LocalEs(BaseEs):
 
         return {"_id": doc_id, "result": "updated" if update_mode else "created"}
 
-    async def index(self, index_name: str, doc_id: str, body: dict[str, Any]):
+    async def index(self, index_name: str, doc_id: str, body: dict[str, Any]) -> dict[str, str]:
         return await self.insert(index_name, doc_id, body, update_mode=False)
 
-    async def update(self, index_name: str, doc_id: str, body: dict[str, Any]):
+    async def update(self, index_name: str, doc_id: str, body: dict[str, Any]) -> dict[str, str]:
         return await self.insert(index_name, doc_id, body, update_mode=True)
 
     async def exists(self, index_name: str, doc_id: str) -> bool:
         data = await self._read_json_safe(self._index_path(index_name)) or {}
         return doc_id in data
 
-    async def search(self, index_name: str, body: dict[str, Any]):
+    async def search(self, index_name: str, body: dict[str, Any]) -> dict[str, Any]:
         data = await self._read_json_safe(self._index_path(index_name)) or {}
         docs = self._build_docs(data)
         docs = self._filter_docs(docs, body.get("query", {}))

@@ -4,7 +4,7 @@ Provides hot-reload functionality for agent prompts with real-time updates
 """
 
 import logging
-from typing import Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -12,11 +12,11 @@ logger = logging.getLogger(__name__)
 class DynamicAgentManager:
     """Simplified dynamic agent manager"""
 
-    def __init__(self):
-        self.agent_prompt_mapping: Dict[str, str] = {}
-        self.mas_instance = None
+    def __init__(self) -> None:
+        self.agent_prompt_mapping: dict[str, str] = {}
+        self.mas_instance: Any = None
 
-    def register_agents_from_mas(self, mas_instance):
+    def register_agents_from_mas(self, mas_instance: Any) -> bool:
         """
         Auto-register agents that use live prompts from MAS instance
 
@@ -58,7 +58,7 @@ class DynamicAgentManager:
             logger.error(f"Live prompt registration failed: {e}")
             return False
 
-    def _agent_uses_live_prompts(self, agent_instance) -> bool:
+    def _agent_uses_live_prompts(self, agent_instance: Any) -> bool:
         """
         Check if an agent uses live prompts by examining its prompt attribute
 
@@ -144,12 +144,12 @@ class DynamicAgentManager:
             logger.debug(traceback.format_exc())
             return False
 
-    async def update_all_prompts(self) -> Dict[str, bool]:
+    async def update_all_prompts(self) -> dict[str, bool]:
         """
         Update prompts for all agents
 
         Returns:
-            Dict[str, bool]: Update results for each agent
+            dict[str, bool]: Update results for each agent
         """
         results = {}
         for agent_name in self.agent_prompt_mapping.keys():
@@ -163,7 +163,7 @@ class DynamicAgentManager:
 
         return results
 
-    async def update_prompt_by_key(self, prompt_key: str) -> Dict[str, bool]:
+    async def update_prompt_by_key(self, prompt_key: str) -> dict[str, bool]:
         """
         Update all agents using specified prompt key
 
@@ -171,7 +171,7 @@ class DynamicAgentManager:
             prompt_key: Prompt key name
 
         Returns:
-            Dict[str, bool]: Update results for each agent
+            dict[str, bool]: Update results for each agent
         """
         results = {}
         for agent_name, key in self.agent_prompt_mapping.items():
@@ -187,7 +187,7 @@ class DynamicAgentManager:
 
         return results
 
-    def get_agent_prompt_mapping(self) -> Dict[str, str]:
+    def get_agent_prompt_mapping(self) -> dict[str, str]:
         """Get agent to prompt mapping"""
         return self.agent_prompt_mapping.copy()
 
@@ -196,7 +196,7 @@ class DynamicAgentManager:
 dynamic_agent_manager = DynamicAgentManager()
 
 
-async def setup_dynamic_agents(mas_instance):
+async def setup_dynamic_agents(mas_instance: Any) -> None:
     """
     Setup dynamic prompt functionality for agents in MAS instance
 
@@ -225,7 +225,7 @@ async def setup_dynamic_agents(mas_instance):
         logger.info("Dynamic agent manager setup failed")
 
 
-async def auto_save_agent_prompts_to_database(mas_instance):
+async def auto_save_agent_prompts_to_database(mas_instance: Any) -> None:
     """
     Auto-save existing agent prompts to database for first-time setup
 

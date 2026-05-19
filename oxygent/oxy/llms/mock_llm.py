@@ -4,7 +4,7 @@ Provides MockLLM, a deterministic stub useful for testing without invoking real 
 """
 
 import asyncio
-from typing import Callable
+from typing import Any, Callable
 
 from pydantic import Field
 
@@ -19,14 +19,14 @@ class MockLLM(BaseLLM):
         None, exclude=True, description="Mock processing function"
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the mock LLM."""
         super().__init__(**kwargs)
 
         if self.func_mock_process is None:
             self.func_mock_process = self._mock_process
 
-    async def _mock_process(self, oxy_request: OxyRequest):
+    async def _mock_process(self, oxy_request: OxyRequest) -> str:
         """Apply optional user-defined processing to produce the mock response."""
         await asyncio.sleep(1)
         return "output"

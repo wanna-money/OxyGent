@@ -54,7 +54,7 @@ async def get_system_usage() -> str:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
 
 
-async def main():
+async def main() -> None:
     """
     Main function for testing system tools.
     """

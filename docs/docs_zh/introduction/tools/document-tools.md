@@ -284,7 +284,7 @@ extract_pdf_images(
 
 ```python
 merge_pdfs(
-    pdf_paths: List[str],           # PDF文件列表
+    pdf_paths: list[str],           # PDF文件列表
     output_path: str,               # 输出文件路径
     include_bookmarks: bool = True  # 是否保留书签
 ) -> str
@@ -307,7 +307,7 @@ result = merge_pdfs(
 ```python
 split_pdf(
     path: str,
-    split_ranges: List[str],  # 拆分范围列表
+    split_ranges: list[str],  # 拆分范围列表
     output_dir: str,
     name_prefix: str = "split"
 ) -> str

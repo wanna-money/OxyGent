@@ -1,7 +1,7 @@
 """LLM output parser using Pydantic models for structured output extraction."""
 
 import json
-from typing import Any, List, Optional, Type
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -28,8 +28,8 @@ class PydanticOutputParser(BaseModel):
 
     def __init__(
         self,
-        output_cls: Type[BaseModel],
-        excluded_schema_keys_from_format: Optional[List] = None,
+        output_cls: type[BaseModel],
+        excluded_schema_keys_from_format: Optional[list[str]] = None,
         pydantic_format_tmpl: str = PYDANTIC_FORMAT_TMPL,
     ) -> None:
         """Init params."""
@@ -38,7 +38,7 @@ class PydanticOutputParser(BaseModel):
         self._pydantic_format_tmpl = pydantic_format_tmpl
 
     @property
-    def output_cls(self) -> Type[BaseModel]:
+    def output_cls(self) -> type[BaseModel]:
         return self._output_cls
 
     @property
