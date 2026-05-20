@@ -167,18 +167,31 @@ class BaseMCPClient(BaseTool):
         Safely closes the MCP server session and all associated resources. Uses a
         cleanup lock to prevent concurrent cleanup operations and handles cancellation
         and other exceptions gracefully.
+
+        When ``init()`` ran inside ``asyncio.gather`` (which creates a child
+        task), the anyio cancel-scope was entered in that child task.  Closing
+        the exit stack from the current (different) task raises a
+        ``RuntimeError``.  In that case we fall back to
+        ``_on_cross_task_cleanup`` so subclasses can do transport-specific
+        teardown (e.g. killing a subprocess).
         """
         async with self._cleanup_lock:
             try:
                 await self._exit_stack.aclose()
+            except RuntimeError as e:
+                if "cancel scope" in str(e) or "different task" in str(e):
+                    await self._on_cross_task_cleanup()
+                else:
+                    logger.warning(
+                        f"MCP client cleanup failed for server '{self.name}': {e}",
+                        exc_info=True,
+                    )
             except asyncio.CancelledError:
-                # TODO cleanup(): Operation was cancelled
                 logger.error(
                     f"MCP client cleanup was cancelled for server '{self.name}'",
                     exc_info=True,
                 )
             except Exception as e:
-                # Suppress cleanup exceptions to prevent cascading failures
                 logger.warning(
                     f"MCP client cleanup failed for server '{self.name}': {e}",
                     exc_info=True,
@@ -186,3 +199,12 @@ class BaseMCPClient(BaseTool):
             finally:
                 self._session = None
                 self._stdio_context = None
+
+    async def _on_cross_task_cleanup(self) -> None:
+        """Hook for subclasses to handle cleanup when the exit stack cannot
+        be closed because it was entered in a different asyncio task.
+
+        The default implementation is a no-op (suitable for HTTP-based
+        transports where the connection simply goes away).  ``StdioMCPClient``
+        overrides this to terminate the child process.
+        """

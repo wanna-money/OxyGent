@@ -37,9 +37,9 @@ except ImportError:
 
 # Import the modules under test
 from oxygent import MAS, Config, oxy
-from oxygent.chart.flow_image_gen_tools import flow_image_gen_tools
-from oxygent.chart.open_chart_tools import open_chart_tools
-from oxygent.chart.static_files_utils import create_static_files
+from function_hubs.chart.flow_image_gen_tools import flow_image_gen_tools
+from function_hubs.chart.open_chart_tools import open_chart_tools
+from function_hubs.chart.static_files_utils import create_static_files
 
 
 class TestMASConfiguration:
@@ -232,7 +232,7 @@ class TestWebServiceIntegration:
     def test_flowchart_api_import(self):
         """Test that flowchart API router can be imported."""
         try:
-            from oxygent.chart.flowchart_api import router as flowchart_router
+            from function_hubs.chart.flowchart_api import router as flowchart_router
             assert flowchart_router is not None
         except ImportError:
             # This might not be available in all environments
@@ -303,45 +303,41 @@ class TestPromptTemplate:
 
 @pytest.mark.asyncio
 async def test_full_integration_simulation():
-    """Simulate a full integration test of the demo workflow."""
-    # This test simulates the main workflow without actually starting services
-    
-    # 1. Test configuration setup
+    """Simulate a full integration test of the demo workflow.
+
+    Verifies MAS lifecycle (init/cleanup) with the chart oxy_space components
+    without starting a real web server.
+    """
     Config.set_agent_llm_model("default_llm")
-    
-    # 2. Test oxy_space creation
+
     test_oxy_space = [
         oxy.HttpLLM(
             name="default_llm",
-            api_key=os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("OPENAI_BASE_URL"),
-            model_name=os.getenv("OPENAI_MODEL_NAME"),
+            api_key=os.getenv("OPENAI_API_KEY") or "test-key",
+            base_url=os.getenv("OPENAI_BASE_URL") or "http://localhost:1234",
+            model_name=os.getenv("OPENAI_MODEL_NAME") or "test-model",
         ),
         flow_image_gen_tools,
         open_chart_tools,
     ]
-    
-    # 3. Test that we can create the oxy_space without errors
+
     assert len(test_oxy_space) == 3
     assert test_oxy_space[1] == flow_image_gen_tools
     assert test_oxy_space[2] == open_chart_tools
-    
-    # 4. Mock the MAS system to avoid actually starting it
-    with patch('oxygent.MAS') as MockMAS:
-        mock_mas_instance = AsyncMock()
-        MockMAS.return_value.__aenter__.return_value = mock_mas_instance
-        mock_mas_instance.start_web_service = AsyncMock()
-        
-        # Simulate the main() function workflow
-        async with MAS(oxy_space=test_oxy_space) as mas:
-            # Simulate starting web service
+
+    async with MAS(oxy_space=test_oxy_space) as mas:
+        # Patch start_web_service on the class to avoid binding a real port.
+        # Pydantic BaseModel controls __setattr__/__delattr__, so
+        # patch.object on an instance raises ValueError; patching the class works.
+        with patch.object(MAS, 'start_web_service', new_callable=AsyncMock) as mock_start:
             await mas.start_web_service(
                 first_query="请生成一个软件开发流程图，包括需求分析、设计、编码、测试和部署阶段",
-                port=8081
+                port=8081,
             )
-            
-            # Verify the web service was called
-            mas.start_web_service.assert_called_once()
+            mock_start.assert_called_once_with(
+                first_query="请生成一个软件开发流程图，包括需求分析、设计、编码、测试和部署阶段",
+                port=8081,
+            )
 
 
 if __name__ == "__main__":

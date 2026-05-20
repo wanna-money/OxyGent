@@ -6,9 +6,11 @@ communication, allowing MCP servers to run as separate processes that communicat
 through stdin/stdout pipes.
 """
 
+import asyncio
 import logging
 import os
 import shutil
+import signal
 from typing import Any, Optional
 
 from mcp import ClientSession, StdioServerParameters
@@ -18,6 +20,8 @@ from pydantic import Field
 from .base_mcp_client import BaseMCPClient
 
 logger = logging.getLogger(__name__)
+
+_TERMINATE_TIMEOUT = 2.0
 
 
 class StdioMCPClient(BaseMCPClient):
@@ -86,6 +90,48 @@ class StdioMCPClient(BaseMCPClient):
             logger.error(f"Error initializing stdio server '{self.name}' (command={self.params.get('command')}): {e}", exc_info=True)
             await self.cleanup()
             raise Exception(f"Server {self.name} error")
+
+    async def _on_cross_task_cleanup(self) -> None:
+        """Terminate the MCP subprocess directly via signals.
+
+        Used as a fallback when the exit-stack teardown cannot run in the
+        original task.
+        """
+        process = self._find_stdio_process()
+        if process is None:
+            return
+
+        pid = process.pid
+        try:
+            os.killpg(os.getpgid(pid), signal.SIGTERM)
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
+
+        try:
+            await asyncio.wait_for(process.wait(), timeout=_TERMINATE_TIMEOUT)
+        except asyncio.TimeoutError:
+            try:
+                os.killpg(os.getpgid(pid), signal.SIGKILL)
+            except (ProcessLookupError, PermissionError, OSError):
+                pass
+        except ProcessLookupError:
+            pass
+
+    def _find_stdio_process(self) -> Any:
+        """Walk the exit-stack callbacks to locate the anyio Process handle."""
+        for cb in reversed(self._exit_stack._exit_callbacks):
+            wrapper = getattr(cb[1], "__self__", None)
+            if wrapper is None:
+                continue
+            gen = getattr(wrapper, "gen", None)
+            if gen is None:
+                continue
+            frame = getattr(gen, "ag_frame", None) or getattr(gen, "gi_frame", None)
+            if frame and "process" in frame.f_locals:
+                proc = frame.f_locals["process"]
+                if hasattr(proc, "pid"):
+                    return proc
+        return None
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any], headers: Optional[dict[str, str]] = None) -> Any:
         server_params = await self.get_server_params()

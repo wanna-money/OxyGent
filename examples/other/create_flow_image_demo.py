@@ -1,35 +1,16 @@
 import asyncio
 import os
-import sys
 
-# 将项目根目录添加到 Python 的模块搜索路径中
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-sys.path.insert(0, project_root)
-
-# 加载环境变量
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv()
-except ImportError:
-    print(
-        "Warning: python-dotenv not installed. Environment variables should be set manually."
-    )
-    pass
-
-# 导入必要的模块
-from oxygent import MAS, Config, oxy
-
-# 导入自定义模块
-sys.path.append(project_root)
-# FastAPI 相关导入
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from oxygent.chart.flow_image_gen_tools import flow_image_gen_tools
-from oxygent.chart.open_chart_tools import open_chart_tools
-from oxygent.chart.static_files_utils import create_static_files
+from function_hubs.chart.flow_image_gen_tools import flow_image_gen_tools
+from function_hubs.chart.open_chart_tools import open_chart_tools
+from function_hubs.chart.static_files_utils import create_static_files
+
+# 导入必要的模块
+from oxygent import MAS, Config, oxy
 
 Config.set_agent_llm_model("default_llm")
 # Config.set_server_auto_open_webpage(False)  # 禁用自动打开浏览器
@@ -142,6 +123,7 @@ oxy_space = [
         api_key=os.getenv("OPENAI_API_KEY"),
         base_url=os.getenv("OPENAI_BASE_URL"),
         model_name=os.getenv("OPENAI_MODEL_NAME"),
+        llm_params={"stream": False},
     ),
     flow_image_gen_tools,
     open_chart_tools,
@@ -183,7 +165,7 @@ app.add_middleware(
 )
 
 # 添加API路由
-from oxygent.chart.flowchart_api import router as flowchart_router
+from function_hubs.chart.flowchart_api import router as flowchart_router
 
 app.include_router(flowchart_router, prefix="/api")
 
@@ -198,16 +180,18 @@ async def read_root():
 
 async def main():
     # 创建web目录（如果不存在）
-    os.makedirs("../../oxygent/chart/web", exist_ok=True)
-    os.makedirs("../../oxygent/chart/web/css", exist_ok=True)
-    os.makedirs("../../oxygent/chart/web/js", exist_ok=True)
+    os.makedirs("../../function_hubs/chart/web", exist_ok=True)
+    os.makedirs("../../function_hubs/chart/web/css", exist_ok=True)
+    os.makedirs("../../function_hubs/chart/web/js", exist_ok=True)
 
     # 创建静态文件
-    create_static_files("../../oxygent/chart")
+    create_static_files("../../function_hubs/chart")
 
     # 使用MAS启动Web服务
     # 注意：静态文件挂载必须在API路由之后，否则会覆盖API路由
-    app.mount("/static", StaticFiles(directory="../../oxygent/chart/web"), name="web")
+    app.mount(
+        "/static", StaticFiles(directory="../../function_hubs/chart/web"), name="web"
+    )
 
     async with MAS(oxy_space=oxy_space) as mas:
         # 启动Web服务，但不使用默认的 first_query 处理方式

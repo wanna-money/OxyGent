@@ -13,7 +13,7 @@ This example builds an interactive flowchart assistant that generates and displa
 
 - Environment variables: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL_NAME` (note: this example uses OpenAI-style variable names, not the default `DEFAULT_LLM_*` names)
 - Python packages listed in `requirements.txt`
-- The `oxygent.chart` module (provides `flow_image_gen_tools`, `open_chart_tools`, `create_static_files`, and `flowchart_api`)
+- The `function_hubs.chart` module (provides `flow_image_gen_tools`, `open_chart_tools`, `create_static_files`, and `flowchart_api`)
 - A web browser for viewing generated flowcharts
 
 ## How to Run
@@ -58,8 +58,8 @@ The `MASTER_AGENT_PROMPT` is a detailed Chinese-language system prompt that inst
 | Component | Type | Key Parameters |
 |-----------|------|----------------|
 | `default_llm` | `HttpLLM` | `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL_NAME` from env vars |
-| `flow_image_gen_tools` | FunctionHub | Imported from `oxygent.chart.flow_image_gen_tools`; generates Mermaid flowcharts |
-| `open_chart_tools` | FunctionHub | Imported from `oxygent.chart.open_chart_tools`; opens HTML files in browser |
+| `flow_image_gen_tools` | FunctionHub | Imported from `function_hubs.chart.flow_image_gen_tools`; generates Mermaid flowcharts |
+| `open_chart_tools` | FunctionHub | Imported from `function_hubs.chart.open_chart_tools`; opens HTML files in browser |
 | `image_gen_agent` | `ReActAgent` | `tools=["flow_image_gen_tools"]`, desc: flowchart generation agent |
 | `open_chart_agent` | `ReActAgent` | `tools=["open_chart_tools"]`, desc: open flowchart in browser |
 | `master_agent` | `ReActAgent` | `is_master=True`, `sub_agents=["image_gen_agent", "open_chart_agent"]`, `prompt_template=MASTER_AGENT_PROMPT`, also has direct tool access to both tool sets |
@@ -69,19 +69,19 @@ The `MASTER_AGENT_PROMPT` is a detailed Chinese-language system prompt that inst
 The script creates a custom FastAPI application alongside the OxyGent MAS:
 
 1. **CORS middleware** -- Allows all origins for development convenience.
-2. **Flowchart API router** -- Mounted at `/api` from `oxygent.chart.flowchart_api`.
+2. **Flowchart API router** -- Mounted at `/api` from `function_hubs.chart.flowchart_api`.
 3. **Root redirect** -- `GET /` redirects to `/static/index.html`.
-4. **Static files** -- The web UI is served from `oxygent/chart/web/` at the `/static` path.
+4. **Static files** -- The web UI is served from `function_hubs/chart/web/` at the `/static` path.
 
 ### Entry Point
 
 ```python
 async def main():
-    os.makedirs("../../oxygent/chart/web", exist_ok=True)
-    os.makedirs("../../oxygent/chart/web/css", exist_ok=True)
-    os.makedirs("../../oxygent/chart/web/js", exist_ok=True)
-    create_static_files("../../oxygent/chart")
-    app.mount("/static", StaticFiles(directory="../../oxygent/chart/web"), name="web")
+    os.makedirs("../../function_hubs/chart/web", exist_ok=True)
+    os.makedirs("../../function_hubs/chart/web/css", exist_ok=True)
+    os.makedirs("../../function_hubs/chart/web/js", exist_ok=True)
+    create_static_files("../../function_hubs/chart")
+    app.mount("/static", StaticFiles(directory="../../function_hubs/chart/web"), name="web")
 
     async with MAS(oxy_space=oxy_space) as mas:
         await mas.start_web_service(
