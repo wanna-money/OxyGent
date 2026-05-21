@@ -168,6 +168,10 @@ class SSEOxyGent(RemoteAgent):
                                 except json.JSONDecodeError as e:
                                     logger.warning(
                                         f"Failed to decode SSE message data as JSON from {url}: {e} | raw data: {message_data[:200]}",
+                                        extra={
+                                            "trace_id": oxy_request.current_trace_id,
+                                            "node_id": oxy_request.node_id,
+                                        },
                                         exc_info=True,
                                     )
                                     await oxy_request.send_message(
@@ -188,7 +192,6 @@ class SSEOxyGent(RemoteAgent):
                         extra={
                             "trace_id": oxy_request.current_trace_id,
                             "node_id": oxy_request.node_id,
-                            "error": str(e),
                         },
                         exc_info=True,
                     )
@@ -213,7 +216,6 @@ class SSEOxyGent(RemoteAgent):
                     extra={
                         "trace_id": oxy_request.current_trace_id,
                         "node_id": oxy_request.node_id,
-                        "error": str(e),
                     },
                     exc_info=True,
                 )

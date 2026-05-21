@@ -264,8 +264,8 @@ class ReActAgent(LocalAgent):
                 )
             else:
                 return LLMResponse(
-                    state=LLMState.ERROR_PARSE,
-                    output="Please answer strictly according to the format. If you want to call a tool, provide tool_name.",
+                    state=LLMState.ANSWER,
+                    output=ori_response,
                     ori_response=ori_response,
                 )
 
@@ -292,6 +292,10 @@ class ReActAgent(LocalAgent):
         except Exception as e:
             logger.warning(
                 f"Unexpected error parsing LLM response: {e} | response text: {ori_response[:500]}",
+                extra={
+                    "trace_id": oxy_request.current_trace_id,
+                    "node_id": oxy_request.node_id,
+                },
                 exc_info=True,
             )
             return LLMResponse(
@@ -398,6 +402,10 @@ class ReActAgent(LocalAgent):
                         except (AttributeError, ValueError) as e:
                             logger.warning(
                                 f"Failed to extract trust_mode from response output: {e} | output text: {oxy_response.output[:200]}",
+                                extra={
+                                    "trace_id": oxy_request.current_trace_id,
+                                    "node_id": oxy_request.node_id,
+                                },
                                 exc_info=True,
                             )
                             llm_response.output["trust_mode"] = 0

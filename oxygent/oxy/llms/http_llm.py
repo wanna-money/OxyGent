@@ -104,6 +104,10 @@ class HttpLLM(RemoteLLM):
                         except json.JSONDecodeError as e:
                             logger.warning(
                                 f"Failed to decode streaming chunk as JSON from {url}: {e} | line: {line[:200]}",
+                                extra={
+                                    "trace_id": oxy_request.current_trace_id,
+                                    "node_id": oxy_request.node_id,
+                                },
                                 exc_info=True,
                             )
                             continue

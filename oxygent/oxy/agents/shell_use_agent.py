@@ -109,6 +109,10 @@ class ShellUseAgent(ReActAgent):
         except Exception as e:
             logger.warning(
                 f"Unexpected error parsing shell LLM response: {e} | response text: {ori_response[:500]}",
+                extra={
+                    "trace_id": oxy_request.current_trace_id,
+                    "node_id": oxy_request.node_id,
+                },
                 exc_info=True,
             )
             return LLMResponse(
