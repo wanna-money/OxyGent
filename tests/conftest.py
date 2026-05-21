@@ -13,18 +13,14 @@ from unittest.mock import AsyncMock
 import pytest
 
 from oxygent.config import Config
-from oxygent.mas import MAS
-from oxygent.oxy.agents.chat_agent import ChatAgent
-from oxygent.oxy.agents.react_agent import ReActAgent
-from oxygent.oxy.base_tool import BaseTool
 from oxygent.oxy.function_tools.function_tool import FunctionTool
 from oxygent.oxy.llms.mock_llm import MockLLM
-from oxygent.schemas import OxyRequest, OxyResponse, OxyState
-
+from oxygent.schemas import OxyRequest
 
 # ---------------------------------------------------------------------------
 # Config isolation
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def reset_config():
@@ -42,15 +38,9 @@ def patch_config_defaults(monkeypatch):
     monkeypatch.setattr(
         "oxygent.config.Config.get_storage_es_engine", lambda: "MemoryEs"
     )
-    monkeypatch.setattr(
-        "oxygent.config.Config.get_es_config", lambda: None
-    )
-    monkeypatch.setattr(
-        "oxygent.config.Config.get_redis_config", lambda: None
-    )
-    monkeypatch.setattr(
-        "oxygent.config.Config.get_vearch_config", lambda: None
-    )
+    monkeypatch.setattr("oxygent.config.Config.get_es_config", lambda: None)
+    monkeypatch.setattr("oxygent.config.Config.get_redis_config", lambda: None)
+    monkeypatch.setattr("oxygent.config.Config.get_vearch_config", lambda: None)
     monkeypatch.setattr(
         "oxygent.config.Config.get_live_prompt_is_active", lambda: False
     )
@@ -59,6 +49,7 @@ def patch_config_defaults(monkeypatch):
 # ---------------------------------------------------------------------------
 # DummyMAS (lightweight alternative for tests that don't need full MAS init)
 # ---------------------------------------------------------------------------
+
 
 class DummyMAS:
     """Lightweight MAS stand-in for tests that only need oxy_name_to_oxy."""
@@ -110,6 +101,7 @@ def dummy_mas():
 # MockLLM factory
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def mock_llm_factory():
     """Factory that creates MockLLM instances with custom response functions."""
@@ -120,6 +112,7 @@ def mock_llm_factory():
         func: Optional[Callable] = None,
     ) -> MockLLM:
         if func is None:
+
             async def _static_response(oxy_request: OxyRequest) -> str:
                 return response
 
@@ -134,6 +127,7 @@ def mock_llm_factory():
 # FunctionTool factory
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def function_tool_factory():
     """Factory that creates FunctionTool instances wrapping Python functions."""
@@ -144,6 +138,7 @@ def function_tool_factory():
         func: Optional[Callable] = None,
     ) -> FunctionTool:
         if func is None:
+
             async def _default_func() -> str:
                 return f"{name}_result"
 
@@ -157,6 +152,7 @@ def function_tool_factory():
 # ---------------------------------------------------------------------------
 # OxyRequest factory
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def oxy_request_factory():
@@ -185,6 +181,7 @@ def oxy_request_factory():
 # ---------------------------------------------------------------------------
 # Helper: build a simple ReAct LLM mock that responds with tool calls then answers
 # ---------------------------------------------------------------------------
+
 
 def make_react_llm_func(tool_calls: list[dict], final_answer: str):
     """Create a MockLLM function that first produces tool_call JSON responses,

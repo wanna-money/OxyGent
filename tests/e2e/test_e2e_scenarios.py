@@ -23,10 +23,10 @@ from oxygent.oxy.function_tools.function_tool import FunctionTool
 from oxygent.oxy.llms.mock_llm import MockLLM
 from oxygent.schemas import OxyRequest, OxyResponse, OxyState
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _static_llm(name: str, output: str) -> MockLLM:
     """Create a MockLLM that always returns *output*."""
@@ -74,9 +74,7 @@ class TestSingleTurnQA:
         )
 
         async with MAS(oxy_space=[mock_llm, agent]) as mas:
-            response = await mas.chat_with_agent(
-                payload={"query": "What is Python?"}
-            )
+            response = await mas.chat_with_agent(payload={"query": "What is Python?"})
 
             assert isinstance(response, OxyResponse)
             assert response.state is OxyState.COMPLETED
@@ -181,9 +179,7 @@ class TestReActToolUse:
         )
 
         async with MAS(oxy_space=[mock_llm, calculator, agent]) as mas:
-            response = await mas.chat_with_agent(
-                payload={"query": "What is 2 + 3?"}
-            )
+            response = await mas.chat_with_agent(payload={"query": "What is 2 + 3?"})
 
             assert isinstance(response, OxyResponse)
             assert response.state is OxyState.COMPLETED
@@ -281,7 +277,9 @@ class TestErrorRecoveryOnToolFailure:
         tool_call_json = json.dumps(
             {"tool_name": "flaky_tool", "arguments": {"input": "test"}}
         )
-        fallback_answer = "I could not complete the tool call, but here is my best answer."
+        fallback_answer = (
+            "I could not complete the tool call, but here is my best answer."
+        )
 
         call_idx = {"value": 0}
 
@@ -354,9 +352,7 @@ class TestWorkflowEndToEnd:
         )
 
         async with MAS(oxy_space=[mock_llm, workflow_agent]) as mas:
-            response = await mas.chat_with_agent(
-                payload={"query": "Run my pipeline"}
-            )
+            response = await mas.chat_with_agent(payload={"query": "Run my pipeline"})
 
             assert isinstance(response, OxyResponse)
             assert response.state is OxyState.COMPLETED

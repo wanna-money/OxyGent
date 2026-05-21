@@ -22,10 +22,10 @@ from oxygent.routes import router
 from oxygent.schemas import WebResponse
 from oxygent.utils.common_utils import generate_uuid
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_mock_llm(response: str = "API test response") -> MockLLM:
     async def _fn(oxy_request):
@@ -71,9 +71,7 @@ def _build_app_with_mas(mas):
 
     @app.get("/get_organization")
     def get_organization():
-        return WebResponse(
-            data={"organization": mas.agent_organization}
-        ).to_dict()
+        return WebResponse(data={"organization": mas.agent_organization}).to_dict()
 
     @app.get("/get_welcome_message")
     def get_welcome_message():
@@ -105,6 +103,7 @@ def _build_app_with_mas(mas):
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def app_with_router():
     """Create a minimal FastAPI app with the shared router only."""
@@ -116,6 +115,7 @@ def app_with_router():
 # ---------------------------------------------------------------------------
 # Tests: Shared router endpoints
 # ---------------------------------------------------------------------------
+
 
 class TestSharedRouterEndpoints:
     """Tests for endpoints defined on the shared router in routes.py."""
@@ -144,6 +144,7 @@ class TestSharedRouterEndpoints:
 # Tests: MAS-specific endpoints
 # ---------------------------------------------------------------------------
 
+
 class TestMASEndpoints:
     """Tests for endpoints that require a live MAS instance.
 
@@ -155,7 +156,9 @@ class TestMASEndpoints:
         async with MAS(oxy_space=[_make_mock_llm(), _make_chat_agent()]) as mas:
             app = _build_app_with_mas(mas)
             transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 response = await client.post(
                     "/chat",
                     json={"query": "Hello from API test"},
@@ -171,7 +174,9 @@ class TestMASEndpoints:
         async with MAS(oxy_space=[_make_mock_llm(), _make_chat_agent()]) as mas:
             app = _build_app_with_mas(mas)
             transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 response = await client.post("/chat", json={})
             assert response.status_code == 200
             data = response.json()
@@ -182,7 +187,9 @@ class TestMASEndpoints:
         async with MAS(oxy_space=[_make_mock_llm(), _make_chat_agent()]) as mas:
             app = _build_app_with_mas(mas)
             transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 response = await client.get("/get_organization")
             assert response.status_code == 200
             data = response.json()
@@ -196,7 +203,9 @@ class TestMASEndpoints:
         async with MAS(oxy_space=[_make_mock_llm(), _make_chat_agent()]) as mas:
             app = _build_app_with_mas(mas)
             transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 response = await client.get("/get_welcome_message")
             assert response.status_code == 200
             data = response.json()
@@ -208,7 +217,9 @@ class TestMASEndpoints:
         async with MAS(oxy_space=[_make_mock_llm(), _make_chat_agent()]) as mas:
             app = _build_app_with_mas(mas)
             transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 response = await client.get("/get_agents")
             assert response.status_code == 200
             data = response.json()
@@ -223,7 +234,9 @@ class TestMASEndpoints:
         async with MAS(oxy_space=[_make_mock_llm(), _make_chat_agent()]) as mas:
             app = _build_app_with_mas(mas)
             transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 response = await client.post(
                     "/chat",
                     json={

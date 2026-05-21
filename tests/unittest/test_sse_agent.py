@@ -5,10 +5,17 @@ Unit tests for SSEOxyAgent
 import json
 from unittest.mock import AsyncMock
 
-import httpx
 import pytest
-import respx
-from aioresponses import aioresponses
+
+try:
+    import httpx
+    import respx
+    from aioresponses import aioresponses
+except ImportError:
+    pytest.skip(
+        "respx/aioresponses not available in this environment", allow_module_level=True
+    )
+
 from pydantic import ValidationError
 
 from oxygent.oxy.agents.sse_oxy_agent import SSEOxyGent

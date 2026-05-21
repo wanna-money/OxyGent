@@ -60,11 +60,11 @@ We provide some tests to check your code before pull request.
 ```
 + Unit test:
 ```bash
-    pytest oxygent/tests/unittest
+    pytest tests/unittest
 ```
 + Integration test (Optional):
 ```bash
-    pytest oxygent/tests/integration
+    pytest tests/integration
 ```
 After the PR is submitted, we will format and test the code.
 Our tests are still far from perfect, so you are welcomed to add tests to our project!

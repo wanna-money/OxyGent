@@ -4,7 +4,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from oxygent.databases.db_redis.jimdb_ap_redis import JimdbApRedis
+try:
+    from oxygent.databases.db_redis.jimdb_ap_redis import JimdbApRedis
+except Exception:
+    pytest.skip("aioredis not available in this environment", allow_module_level=True)
 
 
 # ──────────────────────────────────────────────────────────────────────────────

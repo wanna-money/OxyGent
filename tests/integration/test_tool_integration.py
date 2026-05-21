@@ -15,12 +15,12 @@ import pytest
 
 from oxygent.oxy.function_tools.function_hub import FunctionHub
 from oxygent.oxy.function_tools.function_tool import FunctionTool
-from oxygent.schemas import OxyRequest, OxyResponse, OxyState
-
+from oxygent.schemas import OxyRequest, OxyState
 
 # ---------------------------------------------------------------------------
 # 1. FunctionTool async execution
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_function_tool_async_execution(dummy_mas, oxy_request_factory):
@@ -50,6 +50,7 @@ async def test_function_tool_async_execution(dummy_mas, oxy_request_factory):
 # ---------------------------------------------------------------------------
 # 2. FunctionTool sync execution
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_function_tool_sync_execution(dummy_mas, oxy_request_factory):
@@ -89,6 +90,7 @@ async def test_function_tool_sync_execution(dummy_mas, oxy_request_factory):
 # ---------------------------------------------------------------------------
 # 3. FunctionTool schema extraction
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_function_tool_schema_extraction():
@@ -131,6 +133,7 @@ async def test_function_tool_schema_extraction():
 # 4. FunctionTool error handling
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_function_tool_error_handling(dummy_mas, oxy_request_factory):
     """FunctionTool wrapping a function that raises returns FAILED state.
@@ -143,9 +146,7 @@ async def test_function_tool_error_handling(dummy_mas, oxy_request_factory):
     async def fail_hard(value: str) -> str:
         raise ValueError(f"Invalid value: {value}")
 
-    tool = FunctionTool(
-        name="fail_tool", desc="Always fails", func_process=fail_hard
-    )
+    tool = FunctionTool(name="fail_tool", desc="Always fails", func_process=fail_hard)
     tool.set_mas(dummy_mas)
     dummy_mas.add_oxy(tool)
 
@@ -162,6 +163,7 @@ async def test_function_tool_error_handling(dummy_mas, oxy_request_factory):
 # 5. FunctionTool default arguments
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_function_tool_default_arguments(dummy_mas, oxy_request_factory):
     """FunctionTool uses default parameter values when arguments are omitted.
@@ -172,9 +174,7 @@ async def test_function_tool_default_arguments(dummy_mas, oxy_request_factory):
     async def greet(name: str, greeting: str = "Hello") -> str:
         return f"{greeting}, {name}!"
 
-    tool = FunctionTool(
-        name="greet_tool", desc="Greets a person", func_process=greet
-    )
+    tool = FunctionTool(name="greet_tool", desc="Greets a person", func_process=greet)
     tool.set_mas(dummy_mas)
     dummy_mas.add_oxy(tool)
 
@@ -190,6 +190,7 @@ async def test_function_tool_default_arguments(dummy_mas, oxy_request_factory):
 # ---------------------------------------------------------------------------
 # 6. FunctionHub registration and init
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_function_hub_registration_and_init(dummy_mas):
@@ -238,6 +239,7 @@ async def test_function_hub_registration_and_init(dummy_mas):
 # ---------------------------------------------------------------------------
 # 7. Tool permission enforcement
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_tool_permission_enforcement(dummy_mas, oxy_request_factory):
@@ -296,6 +298,7 @@ async def test_tool_permission_enforcement(dummy_mas, oxy_request_factory):
 # ---------------------------------------------------------------------------
 # 8. Tool execution timeout
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_tool_execution_timeout(dummy_mas, oxy_request_factory):

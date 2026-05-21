@@ -19,7 +19,6 @@ from oxygent.oxy.function_tools.function_tool import FunctionTool
 from oxygent.oxy.llms.mock_llm import MockLLM
 from oxygent.schemas import OxyRequest, OxyResponse, OxyState
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -52,7 +51,9 @@ def _make_chat_agent(
     )
 
 
-def _make_function_tool(name: str = "test_tool", result: str = "tool_ok") -> FunctionTool:
+def _make_function_tool(
+    name: str = "test_tool", result: str = "tool_ok"
+) -> FunctionTool:
     """Create a simple FunctionTool that returns a fixed string."""
 
     async def _func() -> str:

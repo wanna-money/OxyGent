@@ -19,13 +19,12 @@ from oxygent.oxy.agents.parallel_agent import ParallelAgent
 from oxygent.oxy.agents.rag_agent import RAGAgent
 from oxygent.oxy.agents.react_agent import ReActAgent
 from oxygent.oxy.agents.workflow_agent import WorkflowAgent
-from oxygent.oxy.llms.mock_llm import MockLLM
 from oxygent.schemas import OxyRequest, OxyResponse, OxyState
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _patch_local_agent_config(monkeypatch):
     """Patch Config classmethods that LocalAgent reads at construction time."""
@@ -46,6 +45,7 @@ def _patch_local_agent_config(monkeypatch):
 # ---------------------------------------------------------------------------
 # 1. ChatAgent full lifecycle
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_chat_agent_full_lifecycle(
@@ -85,6 +85,7 @@ async def test_chat_agent_full_lifecycle(
 # ---------------------------------------------------------------------------
 # 2. ReActAgent -- tool call then answer
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_react_agent_tool_call_and_answer(
@@ -138,20 +139,18 @@ async def test_react_agent_tool_call_and_answer(
             else:
                 # Second LLM call: return the final answer
                 return OxyResponse(
-                    state=OxyState.COMPLETED, output="The answer is 7.", oxy_request=self
+                    state=OxyState.COMPLETED,
+                    output="The answer is 7.",
+                    oxy_request=self,
                 )
         elif callee == "calculator":
             call_count["tool"] += 1
-            return OxyResponse(
-                state=OxyState.COMPLETED, output="7", oxy_request=self
-            )
+            return OxyResponse(state=OxyState.COMPLETED, output="7", oxy_request=self)
         return OxyResponse(
             state=OxyState.FAILED, output=f"Unknown callee: {callee}", oxy_request=self
         )
 
-    monkeypatch.setattr(
-        "oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True
-    )
+    monkeypatch.setattr("oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True)
 
     oxy_request = oxy_request_factory(query="What is 3 + 4?", mas=dummy_mas)
     response = await agent.execute(oxy_request)
@@ -165,6 +164,7 @@ async def test_react_agent_tool_call_and_answer(
 # ---------------------------------------------------------------------------
 # 3. ReActAgent -- direct answer (no tool call)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_react_agent_direct_answer(
@@ -202,11 +202,11 @@ async def test_react_agent_direct_answer(
             state=OxyState.FAILED, output="should not be called", oxy_request=self
         )
 
-    monkeypatch.setattr(
-        "oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True
-    )
+    monkeypatch.setattr("oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True)
 
-    oxy_request = oxy_request_factory(query="What is the capital of France?", mas=dummy_mas)
+    oxy_request = oxy_request_factory(
+        query="What is the capital of France?", mas=dummy_mas
+    )
     response = await agent.execute(oxy_request)
 
     assert response.state is OxyState.COMPLETED
@@ -216,6 +216,7 @@ async def test_react_agent_direct_answer(
 # ---------------------------------------------------------------------------
 # 4. ParallelAgent -- concurrent execution of sub-agents
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_parallel_agent_concurrent_execution(
@@ -285,9 +286,7 @@ async def test_parallel_agent_concurrent_execution(
             state=OxyState.FAILED, output=f"Unknown callee: {callee}", oxy_request=self
         )
 
-    monkeypatch.setattr(
-        "oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True
-    )
+    monkeypatch.setattr("oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True)
 
     oxy_request = oxy_request_factory(query="Analyze this topic", mas=dummy_mas)
     response = await parallel_agent.execute(oxy_request)
@@ -301,6 +300,7 @@ async def test_parallel_agent_concurrent_execution(
 # ---------------------------------------------------------------------------
 # 5. WorkflowAgent -- with custom function
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_workflow_agent_with_custom_function(
@@ -345,6 +345,7 @@ async def test_workflow_agent_with_custom_function(
 # 6. WorkflowAgent -- without function (expect FAILED)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_workflow_agent_without_function(
     monkeypatch, dummy_mas, mock_llm_factory, oxy_request_factory
@@ -376,6 +377,7 @@ async def test_workflow_agent_without_function(
 # ---------------------------------------------------------------------------
 # 7. RAGAgent -- knowledge injection
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_rag_agent_knowledge_injection(
@@ -426,9 +428,7 @@ async def test_rag_agent_knowledge_injection(
             state=OxyState.FAILED, output=f"Unknown callee: {callee}", oxy_request=self
         )
 
-    monkeypatch.setattr(
-        "oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True
-    )
+    monkeypatch.setattr("oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True)
 
     oxy_request = oxy_request_factory(query="Who created Python?", mas=dummy_mas)
     response = await agent.execute(oxy_request)

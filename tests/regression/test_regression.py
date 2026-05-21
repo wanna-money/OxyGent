@@ -14,7 +14,6 @@ import asyncio
 import copy
 import json
 from typing import Any
-from unittest.mock import AsyncMock
 
 import pytest
 
@@ -22,13 +21,12 @@ from oxygent.config import Config
 from oxygent.oxy.agents.chat_agent import ChatAgent
 from oxygent.oxy.agents.react_agent import ReActAgent
 from oxygent.oxy.base_oxy import Oxy
-from oxygent.oxy.llms.mock_llm import MockLLM
 from oxygent.schemas import OxyRequest, OxyResponse, OxyState
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _patch_local_agent_config(monkeypatch):
     """Patch Config classmethods that LocalAgent reads at construction time."""
@@ -73,8 +71,8 @@ class SlowOxy(Oxy):
 # 1. OxyRequest.__deepcopy__ shares shared_data
 # ===================================================================
 
-class TestOxyRequestDeepCopy:
 
+class TestOxyRequestDeepCopy:
     def test_deepcopy_shares_shared_data(self):
         """Modifying shared_data on a deep-copied request must be visible
         on the original, because __deepcopy__ intentionally shares
@@ -124,8 +122,8 @@ class TestOxyRequestDeepCopy:
 # 3. OxyRequest.clone_with preserves fields
 # ===================================================================
 
-class TestOxyRequestCloneWith:
 
+class TestOxyRequestCloneWith:
     def test_clone_with_preserves_fields(self):
         """clone_with should change only the specified fields and leave
         everything else intact."""
@@ -154,8 +152,8 @@ class TestOxyRequestCloneWith:
 # 4. Config singleton isolation via reset_config fixture
 # ===================================================================
 
-class TestConfigSingletonIsolation:
 
+class TestConfigSingletonIsolation:
     def test_config_mutation_is_visible(self):
         """Verify that Config changes take effect within the same test."""
         Config.set_app_name("regression_test_app")
@@ -170,6 +168,7 @@ class TestConfigSingletonIsolation:
 # ===================================================================
 # 5. ReActAgent max_react_rounds fallback
 # ===================================================================
+
 
 @pytest.mark.asyncio
 async def test_react_agent_max_rounds_fallback(
@@ -219,10 +218,12 @@ async def test_react_agent_max_rounds_fallback(
             # stops on its own.
             return OxyResponse(
                 state=OxyState.COMPLETED,
-                output=json.dumps({
-                    "tool_name": "some_tool",
-                    "arguments": {"query": "test"},
-                }),
+                output=json.dumps(
+                    {
+                        "tool_name": "some_tool",
+                        "arguments": {"query": "test"},
+                    }
+                ),
                 oxy_request=self_req,
             )
         if callee == "some_tool":
@@ -237,9 +238,7 @@ async def test_react_agent_max_rounds_fallback(
             oxy_request=self_req,
         )
 
-    monkeypatch.setattr(
-        "oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True
-    )
+    monkeypatch.setattr("oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True)
 
     oxy_request = oxy_request_factory(query="Run forever?", mas=dummy_mas)
     response = await agent.execute(oxy_request)
@@ -257,6 +256,7 @@ async def test_react_agent_max_rounds_fallback(
 # ===================================================================
 # 6. ReActAgent parse error recovery
 # ===================================================================
+
 
 @pytest.mark.asyncio
 async def test_react_agent_parse_error_recovery(
@@ -308,21 +308,22 @@ async def test_react_agent_parse_error_recovery(
             oxy_request=self_req,
         )
 
-    monkeypatch.setattr(
-        "oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True
-    )
+    monkeypatch.setattr("oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True)
 
     oxy_request = oxy_request_factory(query="Parse error test", mas=dummy_mas)
     response = await agent.execute(oxy_request)
 
     assert response.state is OxyState.COMPLETED
     assert response.output == "The recovered answer."
-    assert call_count["llm"] >= 2, "LLM should be called at least twice (error + recovery)"
+    assert call_count["llm"] >= 2, (
+        "LLM should be called at least twice (error + recovery)"
+    )
 
 
 # ===================================================================
 # 7. ChatAgent with empty tool list
 # ===================================================================
+
 
 @pytest.mark.asyncio
 async def test_empty_tool_list_agent(
@@ -361,9 +362,7 @@ async def test_empty_tool_list_agent(
             oxy_request=self_req,
         )
 
-    monkeypatch.setattr(
-        "oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True
-    )
+    monkeypatch.setattr("oxygent.schemas.oxy.OxyRequest.call", _fake_call, raising=True)
 
     oxy_request = oxy_request_factory(query="Hello?", mas=dummy_mas)
     response = await agent.execute(oxy_request)
@@ -375,6 +374,7 @@ async def test_empty_tool_list_agent(
 # ===================================================================
 # 8. Parallel execution -- no shared-state corruption
 # ===================================================================
+
 
 @pytest.mark.asyncio
 async def test_parallel_execution_no_shared_state_corruption():
@@ -400,6 +400,7 @@ async def test_parallel_execution_no_shared_state_corruption():
 # ===================================================================
 # 9. Semaphore limits concurrency
 # ===================================================================
+
 
 @pytest.mark.asyncio
 async def test_semaphore_limits_concurrency():
@@ -448,6 +449,7 @@ async def test_semaphore_limits_concurrency():
 # 10. Timeout enforcement
 # ===================================================================
 
+
 @pytest.mark.asyncio
 async def test_timeout_enforcement():
     """An Oxy whose _execute sleeps for 10 seconds but has timeout=0.5
@@ -493,6 +495,7 @@ async def test_timeout_enforcement():
 # ===================================================================
 # 11. Permission enforcement skips unauthorized callee
 # ===================================================================
+
 
 @pytest.mark.asyncio
 async def test_permission_enforcement_skips_unauthorized():
@@ -547,6 +550,7 @@ async def test_permission_enforcement_skips_unauthorized():
 # ===================================================================
 # 12. preceding_oxy injection
 # ===================================================================
+
 
 @pytest.mark.asyncio
 async def test_preceding_oxy_injection(monkeypatch):

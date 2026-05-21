@@ -4,7 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from oxygent.oxy.agents.skill_agent import _load_metadata_from_file, _parse_simple_frontmatter
+from oxygent.oxy.agents.skill_agent import (
+    _load_metadata_from_file,
+    _parse_simple_frontmatter,
+)
 from oxygent.schemas.skill import SkillMetadata
 
 

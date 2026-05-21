@@ -12,15 +12,15 @@ import json
 import pytest
 
 from oxygent.oxy.flows.parallel_flow import ParallelFlow
-from oxygent.oxy.flows.plan_and_solve import Plan, PlanAndSolve
-from oxygent.oxy.flows.reflexion import Reflexion, ReflexionEvaluation
+from oxygent.oxy.flows.plan_and_solve import PlanAndSolve
+from oxygent.oxy.flows.reflexion import Reflexion
 from oxygent.oxy.flows.workflow import Workflow
 from oxygent.schemas import OxyRequest, OxyResponse, OxyState
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_flow_request(
     mas,
@@ -120,9 +120,7 @@ class TestParallelFlow:
                 output=expected_outputs.get(callee, "unknown"),
             )
 
-        monkeypatch.setattr(
-            "oxygent.schemas.oxy.OxyRequest.call", _fake_call
-        )
+        monkeypatch.setattr("oxygent.schemas.oxy.OxyRequest.call", _fake_call)
 
         oxy_request = _make_flow_request(
             dummy_mas, "par_flow", query="parallel question"
@@ -150,10 +148,12 @@ class TestPlanAndSolve:
         plan_steps = ["step 1: gather data", "step 2: summarize findings"]
         plan_json = json.dumps({"steps": plan_steps})
 
-        executor_results = iter([
-            "Data gathered successfully.",
-            "Summary: all findings look good.",
-        ])
+        executor_results = iter(
+            [
+                "Data gathered successfully.",
+                "Summary: all findings look good.",
+            ]
+        )
 
         call_log = []
 
@@ -173,9 +173,7 @@ class TestPlanAndSolve:
                 )
             return OxyResponse(state=OxyState.FAILED, output="unexpected callee")
 
-        monkeypatch.setattr(
-            "oxygent.schemas.oxy.OxyRequest.call", _fake_call
-        )
+        monkeypatch.setattr("oxygent.schemas.oxy.OxyRequest.call", _fake_call)
 
         flow = PlanAndSolve(
             name="ps_flow",
@@ -211,11 +209,13 @@ class TestReflexion:
         """When the reflexion agent evaluates the first answer as satisfactory,
         the flow should complete in a single round."""
 
-        satisfactory_eval = json.dumps({
-            "is_satisfactory": True,
-            "evaluation_reason": "The answer is accurate and complete.",
-            "improvement_suggestions": "",
-        })
+        satisfactory_eval = json.dumps(
+            {
+                "is_satisfactory": True,
+                "evaluation_reason": "The answer is accurate and complete.",
+                "improvement_suggestions": "",
+            }
+        )
 
         call_log = []
 
@@ -235,9 +235,7 @@ class TestReflexion:
                 )
             return OxyResponse(state=OxyState.FAILED, output="unexpected callee")
 
-        monkeypatch.setattr(
-            "oxygent.schemas.oxy.OxyRequest.call", _fake_call
-        )
+        monkeypatch.setattr("oxygent.schemas.oxy.OxyRequest.call", _fake_call)
 
         flow = Reflexion(
             name="refl_flow",
@@ -265,16 +263,20 @@ class TestReflexion:
         loop: worker -> evaluate -> improve -> worker -> evaluate (satisfactory).
         This verifies the improvement loop runs exactly twice."""
 
-        unsatisfactory_eval = json.dumps({
-            "is_satisfactory": False,
-            "evaluation_reason": "The answer is too brief and lacks detail.",
-            "improvement_suggestions": "Please provide more historical context.",
-        })
-        satisfactory_eval = json.dumps({
-            "is_satisfactory": True,
-            "evaluation_reason": "The answer is now thorough and well-explained.",
-            "improvement_suggestions": "",
-        })
+        unsatisfactory_eval = json.dumps(
+            {
+                "is_satisfactory": False,
+                "evaluation_reason": "The answer is too brief and lacks detail.",
+                "improvement_suggestions": "Please provide more historical context.",
+            }
+        )
+        satisfactory_eval = json.dumps(
+            {
+                "is_satisfactory": True,
+                "evaluation_reason": "The answer is now thorough and well-explained.",
+                "improvement_suggestions": "",
+            }
+        )
 
         worker_call_count = 0
         reflexion_call_count = 0
@@ -314,9 +316,7 @@ class TestReflexion:
 
             return OxyResponse(state=OxyState.FAILED, output="unexpected callee")
 
-        monkeypatch.setattr(
-            "oxygent.schemas.oxy.OxyRequest.call", _fake_call
-        )
+        monkeypatch.setattr("oxygent.schemas.oxy.OxyRequest.call", _fake_call)
 
         flow = Reflexion(
             name="refl_loop_flow",
