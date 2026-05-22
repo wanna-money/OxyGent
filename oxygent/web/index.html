@@ -372,6 +372,21 @@
 
     var master_agent_name = "master_agent";
     var div_right = $("#agent_log");
+    // Coalesce rapid right-panel scroll requests (cached ReRun nodes, fast LLM
+    // bursts) so animations don't stack and keep playing after the stream ends.
+    // A short debounce groups same-burst events; stop() cancels the in-flight
+    // animation so each rebuild gets exactly one smooth scroll to the bottom.
+    var _rightScrollTimer = null;
+    function scrollRightPanelToBottom() {
+        if (!div_right || !div_right[0]) return;
+        if (_rightScrollTimer) clearTimeout(_rightScrollTimer);
+        _rightScrollTimer = setTimeout(function () {
+            _rightScrollTimer = null;
+            if (!div_right[0]) return;
+            div_right.stop(true, false);
+            div_right.animate({ scrollTop: div_right[0].scrollHeight }, 300);
+        }, 80);
+    }
     var div_chat_history = $("#chat_history");
     var div_chatbox = $("#chatbox");
     var div_org = $("#org-zoom-wrapper");
@@ -2326,6 +2341,7 @@
         }
         if (jm["type"] == "agent_log") {
             if (Object.keys(jm.content)?.length) {
+                div_right.stop(true, false);
                 div_right.empty();
             }
             agent_log = jm["content"];
@@ -2424,9 +2440,7 @@
             }
 
             if (div_right[0]) {
-                div_right.animate({
-                    scrollTop: div_right[0].scrollHeight
-                }, 500);
+                scrollRightPanelToBottom();
             }
         }
         if (jm["type"] == "tool_call") {

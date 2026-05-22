@@ -1096,6 +1096,9 @@ class MAS(BaseModel):
                     trace_source.get("original_payload", "{}"),
                     "original_payload",
                 )
+                stored_payload.pop("restart_node_output", None)
+                stored_payload.pop("current_trace_id", None)
+                stored_payload.pop("request_id", None)
 
                 # Step 3: rebuild payload — original as base, restart fields on top
                 payload.clear()
