@@ -1,12 +1,16 @@
-"""oxy.py.
+"""Core request, response, and state schemas for the OxyGent framework.
 
-NOTE: The variables defined in this file have meanings as:
-    - mas: the runtime container that knows every agent/tool(oxy) and routes messages among them
-    - oxy: autonomous object, the agent/tool that can be called by other agents/tools
-    - session: persistent channel between caller and callee
-    - trace: conversation thread (a session can branch into different traces)
-    - caller: parent node
-    - callee: the node being entered during a nested call
+Defines the data structures that flow through every Oxy execution:
+``OxyState`` (lifecycle enum), ``OxyRequest`` (invocation envelope),
+``OxyResponse`` (execution result), and ``OxyOutput`` (serializable output).
+
+Domain terminology used throughout:
+    mas: The runtime container that knows every agent/tool and routes messages.
+    oxy: An autonomous object (agent or tool) callable by other agents/tools.
+    session: A persistent channel between caller and callee.
+    trace: A conversation thread; a session can branch into multiple traces.
+    caller: The parent node initiating a call.
+    callee: The node being entered during a nested call.
 """
 
 import asyncio
@@ -40,20 +44,14 @@ class OxyState(Enum):  # The status of the node (oxy)
 class OxyRequest(BaseModel):
     """Envelope for a single MAS task invocation.
 
-    Attributes
-    ----------
-    from_trace_id : str | None
-        The parent conversation node's trace id.
-    current_trace_id : str
-        Unique id for *this* node; forms a conversation DAG.
-    root_trace_ids : list[str]
-        All roots composing the current session tree.
-    caller / callee : str
-        Names of the oxy initiating the call and the oxy being called.
-    arguments : dict
-        Call-specific parameters (user input, tool args, etc.).
-    shared_data : dict
-        Scratch space shared with descendants in the same trace.
+    Attributes:
+        from_trace_id: The parent conversation node's trace id.
+        current_trace_id: Unique id for this node; forms a conversation DAG.
+        root_trace_ids: All roots composing the current session tree.
+        caller: Name of the oxy initiating the call.
+        callee: Name of the oxy being called.
+        arguments: Call-specific parameters (user input, tool args, etc.).
+        shared_data: Scratch space shared with descendants in the same trace.
     """
 
     # Static
@@ -581,16 +579,11 @@ class OxyRequest(BaseModel):
 class OxyResponse(BaseModel):
     """Result of an oxy execution.
 
-    Attributes
-    ----------
-    state : OxyState
-        Final state of the task.
-    output : Any
-        User-visible payload or error message.
-    extra : dict
-        Optional metadata (tokens used, latency, etc.).
-    oxy_request : OxyRequest | None
-        Echo of the originating request (useful for logging).
+    Attributes:
+        state: Final state of the task.
+        output: User-visible payload or error message.
+        extra: Optional metadata (tokens used, latency, etc.).
+        oxy_request: Echo of the originating request (useful for logging).
     """
 
     state: OxyState

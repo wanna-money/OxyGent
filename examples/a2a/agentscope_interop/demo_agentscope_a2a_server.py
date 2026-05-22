@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """AgentScope A2A server demo.
 
 Run:

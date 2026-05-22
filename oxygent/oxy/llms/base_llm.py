@@ -104,8 +104,16 @@ class BaseLLM(Oxy):
     async def _get_messages(self, oxy_request: OxyRequest) -> list[dict[str, Any]]:
         """Build the message list for the LLM call.
 
-        Merges the system prompt, parses multimodal content (text, image, video, file),
-        and optionally converts URLs to base64. Returns the assembled message list.
+        Merges the system prompt into the first user message when system prompts
+        are disabled, parses multimodal content (text, image, video, file), and
+        optionally converts media URLs to base64-encoded data URIs.
+
+        Args:
+            oxy_request: The incoming request whose ``arguments["messages"]``
+                list will be processed.
+
+        Returns:
+            A list of message dicts ready to be sent to the LLM provider.
         """
         # merge system prompt
         if (
@@ -217,7 +225,19 @@ class BaseLLM(Oxy):
         return messages_processed
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Execute the LLM request."""
+        """Execute the LLM request.
+
+        Subclasses must override this method with provider-specific logic.
+
+        Args:
+            oxy_request: The request containing messages and LLM parameters.
+
+        Returns:
+            An OxyResponse with the model's generated text.
+
+        Raises:
+            NotImplementedError: Always, unless overridden by a subclass.
+        """
         raise NotImplementedError("This method is not yet implemented")
 
     async def _post_send_message(self, oxy_response: OxyResponse) -> None:
@@ -262,7 +282,14 @@ class BaseLLM(Oxy):
                 )
 
     async def _after_execute(self, oxy_response: OxyResponse) -> OxyResponse:
-        """Post-execution hook: aggregate token usage then serialize to dict."""
+        """Post-execution hook: aggregate token usage then serialize to dict.
+
+        Args:
+            oxy_response: The response returned by ``_execute``.
+
+        Returns:
+            The same OxyResponse with ``extra["usage"]`` converted to a dict.
+        """
         usage = oxy_response.extra.get("usage")
         if isinstance(usage, TokenUsage):
             aggregate_token_usage(oxy_response.oxy_request, usage)
@@ -274,6 +301,13 @@ class BaseLLM(Oxy):
 
         Priority (last wins): global config < self.llm_params < request arguments.
         The ``messages`` key in request arguments is always skipped.
+
+        Args:
+            oxy_request: The current request whose arguments are merged.
+            payload: The mutable dict to update in place.
+
+        Returns:
+            The same ``payload`` dict after all merges have been applied.
         """
         payload.update(Config.get_llm_config(exclude=["semaphore", "timeout"]))
         payload.update(self.llm_params)
@@ -285,8 +319,15 @@ class BaseLLM(Oxy):
     def _build_token_usage(
         self, usage_data: Any, messages: list[dict[str, Any]], output: str
     ) -> TokenUsage:
-        """Build TokenUsage with fallback to estimation.
+        """Build a TokenUsage object, falling back to estimation when the
+        provider does not return usage data.
 
-        Delegates to ``token_utils.build_token_usage``.
+        Args:
+            usage_data: Raw usage dict/object returned by the provider, or None.
+            messages: The messages sent to the model (used for estimation).
+            output: The generated text (used for estimation).
+
+        Returns:
+            A populated TokenUsage instance.
         """
         return build_token_usage(usage_data, messages, output, self.model_name)

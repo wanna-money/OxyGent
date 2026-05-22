@@ -1,6 +1,8 @@
-"""memory.py
-Message and Memory Schemas
-========================
+"""Message and memory schemas for conversation history management.
+
+Defines the data structures used to represent chat messages (Function, ToolCall,
+Message) and conversation memory (Memory) compatible with the OpenAI Chat
+Completions message format.
 """
 
 from typing import Any, Literal, Optional, Union

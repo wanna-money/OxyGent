@@ -20,10 +20,10 @@ Do not repeat the schema.
 
 
 class PydanticOutputParser(BaseModel):
-    """Pydantic Output Parser.
+    """Parses LLM text output into validated Pydantic model instances.
 
-    Args:
-        output_cls (BaseModel): Pydantic output class.
+    Attributes:
+        output_cls: The target Pydantic model class for deserialization.
     """
 
     def __init__(
@@ -32,7 +32,14 @@ class PydanticOutputParser(BaseModel):
         excluded_schema_keys_from_format: Optional[list[str]] = None,
         pydantic_format_tmpl: str = PYDANTIC_FORMAT_TMPL,
     ) -> None:
-        """Init params."""
+        """Initialize the parser.
+
+        Args:
+            output_cls: Pydantic model class defining the expected output schema.
+            excluded_schema_keys_from_format: Schema keys to omit from the
+                format instruction shown to the LLM.
+            pydantic_format_tmpl: Template string for the JSON schema prompt.
+        """
         self._output_cls = output_cls
         self._excluded_schema_keys_from_format = excluded_schema_keys_from_format or []
         self._pydantic_format_tmpl = pydantic_format_tmpl
@@ -43,11 +50,18 @@ class PydanticOutputParser(BaseModel):
 
     @property
     def format_string(self) -> str:
-        """Format string."""
+        """The schema instruction string with braces escaped for ``str.format()``."""
         return self.get_format_string(escape_json=True)
 
     def get_format_string(self, escape_json: bool = True) -> str:
-        """Format string."""
+        """Build the JSON schema instruction string for LLM prompts.
+
+        Args:
+            escape_json: Whether to escape braces for ``str.format()`` compatibility.
+
+        Returns:
+            The formatted schema instruction string.
+        """
         schema_dict = self._output_cls.model_json_schema()
         for key in self._excluded_schema_keys_from_format:
             del schema_dict[key]

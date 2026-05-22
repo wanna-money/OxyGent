@@ -1,7 +1,7 @@
-"""base_vector_db.py Base Vector Database Class Module.
+"""Abstract base class for vector database services.
 
-This file defines the abstract base class for vector database services, inheriting from
-BaseDB and providing the interface contract for vector database operations.
+Inherits from BaseDB and defines the interface contract for vector storage
+and similarity search operations.
 """
 
 import logging

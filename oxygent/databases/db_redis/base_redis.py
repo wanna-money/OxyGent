@@ -1,7 +1,7 @@
-"""base_redis.py Base Key-value Database Class Module.
+"""Abstract base class for key-value database services.
 
-This file defines the abstract base class for Key-value database services, inheriting
-from BaseDB and providing the interface contract for Redis operations.
+Inherits from BaseDB and defines the interface contract for Redis-compatible
+key-value operations including get/set, list push/pop, and expiration.
 """
 
 import logging

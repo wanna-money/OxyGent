@@ -1,4 +1,4 @@
-"""memory_es.py – In-memory Elasticsearch implementation.
+"""In-memory Elasticsearch implementation.
 
 This module simulates a subset of Elasticsearch by storing documents entirely
 in memory (Python dicts).  It is functionally equivalent to LocalEs but:

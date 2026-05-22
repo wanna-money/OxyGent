@@ -16,7 +16,18 @@ logger = logging.getLogger(__name__)
 
 
 class BankTool(BaseBank):
-    """A single tool exposed by a BankClient/bank server."""
+    """A single tool exposed by a BankClient/bank server.
+
+    Invokes its endpoint over HTTP (GET or POST) and returns the raw
+    response text.
+
+    Attributes:
+        server_url: URL of the bank server endpoint for this tool.
+        method: HTTP method used when invoking this tool.
+        is_permission_required: Whether permission is required before execution.
+        headers: Extra HTTP headers sent with the request.
+        is_retrievable: Whether this tool can be discovered via vector search.
+    """
 
     server_url: AnyUrl = Field(
         "", description="URL of the bank server endpoint for this tool"
@@ -36,7 +47,18 @@ class BankTool(BaseBank):
     )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Invoke this tool through its parent BankClient."""
+        """Invoke this tool's HTTP endpoint on the bank server.
+
+        Args:
+            oxy_request: The request whose arguments are sent as query
+                params (GET) or JSON body (POST).
+
+        Returns:
+            An OxyResponse containing the HTTP response text.
+
+        Raises:
+            httpx.HTTPStatusError: If the response status code indicates an error.
+        """
         async with httpx.AsyncClient() as client:
             kwargs = {"headers": self.headers, "timeout": self.timeout}
             if self.method.upper() == "GET":

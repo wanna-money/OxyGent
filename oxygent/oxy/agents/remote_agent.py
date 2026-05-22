@@ -1,3 +1,9 @@
+"""Remote agent for inter-system agent communication over HTTP.
+
+Provides RemoteAgent, the base class for agents that delegate execution to
+an external OxyGent MAS instance reachable via HTTP/HTTPS.
+"""
+
 import copy
 from typing import Any
 

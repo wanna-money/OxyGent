@@ -1,7 +1,7 @@
-"""base_es.py Base Elasticsearch Database Class Module.
+"""Abstract base class for Elasticsearch database services.
 
-This file defines the abstract base class for Elasticsearch database services,
-inheriting from BaseDB and providing the interface contract for ES operations.
+Inherits from BaseDB and defines the interface contract for Elasticsearch
+operations including index management, document CRUD, and search queries.
 """
 
 import logging

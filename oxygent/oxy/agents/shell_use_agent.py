@@ -1,3 +1,9 @@
+"""Shell-use agent for terminal-based task execution via SSH.
+
+Provides ShellUseAgent, a ReAct-style agent that establishes SSH connections
+to remote systems and executes shell commands to accomplish tasks.
+"""
+
 import asyncio
 import logging
 from typing import Any

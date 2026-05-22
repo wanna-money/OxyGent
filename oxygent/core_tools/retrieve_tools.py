@@ -1,7 +1,7 @@
-"""Tool Retrieval Module.
+"""Semantic tool retrieval via vector similarity search.
 
-This file demonstrates the structure of the 'retrieve_tools', which can select
-appropriate functions for an agent based on specific circumstances and requirements.
+Provides a FunctionHub tool that queries a Vearch vector database to find
+the most relevant tools for a given query, filtered by application and agent.
 """
 
 from typing import Any

@@ -14,14 +14,25 @@ logger = logging.getLogger(__name__)
 
 
 class LocalLLM(BaseLLM):
-    """LLM that loads a transformer model from disk and runs inference locally."""
+    """LLM that loads a transformer model from disk and runs inference locally.
+
+    Attributes:
+        model_path: Filesystem path to the HuggingFace model directory.
+        device_map: Device placement strategy passed to
+            ``AutoModelForCausalLM.from_pretrained``.
+        dtype: Data type string (e.g. ``"bfloat16"``) for model weights.
+    """
 
     model_path: str = Field("")
     device_map: str = Field("auto")
     dtype: str = Field("bfloat16")
 
     async def init(self) -> None:
-        """Load the model and tokenizer from the configured path."""
+        """Load the model and tokenizer from the configured path.
+
+        Raises:
+            ImportError: If ``torch`` or ``transformers`` are not installed.
+        """
         try:
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -42,7 +53,14 @@ class LocalLLM(BaseLLM):
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_path)
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Generate a response by running the local model on the input messages."""
+        """Generate a response by running the local model on the input messages.
+
+        Args:
+            oxy_request: The request containing messages and generation parameters.
+
+        Returns:
+            An OxyResponse with the decoded model output.
+        """
         payload = {}
         self._build_payload(oxy_request, payload)
 

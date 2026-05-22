@@ -1,6 +1,7 @@
-"""llm.py LLM status module.
+"""LLM response state and container schemas.
 
-The module defines the status and the output of the LLM.
+Defines LLMState (enumeration of possible LLM call outcomes) and LLMResponse
+(the structured result container passed between agents and LLM wrappers).
 """
 
 from enum import Enum

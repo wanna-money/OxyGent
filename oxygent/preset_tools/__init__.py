@@ -1,3 +1,10 @@
+"""Built-in FunctionHub tool collections for OxyGent agents.
+
+Dynamically discovers and imports all preset tool modules (math, file, time,
+HTTP, string, system, shell, python, image generation, SSH) and re-exports
+their FunctionHub instances so they can be referenced via ``preset_tools.*``.
+"""
+
 import importlib
 import os
 

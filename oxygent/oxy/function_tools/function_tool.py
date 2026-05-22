@@ -97,7 +97,19 @@ class FunctionTool(BaseTool):
         return schema
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Execute the wrapped function with provided arguments."""
+        """Execute the wrapped function with provided arguments.
+
+        Resolves each parameter from ``oxy_request.arguments``, falling back
+        to the function's default values when a parameter is absent.
+
+        Args:
+            oxy_request: The request whose arguments map to the wrapped
+                function's parameters.
+
+        Returns:
+            An OxyResponse with COMPLETED state on success, or FAILED state
+            with the error message on exception.
+        """
         try:
             func_kwargs = {}
             sig = signature(self.func_process)

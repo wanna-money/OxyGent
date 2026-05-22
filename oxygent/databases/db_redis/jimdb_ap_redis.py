@@ -1,8 +1,8 @@
-"""jimdb_ap_redis.py JimDB Redis Implementation Module.
+"""JimDB Redis client implementation.
 
-This file implements a Redis client specifically designed for JimDB (JD's internal
-database), providing robust connection handling, automatic retries, and enhanced list
-operations with size limits and expiration management.
+Provides a Redis client specifically designed for JimDB (JD's internal database),
+with robust connection handling, automatic retries, and enhanced list operations
+with size limits and expiration management.
 """
 
 import asyncio

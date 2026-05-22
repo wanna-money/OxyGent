@@ -1,4 +1,4 @@
-"""log_setup.py Logging utilities.
+"""Logging utilities for OxyGent.
 
 This module centralizes logging configuration for the project. It adds
 color‑coded output, trace/node context, and separate formatting rules for

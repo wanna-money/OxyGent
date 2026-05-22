@@ -1,4 +1,8 @@
-"""The module contains some common functions."""
+"""Shared utility functions for OxyGent.
+
+Provides UUID generation, JSON extraction and serialization, image/video base64
+conversion, URL construction, tree printing, and ANSI code stripping.
+"""
 
 import asyncio
 import base64
@@ -180,7 +184,7 @@ def print_tree(
     children = node.get("children", [])
     for idx, child in enumerate(children):
         child_is_last = idx == len(children) - 1
-        # Next layer prefix: uss " " for last one and "│" for others
+        # Next layer prefix: use " " for last one and "│" for others
         extension = "    " if is_last else "│   "
         if is_root:
             extension = ""

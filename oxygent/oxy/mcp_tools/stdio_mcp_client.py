@@ -40,7 +40,14 @@ class StdioMCPClient(BaseMCPClient):
     )
 
     async def _ensure_directories_exist(self, args: list[str]) -> None:
-        """Ensure required directories exist before starting MCP server."""
+        """Ensure required directories exist before starting the MCP server.
+
+        Args:
+            args: Command-line argument list for the server process.
+
+        Raises:
+            FileNotFoundError: If a referenced MCP tool file does not exist.
+        """
         if len(args) >= 2 and "server-filesystem" in " ".join(args):
             target_dir = args[-1]
             if not os.path.exists(target_dir):
@@ -58,15 +65,17 @@ class StdioMCPClient(BaseMCPClient):
     async def init(self, is_fetch_tools: bool = True) -> None:
         """Initialize the stdio connection to the MCP server process.
 
-        Spawns an external process (such as a Node.js script) that acts as an MCP server,
-        establishes stdio communication channels, creates a client session, and discovers
-        available tools from the server.
+        Spawns an external process (such as a Node.js script) that acts as an
+        MCP server, establishes stdio communication channels, creates a client
+        session, and discovers available tools from the server.
 
-        The method performs several validation steps:
-        1. Resolves the command path (with special handling for 'npx')
-        2. Validates that required files exist for directory-based commands
-        3. Sets up environment variables
-        4. Establishes stdio transport and session
+        Args:
+            is_fetch_tools: If True, discover and register available tools
+                after connecting.
+
+        Raises:
+            FileNotFoundError: If a required server file does not exist.
+            Exception: If the process spawn or initialization fails.
         """
 
         try:
@@ -134,6 +143,16 @@ class StdioMCPClient(BaseMCPClient):
         return None
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any], headers: Optional[dict[str, str]] = None) -> Any:
+        """Spawn a fresh stdio process and invoke the named tool.
+
+        Args:
+            tool_name: Name of the MCP tool to call.
+            arguments: Key-value arguments forwarded to the tool.
+            headers: Unused; accepted for interface compatibility.
+
+        Returns:
+            The raw MCP tool call result.
+        """
         server_params = await self.get_server_params()
         async with stdio_client(server_params) as streams:
             async with ClientSession(*streams) as session:
@@ -141,6 +160,18 @@ class StdioMCPClient(BaseMCPClient):
                 return await session.call_tool(tool_name, arguments)
 
     async def get_server_params(self) -> StdioServerParameters:
+        """Build StdioServerParameters from the configured params dict.
+
+        Resolves the command path (with special handling for ``npx``),
+        validates referenced files, and merges environment variables.
+
+        Returns:
+            A StdioServerParameters instance ready for ``stdio_client``.
+
+        Raises:
+            ValueError: If the resolved command is None.
+            FileNotFoundError: If a referenced MCP tool file does not exist.
+        """
         command = (
             shutil.which("npx")
             if self.params["command"] == "npx"

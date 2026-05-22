@@ -67,7 +67,11 @@ class BaseMCPClient(BaseTool):
     async def list_tools(self) -> None:
         """Discover and register tools from the MCP server.
 
-        Connects to the MCP server, retrieves the list of available tools
+        Connects to the MCP server, retrieves the list of available tools,
+        and delegates to ``add_tools`` for registration.
+
+        Raises:
+            RuntimeError: If the client session has not been initialized.
         """
         if not self._session:
             raise RuntimeError(f"Server {self.name} not initialized")
@@ -76,7 +80,15 @@ class BaseMCPClient(BaseTool):
         self.add_tools(tools_response)
 
     def add_tools(self, tools_response: Any) -> None:
-        """Register MCPTool instances dynamically based on the tools_response from the server."""
+        """Register MCPTool instances from the server's tool listing response.
+
+        Each tool in ``tools_response`` is wrapped in an ``MCPTool`` proxy
+        and added to the MAS registry so that agents can discover and call it.
+
+        Args:
+            tools_response: The raw response from ``session.list_tools()``,
+                typically a sequence of ``("tools", [Tool, ...])`` tuples.
+        """
         params = self.model_dump(
             exclude={
                 "sse_url",
@@ -116,9 +128,19 @@ class BaseMCPClient(BaseTool):
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Execute a tool call through the MCP server.
 
-        Forwards the tool execution request to the appropriate MCP server tool and
-        processes the response. Handles both single and multiple content responses from
-        the MCP protocol.
+        Forwards the tool execution request to the appropriate MCP server tool
+        and processes the response. Handles both keep-alive and per-request
+        connection modes, with automatic reconnection on closed resources.
+
+        Args:
+            oxy_request: The request whose ``callee`` identifies the tool to
+                invoke and whose ``arguments`` are forwarded as tool input.
+
+        Returns:
+            An OxyResponse containing the tool's text output.
+
+        Raises:
+            RuntimeError: If the session is not initialized in keep-alive mode.
         """
         tool_name = oxy_request.callee
 
@@ -131,7 +153,7 @@ class BaseMCPClient(BaseTool):
                     tool_name, oxy_request.arguments
                 )
             except anyio.ClosedResourceError:
-                await self.init(is_fetch_tools=False)  # TODO: refetch tools
+                await self.init(is_fetch_tools=False)
                 mcp_response = await self._session.call_tool(
                     tool_name, oxy_request.arguments
                 )
@@ -154,7 +176,6 @@ class BaseMCPClient(BaseTool):
                 oxy_request.arguments,
                 headers=merged_headers,
             )
-        # TODO: Handle result objects and progress tracking
         results = [content.text.strip() for content in mcp_response.content]
         return OxyResponse(
             state=OxyState.COMPLETED,

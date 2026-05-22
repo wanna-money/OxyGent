@@ -1,4 +1,9 @@
-"""A2A server gateway for OxyGent MAS."""
+"""A2A server gateway for OxyGent MAS.
+
+Provides ``A2AServerGateway``, a Pydantic model that binds to a MAS runtime
+and builds a FastAPI router exposing A2A-compatible endpoints for synchronous
+chat, SSE streaming, task lifecycle management, and agent card discovery.
+"""
 
 from __future__ import annotations
 
@@ -29,7 +34,21 @@ logger = logging.getLogger(__name__)
 
 
 class A2AServerGateway(BaseModel):
-    """Protocol gateway that serves A2A endpoints for OxyGent."""
+    """Protocol gateway that serves A2A endpoints backed by an OxyGent MAS.
+
+    Handles agent card generation, JSON-RPC and plain-POST dispatch,
+    synchronous ``message/send``, SSE ``message/stream``, and task
+    lifecycle operations (get, cancel, resubscribe).
+
+    Attributes:
+        mas: Bound MAS runtime instance (set via ``set_mas()``).
+        target_agent_name: Resolved target agent for incoming requests.
+        a2a_base_path: URL prefix for all A2A endpoints.
+        agent_version: Semantic version exposed in the agent card.
+        capabilities: A2A capability flags (streaming, task_control, etc.).
+        parse_stream_delta: Whether to parse SSE payloads for content deltas.
+        skills: Optional static skill definitions override.
+    """
 
     mas: Any = Field(None, exclude=True, repr=False)
     target_agent_name: str = Field(
@@ -82,7 +101,12 @@ class A2AServerGateway(BaseModel):
     _store: A2AInMemoryStore = PrivateAttr(default_factory=A2AInMemoryStore)
 
     def set_mas(self, mas: Any) -> None:
-        """Bind MAS runtime and sync default target to master agent."""
+        """Bind a MAS runtime and synchronize the default target agent.
+
+        Args:
+            mas: The MAS instance to bind. The master agent name is
+                extracted and used as the default request target.
+        """
         self.mas = mas
         master_name = getattr(mas, "master_agent_name", "") if mas else ""
         self.target_agent_name = master_name or "master_agent"
@@ -237,7 +261,14 @@ class A2AServerGateway(BaseModel):
         return answer, trace_id, group_id
 
     def build_router(self) -> APIRouter:
-        """Build FastAPI router exposing A2A-compatible endpoints."""
+        """Build a FastAPI router exposing A2A-compatible endpoints.
+
+        Registers routes for agent card discovery, unified JSON-RPC/plain POST
+        dispatch, message send/stream, and task lifecycle operations.
+
+        Returns:
+            Configured APIRouter ready to be included in a FastAPI app.
+        """
         from sse_starlette.sse import EventSourceResponse
 
         router = APIRouter(prefix=self.a2a_base_path, tags=["a2a"])

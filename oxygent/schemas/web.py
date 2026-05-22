@@ -1,4 +1,8 @@
-"""Web response in base model."""
+"""Standardized web API response schema.
+
+Provides WebResponse, a uniform envelope for all HTTP responses returned
+by the OxyGent FastAPI endpoints.
+"""
 
 from typing import Any
 

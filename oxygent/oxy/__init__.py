@@ -1,3 +1,5 @@
+"""Core Oxy components: agents, tools, LLMs, and flows."""
+
 from .agents import (
     A2AClientAgent,
     ChatAgent,

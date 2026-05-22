@@ -1,3 +1,9 @@
+"""JES (JD Elasticsearch Service) client implementation.
+
+Provides JesEs, a concrete BaseEs subclass that connects to the JES-hosted
+Elasticsearch service using the official async Elasticsearch Python client.
+"""
+
 import asyncio
 import logging
 import os

@@ -1,8 +1,7 @@
-"""local_redis.py Local Key-value Implementation Module.
+"""Local filesystem-based key-value store implementation.
 
-This file implements a local file system-based simulation of Key-value database,
-providing Redis-like functionality for development and testing environments without
-requiring an actual Redis server.
+Provides Redis-like functionality backed by local files for development and
+testing environments without requiring an actual Redis server.
 """
 
 import asyncio

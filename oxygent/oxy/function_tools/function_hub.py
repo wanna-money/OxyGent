@@ -47,12 +47,8 @@ class FunctionHub(BaseTool):
         return self._thread_pool
 
     async def init(self) -> None:
-        """Initialize the hub by creating FunctionTool instances for all registered
-        functions.
-
-        This method converts all functions in func_dict into individual FunctionTool
-        instances and registers them with the MAS (Multi-Agent System).
-        """
+        """Initialize the hub by creating FunctionTool instances for all
+        registered functions and adding them to the MAS registry."""
         await super().init()
         params = self.model_dump(exclude={"func_dict", "name", "desc"})
 

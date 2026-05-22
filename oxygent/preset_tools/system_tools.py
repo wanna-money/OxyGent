@@ -1,4 +1,8 @@
-"""System monitoring tools for OxyGent agents."""
+"""System monitoring tools for OxyGent agents.
+
+Exposes host-level information (OS, architecture, Python version) and live
+resource utilization metrics (CPU, memory, disk) via psutil.
+"""
 
 import asyncio
 import json
@@ -58,9 +62,7 @@ async def get_system_usage() -> str:
 
 
 async def main() -> None:
-    """
-    Main function for testing system tools.
-    """
+    """Run system tools test examples."""
     print("=== System Info Test ===")
     system_info_result = await get_system_info()
     print("System info:")

@@ -1,4 +1,10 @@
-"""Configuration settings for the MAS."""
+"""Centralized configuration singleton for the OxyGent framework.
+
+Loads settings from ``config.json`` with environment-based layering (``default``
+then ``APP_ENV``), supports ``${VAR}`` environment-variable substitution, and
+exposes typed getter/setter methods grouped by domain (app, log, LLM, agent,
+tool, server, Elasticsearch, Redis, message, token tracking, etc.).
+"""
 
 import json
 import logging

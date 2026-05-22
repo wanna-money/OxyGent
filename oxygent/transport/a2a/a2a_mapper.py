@@ -1,4 +1,9 @@
-"""A2A request/response mapping helpers."""
+"""A2A request/response mapping helpers.
+
+Provides functions to normalize, extract, and translate between A2A protocol
+payloads and OxyGent MAS internal chat payloads, including text extraction
+from various A2A message shapes and SSE delta parsing.
+"""
 
 from __future__ import annotations
 
@@ -9,13 +14,32 @@ from ...utils.common_utils import generate_uuid
 
 
 def normalize_message_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    """Return normalized message-level payload for text/context extraction."""
+    """Return the message-level sub-dict for text/context extraction.
+
+    Args:
+        payload: Raw A2A request payload.
+
+    Returns:
+        The ``message`` sub-dictionary if present and valid, otherwise the
+        original payload.
+    """
     message = payload.get("message", {})
     return message if isinstance(message, dict) else payload
 
 
 def extract_text(payload: dict[str, Any]) -> str:
-    """Extract plain text from common A2A payload shapes."""
+    """Extract plain text from various A2A payload shapes.
+
+    Checks ``query``, ``content``, ``text`` top-level keys, then walks the
+    ``parts`` list looking for text parts. Falls back to JSON serialization
+    of the entire payload when no text is found.
+
+    Args:
+        payload: Normalized A2A message payload.
+
+    Returns:
+        Extracted text string.
+    """
     if not isinstance(payload, dict):
         return str(payload)
 
@@ -56,7 +80,14 @@ def extract_text(payload: dict[str, Any]) -> str:
 
 
 def extract_metadata(payload: dict[str, Any]) -> dict[str, Any]:
-    """Extract metadata object safely from payload."""
+    """Extract the metadata dictionary from a payload, defaulting to empty.
+
+    Args:
+        payload: Raw A2A request payload.
+
+    Returns:
+        Metadata dictionary, or empty dict if absent or invalid.
+    """
     md = payload.get("metadata", {})
     return md if isinstance(md, dict) else {}
 
@@ -64,7 +95,18 @@ def extract_metadata(payload: dict[str, Any]) -> dict[str, Any]:
 def extract_context_and_task(
     payload: dict[str, Any], fallback_message: dict[str, Any] | None = None
 ) -> tuple[str, str]:
-    """Extract ``contextId`` and ``taskId`` with fallback generation."""
+    """Extract ``contextId`` and ``taskId``, generating UUIDs as fallback.
+
+    Searches both the top-level payload and an optional fallback message dict
+    for context and task identifiers in both camelCase and snake_case forms.
+
+    Args:
+        payload: Raw A2A request payload.
+        fallback_message: Optional normalized message dict to search as well.
+
+    Returns:
+        Tuple of (context_id, task_id) strings.
+    """
     msg = fallback_message or {}
     task_id = (
         payload.get("taskId")
@@ -86,7 +128,15 @@ def extract_context_and_task(
 def extract_reference_task_ids(
     payload: dict[str, Any], fallback_message: dict[str, Any] | None = None
 ) -> list[str]:
-    """Extract optional ``referenceTaskIds`` from payload/message."""
+    """Extract the optional ``referenceTaskIds`` list from the payload.
+
+    Args:
+        payload: Raw A2A request payload.
+        fallback_message: Optional normalized message dict to search.
+
+    Returns:
+        List of reference task ID strings (may be empty).
+    """
     msg = fallback_message or {}
     refs = (
         payload.get("referenceTaskIds")
@@ -110,7 +160,24 @@ def build_mas_payload(
     metadata: dict[str, Any] | None = None,
     context_session: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
-    """Translate A2A request attributes into MAS chat payload."""
+    """Translate A2A request attributes into an OxyGent MAS chat payload.
+
+    Builds the dict consumed by ``MAS.chat_with_agent()``, resolving
+    ``from_trace_id`` from reference task IDs or prior session context.
+
+    Args:
+        text: User query text.
+        context_id: A2A context identifier (maps to MAS group_id).
+        task_id: A2A task identifier (maps to MAS current_trace_id).
+        target: Target MAS agent name.
+        reference_task_ids: Optional list of prior task IDs for conversation
+            continuity.
+        metadata: Optional A2A metadata to attach as group_data.
+        context_session: Prior session state for this context (from store).
+
+    Returns:
+        MAS-compatible payload dictionary, or None if ``target`` is empty.
+    """
     if not target:
         return None
 
@@ -134,7 +201,20 @@ def build_mas_payload(
 
 
 def extract_delta_from_sse_data(data: Any, parse_delta: bool = True) -> str:
-    """Extract text delta from OxyGent SSE payload shapes."""
+    """Extract the text delta from an OxyGent SSE stream payload.
+
+    Handles both raw string data and parsed JSON dicts. For JSON payloads
+    with ``type=stream``, extracts ``content.delta``; for ``stream_end``,
+    returns empty string.
+
+    Args:
+        data: SSE data field value -- either a raw string or parsed dict.
+        parse_delta: If True (default), attempt to parse JSON and extract
+            the delta. If False, return the raw/serialized value.
+
+    Returns:
+        Extracted text delta string (may be empty).
+    """
     parsed_data = data
     if isinstance(data, str):
         if not parse_delta:

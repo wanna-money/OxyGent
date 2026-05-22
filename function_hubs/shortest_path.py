@@ -1,23 +1,25 @@
-#!/usr/bin/env python3
 """
 使用 Google OR-Tools 解决最短路径问题的示例
 
 这个示例展示了如何使用 OR-Tools 的图算法来解决城市间的最短路径问题。
 """
 
-from ortools.graph.python import min_cost_flow
 import time
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
+from ortools.graph.python import min_cost_flow
+
 from oxygent import oxy
 
-shortest_path_tools = oxy.FunctionHub(
-    name="shortest_path_tools")
+shortest_path_tools = oxy.FunctionHub(name="shortest_path_tools")
 column_data = {}
 
 
-@shortest_path_tools.tool(description="Update city and distance information based on Excel.")
+@shortest_path_tools.tool(
+    description="Update city and distance information based on Excel."
+)
 async def info_update(file_path, sheet_name=0):
     # 读取 Excel 文件
     df = pd.read_excel(file_path, sheet_name=sheet_name)
@@ -35,16 +37,18 @@ async def info_update(file_path, sheet_name=0):
     return "File is Empty"
 
 
-@shortest_path_tools.tool(description="A tool that can calculate the shortest path between different points")
+@shortest_path_tools.tool(
+    description="A tool that can calculate the shortest path between different points"
+)
 async def shortest_path(start_city: str, end_city):
     # 城市列表
-    city_to_index = {city: i for i, city in enumerate(column_data['cities'])}
+    city_to_index = {city: i for i, city in enumerate(column_data["cities"])}
     print(start_city, end_city)
 
-    cities = column_data['cities']
-    start_cities = column_data['start_cities']
-    end_cities = column_data['end_cities']
-    distances = column_data['distances']
+    cities = column_data["cities"]
+    start_cities = column_data["start_cities"]
+    end_cities = column_data["end_cities"]
+    distances = column_data["distances"]
     # 转换城市名称为索引
     start_nodes = [city_to_index[city] for city in start_cities]
     end_nodes = [city_to_index[city] for city in end_cities]
@@ -54,9 +58,11 @@ async def shortest_path(start_city: str, end_city):
     # 添加每条边到图中 (注意：我们需要添加双向边，因为城市之间的道路是双向的)
     for i in range(len(start_nodes)):
         sp_func.add_arc_with_capacity_and_unit_cost(
-            start_nodes[i], end_nodes[i], 1, distances[i])
+            start_nodes[i], end_nodes[i], 1, distances[i]
+        )
         sp_func.add_arc_with_capacity_and_unit_cost(
-            end_nodes[i], start_nodes[i], 1, distances[i])
+            end_nodes[i], start_nodes[i], 1, distances[i]
+        )
 
     # 设置起点和终点的供应/需求
     sp_func.set_node_supply(city_to_index[start_city], 1)  # 起点
@@ -133,20 +139,24 @@ def visualize_city_path(cities, start_cities, end_cities, distances, path):
         for u, v in path:
             path_edges.append((cities[u], cities[v]))
 
-        nx.draw_networkx_edges(G, city_positions, edgelist=path_edges, width=3, edge_color='r')
+        nx.draw_networkx_edges(
+            G, city_positions, edgelist=path_edges, width=3, edge_color="r"
+        )
 
         # 绘制节点
-        nx.draw_networkx_nodes(G, city_positions, node_size=700, node_color='lightblue')
+        nx.draw_networkx_nodes(G, city_positions, node_size=700, node_color="lightblue")
 
         # 绘制节点标签
-        nx.draw_networkx_labels(G, city_positions, font_size=12, font_family='SimHei')
+        nx.draw_networkx_labels(G, city_positions, font_size=12, font_family="SimHei")
 
         # 绘制边权重
-        edge_labels = nx.get_edge_attributes(G, 'weight')
-        nx.draw_networkx_edge_labels(G, city_positions, edge_labels=edge_labels, font_size=8)
+        edge_labels = nx.get_edge_attributes(G, "weight")
+        nx.draw_networkx_edge_labels(
+            G, city_positions, edge_labels=edge_labels, font_size=8
+        )
 
-        plt.title("中国城市间最短路径", fontsize=16, fontfamily='SimHei')
-        plt.axis('off')
+        plt.title("中国城市间最短路径", fontsize=16, fontfamily="SimHei")
+        plt.axis("off")
         plt.tight_layout()
         plt.savefig("city_shortest_path.png")
         print("\n城市路径图已保存为 'city_shortest_path.png'")

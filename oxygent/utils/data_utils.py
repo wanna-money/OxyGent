@@ -1,3 +1,5 @@
+"""Data transformation utilities for node graph processing."""
+
 from typing import Any
 
 

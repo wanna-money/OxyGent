@@ -1,4 +1,4 @@
-"""local_es.py – Local Elasticsearch implementation (cross‑platform, UTF‑8‑safe)
+"""Local filesystem-based Elasticsearch implementation (cross-platform, UTF-8-safe).
 
 This module simulates a subset of Elasticsearch by persisting documents as JSON
 files on the local filesystem.  The design goals are:

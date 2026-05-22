@@ -1,7 +1,7 @@
-"""base_db.py Base Database Class Module.
+"""Base database service class with retry and error handling.
 
-This file defines the base class for database services, providing common functionality
-such as retry mechanisms and error handling for database operations.
+Defines the abstract base class for all database services, providing common
+functionality such as configurable retry mechanisms and error handling.
 """
 
 import asyncio

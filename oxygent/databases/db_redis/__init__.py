@@ -1,3 +1,5 @@
+"""Key-value store backends (JimDB Redis, local filesystem)."""
+
 import sys
 
 if sys.version_info < (3, 11):

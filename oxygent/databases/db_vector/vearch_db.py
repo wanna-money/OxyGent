@@ -1,8 +1,7 @@
-"""vector_db.py Vearch Vector Database Implementation Module.
+"""Vearch vector database client implementation.
 
-This file implements a comprehensive interface for Vearch vector database operations,
-providing functionality for vector storage, similarity search, and tool retrieval with
-embedding support and advanced filtering capabilities.
+Provides VearchDB, a comprehensive interface for vector storage, similarity
+search, and tool retrieval with embedding support and advanced filtering.
 """
 
 import asyncio

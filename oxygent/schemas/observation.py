@@ -1,3 +1,9 @@
+"""Observation and execution result schemas for tool output aggregation.
+
+Provides ExecResult (a single tool's output paired with its executor name)
+and Observation (an ordered collection of ExecResults rendered as text).
+"""
+
 from pydantic import BaseModel, Field
 
 from ..utils.common_utils import to_json
@@ -12,7 +18,11 @@ class ExecResult(BaseModel):
 
 
 class Observation(BaseModel):
-    """Observation for multimodal."""
+    """Aggregated observation from one or more tool executions.
+
+    Collects individual ExecResult entries and provides a unified
+    string representation suitable for inclusion in agent prompts.
+    """
 
     exec_results: list[ExecResult] = Field(
         default_factory=list, description="List of individual tool execution results"

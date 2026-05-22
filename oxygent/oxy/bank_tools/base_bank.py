@@ -22,5 +22,12 @@ class BaseBank(BaseTool):
     )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Subclasses must implement bank-specific dispatch logic."""
+        """Subclasses must implement bank-specific dispatch logic.
+
+        Args:
+            oxy_request: The incoming request to dispatch.
+
+        Raises:
+            NotImplementedError: Always, unless overridden by a subclass.
+        """
         raise NotImplementedError("This method is not yet implemented")

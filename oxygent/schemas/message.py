@@ -1,4 +1,8 @@
-"""SSE message in base model."""
+"""Server-Sent Events (SSE) message schema.
+
+Provides the SSEMessage model used to push events to connected web clients
+through the EventSource protocol.
+"""
 
 from typing import Any
 

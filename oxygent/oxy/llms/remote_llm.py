@@ -16,7 +16,15 @@ class RemoteLLM(BaseLLM):
     """Abstract base class for LLMs that are accessed over the network.
 
     Subclasses (e.g., HttpLLM, OpenAILLM) implement provider-specific request
-    formatting and response parsing."""
+    formatting and response parsing.
+
+    Attributes:
+        api_key: API key for authenticating with the remote LLM service.
+        base_url: Base URL of the remote LLM API endpoint.
+        model_name: Model identifier to use for requests.
+        headers: Extra HTTP headers or a callable that returns headers
+            given an OxyRequest.
+    """
 
     api_key: Optional[str] = Field(
         default=None,
@@ -72,5 +80,15 @@ class RemoteLLM(BaseLLM):
             raise ValueError("headers must be either a dict or a callable")
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Subclasses must implement provider-specific request execution."""
+        """Subclasses must implement provider-specific request execution.
+
+        Args:
+            oxy_request: The request containing messages and LLM parameters.
+
+        Returns:
+            An OxyResponse with the model's generated text.
+
+        Raises:
+            NotImplementedError: Always, unless overridden by a subclass.
+        """
         raise NotImplementedError("This method is not yet implemented")

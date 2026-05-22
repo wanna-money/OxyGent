@@ -1,6 +1,4 @@
-"""routes.py.
-
-FastAPI routing layer for the OxyGent MAS service.
+"""FastAPI routing layer for the OxyGent MAS service.
 
 This module exposes several HTTP endpoints that support:
     * Health checks and root redirection

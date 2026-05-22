@@ -1,19 +1,13 @@
-"""mas.py OxyGent MAS (Multi-Agent System) Module.
+"""OxyGent Multi-Agent System (MAS) runtime container.
 
-NOTE: This module contains the following parts:
-    - launcher
-    - register
-    - agent organization
-    - resource management
-    The core variables are:
-    - name: Identifier for the MAS instance
-    - oxy_name_to_oxy: Dictionary mapping Oxy names to Oxy instances (register table)
-    - oxy_space: List of Oxy instances (registered Oxy)
-    - master_agent_name: Name of the master agent (instance of BaseAgent)
-    - active_tasks: Dictionary to manage active tasks, for SSE and other async operations
-    - es_client / redis_client / vearch_client: Database clients for Elasticsearch, Redis, and Vearch
-    - agent_organization: Dictionary representing the organization structure of agents
-    - lock: Boolean to control task execution flow
+Provides the MAS class — the top-level runtime that registers all Oxy instances
+(agents, tools, LLMs), initializes database connections, builds the agent
+organization tree, and offers multiple execution modes:
+
+- ``start_web_service()`` — FastAPI + SSE server with built-in web UI
+- ``start_cli_mode()`` — Interactive REPL for local testing
+- ``start_batch_processing()`` — Concurrent batch execution
+- ``chat_with_agent()`` — Programmatic entry point for single queries
 """
 
 import asyncio
@@ -56,7 +50,21 @@ logger = None
 
 
 class MAS(BaseModel):
-    """The main class for the OxyGent Multi-Agent System (MAS)."""
+    """Runtime container that manages all Oxy instances and routes messages.
+
+    Registers agents, tools, and LLMs into a name-to-instance lookup table,
+    initializes database connections (ES, Redis, Vearch), builds the agent
+    organization tree, and provides multiple execution entry points (web,
+    CLI, batch, programmatic).
+
+    Attributes:
+        name: Identifier for this MAS instance.
+        oxy_name_to_oxy: Registry mapping Oxy names to their instances.
+        master_agent_name: Name of the entry-point master agent.
+        es_client: Elasticsearch client for persistence.
+        redis_client: Redis client for SSE message queuing.
+        vearch_client: Vector DB client for tool retrieval.
+    """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

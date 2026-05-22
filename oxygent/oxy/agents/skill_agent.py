@@ -1,26 +1,8 @@
-#!/usr/bin/env python3
-"""
-SkillAgent: Lightweight skill-aware agent with direct path-based skill loading.
+"""Skill-aware agent with direct path-based skill loading.
 
-This module provides a simplified skill-aware agent that loads skills directly
-from specified paths without requiring global registry or SkillSource components.
-
-Core Design:
-    1. Accepts skill paths directly via `skills` parameter (path strings)
-    2. Discovers and loads skills from paths during initialization
-    3. Enhances system prompt with discovered skill metadata
-
-Usage:
-    >>> oxy_space = [
-    ...     oxy.SkillAgent(
-    ...         name="agent",
-    ...         skills=["./skills/weather", "./skills/code"]  # Direct paths
-    ...     ),
-    ... ]
-
-Attributes:
-    skills: List of skill directory paths to load skills from.
-    skill_prompt_template: Template for generating skill prompt section.
+Provides SkillAgent, a lightweight agent that discovers and loads skills from
+specified directory paths, enhancing its system prompt with the discovered
+skill metadata for LLM-guided skill selection.
 """
 
 from __future__ import annotations

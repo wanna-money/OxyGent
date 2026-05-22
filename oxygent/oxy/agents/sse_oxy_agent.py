@@ -1,3 +1,9 @@
+"""SSE-based remote agent for OxyGent-to-OxyGent streaming communication.
+
+Provides SSEOxyGent, an agent that connects to another OxyGent MAS instance
+via Server-Sent Events for real-time streaming responses with automatic retry.
+"""
+
 import asyncio
 import json
 import logging

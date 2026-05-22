@@ -31,7 +31,21 @@ class HttpTool(BaseTool):
     )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Execute the HTTP request using the configured method."""
+        """Execute the HTTP request using the configured method.
+
+        Merges ``default_params`` with the request arguments and dispatches
+        the appropriate HTTP verb (GET, POST, PUT, DELETE, PATCH, or custom).
+
+        Args:
+            oxy_request: The request whose arguments are used as query
+                parameters or JSON body.
+
+        Returns:
+            An OxyResponse containing the HTTP response text.
+
+        Raises:
+            httpx.HTTPStatusError: If the response status code indicates an error.
+        """
         # Merge default parameters with request arguments
         params = self.default_params.copy()
         params.update(oxy_request.arguments)

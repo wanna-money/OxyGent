@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Minimal Google A2A SDK server demo (local).
 
 Run:

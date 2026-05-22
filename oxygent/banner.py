@@ -1,3 +1,5 @@
+"""ASCII art banners for the OxyGent startup display."""
+
 oxygent_larry3d = """
  _____                    ____                   __      
 /\  __`\                 /\  _`\                /\ \__   

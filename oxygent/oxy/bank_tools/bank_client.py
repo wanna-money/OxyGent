@@ -15,7 +15,16 @@ from .base_bank import BaseBank
 
 
 class BankClient(BaseBank):
-    """Client that connects to a remote BankRouter and registers its tools as BankTool instances."""
+    """Client that connects to a remote BankRouter and registers its tools.
+
+    On initialization, fetches the tool listing from the bank server and
+    creates individual BankTool proxy instances in the MAS registry.
+
+    Attributes:
+        server_url: URL of the remote bank server.
+        included_bank_name_list: Names of bank tools discovered from the server.
+        headers: Extra HTTP headers sent with every request.
+    """
 
     server_url: AnyUrl = Field("", description="URL of the remote bank server")
     included_bank_name_list: list[str] = Field(
@@ -35,7 +44,13 @@ class BankClient(BaseBank):
             self.add_tools(response.json())
 
     def add_tools(self, tools_response: list[dict[str, Any]]) -> None:
-        """Register BankTool instances dynamically from the bank server's tools_response."""
+        """Register BankTool instances from the bank server's tool listing.
+
+        Args:
+            tools_response: A list of tool descriptor dicts, each containing
+                ``name``, ``description``, ``endpoint``, ``inputSchema``,
+                and optionally ``type``.
+        """
         params = self.model_dump(
             exclude={
                 "sse_url",

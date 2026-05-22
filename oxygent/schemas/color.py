@@ -1,10 +1,6 @@
+"""ANSI terminal color definitions for styled log output."""
+
 from enum import Enum, auto
-
-"""
-Color enum module
-
-The Color enum is used to represent the color on terminal.
-"""
 
 
 class Color(Enum):
