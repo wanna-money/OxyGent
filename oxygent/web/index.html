@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="./css/file.css"/>
     <link rel="stylesheet" href="./css/agent-list.css"/>
     <link rel="stylesheet" href="./css/timeline.css"/>
+    <link rel="stylesheet" href="./css/guide.css"/>
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
     <script src="./js/utils.js"></script>
     <script src="./js/marked.min.js"></script>
@@ -54,6 +55,10 @@
         <button class="btn-nav-toggle" onclick="window.open('prompts.html', '_blank')" title="Prompt Management">
             <img src="./image/prompt.svg" alt="Prompts"/>
             Prompts
+        </button>
+        <button class="btn-nav-toggle" onclick="startGuideTour()" title="Feature Guide">
+            <img src="./image/guide.svg" alt="Guide"/>
+            Guide
         </button>
     </div>
     <div id="header_title_id" class="header-title"></div>
@@ -263,6 +268,23 @@
         <div class="restart-modal-footer">
             <button type="button" id="restart-modal-cancel">Cancel</button>
             <button type="button" id="restart-modal-confirm">Confirm & Restart</button>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Guide Tour Overlay -->
+<div class="tour-mask" id="tour-mask">
+    <div class="tour-spotlight" id="tour-spotlight"></div>
+    <div class="tour-tooltip" id="tour-tooltip">
+        <div class="tour-tooltip-icon" id="tour-icon"></div>
+        <div class="tour-tooltip-title" id="tour-title"></div>
+        <div class="tour-tooltip-desc" id="tour-desc"></div>
+        <div class="tour-tooltip-step">
+            <span class="tour-tooltip-counter" id="tour-counter"></span>
+            <div class="tour-tooltip-nav">
+                <button class="tour-tooltip-btn" id="tour-skip-btn" onclick="endGuideTour()">Skip</button>
+                <button class="tour-tooltip-btn primary" id="tour-next-btn" onclick="nextGuideTourStep()">Next</button>
+            </div>
         </div>
     </div>
 </div>
@@ -3579,6 +3601,219 @@
         }
     });
 
+
+    // ========== Feature Guide Tour ==========
+    var _guideTourRunning = false;
+    var _guideTourStepIndex = 0;
+    var _guideTourAutoTimer = null;
+
+    var _guideTourSteps = [
+        {
+            selector: '.cascader',
+            icon: '\u{1F4C2}',
+            title: 'File Manager',
+            desc: 'Import/export conversation sessions as JSON. Save your work, load previous sessions, or share agent interactions with your team.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.header-left .btn-nav-toggle:nth-of-type(1)',
+            icon: '\u{1F4DA}',
+            title: 'History',
+            desc: 'Open the History page to browse, search, filter, and rate past conversations. Quickly locate and replay previous agent sessions.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.header-left .btn-nav-toggle:nth-of-type(2)',
+            icon: '\u{270F}️',
+            title: 'Prompts',
+            desc: 'Open the Prompt Manager to edit, version, diff, and hot-reload system prompts at runtime — no service restart needed.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.header-right .control',
+            icon: '\u{23EF}️',
+            title: 'Playback Controls',
+            desc: 'Step-by-step replay: rewind to start, step back, play/pause auto-play, step forward, jump to end. Debug agent execution frame by frame.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '#btn-timeline-toggle',
+            icon: '\u{1F4CF}',
+            title: 'Steps Timeline',
+            desc: 'Toggle the step timeline bar. Shows each execution step on a horizontal track with branch support for navigating parallel traces.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '#btn-tracegraph-toggle',
+            icon: '\u{1F332}',
+            title: 'Trace Graph',
+            desc: 'Toggle the trace graph panel. Visualizes conversation branching as a tree — fork, compare, and navigate between different execution paths.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.container > .center',
+            icon: '\u{1F5FA}️',
+            title: 'Organization Tree',
+            desc: 'Interactive agent hierarchy visualization. See how agents are organized, their types, tools, and LLM configurations. Supports zoom, pan, and minimap.',
+            tooltipPos: 'right'
+        },
+        {
+            selector: '.container > .left',
+            icon: '\u{1F4AC}',
+            title: 'Chat Playground',
+            desc: 'Main conversation panel. Send messages, upload files, use @mention to target specific agents. Supports Markdown rendering and SSE streaming.',
+            tooltipPos: 'left'
+        },
+        {
+            selector: '#chat_send',
+            icon: '\u{2328}️',
+            title: 'Input & Attachments',
+            desc: 'Rich input area: type messages, upload files (images, docs, code), add shared/group data via JSON editor, and @mention agents for direct routing.',
+            tooltipPos: 'above'
+        },
+        {
+            selector: '.container > .right',
+            icon: '\u{1F4CB}',
+            title: 'Agent Detail Panel',
+            desc: 'Click any agent node to inspect execution details: input/output, tool calls, LLM interactions, token usage, and timing information.',
+            tooltipPos: 'left'
+        }
+    ];
+
+    function startGuideTour() {
+        if (_guideTourRunning) return;
+        _guideTourRunning = true;
+        _guideTourStepIndex = 0;
+        document.getElementById('tour-mask').classList.add('visible');
+        _showGuideTourStep(0);
+    }
+
+    function _showGuideTourStep(index) {
+        if (index < 0 || index >= _guideTourSteps.length) {
+            endGuideTour();
+            return;
+        }
+
+        _guideTourStepIndex = index;
+        var step = _guideTourSteps[index];
+
+        var targetEl = document.querySelector(step.selector);
+        if (!targetEl) {
+            if (index < _guideTourSteps.length - 1) {
+                _showGuideTourStep(index + 1);
+            } else {
+                endGuideTour();
+            }
+            return;
+        }
+
+        var elRect = targetEl.getBoundingClientRect();
+        var pad = 4;
+        var spotLeft = elRect.left - pad;
+        var spotTop = elRect.top - pad;
+        var spotW = elRect.width + pad * 2;
+        var spotH = elRect.height + pad * 2;
+
+        // Move spotlight
+        var spotlight = document.getElementById('tour-spotlight');
+        spotlight.style.left = spotLeft + 'px';
+        spotlight.style.top = spotTop + 'px';
+        spotlight.style.width = spotW + 'px';
+        spotlight.style.height = spotH + 'px';
+
+        // Position tooltip
+        var tooltip = document.getElementById('tour-tooltip');
+        tooltip.classList.remove('visible');
+
+        var winW = window.innerWidth;
+        var winH = window.innerHeight;
+        var ttWidth = 320;
+        var ttHeight = 180;
+        var gap = 16;
+        var resolvedPos = step.tooltipPos;
+
+        // Auto-flip if tooltip would go off-screen
+        if (resolvedPos === 'right' && spotLeft + spotW + gap + ttWidth > winW) {
+            resolvedPos = 'left';
+        } else if (resolvedPos === 'left' && spotLeft - gap - ttWidth < 0) {
+            resolvedPos = 'right';
+        } else if (resolvedPos === 'below' && spotTop + spotH + gap + ttHeight > winH) {
+            resolvedPos = 'above';
+        } else if (resolvedPos === 'above' && spotTop - gap - ttHeight < 0) {
+            resolvedPos = 'below';
+        }
+
+        var ttLeft, ttTop;
+
+        if (resolvedPos === 'below') {
+            ttLeft = Math.max(gap, Math.min(spotLeft, winW - ttWidth - gap));
+            ttTop = spotTop + spotH + gap;
+        } else if (resolvedPos === 'above') {
+            ttLeft = Math.max(gap, Math.min(spotLeft, winW - ttWidth - gap));
+            ttTop = spotTop - ttHeight - gap;
+        } else if (resolvedPos === 'right') {
+            ttLeft = spotLeft + spotW + gap;
+            ttTop = Math.max(gap, Math.min(spotTop, winH - ttHeight - gap));
+        } else {
+            ttLeft = spotLeft - ttWidth - gap;
+            ttTop = Math.max(gap, Math.min(spotTop, winH - ttHeight - gap));
+        }
+
+        // Final boundary clamp
+        ttLeft = Math.max(gap, Math.min(ttLeft, winW - ttWidth - gap));
+        ttTop = Math.max(gap, Math.min(ttTop, winH - ttHeight - gap));
+
+        tooltip.style.left = ttLeft + 'px';
+        tooltip.style.top = ttTop + 'px';
+
+        // Fill content
+        document.getElementById('tour-icon').textContent = step.icon;
+        document.getElementById('tour-title').textContent = step.title;
+        document.getElementById('tour-desc').textContent = step.desc;
+        document.getElementById('tour-counter').textContent = (index + 1) + ' / ' + _guideTourSteps.length;
+
+        var nextBtn = document.getElementById('tour-next-btn');
+        nextBtn.textContent = (index === _guideTourSteps.length - 1) ? 'Finish' : 'Next';
+
+        // Animate in tooltip after spotlight moves
+        setTimeout(function() {
+            tooltip.classList.add('visible');
+        }, 400);
+
+        // Auto advance after 8 seconds
+        clearTimeout(_guideTourAutoTimer);
+        if (index < _guideTourSteps.length - 1) {
+            _guideTourAutoTimer = setTimeout(function() {
+                if (_guideTourRunning) nextGuideTourStep();
+            }, 8000);
+        }
+    }
+
+    function nextGuideTourStep() {
+        clearTimeout(_guideTourAutoTimer);
+        if (_guideTourStepIndex >= _guideTourSteps.length - 1) {
+            endGuideTour();
+        } else {
+            _showGuideTourStep(_guideTourStepIndex + 1);
+        }
+    }
+
+    function endGuideTour() {
+        clearTimeout(_guideTourAutoTimer);
+        _guideTourRunning = false;
+        var tooltip = document.getElementById('tour-tooltip');
+        tooltip.classList.remove('visible');
+        setTimeout(function() {
+            document.getElementById('tour-mask').classList.remove('visible');
+        }, 300);
+    }
+
+    // ESC key closes tour
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && _guideTourRunning) {
+            endGuideTour();
+        }
+    });
 
 </script>
 </html>
