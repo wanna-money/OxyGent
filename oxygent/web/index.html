@@ -3735,9 +3735,9 @@
         spotlight.style.width = spotW + 'px';
         spotlight.style.height = spotH + 'px';
 
-        // Position tooltip
+        // Position tooltip — keep it visible and glide alongside the spotlight
         var tooltip = document.getElementById('tour-tooltip');
-        tooltip.classList.remove('visible');
+        var firstShow = !tooltip.classList.contains('visible');
 
         var winW = window.innerWidth;
         var winH = window.innerHeight;
@@ -3777,30 +3777,42 @@
         ttLeft = Math.max(gap, Math.min(ttLeft, winW - ttWidth - gap));
         ttTop = Math.max(gap, Math.min(ttTop, winH - ttHeight - gap));
 
-        tooltip.style.left = ttLeft + 'px';
-        tooltip.style.top = ttTop + 'px';
-
-        // Fill content
-        document.getElementById('tour-icon').textContent = step.icon;
-        document.getElementById('tour-title').textContent = step.title;
-        document.getElementById('tour-desc').textContent = step.desc;
-        document.getElementById('tour-counter').textContent = (index + 1) + ' / ' + _guideTourSteps.length;
-
-        var nextBtn = document.getElementById('tour-next-btn');
-        nextBtn.textContent = (index === _guideTourSteps.length - 1) ? 'Finish' : 'Next';
-
-        // Animate in tooltip after spotlight moves
-        setTimeout(function() {
-            tooltip.classList.add('visible');
-        }, 400);
-
-        // Auto advance after 8 seconds
-        clearTimeout(_guideTourAutoTimer);
-        if (index < _guideTourSteps.length - 1) {
-            _guideTourAutoTimer = setTimeout(function() {
-                if (_guideTourRunning) nextGuideTourStep();
-            }, 8000);
+        function writeContent() {
+            document.getElementById('tour-icon').textContent = step.icon;
+            document.getElementById('tour-title').textContent = step.title;
+            document.getElementById('tour-desc').textContent = step.desc;
+            document.getElementById('tour-counter').textContent = (index + 1) + ' / ' + _guideTourSteps.length;
+            var nextBtn = document.getElementById('tour-next-btn');
+            nextBtn.textContent = (index === _guideTourSteps.length - 1) ? 'Finish' : 'Next';
         }
+
+        if (firstShow) {
+            // First step: position without transition, then fade in
+            tooltip.style.transition = 'none';
+            tooltip.style.left = ttLeft + 'px';
+            tooltip.style.top = ttTop + 'px';
+            void tooltip.offsetWidth; // force reflow
+            tooltip.style.transition = '';
+            writeContent();
+            requestAnimationFrame(function() {
+                tooltip.classList.add('visible');
+            });
+        } else {
+            // Subsequent steps: glide position via CSS transition, cross-fade content
+            tooltip.style.left = ttLeft + 'px';
+            tooltip.style.top = ttTop + 'px';
+            tooltip.classList.add('content-swapping');
+            setTimeout(function() {
+                writeContent();
+                tooltip.classList.remove('content-swapping');
+            }, 180);
+        }
+
+        // Auto advance (including auto-finish on the last step)
+        clearTimeout(_guideTourAutoTimer);
+        _guideTourAutoTimer = setTimeout(function() {
+            if (_guideTourRunning) nextGuideTourStep();
+        }, 1500);
     }
 
     function nextGuideTourStep() {

@@ -5,46 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prompt Manager - OxyGent</title>
     <link rel="shortcut icon" href="./image/group-favicon.png" type="image/x-icon">
-
-    <!-- Project Styles -->
-    <link rel="stylesheet" href="./css/style.css">
-    <link rel="stylesheet" href="./css/main.css">
-    <!-- Prompt Manager Refactored Styles -->
     <link rel="stylesheet" href="./css/prompt-manager.css">
-
-    <!-- Scripts -->
+    <link rel="stylesheet" href="./css/guide.css">
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
     <script src="./js/prompt-manager.js" defer></script>
 </head>
 <body>
-    <!-- Header matching index.html style -->
-    <div class="header">
-        <div class="header-left">
-            <img class="header-left-img" src="./image/group-favicon.png" alt="OxyGent">
+    <!-- Header (matches node.html) -->
+    <div class="node-header">
+        <div class="node-header-left">
+            <img class="node-header-logo" src="./image/group-favicon.png" alt="">
+            <span class="node-header-title">Prompt Manager</span>
         </div>
-        <div class="header-title">Prompt Manager</div>
-        <div class="header-right">
-            <button onclick="window.location.href='/'" title="Back to Home">
-                <img src="./image/arrow-left.svg" alt="Back">
+        <div class="node-header-center">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Search prompts..." onkeyup="handleSearch(event)">
+            </div>
+        </div>
+        <div class="node-header-right">
+            <button class="node-header-btn" onclick="loadPrompts()" title="Refresh all prompts">
+                <img src="./image/refresh.svg" alt=""/>
+                <span>Refresh</span>
+            </button>
+            <button class="node-header-btn" onclick="startGuideTour()" title="Feature Guide">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M6 6a2 2 0 1 1 2.5 1.9c-.5.3-.5.6-.5 1.1"/><circle cx="8" cy="12" r="0.5" fill="currentColor" stroke="none"/></svg>
+                <span>Guide</span>
+            </button>
+            <button class="node-header-btn" onclick="window.open('index.html', '_self')">
+                <img src="./image/arrow-left.svg" alt=""/>
+                Back
             </button>
         </div>
     </div>
 
     <!-- Main Content -->
-    <div class="container">
-        <div class="main-panel">
-            <!-- Toolbar -->
-            <div class="actions-bar">
-                <div class="search-box">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="searchInput" placeholder="Search prompts..." onkeyup="handleSearch(event)">
-                </div>
-            </div>
-
-            <!-- Prompts Grid -->
-            <div id="promptsList" class="prompts-grid">
-                <!-- Dynamic Content will be loaded here -->
-            </div>
+    <div class="content-wrapper">
+        <div id="promptsList" class="prompts-grid">
+            <!-- Dynamic Content will be loaded here -->
         </div>
     </div>
 
@@ -259,6 +257,207 @@
             </div>
         </div>
     </div>
+
+    <!-- Guide Tour Overlay -->
+    <div class="tour-mask" id="tour-mask">
+        <div class="tour-spotlight" id="tour-spotlight"></div>
+        <div class="tour-tooltip" id="tour-tooltip">
+            <div class="tour-tooltip-icon" id="tour-icon"></div>
+            <div class="tour-tooltip-title" id="tour-title"></div>
+            <div class="tour-tooltip-desc" id="tour-desc"></div>
+            <div class="tour-tooltip-step">
+                <span class="tour-tooltip-counter" id="tour-counter"></span>
+                <div class="tour-tooltip-nav">
+                    <button class="tour-tooltip-btn" id="tour-skip-btn" onclick="endGuideTour()">Skip</button>
+                    <button class="tour-tooltip-btn primary" id="tour-next-btn" onclick="nextGuideTourStep()">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ========== Feature Guide Tour ==========
+    var _guideTourRunning = false;
+    var _guideTourStepIndex = 0;
+    var _guideTourAutoTimer = null;
+
+    var _guideTourSteps = [
+        {
+            selector: '.search-box',
+            icon: '\u{1F50D}',
+            title: 'Search Prompts',
+            desc: 'Filter prompts by prompt_key, content, agent_type, or description. Matches in real-time as you type (debounced 300ms).',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.node-header-right',
+            icon: '\u{1F504}',
+            title: 'Toolbar',
+            desc: 'Refresh re-fetches all prompts from /api/prompts/. Guide opens this walkthrough. Back returns to the main OxyGent page.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.prompt-card',
+            icon: '\u{1F4C4}',
+            title: 'Prompt Card',
+            desc: 'Displays prompt_key, agent_type badge, version number, and a content preview (300 chars). Click the content area to open the edit modal where you can modify and save changes.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.badge-version-btn',
+            icon: '\u{1F4D6}',
+            title: 'Version History',
+            desc: 'Click the version badge to view all saved versions. You can preview any version\'s full content, copy it, or rollback — rollback creates a new version with the old content.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.optimize-btn',
+            icon: '\u{2728}',
+            title: 'Optimize Prompt',
+            desc: 'Opens AI-powered optimization. Choose a strategy (comprehensive, clarity, structure, completeness, effectiveness), add custom requirements, then preview the optimized result and apply it.',
+            tooltipPos: 'above'
+        }
+    ];
+
+    function startGuideTour() {
+        if (_guideTourRunning) return;
+        _guideTourRunning = true;
+        _guideTourStepIndex = 0;
+        document.getElementById('tour-mask').classList.add('visible');
+        _showGuideTourStep(0);
+    }
+
+    function _showGuideTourStep(index) {
+        if (index < 0 || index >= _guideTourSteps.length) {
+            endGuideTour();
+            return;
+        }
+
+        _guideTourStepIndex = index;
+        var step = _guideTourSteps[index];
+
+        var targetEl = document.querySelector(step.selector);
+        if (!targetEl) {
+            if (index < _guideTourSteps.length - 1) {
+                _showGuideTourStep(index + 1);
+            } else {
+                endGuideTour();
+            }
+            return;
+        }
+
+        var elRect = targetEl.getBoundingClientRect();
+        var pad = 4;
+        var spotLeft = elRect.left - pad;
+        var spotTop = elRect.top - pad;
+        var spotW = elRect.width + pad * 2;
+        var spotH = elRect.height + pad * 2;
+
+        var spotlight = document.getElementById('tour-spotlight');
+        spotlight.style.left = spotLeft + 'px';
+        spotlight.style.top = spotTop + 'px';
+        spotlight.style.width = spotW + 'px';
+        spotlight.style.height = spotH + 'px';
+
+        var tooltip = document.getElementById('tour-tooltip');
+        var firstShow = !tooltip.classList.contains('visible');
+
+        var winW = window.innerWidth;
+        var winH = window.innerHeight;
+        var ttWidth = 320;
+        var ttHeight = 180;
+        var gap = 16;
+        var resolvedPos = step.tooltipPos;
+
+        if (resolvedPos === 'right' && spotLeft + spotW + gap + ttWidth > winW) {
+            resolvedPos = 'left';
+        } else if (resolvedPos === 'left' && spotLeft - gap - ttWidth < 0) {
+            resolvedPos = 'right';
+        } else if (resolvedPos === 'below' && spotTop + spotH + gap + ttHeight > winH) {
+            resolvedPos = 'above';
+        } else if (resolvedPos === 'above' && spotTop - gap - ttHeight < 0) {
+            resolvedPos = 'below';
+        }
+
+        var ttLeft, ttTop;
+
+        if (resolvedPos === 'below') {
+            ttLeft = Math.max(gap, Math.min(spotLeft, winW - ttWidth - gap));
+            ttTop = spotTop + spotH + gap;
+        } else if (resolvedPos === 'above') {
+            ttLeft = Math.max(gap, Math.min(spotLeft, winW - ttWidth - gap));
+            ttTop = spotTop - ttHeight - gap;
+        } else if (resolvedPos === 'right') {
+            ttLeft = spotLeft + spotW + gap;
+            ttTop = Math.max(gap, Math.min(spotTop, winH - ttHeight - gap));
+        } else {
+            ttLeft = spotLeft - ttWidth - gap;
+            ttTop = Math.max(gap, Math.min(spotTop, winH - ttHeight - gap));
+        }
+
+        ttLeft = Math.max(gap, Math.min(ttLeft, winW - ttWidth - gap));
+        ttTop = Math.max(gap, Math.min(ttTop, winH - ttHeight - gap));
+
+        function writeContent() {
+            document.getElementById('tour-icon').textContent = step.icon;
+            document.getElementById('tour-title').textContent = step.title;
+            document.getElementById('tour-desc').textContent = step.desc;
+            document.getElementById('tour-counter').textContent = (index + 1) + ' / ' + _guideTourSteps.length;
+            var nextBtn = document.getElementById('tour-next-btn');
+            nextBtn.textContent = (index === _guideTourSteps.length - 1) ? 'Finish' : 'Next';
+        }
+
+        if (firstShow) {
+            tooltip.style.transition = 'none';
+            tooltip.style.left = ttLeft + 'px';
+            tooltip.style.top = ttTop + 'px';
+            void tooltip.offsetWidth;
+            tooltip.style.transition = '';
+            writeContent();
+            requestAnimationFrame(function() {
+                tooltip.classList.add('visible');
+            });
+        } else {
+            tooltip.style.left = ttLeft + 'px';
+            tooltip.style.top = ttTop + 'px';
+            tooltip.classList.add('content-swapping');
+            setTimeout(function() {
+                writeContent();
+                tooltip.classList.remove('content-swapping');
+            }, 180);
+        }
+
+        clearTimeout(_guideTourAutoTimer);
+        _guideTourAutoTimer = setTimeout(function() {
+            if (_guideTourRunning) nextGuideTourStep();
+        }, 6000);
+    }
+
+    function nextGuideTourStep() {
+        clearTimeout(_guideTourAutoTimer);
+        if (_guideTourStepIndex >= _guideTourSteps.length - 1) {
+            endGuideTour();
+        } else {
+            _showGuideTourStep(_guideTourStepIndex + 1);
+        }
+    }
+
+    function endGuideTour() {
+        clearTimeout(_guideTourAutoTimer);
+        _guideTourRunning = false;
+        var tooltip = document.getElementById('tour-tooltip');
+        tooltip.classList.remove('visible');
+        setTimeout(function() {
+            document.getElementById('tour-mask').classList.remove('visible');
+        }, 300);
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && _guideTourRunning) {
+            endGuideTour();
+        }
+    });
+    </script>
 
 </body>
 </html>
