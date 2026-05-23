@@ -320,7 +320,7 @@ async def call(item: Item):
             f"Call error for class_name={item.class_attr.get('class_name', 'unknown')}: {e}",
             exc_info=True,
         )
-        return WebResponse(code=500, message="遇到问题").to_dict()
+        return WebResponse(code=500, message=str(e)).to_dict()
 
 
 class Script(BaseModel):

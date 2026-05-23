@@ -1,8 +1,14 @@
 .section0 {
-    fill:#ffffff !important;
+    fill: transparent !important;
+}
+.section1 {
+    fill: transparent !important;
 }
 .section2 {
-    fill:#ffffff !important;
+    fill: transparent !important;
+}
+.section3 {
+    fill: transparent !important;
 }
 /* 修改第1种section样式 */
 .task0 {
@@ -73,4 +79,9 @@
 #flowchart-container-gantt .taskTextOutsideLeft.clickable.mermaid-selected-text {
     fill: #5048E5 !important;
     font-weight: bold !important;
+}
+
+/* Remove blank title area at top of gantt chart */
+#flowchart-container-gantt svg {
+    margin-top: -40px;
 }
