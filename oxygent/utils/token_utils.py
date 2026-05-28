@@ -80,16 +80,35 @@ def build_token_usage(
     u = _to_dict(usage_data)
 
     # --- input / output tokens ---
-    # OpenAI-family: prompt_tokens; Gemini native: promptTokenCount
-    input_tokens = u.get("prompt_tokens") or u.get("promptTokenCount", 0)
-    output_tokens = u.get("completion_tokens") or u.get("candidatesTokenCount", 0)
+    # OpenAI: prompt_tokens; Gemini native: promptTokenCount; Anthropic: input_tokens
+    input_tokens = u.get("prompt_tokens") or u.get("promptTokenCount") or u.get("input_tokens", 0)
+    output_tokens = u.get("completion_tokens") or u.get("candidatesTokenCount") or u.get("output_tokens", 0)
+
+    # --- total tokens (API-provided) ---
+    # Gemini: total = prompt + completion + thoughts（thoughts 不含在 completion 中）
+    # OpenAI: total = prompt + completion（reasoning 已含在 completion 中）
+    total_tokens = u.get("total_tokens") or 0
 
     # --- cached tokens ---
-    cached_tokens = 0
+    # cached_input_tokens: cache read hits (链式回退)
+    # 1. prompt_tokens_details.cached_tokens        → OpenAI / Doubao / 阿里云
+    # 2. 顶层 cache_read_input_tokens               → Anthropic
+    # 3. 顶层 prompt_cache_hit_tokens               → DeepSeek
+    # 4. 顶层 cachedContentTokenCount               → Gemini native
+    cached_input_tokens = 0
     prompt_details = u.get("prompt_tokens_details")
     if prompt_details:
         d = _to_dict(prompt_details)
-        cached_tokens = d.get("cached_tokens") or d.get("cache_read_input_tokens", 0)
+        cached_input_tokens = d.get("cached_tokens") or 0
+    if not cached_input_tokens:
+        cached_input_tokens = u.get("cache_read_input_tokens") or 0
+    if not cached_input_tokens:
+        cached_input_tokens = u.get("prompt_cache_hit_tokens") or 0
+    if not cached_input_tokens:
+        cached_input_tokens = u.get("cachedContentTokenCount") or 0
+
+    # cache_creation_input_tokens: 缓存写入 (Anthropic / 阿里云)
+    cache_creation_input_tokens = u.get("cache_creation_input_tokens") or 0
 
     # --- reasoning / thinking tokens ---
     # Priority: completion_tokens_details.reasoning_tokens (OpenAI/Doubao)
@@ -110,7 +129,9 @@ def build_token_usage(
     return TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
-        cached_tokens=cached_tokens,
+        total_tokens=total_tokens,
+        cached_input_tokens=cached_input_tokens,
+        cache_creation_input_tokens=cache_creation_input_tokens,
         reasoning_tokens=reasoning_tokens,
         model_name=model_name,
         estimation_method=EstimationMethod.EXACT,
@@ -138,7 +159,8 @@ def aggregate_token_usage(oxy_request: Any, usage: TokenUsage) -> None:
             "total_tokens": 0,
             "input_tokens": 0,
             "output_tokens": 0,
-            "cached_tokens": 0,
+            "cached_input_tokens": 0,
+            "cache_creation_input_tokens": 0,
             "reasoning_tokens": 0,
             "request_count": 0,
             "by_model": {},
@@ -148,7 +170,8 @@ def aggregate_token_usage(oxy_request: Any, usage: TokenUsage) -> None:
     tm["total_tokens"] += usage.total_tokens
     tm["input_tokens"] += usage.input_tokens
     tm["output_tokens"] += usage.output_tokens
-    tm["cached_tokens"] += usage.cached_tokens
+    tm["cached_input_tokens"] += usage.cached_input_tokens
+    tm["cache_creation_input_tokens"] += usage.cache_creation_input_tokens
     tm["reasoning_tokens"] += usage.reasoning_tokens
     tm["request_count"] += 1
 
@@ -158,7 +181,8 @@ def aggregate_token_usage(oxy_request: Any, usage: TokenUsage) -> None:
             "total_tokens": 0,
             "input_tokens": 0,
             "output_tokens": 0,
-            "cached_tokens": 0,
+            "cached_input_tokens": 0,
+            "cache_creation_input_tokens": 0,
             "reasoning_tokens": 0,
             "request_count": 0,
         }
@@ -167,7 +191,8 @@ def aggregate_token_usage(oxy_request: Any, usage: TokenUsage) -> None:
     mm["total_tokens"] += usage.total_tokens
     mm["input_tokens"] += usage.input_tokens
     mm["output_tokens"] += usage.output_tokens
-    mm["cached_tokens"] += usage.cached_tokens
+    mm["cached_input_tokens"] += usage.cached_input_tokens
+    mm["cache_creation_input_tokens"] += usage.cache_creation_input_tokens
     mm["reasoning_tokens"] += usage.reasoning_tokens
     mm["request_count"] += 1
 
