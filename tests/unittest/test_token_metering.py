@@ -170,7 +170,7 @@ class TestBuildTokenUsage:
         assert usage.reasoning_tokens == 26
 
     def test_gemini_total_tokens_includes_thinking(self):
-        """Gemini total_tokens 包含 thoughts_tokens（与 input+output 不同）。"""
+        """Gemini total_tokens includes thoughts_tokens (differs from input+output)."""
         usage = build_token_usage(
             {
                 "prompt_tokens": 7,
@@ -185,7 +185,7 @@ class TestBuildTokenUsage:
         assert usage.input_tokens == 7
         assert usage.output_tokens == 10
         assert usage.reasoning_tokens == 21
-        assert usage.total_tokens == 38  # API 返回的 total 包含 thinking
+        assert usage.total_tokens == 38  # API total includes thinking
 
     def test_gemini_native_format(self):
         """Gemini native: camelCase fields from usageMetadata."""
@@ -236,7 +236,7 @@ class TestBuildTokenUsage:
         assert usage.cache_creation_input_tokens == 0
 
     def test_anthropic_format(self):
-        """Anthropic: 顶层 cache_read/cache_creation，无 prompt_tokens_details。"""
+        """Anthropic: top-level cache_read/cache_creation, no prompt_tokens_details."""
         usage = build_token_usage(
             {
                 "input_tokens": 50,
@@ -254,7 +254,7 @@ class TestBuildTokenUsage:
         assert usage.cache_creation_input_tokens == 248
 
     def test_deepseek_cache_format(self):
-        """DeepSeek: 顶层 prompt_cache_hit_tokens。"""
+        """DeepSeek: top-level prompt_cache_hit_tokens."""
         usage = build_token_usage(
             {
                 "prompt_tokens": 405,

@@ -85,16 +85,16 @@ def build_token_usage(
     output_tokens = u.get("completion_tokens") or u.get("candidatesTokenCount") or u.get("output_tokens", 0)
 
     # --- total tokens (API-provided) ---
-    # Gemini: total = prompt + completion + thoughts（thoughts 不含在 completion 中）
-    # OpenAI: total = prompt + completion（reasoning 已含在 completion 中）
+    # Gemini: total = prompt + completion + thoughts (thoughts NOT included in completion)
+    # OpenAI: total = prompt + completion (reasoning already included in completion)
     total_tokens = u.get("total_tokens") or 0
 
     # --- cached tokens ---
-    # cached_input_tokens: cache read hits (链式回退)
-    # 1. prompt_tokens_details.cached_tokens        → OpenAI / Doubao / 阿里云
-    # 2. 顶层 cache_read_input_tokens               → Anthropic
-    # 3. 顶层 prompt_cache_hit_tokens               → DeepSeek
-    # 4. 顶层 cachedContentTokenCount               → Gemini native
+    # cached_input_tokens: cache read hits (chain fallback)
+    # 1. prompt_tokens_details.cached_tokens        -> OpenAI / Doubao / Alibaba Cloud
+    # 2. top-level cache_read_input_tokens          -> Anthropic
+    # 3. top-level prompt_cache_hit_tokens          -> DeepSeek
+    # 4. top-level cachedContentTokenCount          -> Gemini native
     cached_input_tokens = 0
     prompt_details = u.get("prompt_tokens_details")
     if prompt_details:
@@ -107,7 +107,7 @@ def build_token_usage(
     if not cached_input_tokens:
         cached_input_tokens = u.get("cachedContentTokenCount") or 0
 
-    # cache_creation_input_tokens: 缓存写入 (Anthropic / 阿里云)
+    # cache_creation_input_tokens: cache writes (Anthropic / Alibaba Cloud)
     cache_creation_input_tokens = u.get("cache_creation_input_tokens") or 0
 
     # --- reasoning / thinking tokens ---

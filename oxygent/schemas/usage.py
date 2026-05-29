@@ -41,7 +41,7 @@ class TokenUsage(BaseModel):
 
     @model_validator(mode="after")
     def _compute_total(self) -> "TokenUsage":
-        """API 返回 total_tokens 时优先使用，否则按 input+output 计算。"""
+        """Use API-provided total_tokens when available, fallback to input+output."""
         if self.total_tokens == 0:
             self.total_tokens = self.input_tokens + self.output_tokens
         return self
