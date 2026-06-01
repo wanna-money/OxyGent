@@ -6,9 +6,10 @@
 }
 
 .me{
-    display: block;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-start;
     clear: both;
-    overflow: hidden;
     margin-bottom: 20px;
 }
 
@@ -18,8 +19,10 @@
     justify-content: center;
     width: 42px;
     height: 42px;
+    min-width: 42px;
     border-radius: 4px;
     background-color: #155EEF;
+    margin-right: 0;
 }
 
 .me .user-img img {
@@ -27,20 +30,21 @@
     height: 26px;
 }
 
-.me p { 
-    float: right;
+.me p {
+    text-align: right;
 }
 
 .me span{
-    float: right;
     background: #E1EFFD;
     padding: 14px;
     border-radius:4px;
     margin-right: 12px;
-    max-width: calc(100% - 54px);
+    max-width: calc(100% - 108px);
     position: relative;
     font-size: 14px;
     line-height: 20px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
 }
 
 /*master*/
@@ -77,12 +81,31 @@
     border-radius: 4px;
     float: left;
     margin: 23px 0 0 12px;
-    max-width: calc(100% - 54px);
+    max-width: calc(100% - 108px);
     position: relative;
     white-space: pre-wrap;
     word-wrap: break-word;
     font-size: 14px;
     line-height: 20px;
+}
+
+.master span::before,
+.other span::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 12px;
+    border: 5px solid transparent;
+    border-right-color: #F3F3F5;
+}
+
+.me > span:not(.user-img)::before {
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 12px;
+    border: 5px solid transparent;
+    border-left-color: #E1EFFD;
 }
 
 /* 流式输出样式 */
@@ -135,7 +158,7 @@
     border-radius: 4px;
     float: left;
     margin: 23px 0 0 12px;
-    max-width: calc(100% - 54px);
+    max-width: calc(100% - 108px);
     position: relative;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -799,6 +822,76 @@
 .json-editor-btn img {
     width: 22px;
     height: 22px;
+}
+
+.querys-btn {
+    position: absolute;
+    left: 87px;
+    bottom: 17px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.querys-btn img {
+    width: 21px;
+    height: 21px;
+}
+
+.querys-panel {
+    position: absolute;
+    bottom: 56px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    z-index: 100;
+    padding: 12px 16px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.querys-panel-header {
+    margin-bottom: 8px;
+}
+
+.querys-panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.querys-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.querys-list li {
+    padding: 8px 10px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.5;
+    word-break: break-word;
+    transition: background 0.15s;
+}
+
+.querys-list li:last-child {
+    margin-bottom: 0;
+}
+
+.querys-list li:hover {
+    background: #f0f4ff;
 }
 
 .json-editor-panel {

@@ -206,6 +206,16 @@
                 <button class="json-editor-btn" id="json_editor_toggle" onclick="toggleJsonEditor()">
                     <img src="./image/json.svg" alt="JSON"/>
                 </button>
+                <button class="querys-btn" id="querys_toggle" style="display:none;" onclick="toggleQuerysPanel()">
+                    <img src="./image/querys.svg" alt="Querys"/>
+                </button>
+                <!-- Querys Panel -->
+                <div class="querys-panel" id="querys_panel" style="display:none;">
+                    <div class="querys-panel-header">
+                        <span class="querys-panel-title">Queries</span>
+                    </div>
+                    <ul class="querys-list" id="querys_list"></ul>
+                </div>
                 <!-- JSON Editor Panel -->
                 <div class="json-editor-panel" id="json_editor_panel" style="display:none;">
                     <div class="json-editor-header">
@@ -562,9 +572,20 @@
             url: "../get_first_query",
             success: function (response) {
                 // console.log('first_query', response);
-                $("#message_input").val(response.data.first_query);
-                if (response.data.first_query) {
+                var fq = response.data.first_query;
+                if (fq) {
+                    if (Array.isArray(fq)) {
+                        querysList = fq;
+                        $("#message_input").val(fq[0]);
+                    } else {
+                        querysList = [fq];
+                        $("#message_input").val(fq);
+                    }
                     $("#message_send").addClass('message_send_active');
+                    var el = document.getElementById('message_input');
+                    el.style.height = 'auto';
+                    el.style.height = el.scrollHeight + 'px';
+                    $("#querys_toggle").show();
                 }
                 if (response.data.shared_data) {
                     chatSharedData = response.data.shared_data;
@@ -761,7 +782,12 @@
             handle_stream_message(jm);
             return;
         }
-        
+
+        if (jm["type"] === "organization_updated") {
+            refresh_organization();
+            return;
+        }
+
         if (!["tool_call", "observation"].includes(jm["type"])) {
             return;
         }
@@ -967,6 +993,23 @@
             console.log('close');
         };
 
+    }
+
+    function refresh_organization() {
+        $.ajax({
+            url: "../get_organization",
+            type: "GET",
+            success: function (response) {
+                agent_id_dict = response.data.id_dict;
+                agent_organization = response.data.organization;
+                var frames = getActiveFrames();
+                if (frames.length > 0) {
+                    frames[0].agent_id_dict = agent_id_dict;
+                    frames[0].agent_organization = agent_organization;
+                }
+                init_organization();
+            }
+        });
     }
 
     function init_organization() {
@@ -3117,6 +3160,37 @@
         $('#json_editor_panel').hide();
     }
 
+    var querysList = [];
+
+    function toggleQuerysPanel() {
+        var panel = $('#querys_panel');
+        if (panel.is(':visible')) {
+            panel.hide();
+        } else {
+            var list = $('#querys_list');
+            list.empty();
+            querysList.forEach(function (q) {
+                var li = $('<li></li>').text(q);
+                li.on('click', function () {
+                    $('#message_input').val(q);
+                    var el = document.getElementById('message_input');
+                    el.style.height = 'auto';
+                    el.style.height = el.scrollHeight + 'px';
+                    $('#message_send').addClass('message_send_active');
+                    panel.hide();
+                });
+                list.append(li);
+            });
+            panel.show();
+        }
+    }
+
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('#querys_panel, #querys_toggle').length) {
+            $('#querys_panel').hide();
+        }
+    });
+
     // 关闭最右侧对话框
     function closeRight() {
         $('#rightId').css('display', 'none');
@@ -3812,7 +3886,7 @@
         clearTimeout(_guideTourAutoTimer);
         _guideTourAutoTimer = setTimeout(function() {
             if (_guideTourRunning) nextGuideTourStep();
-        }, 1500);
+        }, 6000);
     }
 
     function nextGuideTourStep() {

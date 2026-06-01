@@ -21,7 +21,7 @@ oxygent/mas.py
 | `oxy_space` | `list` | `[]` | 待注册的 Oxy 对象初始列表 |
 | `oxy_name_to_oxy` | `dict[str, Oxy]` | `{}` | Oxy 名称到 Oxy 实例的映射字典 |
 | `master_agent_name` | `str` | `""` | 主 Agent 的名称 |
-| `first_query` | `str` | `""` | 前端显示的首条查询 |
+| `first_query` | `Union[str, list[str]]` | `""` | 前端显示的首条查询或查询列表 |
 | `agent_organization` | `dict` | `[]` | Agent 的组织结构 |
 | `vearch_client` | `Optional[VearchDB]` | `None` | 向量数据库客户端 |
 | `es_client` | `Optional[AsyncElasticsearch]` | `None` | Elasticsearch 客户端 |
@@ -69,6 +69,12 @@ async def main():
     async with MAS(oxy_space=oxy_space) as mas:
         await mas.start_web_service(
             first_query="Hello!" 
+        )
+
+async def main():
+    async with MAS(oxy_space=oxy_space) as mas:
+        await mas.start_web_service(
+            first_query=["今天天气怎么样？", "给我讲个笑话", "现在几点了？"]
         )
 
 async def main():

@@ -21,7 +21,7 @@ oxygent/mas.py
 | `oxy_space` | `list` | `[]` | Initial list of Oxy objects to be registered |
 | `oxy_name_to_oxy` | `dict[str, Oxy]` | `{}` | Dictionary mapping Oxy names to Oxy instances |
 | `master_agent_name` | `str` | `""` | Name of the master agent |
-| `first_query` | `str` | `""` | First query to be displayed in frontend |
+| `first_query` | `Union[str, list[str]]` | `""` | First query or list of queries to be displayed in frontend |
 | `agent_organization` | `dict` | `[]` | Organization structure of agents |
 | `vearch_client` | `Optional[VearchDB]` | `None` | Vector database client |
 | `es_client` | `Optional[AsyncElasticsearch]` | `None` | Elasticsearch client |
@@ -69,6 +69,12 @@ async def main():
     async with MAS(oxy_space=oxy_space) as mas:
         await mas.start_web_service(
             first_query="Hello!" 
+        )
+
+async def main():
+    async with MAS(oxy_space=oxy_space) as mas:
+        await mas.start_web_service(
+            first_query=["How is the weather today?", "Tell me a joke", "What time is it?"]
         )
 
 async def main():

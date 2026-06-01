@@ -1,7 +1,6 @@
 """SSH remote execution tools for OxyGent agents."""
 
 import asyncio
-from typing import Optional
 
 from pydantic import Field
 
@@ -15,7 +14,7 @@ ssh_tools = FunctionHub(name="ssh_tools", timeout=600)
 @ssh_tools.tool(description="a tool for control the ubuntu terminal")
 async def ssh_tool(
     shell_command: str = Field(description="The shell command to execute"),
-    oxy_request: Optional[OxyRequest] = None,
+    oxy_request: OxyRequest = None,
 ) -> str:
     ssh_channel = oxy_request.get_global_data("ssh_channel")
     ssh_channel.send(f"{shell_command}\n")

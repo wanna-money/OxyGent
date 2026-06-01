@@ -258,6 +258,41 @@ class OxyRequest(BaseModel):
         * Wraps the target oxy in a timeout guard.
         * Converts special tools (e.g., retrieve_tools) into the expected downstream format.
         """
+        oxy_name = kwargs.get("callee", "")
+        # Check if the oxy exists
+        if not self.has_oxy(oxy_name):
+            logger.error(
+                f"oxy {oxy_name} not exists",
+                extra={
+                    "trace_id": self.current_trace_id,
+                    "node_id": self.node_id,
+                },
+            )
+            return OxyResponse(
+                state=OxyState.FAILED, output=f"Tool {oxy_name} not exists"
+            )
+
+        caller_oxy = self.get_oxy(self.callee)
+        oxy = self.get_oxy(oxy_name)
+        # Ensure permission for calling
+        if (
+            self.callee_category != "user"
+            and oxy.is_permission_required
+            and oxy_name
+            not in caller_oxy.permitted_tool_name_list + caller_oxy.permitted_oxy
+        ):
+            error_msg = f"No permission for oxy: {oxy_name}, caller: {self.callee}"
+            logger.error(
+                error_msg,
+                extra={
+                    "trace_id": self.current_trace_id,
+                    "node_id": self.node_id,
+                },
+            )
+            return OxyResponse(
+                state=OxyState.SKIPPED, output=f"No permission for tool: {oxy_name}"
+            )
+
         oxy_request = self.clone_with(**kwargs)
 
         oxy_request.node_id = generate_uuid()
@@ -286,42 +321,6 @@ class OxyRequest(BaseModel):
         oxy_request.caller = self.callee
         oxy_request.caller_category = self.callee_category
 
-        oxy_name = oxy_request.callee
-        # Check if the oxy exists
-        if not self.has_oxy(oxy_name):
-            logger.error(
-                f"oxy {oxy_name} not exists",
-                extra={
-                    "trace_id": oxy_request.current_trace_id,
-                    "node_id": oxy_request.node_id,
-                },
-            )
-            return OxyResponse(
-                state=OxyState.FAILED, output=f"Tool {oxy_name} not exists"
-            )
-
-        caller_oxy = self.get_oxy(oxy_request.caller)
-        oxy = self.get_oxy(oxy_name)
-        # Ensure permission for calling
-        if (
-            oxy_request.caller_category != "user"
-            and oxy.is_permission_required
-            and oxy_name
-            not in caller_oxy.permitted_tool_name_list + caller_oxy.permitted_oxy
-        ):
-            error_msg = (
-                f"No permission for oxy: {oxy_name}, caller: {oxy_request.caller}"
-            )
-            logger.error(
-                error_msg,
-                extra={
-                    "trace_id": oxy_request.current_trace_id,
-                    "node_id": oxy_request.node_id,
-                },
-            )
-            return OxyResponse(
-                state=OxyState.SKIPPED, output=f"No permission for tool: {oxy_name}"
-            )
         # Process special parameters for tools
         if oxy_name == "retrieve_tools":
             oxy_request.arguments["app_name"] = Config.get_app_name()

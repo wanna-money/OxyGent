@@ -31,7 +31,8 @@ class TestTokenUsageSchema:
         usage = TokenUsage()
         assert usage.input_tokens == 0
         assert usage.output_tokens == 0
-        assert usage.cached_tokens == 0
+        assert usage.cached_input_tokens == 0
+        assert usage.cache_creation_input_tokens == 0
         assert usage.reasoning_tokens == 0
         assert usage.total_tokens == 0
         assert usage.model_name == ""
@@ -41,13 +42,15 @@ class TestTokenUsageSchema:
         usage = TokenUsage(
             input_tokens=200,
             output_tokens=100,
-            cached_tokens=50,
+            cached_input_tokens=50,
+            cache_creation_input_tokens=10,
             reasoning_tokens=30,
             model_name="claude-3",
             estimation_method=EstimationMethod.TIKTOKEN,
         )
         assert usage.total_tokens == 300
-        assert usage.cached_tokens == 50
+        assert usage.cached_input_tokens == 50
+        assert usage.cache_creation_input_tokens == 10
         assert usage.reasoning_tokens == 30
 
 
@@ -112,7 +115,7 @@ class TestAggregateTokenUsage:
         assert by_model["claude-3"]["request_count"] == 1
 
     def test_cached_and_reasoning_tokens(self):
-        """cached_tokens and reasoning_tokens should be tracked."""
+        """cached_input_tokens, cache_creation_input_tokens, and reasoning_tokens should be tracked."""
         req = OxyRequest(arguments={"query": "test"}, shared_data={})
 
         aggregate_token_usage(
@@ -120,14 +123,16 @@ class TestAggregateTokenUsage:
             TokenUsage(
                 input_tokens=100,
                 output_tokens=50,
-                cached_tokens=30,
+                cached_input_tokens=30,
+                cache_creation_input_tokens=10,
                 reasoning_tokens=20,
                 model_name="o1",
             ),
         )
 
         metrics = req.shared_data["_metrics"]["token_usage"]
-        assert metrics["cached_tokens"] == 30
+        assert metrics["cached_input_tokens"] == 30
+        assert metrics["cache_creation_input_tokens"] == 10
         assert metrics["reasoning_tokens"] == 20
 
     def test_empty_model_name_uses_unknown(self):

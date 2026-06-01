@@ -16,7 +16,7 @@ import json
 import os
 import time
 from collections import OrderedDict
-from typing import Any, AsyncIterator, Callable, Optional
+from typing import Any, AsyncIterator, Callable, Optional, Union
 
 import msgpack
 from elasticsearch import AsyncElasticsearch
@@ -89,7 +89,7 @@ class MAS(BaseModel):
         "", description="Name of the master agent serving as the entry point"
     )
 
-    first_query: str = Field(
+    first_query: Union[str, list[str]] = Field(
         "", description="Initial query sent to the master agent on web UI load"
     )
 
@@ -1339,7 +1339,7 @@ class MAS(BaseModel):
 
     async def start_web_service(
         self,
-        first_query: Optional[str] = None,
+        first_query: Optional[Union[str, list[str]]] = None,
         welcome_message: Optional[str] = None,
         host: Optional[str] = None,
         port: Optional[int] = None,

@@ -22,6 +22,7 @@ tool_modules = [
     "python_tools",
     "image_gen_tools",
     "ssh_tools",
+    "oxy_manage_tools",
 ]
 
 __all__ = []
