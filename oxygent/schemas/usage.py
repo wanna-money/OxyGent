@@ -2,7 +2,7 @@
 
 from enum import Enum
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, model_validator
 
 
 class EstimationMethod(str, Enum):
@@ -19,23 +19,29 @@ class TokenUsage(BaseModel):
     Attributes:
         input_tokens: Number of input (prompt) tokens.
         output_tokens: Number of output (completion) tokens.
-        cached_tokens: Number of input tokens served from cache (e.g. OpenAI
-            prompt_tokens_details.cached_tokens, Anthropic cache_read_input_tokens).
-        reasoning_tokens: Number of tokens used for reasoning/thinking
-            (e.g. OpenAI completion_tokens_details.reasoning_tokens).
+        cached_input_tokens: Number of input tokens served from cache read hit.
+            (e.g. OpenAI prompt_tokens_details.cached_tokens,
+            Anthropic cache_read_input_tokens, DeepSeek prompt_cache_hit_tokens,
+            Gemini cachedContentTokenCount).
+        cache_creation_input_tokens: Number of input tokens written to cache.
+            (e.g. Anthropic cache_creation_input_tokens).
+        reasoning_tokens: Number of tokens used for reasoning/thinking.
         model_name: Name of the LLM model used.
         estimation_method: Method used for token counting.
     """
 
     input_tokens: int = Field(default=0, ge=0)
     output_tokens: int = Field(default=0, ge=0)
-    cached_tokens: int = Field(default=0, ge=0)
+    total_tokens: int = Field(default=0, ge=0)
+    cached_input_tokens: int = Field(default=0, ge=0)
+    cache_creation_input_tokens: int = Field(default=0, ge=0)
     reasoning_tokens: int = Field(default=0, ge=0)
     model_name: str = ""
     estimation_method: EstimationMethod = EstimationMethod.EXACT
 
-    @computed_field
-    @property
-    def total_tokens(self) -> int:
-        """Total tokens (input + output), always computed."""
-        return self.input_tokens + self.output_tokens
+    @model_validator(mode="after")
+    def _compute_total(self) -> "TokenUsage":
+        """Use API-provided total_tokens when available, fallback to input+output."""
+        if self.total_tokens == 0:
+            self.total_tokens = self.input_tokens + self.output_tokens
+        return self
