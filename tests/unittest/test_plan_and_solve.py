@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from oxygent.oxy.flows.plan_and_solve import Action, Plan, PlanAndSolve, Response
+from oxygent.oxy.flows.plan_and_solve import PlanAndSolve
 from oxygent.schemas import OxyRequest, OxyResponse, OxyState
 
 
@@ -112,9 +112,7 @@ def oxy_request(monkeypatch, mas_env):
             # Action.action is Union[Response, Plan]; a Response has a "response" field
             return OxyResponse(
                 state=OxyState.COMPLETED,
-                output=json.dumps(
-                    {"action": {"response": "final-answer"}}
-                ),
+                output=json.dumps({"action": {"response": "final-answer"}}),
                 oxy_request=self,
             )
         if callee == "mock_llm":

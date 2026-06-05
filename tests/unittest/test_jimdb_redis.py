@@ -4,7 +4,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from oxygent.databases.db_redis.jimdb_ap_redis import JimdbApRedis
+try:
+    from oxygent.databases.db_redis.jimdb_ap_redis import JimdbApRedis
+except Exception:
+    pytest.skip("aioredis not available in this environment", allow_module_level=True)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -170,9 +173,7 @@ async def test_close(redis_client):
 @pytest.mark.asyncio
 async def test_close_with_no_pool():
     """close does nothing when redis_pool is None."""
-    with patch(
-        "oxygent.databases.db_redis.jimdb_ap_redis.Redis.from_url"
-    ):
+    with patch("oxygent.databases.db_redis.jimdb_ap_redis.Redis.from_url"):
         client = JimdbApRedis("localhost", 6379, "pass")
         client.redis_pool = None
         await client.close()  # Should not raise

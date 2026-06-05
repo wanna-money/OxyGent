@@ -5,10 +5,17 @@ Unit tests for SSEOxyAgent
 import json
 from unittest.mock import AsyncMock
 
-import httpx
 import pytest
-import respx
-from aioresponses import aioresponses
+
+try:
+    import httpx
+    import respx
+    from aioresponses import aioresponses
+except ImportError:
+    pytest.skip(
+        "respx/aioresponses not available in this environment", allow_module_level=True
+    )
+
 from pydantic import ValidationError
 
 from oxygent.oxy.agents.sse_oxy_agent import SSEOxyGent
@@ -29,7 +36,9 @@ class DummyMAS:
 
     def add_background_task(self, trace_id, task):
         self.background_tasks.setdefault(trace_id, set()).add(task)
-        task.add_done_callback(lambda t: self.background_tasks.get(trace_id, set()).discard(t))
+        task.add_done_callback(
+            lambda t: self.background_tasks.get(trace_id, set()).discard(t)
+        )
 
 
 # ──────────────────────────────────────────────────────────────────────────────

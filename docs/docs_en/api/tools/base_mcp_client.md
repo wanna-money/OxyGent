@@ -33,7 +33,7 @@ The position of the class is:
 | Parameter                 | Type / Allowed value | Default                               | Description                                                        |
 | ------------------------- | -------------------- | ------------------------------------- | ------------------------------------------------------------------ |
 | `included_tool_name_list` | `list`               | `[]`                                  | Tool names discovered and registered from the MCP server.          |
-| `headers`                 | `Dict[str, str]`     | `{}`                                  | Extra HTTP headers for server communication.                       |
+| `headers`                 | `dict[str, str]`     | `{}`                                  | Extra HTTP headers for server communication.                       |
 | `is_dynamic_headers`      | `bool`               | `False`                               | Whether to rebuild HTTP headers on each call from request context. |
 | `is_inherit_headers`      | `bool`               | `False`                               | Whether to inherit HTTP headers from the parent request.           |
 | `is_keep_alive`           | `bool`               | `Config.get_tool_mcp_is_keep_alive()` | Whether to reuse the MCP connection across tool calls.             |

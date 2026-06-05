@@ -48,7 +48,7 @@ Config.set_server_port(8081)
 
 | 组件 | 类型 | 用途 |
 |---|---|---|
-| `default_name` | `HttpLLM` | 共享的 LLM 后端，`temperature=0.01`，`semaphore=4`。 |
+| `default_llm` | `HttpLLM` | 共享的 LLM 后端，`temperature=0.01`，`semaphore=4`。 |
 | `order_tools` | `StdioMCPClient` | 通过 `uv` 运行 `mcp_servers/order_tools.py`。提供三个工具：`query_order`（按订单 ID 查询订单详情）、`query_user_orders`（查询某用户的所有订单）和 `cancel_order`（取消订单并记录原因和时间戳）。 |
 | `payment_service` | `SSEOxyGent` | 8082 端口支付服务的远程代理。允许订单代理将支付相关查询（支付状态、支付方式）委派给支付微服务。 |
 | `order_agent` | `ReActAgent` | 本服务的主代理（`is_master=True`）。使用 `order_tools` 进行订单管理，并可以委派 `payment_service` 处理支付查询。 |

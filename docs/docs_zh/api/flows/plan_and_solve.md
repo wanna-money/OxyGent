@@ -28,7 +28,7 @@
 | ---------------------------------- | ---------------------- | ------------------------------------ | -------------------------------------------------------- |
 | `max_replan_rounds`                | `int`                  | `30`                                 | 允许的最大重新规划迭代次数。                                |
 | `planner_agent_name`               | `str`                  | `"planner_agent"`                    | 用于生成计划的智能体名称。                                  |
-| `pre_plan_steps`                   | `List[str]`            | `None`                               | 预定义的计划步骤，用于替代动态生成的计划。                    |
+| `pre_plan_steps`                   | `list[str]`            | `None`                               | 预定义的计划步骤，用于替代动态生成的计划。                    |
 | `enable_replanner`                 | `bool`                 | `False`                              | 是否在执行过程中启用动态重新规划。                           |
 | `replanner_agent_name`             | `str`                  | `"replanner_agent"`                  | 在失败时用于重新规划的智能体名称。                           |
 | `executor_agent_name`              | `str`                  | `"executor_agent"`                   | 执行各个计划步骤的智能体名称。                               |

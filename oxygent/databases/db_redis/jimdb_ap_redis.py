@@ -1,16 +1,15 @@
-"""jimdb_ap_redis.py JimDB Redis Implementation Module.
+"""JimDB Redis client implementation.
 
-This file implements a Redis client specifically designed for JimDB (JD's internal
-database), providing robust connection handling, automatic retries, and enhanced list
-operations with size limits and expiration management.
+Provides a Redis client specifically designed for JimDB (JD's internal database),
+with robust connection handling, automatic retries, and enhanced list operations
+with size limits and expiration management.
 """
 
 import asyncio
 import json
 import logging
-import traceback
 from functools import wraps
-from typing import Union
+from typing import Any, Callable, Optional, Union
 
 from aioredis import Redis
 from aioredis.exceptions import ConnectionError, TimeoutError
@@ -20,7 +19,7 @@ from ...config import Config
 logger = logging.getLogger(__name__)
 
 
-def retry_decorator(func):
+def retry_decorator(func: Callable) -> Callable:
     """Decorator that provides automatic retry logic for Redis operations.
 
     This decorator handles connection errors by automatically reconnecting
@@ -34,18 +33,19 @@ def retry_decorator(func):
     """
 
     @wraps(func)
-    async def wrapper(self, *args, **kwargs):
+    async def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
         try:
             return await func(self, *args, **kwargs)
         except (ConnectionError, ConnectionResetError, TimeoutError) as e:
-            logger.error(f"Reconnect for Connection Error in {func.__name__}: {e}")
+            logger.error(
+                f"Reconnect for Connection Error in {func.__name__}: {e}", exc_info=True
+            )
             # Close current connection and retry
             await self.close()
             self.redis_pool = self._get_redis_connection()
             return await func(self, *args, **kwargs)
         except Exception as e:
-            logger.error(f"Error in {func.__name__}: {e}")
-            logger.error(traceback.format_exc())
+            logger.error(f"Error in {func.__name__}: {e}", exc_info=True)
             return None
 
     return wrapper
@@ -59,7 +59,7 @@ class JimdbApRedis:
     built-in size limits and expiration handling.
     """
 
-    def __init__(self, host, port, password, db=0):
+    def __init__(self, host: str, port: int, password: str, db: int = 0) -> None:
         """Initialize the JimDB Redis client.
 
         Args:
@@ -79,10 +79,9 @@ class JimdbApRedis:
         try:
             self.redis_pool = self._get_redis_connection()
         except Exception as e:
-            logger.error(f"Error while creating Redis pool: {e}")
-            logger.error(traceback.format_exc())
+            logger.error(f"Error while creating Redis pool: {e}", exc_info=True)
 
-    def _get_redis_connection(self):
+    def _get_redis_connection(self) -> Any:
         """Create and configure a Redis connection pool.
 
         Returns:
@@ -95,7 +94,7 @@ class JimdbApRedis:
             health_check_interval=30,
         )
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the Redis connection pool and clean up resources.
 
         This method properly closes all connections and disconnects the pool to prevent
@@ -106,7 +105,9 @@ class JimdbApRedis:
             await self.redis_pool.connection_pool.disconnect()
 
     @retry_decorator
-    async def set(self, key, value, ex=86400):  # Key-value expiration time is 1 day
+    async def set(
+        self, key: str, value: str, ex: int = 86400
+    ) -> Optional[bool]:  # Key-value expiration time is 1 day
         """Set a key-value pair with expiration time.
 
         NOTE: all of the following functions would call self.execute_command() to execute the command,
@@ -123,7 +124,7 @@ class JimdbApRedis:
         return await self.redis_pool.set(key, value, ex=ex)
 
     @retry_decorator
-    async def get(self, key):
+    async def get(self, key: str) -> Optional[bytes]:
         """Get the value associated with a key.
 
         Args:
@@ -135,7 +136,7 @@ class JimdbApRedis:
         return await self.redis_pool.get(key)
 
     @retry_decorator
-    async def exists(self, key):
+    async def exists(self, key: str) -> Optional[int]:
         """Check if a key exists in the database.
 
         Args:
@@ -147,7 +148,9 @@ class JimdbApRedis:
         return await self.redis_pool.exists(key)
 
     @retry_decorator
-    async def mset(self, items, ex=None):
+    async def mset(
+        self, items: dict[str, str], ex: Optional[int] = None
+    ) -> Optional[bool]:
         """
         Multiple set: Set multiple key-value pairs in a single operation.
 
@@ -161,7 +164,7 @@ class JimdbApRedis:
         return await self.redis_pool.mset(items, ex=ex)
 
     @retry_decorator
-    async def mget(self, keys):
+    async def mget(self, keys: list[str]) -> Optional[list[Optional[bytes]]]:
         """
         Multiple get: Get multiple values for the given keys in a single operation.
 
@@ -169,12 +172,12 @@ class JimdbApRedis:
             keys: List of keys to retrieve
 
         Returns:
-            Optional[List[Optional[bytes]]]: The response of the multiple-get operation
+            Optional[list[Optional[bytes]]]: The response of the multiple-get operation
         """
         return await self.redis_pool.mget(keys)
 
     @retry_decorator
-    async def delete(self, key: str):
+    async def delete(self, key: str) -> Optional[int]:
         """Delete a key from the database.
 
         Args:
@@ -186,7 +189,7 @@ class JimdbApRedis:
         return await self.redis_pool.delete(key)
 
     @retry_decorator
-    async def expire(self, key: str, ex: int):
+    async def expire(self, key: str, ex: int) -> Optional[bool]:
         """Set an expiration time for a key.
 
         Args:
@@ -204,10 +207,10 @@ class JimdbApRedis:
         self,
         key: str,
         *values: Union[bytes, int, str, float],
-        ex: int = None,
-        max_size: int = None,
-        max_length: int = None,
-    ):
+        ex: Optional[int] = None,
+        max_size: Optional[int] = None,
+        max_length: Optional[int] = None,
+    ) -> int:
         """Push values to the left (head) of a list with size and length limits.
 
         This enhanced lpush operation includes automatic list trimming to maintain
@@ -255,7 +258,9 @@ class JimdbApRedis:
             results = await pipe.execute()
             return results[0]
 
-    async def rpop(self, key: str):  # Non-blocking pop from the right end of the list
+    async def rpop(
+        self, key: str
+    ) -> Optional[bytes]:  # Non-blocking pop from the right end of the list
         """Remove and return the last element of a list.
 
         Args:
@@ -266,7 +271,9 @@ class JimdbApRedis:
         """
         return await self.redis_pool.rpop(key)
 
-    async def brpop(self, key: str, timeout=1):  # Waiting for 1 sec for default
+    async def brpop(
+        self, key: str, timeout: int = 1
+    ) -> Optional[bytes]:  # Waiting for 1 sec for default
         """Blocking pop operation that removes and returns the last element of a list.
 
         NOTE: Since JimDB doesn't support brpop, this implementation simulates
@@ -288,7 +295,9 @@ class JimdbApRedis:
             return await self.redis_pool.rpop(key)
 
     @retry_decorator
-    async def lrange(self, key: str, start: int = 0, end: int = -1):
+    async def lrange(
+        self, key: str, start: int = 0, end: int = -1
+    ) -> Optional[list[bytes]]:
         """Get a range of elements from a list.
 
         NOTE: Elements added later appear at the beginning of the list
@@ -300,13 +309,13 @@ class JimdbApRedis:
             end: End index, -1 means last element (default: -1)
 
         Returns:
-            Optional[List[bytes]]: List of elements in the specified range,
+            Optional[list[bytes]]: List of elements in the specified range,
                                  empty list if key doesn't exist, None if error occurred
         """
         return await self.redis_pool.lrange(key, start, end)
 
     @retry_decorator
-    async def lrem(self, key: str, count: int, value: str):
+    async def lrem(self, key: str, count: int, value: str) -> Optional[int]:
         """Remove elements from a list by value.
 
         Args:
@@ -320,7 +329,7 @@ class JimdbApRedis:
         return await self.redis_pool.lrem(key, count, value)
 
     @retry_decorator
-    async def lindex(self, key: str, index: int):
+    async def lindex(self, key: str, index: int) -> Optional[bytes]:
         """Get an element from a list by its index.
 
         Args:
@@ -333,7 +342,7 @@ class JimdbApRedis:
         return await self.redis_pool.lindex(key, index)
 
     @retry_decorator
-    async def llen(self, key: str):
+    async def llen(self, key: str) -> Optional[int]:
         """Get the length of a list.
 
         Args:
@@ -345,7 +354,7 @@ class JimdbApRedis:
         return await self.redis_pool.llen(key)
 
     @retry_decorator
-    async def ltrim(self, key: str, start: int, end: int):
+    async def ltrim(self, key: str, start: int, end: int) -> Optional[bool]:
         """Trim a list to the specified range.
 
         Args:

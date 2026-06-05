@@ -1,33 +1,15 @@
-#!/usr/bin/env python3
-"""
-SkillAgent: Lightweight skill-aware agent with direct path-based skill loading.
+"""Skill-aware agent with direct path-based skill loading.
 
-This module provides a simplified skill-aware agent that loads skills directly
-from specified paths without requiring global registry or SkillSource components.
-
-Core Design:
-    1. Accepts skill paths directly via `skills` parameter (path strings)
-    2. Discovers and loads skills from paths during initialization
-    3. Enhances system prompt with discovered skill metadata
-
-Usage:
-    >>> oxy_space = [
-    ...     oxy.SkillAgent(
-    ...         name="agent",
-    ...         skills=["./skills/weather", "./skills/code"]  # Direct paths
-    ...     ),
-    ... ]
-
-Attributes:
-    skills: List of skill directory paths to load skills from.
-    skill_prompt_template: Template for generating skill prompt section.
+Provides SkillAgent, a lightweight agent that discovers and loads skills from
+specified directory paths, enhancing its system prompt with the discovered
+skill metadata for LLM-guided skill selection.
 """
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -39,7 +21,7 @@ from .react_agent import ReActAgent
 logger = logging.getLogger(__name__)
 
 
-def _parse_simple_frontmatter(lines: List[str]) -> Dict[str, str]:
+def _parse_simple_frontmatter(lines: list[str]) -> dict[str, str]:
     """Parse simple key-value frontmatter (no nested structures).
 
     Supports basic 'key: value' format only.
@@ -105,7 +87,10 @@ def _load_metadata_from_file(skill_path: Path) -> Optional[SkillMetadata]:
         return SkillMetadata.from_frontmatter(frontmatter, skill_path)
 
     except Exception as e:
-        logger.warning(f"Failed to load skill metadata from {skill_path}: {e}")
+        logger.warning(
+            f"Failed to load skill metadata from {skill_path}: {e}",
+            exc_info=True,
+        )
         return None
 
 
@@ -142,7 +127,7 @@ class SkillAgent(ReActAgent):
         >>> # Agent will discover skills from both paths
     """
 
-    skills: Optional[List[str]] = Field(
+    skills: Optional[list[str]] = Field(
         default=None,
         description="List of skill directory paths to load skills from. "
         "Each path can be a skill folder with SKILL.md or a parent "
@@ -155,7 +140,7 @@ class SkillAgent(ReActAgent):
     )
 
     # Internal state (private attributes, not Pydantic fields)
-    _skills_metadata: Dict[str, SkillMetadata] = {}
+    _skills_metadata: dict[str, SkillMetadata] = {}
 
     @property
     def skills_count(self) -> int:
@@ -167,7 +152,7 @@ class SkillAgent(ReActAgent):
         return len(self._skills_metadata)
 
     @property
-    def skill_names(self) -> List[str]:
+    def skill_names(self) -> list[str]:
         """Names of all discovered skills.
 
         Returns:
@@ -289,8 +274,11 @@ class SkillAgent(ReActAgent):
                             rel_parts = skill_file.relative_to(skill_path).parts
                             if any(p in non_skill_subdirs for p in rel_parts[1:-1]):
                                 continue
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.warning(
+                                f"[SkillAgent] Agent '{self.name}': Failed to compute relative path for skill file '{skill_file}': {e}",
+                                exc_info=True,
+                            )
 
                         metadata = _load_metadata_from_file(skill_file)
                         if metadata and metadata.name:

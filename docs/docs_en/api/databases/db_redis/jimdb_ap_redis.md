@@ -45,13 +45,13 @@ database), providing robust connection handling, automatic retries, and enhanced
 | `get(self, key)`                                                       | Yes               | `Optional[bytes]`                 | Get the value of a key.                                                |
 | `exists(self, key)`                                                    | Yes               | `Optional[int]`                   | Check whether a key exists.                                            |
 | `mset(self, items, ex=None)`                                           | Yes               | `Optional[bool]`                  | Set multiple keys at once (optional common TTL).                       |
-| `mget(self, keys)`                                                     | Yes               | `Optional[List[Optional[bytes]]]` | Get multiple keys at once.                                             |
+| `mget(self, keys)`                                                     | Yes               | `Optional[list[Optional[bytes]]]` | Get multiple keys at once.                                             |
 | `delete(self, key)`                                                    | Yes               | `Optional[int]`                   | Delete a key.                                                          |
 | `expire(self, key, ex)`                                                | Yes               | `Optional[bool]`                  | Set a key’s TTL; returns `True` when `ex` is `None`.                   |
 | `lpush(self, key, *values, ex=86400, max_size=1024, max_length=20240)` | Yes               | `int`                             | Left-push with value truncation, list trim, and TTL using a pipeline.  |
 | `rpop(self, key)`                                                      | Yes               | `Optional[bytes]`                 | Pop the last element of a list.                                        |
 | `brpop(self, key, timeout=1)`                                          | Yes               | `Optional[bytes]`                 | Simulated blocking pop (`rpop`, sleep, re-`rpop`) for JimDB.           |
-| `lrange(self, key, start=0, end=-1)`                                   | Yes               | `Optional[List[bytes]]`           | Return a slice of a list (LIFO due to `lpush`).                        |
+| `lrange(self, key, start=0, end=-1)`                                   | Yes               | `Optional[list[bytes]]`           | Return a slice of a list (LIFO due to `lpush`).                        |
 | `lrem(self, key, count, value)`                                        | Yes               | `Optional[int]`                   | Remove elements equal to `value`.                                      |
 | `lindex(self, key, index)`                                             | Yes               | `Optional[bytes]`                 | Get list element by index.                                             |
 | `llen(self, key)`                                                      | Yes               | `Optional[int]`                   | Get list length.                                                       |

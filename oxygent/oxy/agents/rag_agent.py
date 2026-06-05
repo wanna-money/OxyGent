@@ -20,7 +20,7 @@ class RAGAgent(ChatAgent):
     )
 
     @model_validator(mode="after")
-    def set_default_prompt(self):
+    def set_default_prompt(self) -> "RAGAgent":
         """Pydantic model validator that injects the default RAG prompt if none provided."""
         if not self.prompt:
             self.prompt = (

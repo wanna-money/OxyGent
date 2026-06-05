@@ -26,7 +26,7 @@ This module defines the data structures for tool execution observations. An `Obs
 
 | Parameter      | Type               | Default | Description                              |
 | -------------- | ------------------ | ------- | ---------------------------------------- |
-| `exec_results` | `List[ExecResult]` | `[]`    | List of individual tool execution results. |
+| `exec_results` | `list[ExecResult]` | `[]`    | List of individual tool execution results. |
 
 ### Methods
 

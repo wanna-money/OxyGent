@@ -5,7 +5,7 @@ including likes/dislikes, rating statistics, etc.
 """
 
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -82,7 +82,7 @@ class ConversationWithRating(BaseModel):
     # Rating statistics information
     rating_stats: Optional[RatingStats] = Field(None, description="Rating statistics")
     # Rating history records list
-    rating_history: Optional[List["ConversationRating"]] = Field(
+    rating_history: Optional[list["ConversationRating"]] = Field(
         None, description="Complete rating history records list"
     )
 

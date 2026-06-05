@@ -55,7 +55,7 @@ oxy.OpenAILLM(
 - **动态配置合并**：配置从多个来源合并，优先级为：请求参数（最高） > 实例 LLM 参数 > 全局 LLM 配置。
 - **统一响应格式**：对流式和非流式响应均提供统一的 `OxyResponse` 格式处理。
 
-**额外参数**：`headers` — 支持 `Dict[str, str]` 或 `Callable[[OxyRequest], Dict[str, str]]`，用于传递额外的 HTTP 请求头。
+**额外参数**：`headers` — 支持 `dict[str, str]` 或 `Callable[[OxyRequest], dict[str, str]]`，用于传递额外的 HTTP 请求头。
 
 ## 调用ollama部署模型
 

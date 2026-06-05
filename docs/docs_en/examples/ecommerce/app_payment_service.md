@@ -45,7 +45,7 @@ Sets the app name to `payment-service` and binds to port **8082**.
 
 | Component | Type | Purpose |
 |---|---|---|
-| `default_name` | `HttpLLM` | Shared LLM backend with `temperature=0.01` and `semaphore=4`. |
+| `default_llm` | `HttpLLM` | Shared LLM backend with `temperature=0.01` and `semaphore=4`. |
 | `payment_tools` | `StdioMCPClient` | Runs `mcp_servers/payment_tools.py` via `uv`. Provides two tools: `query_payment_status` (payment details by payment ID or order ID) and `get_payment_methods` (list of supported payment methods with fee rates and limits). |
 | `payment_service` | `ReActAgent` | The master agent (`is_master=True`) for this service. Uses `payment_tools` to answer payment-related queries through LLM-driven reasoning. |
 

@@ -7,7 +7,6 @@ from oxygent.oxy import FunctionHub
 tool_modules = [
     "flow_image_gen_tools",
     "open_chart_tools",
-    "flowchart_api"
 ]
 
 __all__ = []

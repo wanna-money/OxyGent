@@ -3,21 +3,23 @@
 Provides DBFactory, a singleton factory for creating and caching database client instances.
 """
 
+from typing import Any
+
 
 class DBFactory:
     """Singleton factory that creates and caches database client instances (ES, Redis, Vector)."""
 
-    _instance = None
-    _created_class = None
+    _instance: Any = None
+    _created_class: type | None = None
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: Any, **kwargs: Any) -> "DBFactory":
         """Create or return a singleton instance of SingletonFactory, ensure only one
         instance of the factory is created."""
         if not hasattr(cls, "_factory_instance"):
             cls._factory_instance = super().__new__(cls)
         return cls._factory_instance
 
-    def get_instance(self, class_type, *args, **kwargs):
+    def get_instance(self, class_type: type, *args: Any, **kwargs: Any) -> Any:
         """Get instance of assigned class_type.
 
         Create instance if not exists, otherwise return the existing instance.

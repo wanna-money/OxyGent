@@ -46,7 +46,7 @@ Sets the app name to `app-time` and binds to port **8082**.
 
 | Component | Type | Purpose |
 |---|---|---|
-| `default_name` | `HttpLLM` | Shared LLM backend with `temperature=0.01` and `semaphore=4`. |
+| `default_llm` | `HttpLLM` | Shared LLM backend with `temperature=0.01` and `semaphore=4`. |
 | `time_tools` | `StdioMCPClient` | Launches the `mcp-server-time` MCP server via `uvx` with the timezone set to `Asia/Shanghai`. Provides time-related tools (get current time, convert timezones, etc.). |
 | `time_agent` | `ReActAgent` | The master agent for this service. Uses `time_tools` to answer time queries through LLM-driven Reason-Act loops. |
 

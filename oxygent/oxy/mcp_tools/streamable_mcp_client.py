@@ -1,7 +1,12 @@
-"""Streamable-HTTP MCP client implementation."""
+"""Streamable-HTTP MCP client implementation.
+
+Provides StreamableMCPClient, which connects to MCP servers over the
+streamable-HTTP transport, supporting both persistent (keep-alive) and
+per-request connection modes.
+"""
 
 import logging
-from typing import Any, List
+from typing import Any, Optional
 
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
@@ -14,20 +19,33 @@ logger = logging.getLogger(__name__)
 
 
 class StreamableMCPClient(BaseMCPClient):
-    """MCP client implementation using Streamable-HTTP transport."""
+    """MCP client implementation using Streamable-HTTP transport.
+
+    Supports keep-alive and dynamic-header modes. In keep-alive mode the
+    connection is reused across calls; otherwise a fresh connection is opened
+    for each tool invocation.
+
+    Attributes:
+        server_url: URL of the MCP server's streamable-HTTP endpoint.
+        middlewares: Client-side MCP middleware instances applied to the session.
+    """
 
     server_url: AnyUrl = Field(
         "", description="URL of the MCP server's streamable-HTTP endpoint"
     )
-    middlewares: List[Any] = Field(
+    middlewares: list[Any] = Field(
         default_factory=list, description="Client-side MCP middlewares"
     )
 
-    async def init(self, is_fetch_tools=True) -> None:
+    async def init(self, is_fetch_tools: bool = True) -> None:
         """Initialize the HTTP streaming connection to the MCP server.
 
         Args:
-            is_fetch_tools (bool): If True, fetch the tool list after connecting.
+            is_fetch_tools: If True, discover and register available tools
+                after connecting.
+
+        Raises:
+            Exception: If the connection or initialization fails.
         """
         try:
             if not self.is_dynamic_headers and self.is_keep_alive:
@@ -48,7 +66,7 @@ class StreamableMCPClient(BaseMCPClient):
                     if hasattr(self._session, "add_middleware"):
                         self._session.add_middleware(mw)
                     else:
-                        logger.warning("middleware %s is ignored", mw)
+                        logger.warning(f"middleware {mw} is ignored")
 
                 await self._session.initialize()
                 if is_fetch_tools:
@@ -64,12 +82,29 @@ class StreamableMCPClient(BaseMCPClient):
                         tools_response = await session.list_tools()
                         self.add_tools(tools_response)
         except Exception as e:
-            logger.error("Error initializing server %s: %s", self.name, e)
+            logger.error(
+                f"Error initializing streamable-HTTP server '{self.name}' (url={self.server_url}): {e}",
+                exc_info=True,
+            )
             await self.cleanup()
             raise Exception(f"Server {self.name} error") from e
 
-    async def call_tool(self, tool_name, arguments, headers=None):
-        """Open a fresh streamable-HTTP connection and invoke the named tool with arguments."""
+    async def call_tool(
+        self,
+        tool_name: str,
+        arguments: dict[str, Any],
+        headers: Optional[dict[str, str]] = None,
+    ) -> Any:
+        """Open a fresh streamable-HTTP connection and invoke the named tool.
+
+        Args:
+            tool_name: Name of the MCP tool to call.
+            arguments: Key-value arguments forwarded to the tool.
+            headers: Optional HTTP headers for the connection.
+
+        Returns:
+            The raw MCP tool call result.
+        """
         async with streamablehttp_client(
             build_url(self.server_url), headers=headers, timeout=self.timeout
         ) as (read, write, _):

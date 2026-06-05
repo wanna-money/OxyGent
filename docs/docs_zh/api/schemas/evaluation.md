@@ -65,7 +65,7 @@ oxygent/schemas/evaluation.py
 | `create_time`    | `str`                                 | （必填）   | 创建时间。                           |
 | `from_trace_id`  | `Optional[str]`                       | `None`     | 来源对话 ID。                        |
 | `rating_stats`   | `Optional[RatingStats]`               | `None`     | 聚合后的评分统计。                   |
-| `rating_history`  | `Optional[List[ConversationRating]]` | `None`     | 完整的评分历史记录。                 |
+| `rating_history`  | `Optional[list[ConversationRating]]` | `None`     | 完整的评分历史记录。                 |
 
 ## RatingResponse (BaseModel)
 

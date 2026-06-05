@@ -5,7 +5,7 @@ execute each step via a worker agent, evaluate results, and replan if needed.
 """
 
 import logging
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class Plan(BaseModel):
     """A structured execution plan containing ordered steps."""
 
-    steps: List[str] = Field(
+    steps: list[str] = Field(
         description="different steps to follow, should be in sorted order"
     )
 
@@ -40,7 +40,22 @@ class Action(BaseModel):
 
 
 class PlanAndSolve(BaseFlow):
-    """Plan-and-Solve Prompting Workflow."""
+    """Plan-and-Solve prompting workflow.
+
+    Decomposes a user goal into ordered steps via a planner agent, executes
+    each step through an executor agent, and optionally replans after each
+    step using a replanner agent.  The loop continues until all steps are
+    completed or ``max_replan_rounds`` is exhausted.
+
+    Attributes:
+        max_replan_rounds: Maximum number of replanning iterations allowed.
+        planner_agent_name: Name of the agent that generates plans.
+        pre_plan_steps: Optional predefined steps prepended before planning.
+        enable_replanner: Whether to enable replanning after each step.
+        replanner_agent_name: Name of the agent used for replanning.
+        executor_agent_name: Name of the agent that executes individual steps.
+        llm_model: LLM model name used as a fallback summariser.
+    """
 
     max_replan_rounds: int = Field(
         30, description="Maximum number of replanning iterations allowed"
@@ -49,7 +64,7 @@ class PlanAndSolve(BaseFlow):
     planner_agent_name: str = Field(
         "planner_agent", description="Name of the agent used to generate plans"
     )
-    pre_plan_steps: List[str] = Field(
+    pre_plan_steps: Optional[list[str]] = Field(
         None, description="Predefined steps to prepend before the generated plan"
     )
 
@@ -86,7 +101,7 @@ class PlanAndSolve(BaseFlow):
         description="replanner pydantic parser",
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the Plan-and-Solve flow."""
         super().__init__(**kwargs)
 
@@ -98,7 +113,19 @@ class PlanAndSolve(BaseFlow):
         )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Run the plan-solve-evaluate-replan loop until the goal is achieved or rounds are exhausted."""
+        """Run the plan-solve-evaluate-replan loop.
+
+        Plans the goal (unless pre-defined steps are provided), executes each
+        step sequentially, and optionally replans after every step.  Exits
+        early when all steps are completed or the replanner signals a final
+        response.
+
+        Args:
+            oxy_request: The incoming request containing the user query.
+
+        Returns:
+            An OxyResponse with the final answer.
+        """
         plan_str = ""
         past_steps = ""
         original_query = oxy_request.get_query()

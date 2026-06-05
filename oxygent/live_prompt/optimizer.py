@@ -7,7 +7,7 @@ and custom optimization requirements.
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from ..schemas import OxyRequest
 
@@ -191,7 +191,7 @@ This provides a full prompt engineering review and improvement.
             "or specify llm_model parameter with an existing instance name."
         )
 
-    def _get_available_llm_instances(self) -> List[str]:
+    def _get_available_llm_instances(self) -> list[str]:
         """Get list of registered LLM instance names from global MAS.
 
         Returns:
@@ -222,7 +222,7 @@ This provides a full prompt engineering review and improvement.
             return llm_instances
 
         except Exception as e:
-            logger.debug(f"Error getting LLM instances: {e}")
+            logger.debug(f"Error getting LLM instances: {e}", exc_info=True)
             return []
 
     async def optimize(
@@ -231,8 +231,8 @@ This provides a full prompt engineering review and improvement.
         agent_type: str = "general",
         optimization_strategy: str = "comprehensive",
         custom_requirements: str = "",
-        context: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        context: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """Optimize a prompt based on specified strategy and constraints.
 
         Args:
@@ -295,7 +295,10 @@ This provides a full prompt engineering review and improvement.
                         result["optimized_prompt"], agent_type
                     )
                 except Exception as e:
-                    logger.warning(f"Validation failed: {e}")
+                    logger.warning(
+                        f"Validation failed for agent_type '{agent_type}': {e}",
+                        exc_info=True,
+                    )
                     result["validated"] = {
                         "meets_constraints": False,
                         "missing_elements": ["Validation error"],
@@ -312,7 +315,10 @@ This provides a full prompt engineering review and improvement.
             return result
 
         except Exception as e:
-            logger.error(f"Error during prompt optimization: {e}")
+            logger.error(
+                f"Error during prompt optimization for agent_type '{agent_type}', strategy '{optimization_strategy}': {e}",
+                exc_info=True,
+            )
             return {
                 "error": str(e),
                 "optimized_prompt": current_prompt,  # Fallback to original
@@ -392,7 +398,7 @@ This provides a full prompt engineering review and improvement.
             custom_requirements=custom_requirements or "None specified",
         )
 
-    async def _execute_optimization(self, optimizer_prompt: str) -> Dict[str, Any]:
+    async def _execute_optimization(self, optimizer_prompt: str) -> dict[str, Any]:
         """Execute the optimization using LLM.
 
         Args:
@@ -447,10 +453,13 @@ This provides a full prompt engineering review and improvement.
             return result
 
         except Exception as e:
-            logger.error(f"Error executing LLM optimization: {e}")
+            logger.error(
+                f"Error executing LLM optimization with model '{self.llm_model}': {e}",
+                exc_info=True,
+            )
             raise
 
-    def _parse_optimization_result(self, output: str) -> Dict[str, Any]:
+    def _parse_optimization_result(self, output: str) -> dict[str, Any]:
         """Parse the LLM output into structured result.
 
         Args:
@@ -523,7 +532,7 @@ This provides a full prompt engineering review and improvement.
 
         except json.JSONDecodeError as e:
             # JSON parsing failed, return raw output
-            logger.warning(f"Failed to parse JSON from LLM output: {e}")
+            logger.warning(f"Failed to parse JSON from LLM output: {e}", exc_info=True)
             return {
                 "analysis": "Failed to parse JSON response",
                 "improvements": [],
@@ -536,7 +545,7 @@ This provides a full prompt engineering review and improvement.
                 },
             }
         except Exception as e:
-            logger.error(f"Error parsing optimization result: {e}")
+            logger.error(f"Error parsing optimization result: {e}", exc_info=True)
             # Return structured error response
             return {
                 "analysis": "Failed to parse LLM response",
@@ -552,7 +561,7 @@ This provides a full prompt engineering review and improvement.
 
     def _validate_optimized_prompt(
         self, optimized_prompt: str, agent_type: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Validate that the optimized prompt meets framework requirements.
 
         Args:
@@ -608,7 +617,7 @@ This provides a full prompt engineering review and improvement.
 
         return validation_result
 
-    def get_available_strategies(self) -> List[str]:
+    def get_available_strategies(self) -> list[str]:
         """Get list of available optimization strategies.
 
         Returns:
@@ -616,7 +625,7 @@ This provides a full prompt engineering review and improvement.
         """
         return list(self.OPTIMIZATION_STRATEGIES.keys())
 
-    def get_supported_agent_types(self) -> List[str]:
+    def get_supported_agent_types(self) -> list[str]:
         """Get list of supported agent types.
 
         Returns:

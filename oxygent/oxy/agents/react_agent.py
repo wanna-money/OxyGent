@@ -9,7 +9,7 @@ import asyncio
 import json
 import logging
 import re
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from pydantic import Field
 
@@ -90,7 +90,7 @@ class ReActAgent(LocalAgent):
         None, exclude=True, description="Function to perform reflexion on responses"
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the ReAct agent with appropriate prompt and parsing function."""
         super().__init__(**kwargs)
 
@@ -124,7 +124,7 @@ class ReActAgent(LocalAgent):
         return None
 
     async def _get_history(
-        self, oxy_request: OxyRequest, is_get_user_master_session=False
+        self, oxy_request: OxyRequest, is_get_user_master_session: bool = False
     ) -> Memory:
         """Retrieve conversation history with intelligent memory management.
 
@@ -264,8 +264,8 @@ class ReActAgent(LocalAgent):
                 )
             else:
                 return LLMResponse(
-                    state=LLMState.ERROR_PARSE,
-                    output="Please answer strictly according to the format. If you want to call a tool, provide tool_name.",
+                    state=LLMState.ANSWER,
+                    output=ori_response,
                     ori_response=ori_response,
                 )
 
@@ -290,9 +290,16 @@ class ReActAgent(LocalAgent):
                     ori_response=ori_response,
                 )
         except Exception as e:
-            logger.warning(e)
+            logger.warning(
+                f"Unexpected error parsing LLM response: {e} | response text: {ori_response[:500]}",
+                extra={
+                    "trace_id": oxy_request.current_trace_id,
+                    "node_id": oxy_request.node_id,
+                },
+                exc_info=True,
+            )
             return LLMResponse(
-                state=LLMState.ERROR_PARSE, output=e, ori_response=ori_response
+                state=LLMState.ERROR_PARSE, output=str(e), ori_response=ori_response
             )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
@@ -392,7 +399,15 @@ class ReActAgent(LocalAgent):
                                     r'"trust_mode"\s*:\s*(\d+)', oxy_response.output
                                 ).group(1)
                             )
-                        except (AttributeError, ValueError):
+                        except (AttributeError, ValueError) as e:
+                            logger.warning(
+                                f"Failed to extract trust_mode from response output: {e} | output text: {oxy_response.output[:200]}",
+                                extra={
+                                    "trace_id": oxy_request.current_trace_id,
+                                    "node_id": oxy_request.node_id,
+                                },
+                                exc_info=True,
+                            )
                             llm_response.output["trust_mode"] = 0
 
                     if self.trust_mode or (

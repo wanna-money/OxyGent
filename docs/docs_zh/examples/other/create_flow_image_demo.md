@@ -13,7 +13,7 @@
 
 - 环境变量：`OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL_NAME`（注意：本示例使用 OpenAI 风格的变量名，而非默认的 `DEFAULT_LLM_*` 名称）
 - `requirements.txt` 中列出的 Python 依赖包
-- `oxygent.chart` 模块（提供 `flow_image_gen_tools`、`open_chart_tools`、`create_static_files` 和 `flowchart_api`）
+- `function_hubs.chart` 模块（提供 `flow_image_gen_tools`、`open_chart_tools`、`create_static_files` 和 `flowchart_api`）
 - Web 浏览器，用于查看生成的流程图
 
 ## 运行方式
@@ -58,8 +58,8 @@ Config.set_agent_llm_model("default_llm")
 | 组件 | 类型 | 关键参数 |
 |------|------|----------|
 | `default_llm` | `HttpLLM` | 来自环境变量的 `OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL_NAME` |
-| `flow_image_gen_tools` | FunctionHub | 从 `oxygent.chart.flow_image_gen_tools` 导入；生成 Mermaid 流程图 |
-| `open_chart_tools` | FunctionHub | 从 `oxygent.chart.open_chart_tools` 导入；在浏览器中打开 HTML 文件 |
+| `flow_image_gen_tools` | FunctionHub | 从 `function_hubs.chart.flow_image_gen_tools` 导入；生成 Mermaid 流程图 |
+| `open_chart_tools` | FunctionHub | 从 `function_hubs.chart.open_chart_tools` 导入；在浏览器中打开 HTML 文件 |
 | `image_gen_agent` | `ReActAgent` | `tools=["flow_image_gen_tools"]`，描述：流程图生成代理 |
 | `open_chart_agent` | `ReActAgent` | `tools=["open_chart_tools"]`，描述：在浏览器中打开流程图 |
 | `master_agent` | `ReActAgent` | `is_master=True`，`sub_agents=["image_gen_agent", "open_chart_agent"]`，`prompt_template=MASTER_AGENT_PROMPT`，同时拥有两个工具集的直接访问权限 |
@@ -69,19 +69,19 @@ Config.set_agent_llm_model("default_llm")
 脚本在 OxyGent MAS 之外创建了自定义 FastAPI 应用：
 
 1. **CORS 中间件** -- 允许所有来源，方便开发调试。
-2. **流程图 API 路由** -- 从 `oxygent.chart.flowchart_api` 挂载到 `/api` 路径。
+2. **流程图 API 路由** -- 从 `function_hubs.chart.flowchart_api` 挂载到 `/api` 路径。
 3. **根路径重定向** -- `GET /` 重定向到 `/static/index.html`。
-4. **静态文件服务** -- Web UI 从 `oxygent/chart/web/` 目录提供服务，挂载到 `/static` 路径。
+4. **静态文件服务** -- Web UI 从 `function_hubs/chart/web/` 目录提供服务，挂载到 `/static` 路径。
 
 ### 入口函数
 
 ```python
 async def main():
-    os.makedirs("../../oxygent/chart/web", exist_ok=True)
-    os.makedirs("../../oxygent/chart/web/css", exist_ok=True)
-    os.makedirs("../../oxygent/chart/web/js", exist_ok=True)
-    create_static_files("../../oxygent/chart")
-    app.mount("/static", StaticFiles(directory="../../oxygent/chart/web"), name="web")
+    os.makedirs("../../function_hubs/chart/web", exist_ok=True)
+    os.makedirs("../../function_hubs/chart/web/css", exist_ok=True)
+    os.makedirs("../../function_hubs/chart/web/js", exist_ok=True)
+    create_static_files("../../function_hubs/chart")
+    app.mount("/static", StaticFiles(directory="../../function_hubs/chart/web"), name="web")
 
     async with MAS(oxy_space=oxy_space) as mas:
         await mas.start_web_service(

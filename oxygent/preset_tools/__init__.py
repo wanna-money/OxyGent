@@ -1,3 +1,10 @@
+"""Built-in FunctionHub tool collections for OxyGent agents.
+
+Dynamically discovers and imports all preset tool modules (math, file, time,
+HTTP, string, system, shell, python, image generation, SSH) and re-exports
+their FunctionHub instances so they can be referenced via ``preset_tools.*``.
+"""
+
 import importlib
 import os
 
@@ -15,6 +22,7 @@ tool_modules = [
     "python_tools",
     "image_gen_tools",
     "ssh_tools",
+    "oxy_manage_tools",
 ]
 
 __all__ = []
@@ -69,10 +77,13 @@ for module_name in tool_modules:
         # Print a clear prompt message
         if missing_package and not missing_package.startswith(__package__):
             print(
-                f"Warning: Failed to import tool '{module_name}': Missing dependency package '{missing_package}', please run: pip install {missing_package}"
+                f"Warning: Failed to import tool '{module_name}' from '{module_path}': "
+                f"Missing dependency package '{missing_package}', please run: pip install {missing_package}"
             )
         else:
-            print(f"Warning: Failed to import tool '{module_name}': {error_msg}")
+            print(
+                f"Warning: Failed to import tool '{module_name}' from '{module_path}': {error_msg}"
+            )
 
         # Set the module entry to None to prevent errors in subsequent use
         globals()[module_name] = None

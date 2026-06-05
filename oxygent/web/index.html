@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="./css/file.css"/>
     <link rel="stylesheet" href="./css/agent-list.css"/>
     <link rel="stylesheet" href="./css/timeline.css"/>
+    <link rel="stylesheet" href="./css/guide.css"/>
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
     <script src="./js/utils.js"></script>
     <script src="./js/marked.min.js"></script>
@@ -47,17 +48,21 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div id="header_title_id" class="header-title"></div>
-    <div class="header-right">
-        <button class="btn-history" onclick="window.open('history.html', '_blank')" title="Conversation History">
+        <button class="btn-nav-toggle" onclick="window.open('history.html', '_blank')" title="Conversation History">
             <img src="./image/history.svg" alt="History"/>
             History
         </button>
-        <button class="btn-history" onclick="window.open('prompts.html', '_blank')" title="Prompt Management">
+        <button class="btn-nav-toggle" onclick="window.open('prompts.html', '_blank')" title="Prompt Management">
             <img src="./image/prompt.svg" alt="Prompts"/>
             Prompts
         </button>
+        <button class="btn-nav-toggle" onclick="startGuideTour()" title="Feature Guide">
+            <img src="./image/guide.svg" alt="Guide"/>
+            Guide
+        </button>
+    </div>
+    <div id="header_title_id" class="header-title"></div>
+    <div class="header-right">
         <div class="control">
             <button onclick="begin()">
                 <img src="./image/arrow-left-double.svg" alt=""/>
@@ -201,6 +206,16 @@
                 <button class="json-editor-btn" id="json_editor_toggle" onclick="toggleJsonEditor()">
                     <img src="./image/json.svg" alt="JSON"/>
                 </button>
+                <button class="querys-btn" id="querys_toggle" style="display:none;" onclick="toggleQuerysPanel()">
+                    <img src="./image/querys.svg" alt="Querys"/>
+                </button>
+                <!-- Querys Panel -->
+                <div class="querys-panel" id="querys_panel" style="display:none;">
+                    <div class="querys-panel-header">
+                        <span class="querys-panel-title">Queries</span>
+                    </div>
+                    <ul class="querys-list" id="querys_list"></ul>
+                </div>
                 <!-- JSON Editor Panel -->
                 <div class="json-editor-panel" id="json_editor_panel" style="display:none;">
                     <div class="json-editor-header">
@@ -263,6 +278,23 @@
         <div class="restart-modal-footer">
             <button type="button" id="restart-modal-cancel">Cancel</button>
             <button type="button" id="restart-modal-confirm">Confirm & Restart</button>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Guide Tour Overlay -->
+<div class="tour-mask" id="tour-mask">
+    <div class="tour-spotlight" id="tour-spotlight"></div>
+    <div class="tour-tooltip" id="tour-tooltip">
+        <div class="tour-tooltip-icon" id="tour-icon"></div>
+        <div class="tour-tooltip-title" id="tour-title"></div>
+        <div class="tour-tooltip-desc" id="tour-desc"></div>
+        <div class="tour-tooltip-step">
+            <span class="tour-tooltip-counter" id="tour-counter"></span>
+            <div class="tour-tooltip-nav">
+                <button class="tour-tooltip-btn" id="tour-skip-btn" onclick="endGuideTour()">Skip</button>
+                <button class="tour-tooltip-btn primary" id="tour-next-btn" onclick="nextGuideTourStep()">Next</button>
+            </div>
         </div>
     </div>
 </div>
@@ -350,6 +382,21 @@
 
     var master_agent_name = "master_agent";
     var div_right = $("#agent_log");
+    // Coalesce rapid right-panel scroll requests (cached ReRun nodes, fast LLM
+    // bursts) so animations don't stack and keep playing after the stream ends.
+    // A short debounce groups same-burst events; stop() cancels the in-flight
+    // animation so each rebuild gets exactly one smooth scroll to the bottom.
+    var _rightScrollTimer = null;
+    function scrollRightPanelToBottom() {
+        if (!div_right || !div_right[0]) return;
+        if (_rightScrollTimer) clearTimeout(_rightScrollTimer);
+        _rightScrollTimer = setTimeout(function () {
+            _rightScrollTimer = null;
+            if (!div_right[0]) return;
+            div_right.stop(true, false);
+            div_right.animate({ scrollTop: div_right[0].scrollHeight }, 300);
+        }, 80);
+    }
     var div_chat_history = $("#chat_history");
     var div_chatbox = $("#chatbox");
     var div_org = $("#org-zoom-wrapper");
@@ -525,9 +572,20 @@
             url: "../get_first_query",
             success: function (response) {
                 // console.log('first_query', response);
-                $("#message_input").val(response.data.first_query);
-                if (response.data.first_query) {
+                var fq = response.data.first_query;
+                if (fq) {
+                    if (Array.isArray(fq)) {
+                        querysList = fq;
+                        $("#message_input").val(fq[0]);
+                    } else {
+                        querysList = [fq];
+                        $("#message_input").val(fq);
+                    }
                     $("#message_send").addClass('message_send_active');
+                    var el = document.getElementById('message_input');
+                    el.style.height = 'auto';
+                    el.style.height = el.scrollHeight + 'px';
+                    $("#querys_toggle").show();
                 }
                 if (response.data.shared_data) {
                     chatSharedData = response.data.shared_data;
@@ -724,7 +782,12 @@
             handle_stream_message(jm);
             return;
         }
-        
+
+        if (jm["type"] === "organization_updated") {
+            refresh_organization();
+            return;
+        }
+
         if (!["tool_call", "observation"].includes(jm["type"])) {
             return;
         }
@@ -930,6 +993,23 @@
             console.log('close');
         };
 
+    }
+
+    function refresh_organization() {
+        $.ajax({
+            url: "../get_organization",
+            type: "GET",
+            success: function (response) {
+                agent_id_dict = response.data.id_dict;
+                agent_organization = response.data.organization;
+                var frames = getActiveFrames();
+                if (frames.length > 0) {
+                    frames[0].agent_id_dict = agent_id_dict;
+                    frames[0].agent_organization = agent_organization;
+                }
+                init_organization();
+            }
+        });
     }
 
     function init_organization() {
@@ -2304,6 +2384,7 @@
         }
         if (jm["type"] == "agent_log") {
             if (Object.keys(jm.content)?.length) {
+                div_right.stop(true, false);
                 div_right.empty();
             }
             agent_log = jm["content"];
@@ -2402,9 +2483,7 @@
             }
 
             if (div_right[0]) {
-                div_right.animate({
-                    scrollTop: div_right[0].scrollHeight
-                }, 500);
+                scrollRightPanelToBottom();
             }
         }
         if (jm["type"] == "tool_call") {
@@ -3081,6 +3160,37 @@
         $('#json_editor_panel').hide();
     }
 
+    var querysList = [];
+
+    function toggleQuerysPanel() {
+        var panel = $('#querys_panel');
+        if (panel.is(':visible')) {
+            panel.hide();
+        } else {
+            var list = $('#querys_list');
+            list.empty();
+            querysList.forEach(function (q) {
+                var li = $('<li></li>').text(q);
+                li.on('click', function () {
+                    $('#message_input').val(q);
+                    var el = document.getElementById('message_input');
+                    el.style.height = 'auto';
+                    el.style.height = el.scrollHeight + 'px';
+                    $('#message_send').addClass('message_send_active');
+                    panel.hide();
+                });
+                list.append(li);
+            });
+            panel.show();
+        }
+    }
+
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('#querys_panel, #querys_toggle').length) {
+            $('#querys_panel').hide();
+        }
+    });
+
     // 关闭最右侧对话框
     function closeRight() {
         $('#rightId').css('display', 'none');
@@ -3579,6 +3689,231 @@
         }
     });
 
+
+    // ========== Feature Guide Tour ==========
+    var _guideTourRunning = false;
+    var _guideTourStepIndex = 0;
+    var _guideTourAutoTimer = null;
+
+    var _guideTourSteps = [
+        {
+            selector: '.cascader',
+            icon: '\u{1F4C2}',
+            title: 'File Manager',
+            desc: 'Import/export conversation sessions as JSON. Save your work, load previous sessions, or share agent interactions with your team.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.header-left .btn-nav-toggle:nth-of-type(1)',
+            icon: '\u{1F4DA}',
+            title: 'History',
+            desc: 'Open the History page to browse, search, filter, and rate past conversations. Quickly locate and replay previous agent sessions.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.header-left .btn-nav-toggle:nth-of-type(2)',
+            icon: '\u{270F}️',
+            title: 'Prompts',
+            desc: 'Open the Prompt Manager to edit, version, diff, and hot-reload system prompts at runtime — no service restart needed.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.header-right .control',
+            icon: '\u{23EF}️',
+            title: 'Playback Controls',
+            desc: 'Step-by-step replay: rewind to start, step back, play/pause auto-play, step forward, jump to end. Debug agent execution frame by frame.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '#btn-timeline-toggle',
+            icon: '\u{1F4CF}',
+            title: 'Steps Timeline',
+            desc: 'Toggle the step timeline bar. Shows each execution step on a horizontal track with branch support for navigating parallel traces.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '#btn-tracegraph-toggle',
+            icon: '\u{1F332}',
+            title: 'Trace Graph',
+            desc: 'Toggle the trace graph panel. Visualizes conversation branching as a tree — fork, compare, and navigate between different execution paths.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.container > .center',
+            icon: '\u{1F5FA}️',
+            title: 'Organization Tree',
+            desc: 'Interactive agent hierarchy visualization. See how agents are organized, their types, tools, and LLM configurations. Supports zoom, pan, and minimap.',
+            tooltipPos: 'right'
+        },
+        {
+            selector: '.container > .left',
+            icon: '\u{1F4AC}',
+            title: 'Chat Playground',
+            desc: 'Main conversation panel. Send messages, upload files, use @mention to target specific agents. Supports Markdown rendering and SSE streaming.',
+            tooltipPos: 'left'
+        },
+        {
+            selector: '#chat_send',
+            icon: '\u{2328}️',
+            title: 'Input & Attachments',
+            desc: 'Rich input area: type messages, upload files (images, docs, code), add shared/group data via JSON editor, and @mention agents for direct routing.',
+            tooltipPos: 'above'
+        },
+        {
+            selector: '.container > .right',
+            icon: '\u{1F4CB}',
+            title: 'Agent Detail Panel',
+            desc: 'Click any agent node to inspect execution details: input/output, tool calls, LLM interactions, token usage, and timing information.',
+            tooltipPos: 'left'
+        }
+    ];
+
+    function startGuideTour() {
+        if (_guideTourRunning) return;
+        _guideTourRunning = true;
+        _guideTourStepIndex = 0;
+        document.getElementById('tour-mask').classList.add('visible');
+        _showGuideTourStep(0);
+    }
+
+    function _showGuideTourStep(index) {
+        if (index < 0 || index >= _guideTourSteps.length) {
+            endGuideTour();
+            return;
+        }
+
+        _guideTourStepIndex = index;
+        var step = _guideTourSteps[index];
+
+        var targetEl = document.querySelector(step.selector);
+        if (!targetEl) {
+            if (index < _guideTourSteps.length - 1) {
+                _showGuideTourStep(index + 1);
+            } else {
+                endGuideTour();
+            }
+            return;
+        }
+
+        var elRect = targetEl.getBoundingClientRect();
+        var pad = 4;
+        var spotLeft = elRect.left - pad;
+        var spotTop = elRect.top - pad;
+        var spotW = elRect.width + pad * 2;
+        var spotH = elRect.height + pad * 2;
+
+        // Move spotlight
+        var spotlight = document.getElementById('tour-spotlight');
+        spotlight.style.left = spotLeft + 'px';
+        spotlight.style.top = spotTop + 'px';
+        spotlight.style.width = spotW + 'px';
+        spotlight.style.height = spotH + 'px';
+
+        // Position tooltip — keep it visible and glide alongside the spotlight
+        var tooltip = document.getElementById('tour-tooltip');
+        var firstShow = !tooltip.classList.contains('visible');
+
+        var winW = window.innerWidth;
+        var winH = window.innerHeight;
+        var ttWidth = 320;
+        var ttHeight = 180;
+        var gap = 16;
+        var resolvedPos = step.tooltipPos;
+
+        // Auto-flip if tooltip would go off-screen
+        if (resolvedPos === 'right' && spotLeft + spotW + gap + ttWidth > winW) {
+            resolvedPos = 'left';
+        } else if (resolvedPos === 'left' && spotLeft - gap - ttWidth < 0) {
+            resolvedPos = 'right';
+        } else if (resolvedPos === 'below' && spotTop + spotH + gap + ttHeight > winH) {
+            resolvedPos = 'above';
+        } else if (resolvedPos === 'above' && spotTop - gap - ttHeight < 0) {
+            resolvedPos = 'below';
+        }
+
+        var ttLeft, ttTop;
+
+        if (resolvedPos === 'below') {
+            ttLeft = Math.max(gap, Math.min(spotLeft, winW - ttWidth - gap));
+            ttTop = spotTop + spotH + gap;
+        } else if (resolvedPos === 'above') {
+            ttLeft = Math.max(gap, Math.min(spotLeft, winW - ttWidth - gap));
+            ttTop = spotTop - ttHeight - gap;
+        } else if (resolvedPos === 'right') {
+            ttLeft = spotLeft + spotW + gap;
+            ttTop = Math.max(gap, Math.min(spotTop, winH - ttHeight - gap));
+        } else {
+            ttLeft = spotLeft - ttWidth - gap;
+            ttTop = Math.max(gap, Math.min(spotTop, winH - ttHeight - gap));
+        }
+
+        // Final boundary clamp
+        ttLeft = Math.max(gap, Math.min(ttLeft, winW - ttWidth - gap));
+        ttTop = Math.max(gap, Math.min(ttTop, winH - ttHeight - gap));
+
+        function writeContent() {
+            document.getElementById('tour-icon').textContent = step.icon;
+            document.getElementById('tour-title').textContent = step.title;
+            document.getElementById('tour-desc').textContent = step.desc;
+            document.getElementById('tour-counter').textContent = (index + 1) + ' / ' + _guideTourSteps.length;
+            var nextBtn = document.getElementById('tour-next-btn');
+            nextBtn.textContent = (index === _guideTourSteps.length - 1) ? 'Finish' : 'Next';
+        }
+
+        if (firstShow) {
+            // First step: position without transition, then fade in
+            tooltip.style.transition = 'none';
+            tooltip.style.left = ttLeft + 'px';
+            tooltip.style.top = ttTop + 'px';
+            void tooltip.offsetWidth; // force reflow
+            tooltip.style.transition = '';
+            writeContent();
+            requestAnimationFrame(function() {
+                tooltip.classList.add('visible');
+            });
+        } else {
+            // Subsequent steps: glide position via CSS transition, cross-fade content
+            tooltip.style.left = ttLeft + 'px';
+            tooltip.style.top = ttTop + 'px';
+            tooltip.classList.add('content-swapping');
+            setTimeout(function() {
+                writeContent();
+                tooltip.classList.remove('content-swapping');
+            }, 180);
+        }
+
+        // Auto advance (including auto-finish on the last step)
+        clearTimeout(_guideTourAutoTimer);
+        _guideTourAutoTimer = setTimeout(function() {
+            if (_guideTourRunning) nextGuideTourStep();
+        }, 6000);
+    }
+
+    function nextGuideTourStep() {
+        clearTimeout(_guideTourAutoTimer);
+        if (_guideTourStepIndex >= _guideTourSteps.length - 1) {
+            endGuideTour();
+        } else {
+            _showGuideTourStep(_guideTourStepIndex + 1);
+        }
+    }
+
+    function endGuideTour() {
+        clearTimeout(_guideTourAutoTimer);
+        _guideTourRunning = false;
+        var tooltip = document.getElementById('tour-tooltip');
+        tooltip.classList.remove('visible');
+        setTimeout(function() {
+            document.getElementById('tour-mask').classList.remove('visible');
+        }, 300);
+    }
+
+    // ESC key closes tour
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && _guideTourRunning) {
+            endGuideTour();
+        }
+    });
 
 </script>
 </html>

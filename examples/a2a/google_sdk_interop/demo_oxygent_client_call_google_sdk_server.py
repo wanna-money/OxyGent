@@ -10,7 +10,7 @@ Run:
 import asyncio
 import os
 
-from oxygent import Config, MAS, OxyRequest, oxy
+from oxygent import MAS, Config, OxyRequest, oxy
 
 SERVER_URL = "http://127.0.0.1:8011"
 CLIENT_NAME = "google_sdk_server_client"
@@ -41,15 +41,19 @@ async def main():
             streaming=False,
             timeout=60,
             enable_task_polling=False,
-            headers=DEMO_HEADERS
+            headers=DEMO_HEADERS,
         )
     ]
 
     async with MAS(oxy_space=oxy_space) as mas:
         print("request headers:", DEMO_HEADERS)
-        response = await call_once(mas, "Please introduce yourself in one short sentence.")
+        response = await call_once(
+            mas, "Please introduce yourself in one short sentence."
+        )
         print(response.output)
-        print("session:", response.extra.get("context_id"), response.extra.get("task_id"))
+        print(
+            "session:", response.extra.get("context_id"), response.extra.get("task_id")
+        )
 
 
 if __name__ == "__main__":

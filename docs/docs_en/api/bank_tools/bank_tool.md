@@ -30,7 +30,7 @@ The position of the class is:
 | `server_url`            | `AnyUrl`             | `""`    | URL of the bank server endpoint for this tool.                       |
 | `method`                | `Literal["GET", "POST"]` | `"GET"` | HTTP method used when invoking this tool.                        |
 | `is_permission_required`| `bool`               | `True`  | Whether permission is required for execution.                        |
-| `headers`               | `Dict[str, str]`     | `{}`    | Extra HTTP headers sent with requests.                               |
+| `headers`               | `dict[str, str]`     | `{}`    | Extra HTTP headers sent with requests.                               |
 | `is_retrievable`        | `bool`               | `False` | Whether this tool can be discovered via vector search retrieval.     |
 
 ## Methods

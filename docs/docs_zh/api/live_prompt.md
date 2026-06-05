@@ -38,11 +38,11 @@ Live Prompt 系统提供基于 Elasticsearch（或 LocalEs 回退方案）的热
 | `save_prompt(prompt_key, prompt_content, ...)`                  | 是               | `bool`                | 保存或更新提示词，包含版本历史和乐观锁。 |
 | `get_prompt(prompt_key, use_cache=True)`                        | 是               | `Optional[dict]`      | 按键获取提示词（优先使用缓存）。                        |
 | `get_prompt_content(prompt_key, fallback_content, use_cache)`   | 是               | `str`                 | 获取提示词内容，支持回退值。                      |
-| `get_prompt_history(prompt_key)`                                | 是               | `List[dict]`          | 获取按版本降序排列的提示词版本历史。       |
+| `get_prompt_history(prompt_key)`                                | 是               | `list[dict]`          | 获取按版本降序排列的提示词版本历史。       |
 | `revert_to_version(prompt_key, target_version)`                 | 是               | `bool`                | 将提示词回退到历史中的指定版本。              |
-| `list_prompts(category, agent_type, is_active, tags)`           | 是               | `List[dict]`          | 列出提示词，支持可选过滤条件。                          |
+| `list_prompts(category, agent_type, is_active, tags)`           | 是               | `list[dict]`          | 列出提示词，支持可选过滤条件。                          |
 | `delete_prompt(prompt_key)`                                     | 是               | `bool`                | 从数据库和缓存中删除提示词。                       |
-| `search_prompts(keyword, category)`                             | 是               | `List[dict]`          | 跨提示词字段进行全文搜索。                         |
+| `search_prompts(keyword, category)`                             | 是               | `list[dict]`          | 跨提示词字段进行全文搜索。                         |
 | `clear_cache(prompt_key=None)`                                  | 是               | `None`                | 清除指定键或所有键的缓存。                      |
 | `start_version_sync()`                                          | 是               | `None`                | 启动版本同步，确保多实例一致性。  |
 | `stop_version_sync()`                                           | 是               | `None`                | 停止版本同步。                                  |
@@ -74,8 +74,8 @@ Live Prompt 系统提供基于 Elasticsearch（或 LocalEs 回退方案）的热
 | 方法                                                          | 协程 (async) | 返回值   | 用途                                             |
 | --------------------------------------------------------------- | ----------------- | -------------- | ------------------------------------------------------------- |
 | `optimize(current_prompt, agent_type, strategy, requirements, context)` | 是     | `dict`         | 根据策略和约束优化提示词。          |
-| `get_available_strategies()`                                    | 否                | `List[str]`    | 列出可用的优化策略。                       |
-| `get_supported_agent_types()`                                   | 否                | `List[str]`    | 列出支持的 Agent 类型（react、general）。                  |
+| `get_available_strategies()`                                    | 否                | `list[str]`    | 列出可用的优化策略。                       |
+| `get_supported_agent_types()`                                   | 否                | `list[str]`    | 列出支持的 Agent 类型（react、general）。                  |
 
 ### 模块级函数
 
@@ -117,9 +117,9 @@ Live Prompt 系统提供基于 Elasticsearch（或 LocalEs 回退方案）的热
 | ----------------------------------------- | ----------------- | ----------------- | ---------------------------------------------------------- |
 | `register_agents_from_mas(mas_instance)`  | 否                | `bool`            | 从 MAS 中自动注册使用 Live Prompt 的 Agent。       |
 | `update_agent_prompt(agent_name)`         | 是               | `bool`            | 更新指定 Agent 的提示词。                        |
-| `update_all_prompts()`                    | 是               | `Dict[str, bool]` | 更新所有已注册 Agent 的提示词。                  |
-| `update_prompt_by_key(prompt_key)`        | 是               | `Dict[str, bool]` | 更新使用指定提示词键的所有 Agent。             |
-| `get_agent_prompt_mapping()`              | 否                | `Dict[str, str]`  | 获取 Agent 到提示词键的映射。                       |
+| `update_all_prompts()`                    | 是               | `dict[str, bool]` | 更新所有已注册 Agent 的提示词。                  |
+| `update_prompt_by_key(prompt_key)`        | 是               | `dict[str, bool]` | 更新使用指定提示词键的所有 Agent。             |
+| `get_agent_prompt_mapping()`              | 否                | `dict[str, str]`  | 获取 Agent 到提示词键的映射。                       |
 
 ### 模块级便捷函数
 

@@ -29,7 +29,7 @@ python -m examples.mcp_tools.browser_demo
 ### 配置
 
 ```python
-def load_config() -> Dict[str, Any]:
+def load_config() -> dict[str, Any]:
 ```
 
 一个辅助函数，加载并验证必需的环境变量。如果缺少任何变量，会抛出 `ValueError` 并提供清晰的错误信息。`Config.set_agent_llm_model("default_llm")` 设置全局默认 LLM。

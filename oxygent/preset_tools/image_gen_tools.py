@@ -10,7 +10,12 @@ image_gen_tools = FunctionHub(name="image_gen_tools")
     "descriptions only accept English, so you need to translate the description into English in advance."
 )
 def gen_image(description: str) -> str:
-    """
-    Image generation method, returns image URL
+    """Generate an image from a text description via the Pollinations API.
+
+    Args:
+        description: English text description of the desired image.
+
+    Returns:
+        URL of the generated image.
     """
     return f"https://image.pollinations.ai/prompt/{description}?nologo=true"

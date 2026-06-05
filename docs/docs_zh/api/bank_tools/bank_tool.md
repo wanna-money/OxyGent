@@ -30,7 +30,7 @@
 | `server_url`            | `AnyUrl`                 | `""`    | 该工具对应的 Bank 服务器端点 URL。                           |
 | `method`                | `Literal["GET", "POST"]` | `"GET"` | 调用此工具时使用的 HTTP 方法。                               |
 | `is_permission_required`| `bool`                   | `True`  | 执行时是否需要权限。                                         |
-| `headers`               | `Dict[str, str]`         | `{}`    | 请求时发送的额外 HTTP 头。                                   |
+| `headers`               | `dict[str, str]`         | `{}`    | 请求时发送的额外 HTTP 头。                                   |
 | `is_retrievable`        | `bool`                   | `False` | 该工具是否可通过向量搜索检索发现。                           |
 
 ## 方法

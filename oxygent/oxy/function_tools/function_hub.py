@@ -8,11 +8,15 @@ It supports both synchronous and asynchronous functions with automatic conversio
 import asyncio
 import concurrent.futures
 import functools
+import logging
+from typing import Any, Callable
 
 from pydantic import Field
 
 from ..base_tool import BaseTool
 from .function_tool import FunctionTool
+
+logger = logging.getLogger(__name__)
 
 
 class FunctionHub(BaseTool):
@@ -26,29 +30,25 @@ class FunctionHub(BaseTool):
             and execution functions. Format: {name: (description, async_func)}
     """
 
-    func_dict: dict = Field(
+    func_dict: dict[str, tuple[str, Callable[..., Any]]] = Field(
         default_factory=dict, description="Registry of functions and their metadata"
     )
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         """Initialize the FunctionHub with thread pool support."""
         super().__init__(**data)
-        self._thread_pool = None  # Private attribute for thread pool
+        self._thread_pool: concurrent.futures.ThreadPoolExecutor | None = None
 
     @property
-    def thread_pool(self):
+    def thread_pool(self) -> concurrent.futures.ThreadPoolExecutor:
         """Lazy initialization of thread pool."""
         if self._thread_pool is None:
             self._thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=4)
         return self._thread_pool
 
-    async def init(self):
-        """Initialize the hub by creating FunctionTool instances for all registered
-        functions.
-
-        This method converts all functions in func_dict into individual FunctionTool
-        instances and registers them with the MAS (Multi-Agent System).
-        """
+    async def init(self) -> None:
+        """Initialize the hub by creating FunctionTool instances for all
+        registered functions and adding them to the MAS registry."""
         await super().init()
         params = self.model_dump(exclude={"func_dict", "name", "desc"})
 
@@ -60,7 +60,7 @@ class FunctionHub(BaseTool):
             function_tool.set_mas(self.mas)
             self.mas.add_oxy(function_tool)
 
-    def tool(self, description):
+    def tool(self, description: str) -> Callable[..., Callable[..., Any]]:
         """Decorator for registering functions as tools.
 
         This decorator automatically converts both synchronous and asynchronous
@@ -101,8 +101,17 @@ class FunctionHub(BaseTool):
 
         return decorator
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Clean up resources, including the thread pool."""
-        if self._thread_pool:
-            self._thread_pool.shutdown(wait=True)
-            self._thread_pool = None
+        if self._thread_pool is not None:
+            try:
+                await asyncio.get_running_loop().run_in_executor(
+                    None, self._thread_pool.shutdown, True
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Error shutting down FunctionHub thread pool for '{self.name}': {e}",
+                    exc_info=True,
+                )
+            finally:
+                self._thread_pool = None

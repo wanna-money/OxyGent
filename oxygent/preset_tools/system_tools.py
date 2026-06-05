@@ -1,4 +1,8 @@
-"""System monitoring tools for OxyGent agents."""
+"""System monitoring tools for OxyGent agents.
+
+Exposes host-level information (OS, architecture, Python version) and live
+resource utilization metrics (CPU, memory, disk) via psutil.
+"""
 
 import asyncio
 import json
@@ -51,13 +55,14 @@ async def get_system_usage() -> str:
         }
         return json.dumps(usage, ensure_ascii=False)
     except Exception as e:
-        return json.dumps({"error": str(e)}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"get_system_usage failed: {e}"},
+            ensure_ascii=False,
+        )
 
 
-async def main():
-    """
-    Main function for testing system tools.
-    """
+async def main() -> None:
+    """Run system tools test examples."""
     print("=== System Info Test ===")
     system_info_result = await get_system_info()
     print("System info:")
@@ -69,8 +74,8 @@ async def main():
         print("\nFormatted system info:")
         for key, value in system_info_dict.items():
             print(f"  {key}: {value}")
-    except json.JSONDecodeError:
-        print("Failed to parse system info JSON")
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse system info JSON from get_system_info: {e}")
 
     print("\n=== System Resource Usage Test ===")
     usage_result = await get_system_usage()
@@ -86,8 +91,8 @@ async def main():
         else:
             for key, value in usage_dict.items():
                 print(f"  {key}: {value}")
-    except json.JSONDecodeError:
-        print("Failed to parse resource usage JSON")
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse resource usage JSON from get_system_usage: {e}")
 
 
 if __name__ == "__main__":

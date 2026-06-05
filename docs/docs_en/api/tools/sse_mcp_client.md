@@ -33,7 +33,7 @@ The position of the class is:
 | Parameter     | Type / Allowed value | Default | Description                                                      |
 | ------------- | -------------------- | ------- | ---------------------------------------------------------------- |
 | `sse_url`     | `AnyUrl`             | `""`    | The URL for the SSE connection to the MCP server.                |
-| `middlewares` | `List[Any]`          | `[]`    | Client-side MCP middlewares to apply to the session.             |
+| `middlewares` | `list[Any]`          | `[]`    | Client-side MCP middlewares to apply to the session.             |
 
 ## Methods
 

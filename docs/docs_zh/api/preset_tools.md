@@ -9,6 +9,7 @@ oxygent/preset_tools/
 ├── http_tools.py
 ├── image_gen_tools.py
 ├── math_tools.py
+├── oxy_manage_tools.py
 ├── python_tools.py
 ├── shell_tools.py
 ├── ssh_tools.py
@@ -21,7 +22,7 @@ oxygent/preset_tools/
 
 ## 简介
 
-`preset_tools` 包提供了 10 个内置的 `FunctionHub` 集合，涵盖常用的工具操作。每个模块导出一个 `FunctionHub` 实例，其中包含使用 `@tool` 装饰器修饰的函数，可以直接注册到 Agent 的 `oxy_space` 中。该包在导入时会自动发现并加载所有模块。
+`preset_tools` 包提供了 11 个内置的 `FunctionHub` 集合，涵盖常用的工具操作。每个模块导出一个 `FunctionHub` 实例，其中包含使用 `@tool` 装饰器修饰的函数，可以直接注册到 Agent 的 `oxy_space` 中。该包在导入时会自动发现并加载所有模块。
 
 ---
 
@@ -34,7 +35,7 @@ oxygent/preset_tools/
 | `write_file`    | 否    | `path: str`, `content: str`                   | `str`   | 创建或覆盖文件。                  |
 | `read_file`     | 否    | `path: str`                                   | `str`   | 读取并返回文件内容。            |
 | `delete_file`   | 否    | `path: str`                                   | `str`   | 递归删除文件或目录。      |
-| `view_text_file`| 否    | `file_path: str`, `ranges: Optional[List[int]]` | `str` | 查看文件内容，显示行号，支持可选行范围。 |
+| `view_text_file`| 否    | `file_path: str`, `ranges: Optional[list[int]]` | `str` | 查看文件内容，显示行号，支持可选行范围。 |
 
 ---
 
@@ -56,6 +57,23 @@ oxygent/preset_tools/
 | 工具        | 异步 | 参数          | 返回值 | 用途                                   |
 | ----------- | ----- | ------------------- | ------ | ----------------------------------------- |
 | `gen_image` | 否    | `description: str`  | `str`  | 根据给定的文本描述返回 pollinations.ai URL。 |
+
+---
+
+## oxy_manage_tools
+
+`FunctionHub(name="oxy_manage_tools")` — Agent 组织架构的运行时 CRUD 操作。挂载到 master agent 后，即可通过对话管理 Oxy 实例（Agent、工具、LLM）。
+
+| 工具            | 异步 | 参数                                                                                       | 返回值 | 用途                                                      |
+| --------------- | ----- | ------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------ |
+| `list_oxys`     | 是   | `category_filter: str = ""`                                                                      | `str`  | 列出所有已注册的 Oxy 实例，可按 `agent`、`tool`、`llm` 过滤。 |
+| `get_oxy_info`  | 是   | `oxy_name: str`                                                                                  | `str`  | 获取指定 Oxy 实例的详细配置信息。       |
+| `create_agent`  | 是   | `agent_name: str`, `agent_type: str`, `desc: str`, `llm_model: str`, `prompt: str`, `sub_agents: str`, `tools: str`, `parent_agent: str` | `str`  | 在运行时创建并注册一个新 Agent。                  |
+| `delete_oxy`    | 是   | `oxy_name: str`                                                                                  | `str`  | 删除一个 Oxy 并清理所有父级 Agent 中对它的引用。 |
+| `move_oxy`      | 是   | `oxy_name: str`, `from_parent: str`, `to_parent: str`                                           | `str`  | 将子 Agent 或工具从一个父级 Agent 移动到另一个。   |
+| `modify_oxy`    | 是   | `oxy_name: str`, `field_name: str`, `field_value: str`                                          | `str`  | 更新现有 Oxy 实例的任意字段。                |
+
+结构性变更（`create_agent`、`delete_oxy`、`move_oxy`，以及 `modify_oxy` 修改结构字段时）会自动发送 SSE 消息以刷新前端组织架构树。
 
 ---
 
@@ -87,7 +105,7 @@ oxygent/preset_tools/
 
 | 工具                    | 异步 | 参数                                                 | 返回值 | 用途                                                    |
 | ----------------------- | ----- | ---------------------------------------------------------- | ------ | ---------------------------------------------------------- |
-| `run_shell_command`     | 否    | `args: List[str]`, `tail: int = 10`, `base_dir: Optional[str]` | `str` | 同步运行 Shell 命令；返回最后 `tail` 行。 |
+| `run_shell_command`     | 否    | `args: list[str]`, `tail: int = 10`, `base_dir: Optional[str]` | `str` | 同步运行 Shell 命令；返回最后 `tail` 行。 |
 | `execute_shell_command` | 是   | `command: str`, `timeout: int = 300`                       | `str`  | 异步运行 Shell 命令，支持超时。    |
 
 ---

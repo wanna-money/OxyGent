@@ -36,7 +36,7 @@ This module defines the data structures for chat conversations: `Function`, `Too
 | -------------- | ----------------------------------------------------- | ---------- | ------------------------------------- |
 | `role`         | `Literal["system", "user", "assistant", "tool"]`      | (required) | Message role.                         |
 | `content`      | `Optional[Union[str, list, dict]]`                    | `None`     | Message content.                      |
-| `tool_calls`   | `Optional[List[ToolCall]]`                            | `None`     | Tool calls in this message.           |
+| `tool_calls`   | `Optional[list[ToolCall]]`                            | `None`     | Tool calls in this message.           |
 | `name`         | `Optional[str]`                                       | `None`     | Name (for tool messages).             |
 | `tool_call_id` | `Optional[str]`                                       | `None`     | Tool call ID (for tool responses).    |
 
@@ -49,7 +49,7 @@ This module defines the data structures for chat conversations: `Function`, `Too
 | `assistant_message(content)` (classmethod)           | No                | `Message`        | Factory: create an assistant-role message.                |
 | `tool_message(content, name, tool_call_id)` (classmethod) | No          | `Message`        | Factory: create a tool-role message.                      |
 | `from_tool_calls(tool_calls, content, **kwargs)` (classmethod) | No    | `Message`        | Create assistant message with formatted tool calls.       |
-| `dict_list_to_messages(dict_list)` (staticmethod)    | No                | `List[Message]`  | Convert list-of-dicts to list-of-Messages.                |
+| `dict_list_to_messages(dict_list)` (staticmethod)    | No                | `list[Message]`  | Convert list-of-dicts to list-of-Messages.                |
 | `to_dict()`                                          | No                | `dict`           | Convert to SDK-compatible dict (non-None fields only).    |
 
 ## Memory (BaseModel)
@@ -58,7 +58,7 @@ This module defines the data structures for chat conversations: `Function`, `Too
 
 | Parameter      | Type            | Default | Description                        |
 | -------------- | --------------- | ------- | ---------------------------------- |
-| `messages`     | `List[Message]` | `[]`    | Stored messages.                   |
+| `messages`     | `list[Message]` | `[]`    | Stored messages.                   |
 | `max_messages` | `int`           | `50`    | Maximum message buffer size.       |
 
 ### Methods
@@ -68,5 +68,5 @@ This module defines the data structures for chat conversations: `Function`, `Too
 | `add_message(message)`                    | No                | `None`          | Append a single message.                                       |
 | `add_messages(messages)`                  | No                | `None`          | Append multiple messages.                                      |
 | `clear()`                                 | No                | `None`          | Drop all stored messages.                                      |
-| `get_recent_messages(n)`                  | No                | `List[Message]` | Return the `n` most recent messages.                           |
-| `to_dict_list(short_memory_size=None)`    | No                | `List[dict]`    | Convert to list-of-dicts with sliding-window trimming.         |
+| `get_recent_messages(n)`                  | No                | `list[Message]` | Return the `n` most recent messages.                           |
+| `to_dict_list(short_memory_size=None)`    | No                | `list[dict]`    | Convert to list-of-dicts with sliding-window trimming.         |

@@ -9,7 +9,7 @@ Run:
 
 import asyncio
 
-from oxygent import Config, MAS, OxyRequest, oxy
+from oxygent import MAS, Config, OxyRequest, oxy
 
 SERVER_URL = "http://127.0.0.1:8101/a2a"
 CLIENT_NAME = "langchain_stream_client"
@@ -41,7 +41,9 @@ async def main():
     async with MAS(oxy_space=oxy_space) as mas:
         response = await call_once(mas, "请简要介绍一下 LangChain A2A 服务能力。")
         print("\n[final]", response.output)
-        print("session:", response.extra.get("context_id"), response.extra.get("task_id"))
+        print(
+            "session:", response.extra.get("context_id"), response.extra.get("task_id")
+        )
 
 
 if __name__ == "__main__":

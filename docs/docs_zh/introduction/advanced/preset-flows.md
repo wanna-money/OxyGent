@@ -27,7 +27,7 @@
 | `executor_agent_name` | `str` | `"executor_agent"` | 负责执行每一步的智能体名称 |
 | `enable_replanner` | `bool` | `False` | 是否在每步执行后动态调整计划 |
 | `max_replan_rounds` | `int` | `30` | 最大执行/重规划轮次 |
-| `pre_plan_steps` | `List[str]` | `None` | 预设的计划步骤（跳过规划阶段） |
+| `pre_plan_steps` | `list[str]` | `None` | 预设的计划步骤（跳过规划阶段） |
 | `llm_model` | `str` | `"default_llm"` | 备用 LLM 模型名称 |
 
 ### 使用示例

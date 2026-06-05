@@ -1,14 +1,15 @@
-"""vector_db.py Vearch Vector Database Implementation Module.
+"""Vearch vector database client implementation.
 
-This file implements a comprehensive interface for Vearch vector database operations,
-providing functionality for vector storage, similarity search, and tool retrieval with
-embedding support and advanced filtering capabilities.
+Provides VearchDB, a comprehensive interface for vector storage, similarity
+search, and tool retrieval with embedding support and advanced filtering.
 """
 
 import asyncio
 import base64
 import json
+import logging
 import random
+from typing import Any, Optional
 
 import httpx
 import numpy as np
@@ -16,6 +17,8 @@ import pandas as pd
 
 from oxygent.databases.db_vector.base_vector_db import BaseVectorDB
 from oxygent.embedding_cache import EmbeddingCache
+
+logger = logging.getLogger(__name__)
 
 
 class VectorToolAsync(object):
@@ -26,11 +29,11 @@ class VectorToolAsync(object):
     queries. All operations are asynchronous and use httpx for HTTP communication.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @staticmethod
-    async def create_db(master_url, db_name):
+    async def create_db(master_url: str, db_name: str) -> dict[str, Any]:
         """Create a new database in Vearch.
 
         Args:
@@ -50,7 +53,9 @@ class VectorToolAsync(object):
             return response.json()
 
     @staticmethod
-    async def create_space(master_url, db_name, space_config):
+    async def create_space(
+        master_url: str, db_name: str, space_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create a new space (table) within a database.
 
         Args:
@@ -67,7 +72,7 @@ class VectorToolAsync(object):
             return response.json()
 
     @staticmethod
-    async def drop_space(master_url, db_name, space_name):
+    async def drop_space(master_url: str, db_name: str, space_name: str) -> str:
         """Delete a space from the database.
 
         Args:
@@ -84,7 +89,7 @@ class VectorToolAsync(object):
             return response.text
 
     @staticmethod
-    def generate_random_str(randomlength=10):
+    def generate_random_str(randomlength: int = 10) -> str:
         """Generate a random string for document IDs.
 
         Args:
@@ -97,7 +102,9 @@ class VectorToolAsync(object):
         return "".join(random.choices(base_str, k=randomlength))
 
     @staticmethod
-    async def insert_batch(db_name, space_name, router_url, data_list):
+    async def insert_batch(
+        db_name: str, space_name: str, router_url: str, data_list: str
+    ) -> str:
         """Insert multiple documents in batch using bulk API.
 
         Args:
@@ -115,7 +122,9 @@ class VectorToolAsync(object):
             return response.text
 
     @staticmethod
-    async def insert_single(db_name, space_name, router_url, data_list):
+    async def insert_single(
+        db_name: str, space_name: str, router_url: str, data_list: str
+    ) -> str:
         """Insert a single document.
 
         Args:
@@ -133,7 +142,9 @@ class VectorToolAsync(object):
             return response.text
 
     @staticmethod
-    async def check_info(db_name, space_name, master_url):
+    async def check_info(
+        db_name: str, space_name: str, master_url: str
+    ) -> dict[str, Any]:
         """Check space information and status.
 
         Args:
@@ -150,7 +161,7 @@ class VectorToolAsync(object):
             return response.json()
 
     @staticmethod
-    async def get_cluster_health(master_url):
+    async def get_cluster_health(master_url: str) -> dict[str, Any]:
         """Get cluster health information including document counts.
 
         Args:
@@ -165,7 +176,7 @@ class VectorToolAsync(object):
             return response.json()
 
     @staticmethod
-    async def check_doc_num(master_url, db_name, space_name):
+    async def check_doc_num(master_url: str, db_name: str, space_name: str) -> int:
         """Get the number of documents in a specific space.
 
         Args:
@@ -190,7 +201,9 @@ class VectorToolAsync(object):
         return doc_num
 
     @staticmethod
-    async def search_by_filter(db_name, space_name, router_url, data_list):
+    async def search_by_filter(
+        db_name: str, space_name: str, router_url: str, data_list: dict[str, Any]
+    ) -> dict[str, Any]:
         """Search documents using filter conditions only.
 
         Args:
@@ -208,7 +221,14 @@ class VectorToolAsync(object):
             return response.json()
 
     @staticmethod
-    async def emb_search(db_name, space_name, router_url, emb, retrieval_nums, fields):
+    async def emb_search(
+        db_name: str,
+        space_name: str,
+        router_url: str,
+        emb: Any,
+        retrieval_nums: int,
+        fields: list[str],
+    ) -> dict[str, Any]:
         """Perform vector similarity search using embeddings.
 
         Args:
@@ -239,8 +259,14 @@ class VectorToolAsync(object):
 
     @staticmethod
     async def filter_and_emb_search(
-        db_name, space_name, router_url, emb, retrieval_nums, fields, filter=None
-    ):
+        db_name: str,
+        space_name: str,
+        router_url: str,
+        emb: Any,
+        retrieval_nums: int,
+        fields: list[str],
+        filter: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """Perform hybrid search combining vector similarity and filter conditions.
 
         Args:
@@ -277,7 +303,9 @@ class VectorToolAsync(object):
             return response.json()
 
     @staticmethod
-    async def delete_by_docid(db_name, space_name, router_url, doc_id):
+    async def delete_by_docid(
+        db_name: str, space_name: str, router_url: str, doc_id: str
+    ) -> str:
         """Delete a document by its ID.
 
         Args:
@@ -295,7 +323,7 @@ class VectorToolAsync(object):
             return response.text
 
     @staticmethod
-    def retrieval2df(res):
+    def retrieval2df(res: dict[str, Any]) -> "pd.DataFrame":
         """Convert Vearch search results to pandas DataFrame.
 
         Args:
@@ -313,7 +341,7 @@ class VectorToolAsync(object):
         return pd.DataFrame(df_list)
 
     @staticmethod
-    def check_search_result(res_json):
+    def check_search_result(res_json: dict[str, Any]) -> bool:
         """Check if search results contain valid data.
 
         Args:
@@ -341,7 +369,7 @@ class VearchDB(BaseVectorDB):
     document operations.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: dict[str, Any]) -> None:
         """Initialize Vearch database client.
 
         Args:
@@ -367,7 +395,7 @@ class VearchDB(BaseVectorDB):
         else:
             self.emb_func = None
 
-    async def create_space(self, space_config):
+    async def create_space(self, space_config: dict[str, Any]) -> dict[str, Any]:
         """Create a new space with custom configuration.
 
         Args:
@@ -381,7 +409,7 @@ class VearchDB(BaseVectorDB):
         )
         return res
 
-    async def create_tool_df_space(self, tool_space_name):
+    async def create_tool_df_space(self, tool_space_name: str) -> dict[str, Any]:
         """Create system-specific tool dataframe space with predefined schema.
 
         This method creates a specialized space for storing tool information
@@ -424,7 +452,7 @@ class VearchDB(BaseVectorDB):
         )
         return res
 
-    async def drop_space(self, space_name):
+    async def drop_space(self, space_name: str) -> str:
         """Delete a space from the database.
 
         Args:
@@ -436,8 +464,13 @@ class VearchDB(BaseVectorDB):
         return res
 
     async def query_search(
-        self, space_name, query, retrieval_nums, fields=None, threshold=None
-    ):
+        self,
+        space_name: str,
+        query: str,
+        retrieval_nums: int,
+        fields: Optional[list[str]] = None,
+        threshold: Optional[float] = None,
+    ) -> "pd.DataFrame":
         """Perform semantic search based on text query with optional threshold
         filtering.
 
@@ -486,8 +519,12 @@ class VearchDB(BaseVectorDB):
         return res_df
 
     async def query_search_batch(
-        self, space_name, query_list, retrieval_nums, fields=None
-    ):
+        self,
+        space_name: str,
+        query_list: list[str],
+        retrieval_nums: int,
+        fields: Optional[list[str]] = None,
+    ) -> "pd.DataFrame":
         """Perform batch semantic search for multiple queries.
 
         Args:
@@ -527,7 +564,7 @@ class VearchDB(BaseVectorDB):
         batch_result_df = pd.concat(batch_result)
         return batch_result_df
 
-    async def check_space_exist(self, space_name):
+    async def check_space_exist(self, space_name: str) -> bool:
         """Check if a space exists in the database.
 
         Args:
@@ -544,13 +581,19 @@ class VearchDB(BaseVectorDB):
             if res.get("msg", "space_notexists") == "success":
                 return True
             return False
-        except Exception:
+        except Exception as e:
+            logger.warning(
+                f"Failed to check if space '{space_name}' exists in db '{self.config.db_name}': {e}",
+                exc_info=True,
+            )
             return False
 
     ##
     ## NOTE: System-level methods for tool management
     ##
-    async def create_vearch_table_by_tool_list(self, tool_list):
+    async def create_vearch_table_by_tool_list(
+        self, tool_list: list[tuple[str, str, str, str]]
+    ) -> None:
         """Initialize Vearch database with tool information for system use.
 
         This method creates and populates the system tool space with tool metadata
@@ -589,7 +632,7 @@ class VearchDB(BaseVectorDB):
 
         return
 
-    async def upload_by_df(self, df):
+    async def upload_by_df(self, df: "pd.DataFrame") -> str:
         """Upload tool data from DataFrame to Vearch.
 
         Args:
@@ -628,7 +671,7 @@ class VearchDB(BaseVectorDB):
 
         return res
 
-    async def delete_by_appname(self, app_name):
+    async def delete_by_appname(self, app_name: str) -> None:
         """Delete all documents associated with a specific app name.
 
         Args:
@@ -646,7 +689,7 @@ class VearchDB(BaseVectorDB):
             )
         return
 
-    async def recall_by_appname(self, app_name):
+    async def recall_by_appname(self, app_name: str) -> list[str]:
         """Retrieve all document IDs for a specific app name.
 
         Args:
@@ -679,14 +722,14 @@ class VearchDB(BaseVectorDB):
 
     async def tool_retrieval(
         self,
-        query,
-        app_name=None,
-        agent_name=None,
-        top_k=5,
-        threshold=0.01,
-        *args,
-        **kwargs,
-    ):
+        query: str,
+        app_name: Optional[str] = None,
+        agent_name: Optional[str] = None,
+        top_k: int = 5,
+        threshold: float = 0.01,
+        *args: Any,
+        **kwargs: Any,
+    ) -> list[str]:
         """Retrieve relevant tools based on query with app and agent filtering.
 
         This is the main method for tool discovery in the system, combining
@@ -725,7 +768,9 @@ class VearchDB(BaseVectorDB):
     ##
     ## NOTE:Agent-level methods for table operations
     ##
-    async def single_mode_insert_by_text(self, body, vector_col, space_name):
+    async def single_mode_insert_by_text(
+        self, body: dict[str, Any], vector_col: str, space_name: str
+    ) -> str:
         """Insert a single document with automatic embedding generation.
 
         Args:
@@ -761,7 +806,9 @@ class VearchDB(BaseVectorDB):
     ## NOTE:Helper methods for parameter passing
     ##
 
-    async def emb_search(self, emb, retrieval_nums, fields):
+    async def emb_search(
+        self, emb: Any, retrieval_nums: int, fields: list[str]
+    ) -> "pd.DataFrame":
         """Direct embedding search when user hasn't specified embedding function.
 
         Args:
@@ -786,7 +833,13 @@ class VearchDB(BaseVectorDB):
             res = pd.DataFrame()
         return res
 
-    async def filter_and_emb_search(self, emb, retrieval_nums, fields, filter=None):
+    async def filter_and_emb_search(
+        self,
+        emb: Any,
+        retrieval_nums: int,
+        fields: list[str],
+        filter: Optional[dict[str, Any]] = None,
+    ) -> "pd.DataFrame":
         """Combined embedding and filter search.
 
         Args:
@@ -815,7 +868,9 @@ class VearchDB(BaseVectorDB):
             res = pd.DataFrame()
         return res
 
-    async def search_by_filter(self, space_name, filter):
+    async def search_by_filter(
+        self, space_name: str, filter: dict[str, Any]
+    ) -> "pd.DataFrame":
         """Search using filter conditions only.
 
         Args:
@@ -842,7 +897,7 @@ class VearchConfig(object):
     access and maintains embedding function mappings.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: dict[str, Any]) -> None:
         # Convert all config items to class attributes
         for key, value in config.items():
             setattr(self, key, value)
@@ -857,10 +912,12 @@ class EmbeddingModel(object):
     and proper error handling.
     """
 
-    def __init__(self, url):
+    def __init__(self, url: str) -> None:
         self.url = url
 
-    async def get_embeddings_async(self, querys):
+    async def get_embeddings_async(
+        self, querys: list[str] | tuple[str, ...]
+    ) -> Optional[np.ndarray]:
         """Generate embeddings for a batch of text queries asynchronously.
 
         This method handles batch embedding generation with parallel processing

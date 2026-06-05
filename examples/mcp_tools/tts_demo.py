@@ -4,16 +4,19 @@ TTS MCP Service Test Demo
 This demo shows how to use the optimized TTS MCP service with OxyGent framework.
 """
 
+import asyncio
 import os
 import sys
-import asyncio
+
 from oxygent import MAS, Config, oxy
 
 # Configure the default LLM
 Config.set_agent_llm_model("default_llm")
 
 # Get the absolute path to the project root
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 TTS_TOOLS_PATH = os.path.join(PROJECT_ROOT, "mcp_servers", "tts_tools.py")
 
 # Define the oxy space with optimized TTS tools
@@ -25,7 +28,6 @@ oxy_space = [
         base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
         model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
     ),
-
     # Optimized TTS MCP Client
     oxy.StdioMCPClient(
         name="tts_tools",
@@ -34,7 +36,6 @@ oxy_space = [
             "args": [TTS_TOOLS_PATH],
         },
     ),
-
     # TTS Agent that can handle text-to-speech requests
     oxy.ReActAgent(
         name="tts_agent",
@@ -72,7 +73,6 @@ oxy_space = [
 When users want to hear text spoken, use text_to_speech function. This will either play from cache (if exists) or generate new audio and play it.""",
         llm_model="default_llm",
     ),
-
     # Master agent to coordinate
     oxy.ReActAgent(
         is_master=True,
@@ -86,7 +86,7 @@ When users want to hear text spoken, use text_to_speech function. This will eith
 
 async def main():
     """Main function to run the TTS test demo"""
-    
+
     # Start the MAS with optimized TTS capabilities
     async with MAS(oxy_space=oxy_space) as mas:
         print("🎤 TTS MCP Service with Auto-Caching Started!")
@@ -107,7 +107,7 @@ async def main():
         print("- '播放这段话：[your text]' - Direct speech playback")
         print("- 'Play this text: [your text]' - Direct speech playback")
         print("=" * 60)
-        
+
         await mas.start_web_service(
             first_query="Hello! I'm your TTS assistant with automatic caching. I can convert text to speech, cache audio files for reuse, and play them back. I support Chinese and English voices on macOS and Windows. What would you like me to help you with?",
             welcome_message="Hi, I'm OxyGent with TTS and auto-caching capabilities. How can I assist you?",
@@ -125,5 +125,5 @@ if __name__ == "__main__":
     print("apt install ffmpeg   # Linux")
     print("=" * 40)
     print()
-    
+
     asyncio.run(main())

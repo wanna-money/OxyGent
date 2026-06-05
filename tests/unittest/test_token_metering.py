@@ -13,7 +13,6 @@ from oxygent.utils.token_utils import (
     build_token_usage,
 )
 
-
 # ---------------------------------------------------------------------------
 # TokenUsage schema
 # ---------------------------------------------------------------------------
@@ -170,6 +169,24 @@ class TestBuildTokenUsage:
         assert usage.output_tokens == 9
         assert usage.reasoning_tokens == 26
 
+    def test_gemini_total_tokens_includes_thinking(self):
+        """Gemini total_tokens includes thoughts_tokens (differs from input+output)."""
+        usage = build_token_usage(
+            {
+                "prompt_tokens": 7,
+                "completion_tokens": 10,
+                "thoughts_tokens": 21,
+                "total_tokens": 38,
+            },
+            [],
+            "",
+            "gemini-2.5-flash",
+        )
+        assert usage.input_tokens == 7
+        assert usage.output_tokens == 10
+        assert usage.reasoning_tokens == 21
+        assert usage.total_tokens == 38  # API total includes thinking
+
     def test_gemini_native_format(self):
         """Gemini native: camelCase fields from usageMetadata."""
         usage = build_token_usage(
@@ -204,7 +221,7 @@ class TestBuildTokenUsage:
         assert usage.output_tokens == 27
 
     def test_cached_tokens(self):
-        """Extract cached_tokens from prompt_tokens_details."""
+        """Extract cached_input_tokens from prompt_tokens_details."""
         usage = build_token_usage(
             {
                 "prompt_tokens": 500,
@@ -215,7 +232,59 @@ class TestBuildTokenUsage:
             "",
             "gpt-4o",
         )
-        assert usage.cached_tokens == 300
+        assert usage.cached_input_tokens == 300
+        assert usage.cache_creation_input_tokens == 0
+
+    def test_anthropic_format(self):
+        """Anthropic: top-level cache_read/cache_creation, no prompt_tokens_details."""
+        usage = build_token_usage(
+            {
+                "input_tokens": 50,
+                "output_tokens": 100,
+                "cache_read_input_tokens": 100000,
+                "cache_creation_input_tokens": 248,
+            },
+            [],
+            "",
+            "claude-sonnet-4-20250514",
+        )
+        assert usage.input_tokens == 50
+        assert usage.output_tokens == 100
+        assert usage.cached_input_tokens == 100000
+        assert usage.cache_creation_input_tokens == 248
+
+    def test_deepseek_cache_format(self):
+        """DeepSeek: top-level prompt_cache_hit_tokens."""
+        usage = build_token_usage(
+            {
+                "prompt_tokens": 405,
+                "total_tokens": 415,
+                "completion_tokens": 10,
+                "prompt_tokens_details": None,
+                "prompt_cache_hit_tokens": 380,
+                "reasoning_tokens": 42,
+            },
+            [],
+            "",
+            "deepseek-r1",
+        )
+        assert usage.cached_input_tokens == 380
+        assert usage.cache_creation_input_tokens == 0
+
+    def test_gemini_native_cache_format(self):
+        """Gemini native: cachedContentTokenCount。"""
+        usage = build_token_usage(
+            {
+                "promptTokenCount": 200,
+                "candidatesTokenCount": 15,
+                "thoughtsTokenCount": 30,
+                "cachedContentTokenCount": 150,
+            },
+            [],
+            "",
+            "gemini-2.5-flash",
+        )
+        assert usage.cached_input_tokens == 150
 
     def test_fallback_to_estimator(self):
         usage = build_token_usage(
@@ -285,30 +354,38 @@ class TestTokenAggregation:
 
     def test_cached_and_reasoning_accumulation(self):
         req = MagicMock(shared_data={})
-        aggregate_token_usage(
-            req,
-            TokenUsage(
-                input_tokens=100,
-                output_tokens=50,
-                cached_tokens=60,
-                reasoning_tokens=20,
-                model_name="deepseek-r1",
-            ),
+        u1 = build_token_usage(
+            {
+                "prompt_tokens": 100,
+                "completion_tokens": 50,
+                "prompt_tokens_details": {"cached_tokens": 60},
+                "cache_creation_input_tokens": 10,
+                "reasoning_tokens": 20,
+            },
+            [],
+            "",
+            "deepseek-r1",
         )
-        aggregate_token_usage(
-            req,
-            TokenUsage(
-                input_tokens=80,
-                output_tokens=30,
-                cached_tokens=40,
-                reasoning_tokens=10,
-                model_name="deepseek-r1",
-            ),
+        u2 = build_token_usage(
+            {
+                "prompt_tokens": 80,
+                "completion_tokens": 30,
+                "prompt_tokens_details": {"cached_tokens": 40},
+                "cache_creation_input_tokens": 5,
+                "reasoning_tokens": 10,
+            },
+            [],
+            "",
+            "deepseek-r1",
         )
+        aggregate_token_usage(req, u1)
+        aggregate_token_usage(req, u2)
         m = req.shared_data["_metrics"]["token_usage"]
-        assert m["cached_tokens"] == 100
+        assert m["cached_input_tokens"] == 100
+        assert m["cache_creation_input_tokens"] == 15
         assert m["reasoning_tokens"] == 30
-        assert m["by_model"]["deepseek-r1"]["cached_tokens"] == 100
+        assert m["by_model"]["deepseek-r1"]["cached_input_tokens"] == 100
+        assert m["by_model"]["deepseek-r1"]["cache_creation_input_tokens"] == 15
         assert m["by_model"]["deepseek-r1"]["reasoning_tokens"] == 30
 
     def test_disabled(self):
@@ -316,9 +393,7 @@ class TestTokenAggregation:
         try:
             Config.set_token_tracking_enabled(False)
             req = MagicMock(shared_data={})
-            aggregate_token_usage(
-                req, TokenUsage(input_tokens=100, output_tokens=50)
-            )
+            aggregate_token_usage(req, TokenUsage(input_tokens=100, output_tokens=50))
             assert "_metrics" not in req.shared_data
         finally:
             Config.set_token_tracking_enabled(original)
@@ -335,9 +410,7 @@ class TestAfterExecute:
         from oxygent.oxy.llms.base_llm import BaseLLM
 
         req = MagicMock(shared_data={})
-        token_usage = TokenUsage(
-            input_tokens=10, output_tokens=5, model_name="gpt-4o"
-        )
+        token_usage = TokenUsage(input_tokens=10, output_tokens=5, model_name="gpt-4o")
         resp = OxyResponse(
             state=OxyState.COMPLETED,
             output="hello",
@@ -352,3 +425,28 @@ class TestAfterExecute:
         assert isinstance(resp.extra["usage"], dict)
         assert resp.extra["usage"]["total_tokens"] == 15
         assert req.shared_data["_metrics"]["token_usage"]["total_tokens"] == 15
+
+
+# ---------------------------------------------------------------------------
+# model_dump includes new cache fields
+# ---------------------------------------------------------------------------
+
+
+class TestModelDump:
+    def test_includes_cached_input_tokens(self):
+        usage = TokenUsage(
+            input_tokens=100,
+            output_tokens=50,
+            cached_input_tokens=80,
+            cache_creation_input_tokens=10,
+            model_name="gpt-4o",
+        )
+        data = usage.model_dump()
+        assert data["cached_input_tokens"] == 80
+        assert data["cache_creation_input_tokens"] == 10
+
+    def test_defaults_zero(self):
+        usage = TokenUsage(input_tokens=100, output_tokens=50)
+        data = usage.model_dump()
+        assert data["cached_input_tokens"] == 0
+        assert data["cache_creation_input_tokens"] == 0

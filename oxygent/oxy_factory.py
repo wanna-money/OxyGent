@@ -27,10 +27,10 @@ class OxyFactory:
     }
 
     # Initialize creators mapping at module load time
-    _creators = {}
+    _creators: dict[str, type] = {}
 
     @classmethod
-    def _init_creators(cls):
+    def _init_creators(cls) -> None:
         """Initialize the class creators mapping."""
         from .oxy import (
             ChatAgent,

@@ -1,7 +1,14 @@
-"""Reflexion Flow for OxyGent"""
+"""Reflexion flow for iterative answer improvement.
+
+Implements a generate-evaluate-refine loop: a worker agent produces an
+answer, a reflexion agent evaluates it against quality criteria, and if
+unsatisfactory the worker is prompted to improve.  The cycle repeats up
+to ``max_reflexion_rounds`` times.  Also includes MathReflexion, a
+math-specific variant with numeric evaluation templates.
+"""
 
 import logging
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from pydantic import BaseModel, Field
 
@@ -23,7 +30,20 @@ class ReflexionEvaluation(BaseModel):
 
 
 class Reflexion(BaseFlow):
-    """Reflexion Flow for iterative answer improvement."""
+    """Reflexion flow for iterative answer improvement.
+
+    Orchestrates a worker agent and a reflexion (evaluator) agent in a loop:
+    the worker generates an answer, the evaluator scores it, and if the
+    answer is unsatisfactory the worker receives targeted feedback and
+    tries again.
+
+    Attributes:
+        max_reflexion_rounds: Maximum number of generate-evaluate iterations.
+        worker_agent: Name of the agent that produces answers.
+        reflexion_agent: Name of the agent that evaluates answers.
+        evaluation_template: Prompt template for the evaluation query.
+        improvement_template: Prompt template for the improvement query.
+    """
 
     max_reflexion_rounds: int = Field(3, description="Maximum reflexion iterations")
 
@@ -79,7 +99,7 @@ Previous answer: {previous_answer}""",
         description="Template for improvement query",
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the Reflexion flow with worker and evaluator agents."""
         super().__init__(**kwargs)
 
@@ -110,7 +130,17 @@ Previous answer: {previous_answer}""",
             return self._parse_reflexion_text(response)
 
     def _parse_reflexion_text(self, response: str) -> ReflexionEvaluation:
-        """Parse the evaluator LLM response into a satisfaction flag and feedback text."""
+        """Parse the evaluator LLM response into a ReflexionEvaluation.
+
+        Falls back to line-by-line keyword matching when the pydantic
+        parser is unavailable.
+
+        Args:
+            response: Raw text output from the reflexion agent.
+
+        Returns:
+            A ReflexionEvaluation with satisfaction flag and feedback.
+        """
         lines = response.split("\n")
 
         is_satisfactory = False
@@ -138,7 +168,17 @@ Previous answer: {previous_answer}""",
         )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Execute the reflexion flow."""
+        """Execute the reflexion loop.
+
+        Runs the worker-evaluate-improve cycle until the answer is judged
+        satisfactory or ``max_reflexion_rounds`` is exhausted.
+
+        Args:
+            oxy_request: The incoming request containing the user query.
+
+        Returns:
+            An OxyResponse with the final (possibly refined) answer.
+        """
 
         original_query = oxy_request.get_query()
         current_query = original_query
@@ -240,9 +280,14 @@ Please provide the best possible final answer considering all the feedback above
 
 
 class MathReflexion(Reflexion):
-    """Math-specific Reflexion flow with numeric answer comparison."""
+    """Math-specific Reflexion flow with numeric answer comparison.
 
-    def __init__(self, **kwargs):
+    Pre-configures the worker and evaluator agents and evaluation template
+    for mathematical problem-solving, with checks for calculation
+    correctness, step completeness, and formula accuracy.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
         # Set default agents for math problems
         if "worker_agent" not in kwargs:
             kwargs["worker_agent"] = "math_expert_agent"

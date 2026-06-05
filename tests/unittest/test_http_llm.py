@@ -14,7 +14,9 @@ from oxygent.schemas import OxyRequest, OxyResponse, OxyState
 @pytest.fixture(autouse=True)
 def config_patch(monkeypatch):
     monkeypatch.setattr(
-        "oxygent.oxy.llms.base_llm.Config.get_llm_config", lambda **kwargs: {}, raising=True
+        "oxygent.oxy.llms.base_llm.Config.get_llm_config",
+        lambda **kwargs: {},
+        raising=True,
     )
 
 

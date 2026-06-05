@@ -1,12 +1,16 @@
-"""oxy.py.
+"""Core request, response, and state schemas for the OxyGent framework.
 
-NOTE: The variables defined in this file have meanings as:
-    - mas: the runtime container that knows every agent/tool(oxy) and routes messages among them
-    - oxy: autonomous object, the agent/tool that can be called by other agents/tools
-    - session: persistent channel between caller and callee
-    - trace: conversation thread (a session can branch into different traces)
-    - caller: parent node
-    - callee: the node being entered during a nested call
+Defines the data structures that flow through every Oxy execution:
+``OxyState`` (lifecycle enum), ``OxyRequest`` (invocation envelope),
+``OxyResponse`` (execution result), and ``OxyOutput`` (serializable output).
+
+Domain terminology used throughout:
+    mas: The runtime container that knows every agent/tool and routes messages.
+    oxy: An autonomous object (agent or tool) callable by other agents/tools.
+    session: A persistent channel between caller and callee.
+    trace: A conversation thread; a session can branch into multiple traces.
+    caller: The parent node initiating a call.
+    callee: The node being entered during a nested call.
 """
 
 import asyncio
@@ -14,10 +18,9 @@ import copy
 import logging
 import os
 import time
-import traceback
 from enum import Enum, auto
 from functools import partial
-from typing import Any, List, Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -41,20 +44,14 @@ class OxyState(Enum):  # The status of the node (oxy)
 class OxyRequest(BaseModel):
     """Envelope for a single MAS task invocation.
 
-    Attributes
-    ----------
-    from_trace_id : str | None
-        The parent conversation node's trace id.
-    current_trace_id : str
-        Unique id for *this* node; forms a conversation DAG.
-    root_trace_ids : list[str]
-        All roots composing the current session tree.
-    caller / callee : str
-        Names of the oxy initiating the call and the oxy being called.
-    arguments : dict
-        Call-specific parameters (user input, tool args, etc.).
-    shared_data : dict
-        Scratch space shared with descendants in the same trace.
+    Attributes:
+        from_trace_id: The parent conversation node's trace id.
+        current_trace_id: Unique id for this node; forms a conversation DAG.
+        root_trace_ids: All roots composing the current session tree.
+        caller: Name of the oxy initiating the call.
+        callee: Name of the oxy being called.
+        arguments: Call-specific parameters (user input, tool args, etc.).
+        shared_data: Scratch space shared with descendants in the same trace.
     """
 
     # Static
@@ -91,7 +88,7 @@ class OxyRequest(BaseModel):
     input_md5: Optional[str] = Field(
         "", description="MD5 hash of the input for cache matching"
     )
-    root_trace_ids: list = Field(
+    root_trace_ids: list[str] = Field(
         default_factory=list,
         description="All root trace IDs composing the current session tree",
     )
@@ -103,22 +100,22 @@ class OxyRequest(BaseModel):
         "user", description="Name of the Oxy initiating this call"
     )
     callee: Optional[str] = Field("", description="Name of the Oxy being called")
-    call_stack: List[str] = Field(
+    call_stack: list[str] = Field(
         default_factory=lambda: ["user"],
         description="Ordered list of caller names forming the invocation chain",
     )
-    node_id_stack: List[str] = Field(
+    node_id_stack: list[str] = Field(
         default_factory=lambda: [""],
         description="Ordered list of node IDs paralleling the call stack",
     )
     father_node_id: Optional[str] = Field(
         "", description="Node ID of the direct parent in the call tree"
     )
-    pre_node_ids: Optional[Union[List[str], str]] = Field(
+    pre_node_ids: Optional[Union[list[str], str]] = Field(
         default_factory=list,
         description="Node IDs that must complete before this node executes",
     )
-    latest_node_ids: Optional[Union[List[str], str]] = Field(
+    latest_node_ids: Optional[Union[list[str], str]] = Field(
         default_factory=list,
         description="Most recently completed node IDs in the current branch",
     )
@@ -152,20 +149,20 @@ class OxyRequest(BaseModel):
     parallel_id: Optional[str] = Field(
         "", description="Identifier grouping nodes in the same parallel execution batch"
     )
-    parallel_dict: Optional[dict] = Field(
+    parallel_dict: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         description="Mapping of parallel execution metadata for batch coordination",
     )
 
-    arguments: dict = Field(
+    arguments: dict[str, Any] = Field(
         default_factory=dict,
         description="Call-specific parameters (user input, tool args, etc.)",
     )
-    shared_data: dict = Field(
+    shared_data: dict[str, Any] = Field(
         default_factory=dict,
         description="Public data shared across the entire trace tree",
     )
-    group_data: dict = Field(
+    group_data: dict[str, Any] = Field(
         default_factory=dict,
         description="Data shared across all traces in the same session group",
     )
@@ -181,19 +178,19 @@ class OxyRequest(BaseModel):
     def session_name(self) -> str:  # We use a easy method to create session name
         return self.caller + "__" + self.callee
 
-    def set_mas(self, mas):
+    def set_mas(self, mas: Any) -> None:
         """Bind a MAS instance to this request."""
         self.mas = mas
 
-    def get_oxy(self, oxy_name):
+    def get_oxy(self, oxy_name: str) -> Any:
         """Retrieve a registered Oxy instance by name from the bound MAS."""
         return self.mas.oxy_name_to_oxy[oxy_name]
 
-    def has_oxy(self, oxy_name):
+    def has_oxy(self, oxy_name: str) -> bool:
         """Check whether a named Oxy instance is registered in the bound MAS."""
         return oxy_name in self.mas.oxy_name_to_oxy
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo: dict[int, Any]) -> "OxyRequest":
         """Deep copy the request while sharing mutable cross-trace references."""
         # Dump all the fields into a dict
         fields = self.model_dump()
@@ -246,47 +243,6 @@ class OxyRequest(BaseModel):
                 )
         return new_instance
 
-    async def retry_execute(self, oxy, oxy_request=None) -> "OxyResponse":
-        """Execute an oxy with automatic retries.
-
-        Retries
-        -------
-        Controlled by `oxy.retries` and `oxy.delay`.
-
-        Returns:
-            OxyResponse: Completed or FAILED after exhausting retries.
-        """
-        if oxy_request is None:
-            oxy_request = self
-        attempt = 0
-        while attempt < oxy.retries:
-            try:
-                return await oxy.execute(oxy_request)
-            except Exception as e:
-                attempt += 1
-                logger.warning(
-                    f"Error executing oxy: {e}. Attempt {attempt} of {oxy.retries}.",
-                    extra={
-                        "trace_id": oxy_request.current_trace_id,
-                        "node_id": oxy_request.node_id,
-                    },
-                )
-                if attempt < oxy.retries:
-                    await asyncio.sleep(oxy.delay)
-                else:
-                    error_msg = traceback.format_exc()
-                    logger.warning(
-                        f"Max retries reached. Failing. {error_msg}",
-                        extra={
-                            "trace_id": oxy_request.current_trace_id,
-                            "node_id": oxy_request.node_id,
-                        },
-                    )
-                    return OxyResponse(
-                        state=OxyState.FAILED,
-                        output=f"Error executing tool {oxy.name}: {e}",
-                    )
-
     async def call(self, **kwargs) -> "OxyResponse":
         """Invoke another oxy or tool.
 
@@ -302,6 +258,41 @@ class OxyRequest(BaseModel):
         * Wraps the target oxy in a timeout guard.
         * Converts special tools (e.g., retrieve_tools) into the expected downstream format.
         """
+        oxy_name = kwargs.get("callee", "")
+        # Check if the oxy exists
+        if not self.has_oxy(oxy_name):
+            logger.error(
+                f"oxy {oxy_name} not exists",
+                extra={
+                    "trace_id": self.current_trace_id,
+                    "node_id": self.node_id,
+                },
+            )
+            return OxyResponse(
+                state=OxyState.FAILED, output=f"Tool {oxy_name} not exists"
+            )
+
+        caller_oxy = self.get_oxy(self.callee)
+        oxy = self.get_oxy(oxy_name)
+        # Ensure permission for calling
+        if (
+            self.callee_category != "user"
+            and oxy.is_permission_required
+            and oxy_name
+            not in caller_oxy.permitted_tool_name_list + caller_oxy.permitted_oxy
+        ):
+            error_msg = f"No permission for oxy: {oxy_name}, caller: {self.callee}"
+            logger.error(
+                error_msg,
+                extra={
+                    "trace_id": self.current_trace_id,
+                    "node_id": self.node_id,
+                },
+            )
+            return OxyResponse(
+                state=OxyState.SKIPPED, output=f"No permission for tool: {oxy_name}"
+            )
+
         oxy_request = self.clone_with(**kwargs)
 
         oxy_request.node_id = generate_uuid()
@@ -330,42 +321,6 @@ class OxyRequest(BaseModel):
         oxy_request.caller = self.callee
         oxy_request.caller_category = self.callee_category
 
-        oxy_name = oxy_request.callee
-        # Check if the oxy exists
-        if not self.has_oxy(oxy_name):
-            logger.error(
-                f"oxy {oxy_name} not exists",
-                extra={
-                    "trace_id": oxy_request.current_trace_id,
-                    "node_id": oxy_request.node_id,
-                },
-            )
-            return OxyResponse(
-                state=OxyState.FAILED, output=f"Tool {oxy_name} not exists"
-            )
-
-        caller_oxy = self.get_oxy(oxy_request.caller)
-        oxy = self.get_oxy(oxy_name)
-        # Ensure permission for calling
-        if (
-            oxy_request.caller_category != "user"
-            and oxy.is_permission_required
-            and oxy_name
-            not in caller_oxy.permitted_tool_name_list + caller_oxy.permitted_oxy
-        ):
-            error_msg = (
-                f"No permission for oxy: {oxy_name}, caller: {oxy_request.caller}"
-            )
-            logger.error(
-                error_msg,
-                extra={
-                    "trace_id": oxy_request.current_trace_id,
-                    "node_id": oxy_request.node_id,
-                },
-            )
-            return OxyResponse(
-                state=OxyState.SKIPPED, output=f"No permission for tool: {oxy_name}"
-            )
         # Process special parameters for tools
         if oxy_name == "retrieve_tools":
             oxy_request.arguments["app_name"] = Config.get_app_name()
@@ -379,7 +334,7 @@ class OxyRequest(BaseModel):
         for system_arg in oxy.system_args:
             if system_arg in oxy_request.arguments:
                 continue
-            oxy_request.arguments[system_arg] = system_arg_dict[system_arg]
+            oxy_request.arguments[system_arg] = system_arg_dict.get(system_arg, "")
         # Execute the oxy
         try:
             oxy_response = await asyncio.wait_for(
@@ -395,7 +350,8 @@ class OxyRequest(BaseModel):
             return oxy_response
         except asyncio.TimeoutError:
             logger.warning(
-                f"Task {caller_oxy.name} -> {oxy.name} was timeouted",
+                f"Task {caller_oxy.name} -> {oxy.name} timed out after {oxy.timeout}s",
+                exc_info=True,
                 extra={
                     "trace_id": oxy_request.current_trace_id,
                     "node_id": oxy_request.node_id,
@@ -407,6 +363,7 @@ class OxyRequest(BaseModel):
         except asyncio.CancelledError:
             logger.error(
                 f"Task {caller_oxy.name} -> {oxy.name} was cancelled",
+                exc_info=True,
                 extra={
                     "trace_id": oxy_request.current_trace_id,
                     "node_id": oxy_request.node_id,
@@ -414,9 +371,9 @@ class OxyRequest(BaseModel):
             )
             raise
         except Exception as e:
-            error_msg = traceback.format_exc()
             logger.error(
-                f"Error executing oxy {oxy.name}: {error_msg}",
+                f"Error executing oxy {oxy.name}",
+                exc_info=True,
                 extra={
                     "trace_id": oxy_request.current_trace_id,
                     "node_id": oxy_request.node_id,
@@ -427,7 +384,7 @@ class OxyRequest(BaseModel):
                 output=f"Error executing tool {oxy.name}: {e}",
             )
 
-    async def call_async(self, **kwargs):
+    async def call_async(self, **kwargs: Any) -> None:
         """Call a callee asynchronously in a background task."""
         task = asyncio.create_task(self.call(**kwargs))
         self.mas.add_background_task(self.current_trace_id, task)
@@ -436,7 +393,13 @@ class OxyRequest(BaseModel):
         """Start a streaming call to the callee."""
         return await self.get_oxy(self.callee).execute(self)
 
-    async def send_message(self, message=None, event=None, id=None, retry=None):
+    async def send_message(
+        self,
+        message: Any = None,
+        event: Optional[str] = None,
+        id: Optional[str] = None,
+        retry: Optional[int] = None,
+    ) -> None:
         """Send a message to the frontend via the bound MAS."""
         if self.mas and self.is_send_message:
             # Record first response time on user-facing messages
@@ -470,19 +433,20 @@ class OxyRequest(BaseModel):
             )
             await self.mas.send_message(sse_message, redis_key, group_id=self.group_id)
 
-    def set_query(self, query, master_level=False):
+    def set_query(self, query: str, master_level: bool = False) -> None:
         """Set the query text in the arguments."""
         if master_level:
             self.shared_data["query"] = query
         else:
             self.arguments["query"] = query
 
-    def get_query(self, master_level=False):
+    def get_query(self, master_level: bool = False) -> str:
         """Get the query text from the arguments."""
         md_attachments = []
+        _STATIC_PREFIX = "../static"
         for i, attachment in enumerate(self.arguments.get("attachments", [])):
-            if attachment.startswith("../static/"):
-                attachment = f"{Config.get_cache_save_dir()}/uploads{attachment[9:]}"
+            if attachment.startswith(_STATIC_PREFIX):
+                attachment = f"{Config.get_cache_save_dir()}/uploads{attachment.removeprefix(_STATIC_PREFIX)}"
             is_image_flag = "!" if is_image(attachment) else ""
             attachment_base_name = os.path.basename(attachment)
             md_attachments.append(
@@ -497,17 +461,17 @@ class OxyRequest(BaseModel):
         else:
             return attachments_str + self.arguments.get("query", "")
 
-    def has_short_memory(self, master_level=False):
+    def has_short_memory(self, master_level: bool = False) -> bool:
         """Check whether short-term memory exists in arguments."""
         var_short_memory = "master_short_memory" if master_level else "short_memory"
         return var_short_memory in self.arguments
 
-    def set_short_memory(self, short_memory, master_level=False):
+    def set_short_memory(self, short_memory: Any, master_level: bool = False) -> None:
         """Set short-term memory in arguments."""
         var_short_memory = "master_short_memory" if master_level else "short_memory"
         self.arguments[var_short_memory] = short_memory
 
-    def get_short_memory(self, master_level=False):
+    def get_short_memory(self, master_level: bool = False) -> Any:
         """Get short-term memory from arguments."""
         var_short_memory = "master_short_memory" if master_level else "short_memory"
         return self.arguments.get(var_short_memory, [])
@@ -516,7 +480,7 @@ class OxyRequest(BaseModel):
         """Return the current request_id."""
         return self.request_id
 
-    def set_request_id(self, request_id: str):
+    def set_request_id(self, request_id: str) -> None:
         """Manually override the request_id (rarely needed)."""
         self.request_id = request_id
 
@@ -524,72 +488,74 @@ class OxyRequest(BaseModel):
         """Return the group_id associated with this request."""
         return self.group_id
 
-    def set_group_id(self, group_id: str):
+    def set_group_id(self, group_id: str) -> None:
         """Manually override the group_id."""
         self.group_id = group_id
 
-    def has_arguments(self, key):
+    def has_arguments(self, key: str) -> bool:
         """Check whether arguments exist."""
         return key in self.arguments
 
-    def get_arguments(self, key=None, default=None):
+    def get_arguments(self, key: Optional[str] = None, default: Any = None) -> Any:
         """Get a specific argument by key."""
         if key is None:
             return self.arguments
         return self.arguments.get(key, default)
 
-    def set_arguments(self, key, value):
+    def set_arguments(self, key: str, value: Any) -> None:
         """Set a specific argument by key."""
         self.arguments[key] = value
 
-    def has_shared_data(self, key):
+    def has_shared_data(self, key: str) -> bool:
         """Check whether a key exists in shared_data."""
         return key in self.shared_data
 
-    def get_shared_data(self, key=None, default=None):
+    def get_shared_data(self, key: Optional[str] = None, default: Any = None) -> Any:
         """Get a value from shared_data."""
         if key is None:
             return self.shared_data
         return self.shared_data.get(key, default)
 
-    def set_shared_data(self, key, value):
+    def set_shared_data(self, key: str, value: Any) -> None:
         """Set a value in shared_data."""
         self.shared_data[key] = value
 
-    def has_group_data(self, key):
+    def has_group_data(self, key: str) -> bool:
         """Check whether a key exists in group_data."""
         return key in self.group_data
 
-    def get_group_data(self, key=None, default=None):
+    def get_group_data(self, key: Optional[str] = None, default: Any = None) -> Any:
         """Get a value from group_data."""
         if key is None:
             return self.group_data
         return self.group_data.get(key, default)
 
-    def set_group_data(self, key, value):
+    def set_group_data(self, key: str, value: Any) -> None:
         """Set a value in group_data."""
         self.group_data[key] = value
 
-    def has_global_data(self, key):
+    def has_global_data(self, key: str) -> bool:
         """Check whether a key exists in global_data."""
         return key in self.mas.global_data
 
-    def get_global_data(self, key=None, default=None):
+    def get_global_data(self, key: Optional[str] = None, default: Any = None) -> Any:
         """Get a value from global_data."""
         if key is None:
             return self.mas.global_data
         return self.mas.global_data.get(key, default)
 
-    def set_global_data(self, key, value):
+    def set_global_data(self, key: str, value: Any) -> None:
         """Set a value in global_data."""
         self.mas.global_data[key] = value
 
-    async def break_task(self):
+    async def break_task(self) -> None:
         """Signal task cancellation for the current trace."""
         await self.send_message(message="done", event="close")
-        self.mas.active_tasks[self.current_trace_id].cancel()
+        task = self.mas.active_tasks.get(self.current_trace_id)
+        if task:
+            task.cancel()
 
-    async def get_feedback_stream(self, channel_id=None):
+    async def get_feedback_stream(self, channel_id: Optional[str] = None) -> Any:
         """Get the feedback stream channel for interactive responses."""
         if channel_id is None:
             channel_id = self.current_trace_id
@@ -612,21 +578,16 @@ class OxyRequest(BaseModel):
 class OxyResponse(BaseModel):
     """Result of an oxy execution.
 
-    Attributes
-    ----------
-    state : OxyState
-        Final state of the task.
-    output : Any
-        User-visible payload or error message.
-    extra : dict
-        Optional metadata (tokens used, latency, etc.).
-    oxy_request : OxyRequest | None
-        Echo of the originating request (useful for logging).
+    Attributes:
+        state: Final state of the task.
+        output: User-visible payload or error message.
+        extra: Optional metadata (tokens used, latency, etc.).
+        oxy_request: Echo of the originating request (useful for logging).
     """
 
     state: OxyState
     output: Any
-    extra: dict = Field(
+    extra: dict[str, Any] = Field(
         default_factory=dict,
         description="Optional metadata (token usage, latency, etc.)",
     )
@@ -639,7 +600,7 @@ class OxyOutput(BaseModel):
     """Container for the final output of an Oxy execution chain."""
 
     result: Any
-    attachments: list = Field(
+    attachments: list[Any] = Field(
         default_factory=list,
         description="Supplementary files or data attached to the output",
     )

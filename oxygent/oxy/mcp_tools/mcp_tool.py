@@ -39,5 +39,13 @@ class MCPTool(BaseTool):
     )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Execute the MCP tool by delegating to the parent MCP client."""
+        """Execute the MCP tool by delegating to the parent MCP client.
+
+        Args:
+            oxy_request: The request forwarded to the parent client's
+                ``_execute`` method.
+
+        Returns:
+            The OxyResponse produced by the parent MCP client.
+        """
         return await self.mcp_client._execute(oxy_request)

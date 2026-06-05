@@ -1,4 +1,4 @@
-"""memory_es.py – In-memory Elasticsearch implementation.
+"""In-memory Elasticsearch implementation.
 
 This module simulates a subset of Elasticsearch by storing documents entirely
 in memory (Python dicts).  It is functionally equivalent to LocalEs but:
@@ -30,7 +30,7 @@ class MemoryEs(BaseEs):
 
     _singleton: "MemoryEs | None" = None
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: Any, **kwargs: Any) -> "MemoryEs":
         if cls._singleton is None:
             cls._singleton = super().__new__(cls)
             cls._singleton._indices = {}
@@ -56,11 +56,15 @@ class MemoryEs(BaseEs):
             self._indices[index_name] = {}
         return {"acknowledged": True}
 
-    async def index(self, index_name: str, doc_id: str, body: dict[str, Any]):
+    async def index(
+        self, index_name: str, doc_id: str, body: dict[str, Any]
+    ) -> dict[str, str]:
         self._indices.setdefault(index_name, {})[doc_id] = copy.deepcopy(body)
         return {"_id": doc_id, "result": "created"}
 
-    async def update(self, index_name: str, doc_id: str, body: dict[str, Any]):
+    async def update(
+        self, index_name: str, doc_id: str, body: dict[str, Any]
+    ) -> dict[str, str]:
         store = self._indices.setdefault(index_name, {})
         merged = store.get(doc_id, {})
         merged.update(copy.deepcopy(body))
@@ -70,7 +74,7 @@ class MemoryEs(BaseEs):
     async def exists(self, index_name: str, doc_id: str) -> bool:
         return doc_id in self._indices.get(index_name, {})
 
-    async def search(self, index_name: str, body: dict[str, Any]):
+    async def search(self, index_name: str, body: dict[str, Any]) -> dict[str, Any]:
         data = self._indices.get(index_name, {})
         docs = self._build_docs(data)
         docs = self._filter_docs(docs, body.get("query", {}))

@@ -38,11 +38,11 @@ The Live Prompt system provides hot-reloadable prompt management backed by Elast
 | `save_prompt(prompt_key, prompt_content, ...)`                  | Yes               | `bool`                | Save or update a prompt with version history and optimistic locking. |
 | `get_prompt(prompt_key, use_cache=True)`                        | Yes               | `Optional[dict]`      | Retrieve a prompt by key (cache-first).                        |
 | `get_prompt_content(prompt_key, fallback_content, use_cache)`   | Yes               | `str`                 | Get prompt content with fallback support.                      |
-| `get_prompt_history(prompt_key)`                                | Yes               | `List[dict]`          | Get prompt version history sorted by version descending.       |
+| `get_prompt_history(prompt_key)`                                | Yes               | `list[dict]`          | Get prompt version history sorted by version descending.       |
 | `revert_to_version(prompt_key, target_version)`                 | Yes               | `bool`                | Revert prompt to a specific version from history.              |
-| `list_prompts(category, agent_type, is_active, tags)`           | Yes               | `List[dict]`          | List prompts with optional filtering.                          |
+| `list_prompts(category, agent_type, is_active, tags)`           | Yes               | `list[dict]`          | List prompts with optional filtering.                          |
 | `delete_prompt(prompt_key)`                                     | Yes               | `bool`                | Delete a prompt from database and cache.                       |
-| `search_prompts(keyword, category)`                             | Yes               | `List[dict]`          | Full-text search across prompt fields.                         |
+| `search_prompts(keyword, category)`                             | Yes               | `list[dict]`          | Full-text search across prompt fields.                         |
 | `clear_cache(prompt_key=None)`                                  | Yes               | `None`                | Clear cache for specific key or all keys.                      |
 | `start_version_sync()`                                          | Yes               | `None`                | Start version synchronization for multi-instance consistency.  |
 | `stop_version_sync()`                                           | Yes               | `None`                | Stop version synchronization.                                  |
@@ -74,8 +74,8 @@ The Live Prompt system provides hot-reloadable prompt management backed by Elast
 | Method                                                          | Coroutine (async) | Return Value   | Purpose (concise)                                             |
 | --------------------------------------------------------------- | ----------------- | -------------- | ------------------------------------------------------------- |
 | `optimize(current_prompt, agent_type, strategy, requirements, context)` | Yes     | `dict`         | Optimize a prompt based on strategy and constraints.          |
-| `get_available_strategies()`                                    | No                | `List[str]`    | List available optimization strategies.                       |
-| `get_supported_agent_types()`                                   | No                | `List[str]`    | List supported agent types (react, general).                  |
+| `get_available_strategies()`                                    | No                | `list[str]`    | List available optimization strategies.                       |
+| `get_supported_agent_types()`                                   | No                | `list[str]`    | List supported agent types (react, general).                  |
 
 ### Module-level Function
 
@@ -117,9 +117,9 @@ The Live Prompt system provides hot-reloadable prompt management backed by Elast
 | ----------------------------------------- | ----------------- | ----------------- | ---------------------------------------------------------- |
 | `register_agents_from_mas(mas_instance)`  | No                | `bool`            | Auto-register agents that use live prompts from MAS.       |
 | `update_agent_prompt(agent_name)`         | Yes               | `bool`            | Update prompt for a specific agent.                        |
-| `update_all_prompts()`                    | Yes               | `Dict[str, bool]` | Update prompts for all registered agents.                  |
-| `update_prompt_by_key(prompt_key)`        | Yes               | `Dict[str, bool]` | Update all agents using a specific prompt key.             |
-| `get_agent_prompt_mapping()`              | No                | `Dict[str, str]`  | Get the agent-to-prompt-key mapping.                       |
+| `update_all_prompts()`                    | Yes               | `dict[str, bool]` | Update prompts for all registered agents.                  |
+| `update_prompt_by_key(prompt_key)`        | Yes               | `dict[str, bool]` | Update all agents using a specific prompt key.             |
+| `get_agent_prompt_mapping()`              | No                | `dict[str, str]`  | Get the agent-to-prompt-key mapping.                       |
 
 ### Module-level Convenience Functions
 

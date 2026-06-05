@@ -1,3 +1,8 @@
+"""OxyGent -- Multi-Agent System framework.
+
+Public API surface re-exported for convenience.
+"""
+
 from dotenv import load_dotenv
 
 from .config import Config

@@ -1,15 +1,19 @@
+"""SSE-based remote agent for OxyGent-to-OxyGent streaming communication.
+
+Provides SSEOxyGent, an agent that connects to another OxyGent MAS instance
+via Server-Sent Events for real-time streaming responses with automatic retry.
+"""
+
 import asyncio
 import json
 import logging
 
 import aiohttp
-
-from ...utils.common_utils import EXCLUDED_HEADERS
 import httpx
 from pydantic import Field
 
 from ...schemas import OxyRequest, OxyResponse, OxyState
-from ...utils.common_utils import build_url
+from ...utils.common_utils import EXCLUDED_HEADERS, build_url
 from ...utils.sse_utils import iter_sse_events
 from .remote_agent import RemoteAgent
 
@@ -23,22 +27,33 @@ class SSEOxyGent(RemoteAgent):
         True, description="Whether to share the call stack with the agent."
     )
 
-    async def init(self):
+    async def init(self) -> None:
         """Initialize the SSE remote agent connection."""
         await super().init()
-
-        async with httpx.AsyncClient() as client:
-            response = await client.get(build_url(self.server_url, "/get_organization"))
-            self.org = response.json()["data"]["organization"]
-
-        if self.desc == "":
+        try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    build_url(self.server_url, "/get_description")
+                    build_url(self.server_url, "/get_organization")
                 )
-                if response.json().get("code") == 200:
-                    self.desc = response.json()["data"]["description"]
-        self._set_desc_for_llm()
+                self.org = response.json()["data"]["organization"]
+
+                if self.desc == "":
+                    response = await client.get(
+                        build_url(self.server_url, "/get_description")
+                    )
+                    if response.json().get("code") == 200:
+                        self.desc = response.json()["data"]["description"]
+            self._set_desc_for_llm()
+        except Exception as e:
+            logger.error(
+                f"Failed to initialize SSEOxyGent '{self.name}' "
+                f"(url={self.server_url}): {e}",
+                exc_info=True,
+            )
+            raise RuntimeError(
+                f"Failed to initialize SSEOxyGent '{self.name}' "
+                f"at {self.server_url}: {e}"
+            ) from e
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Forward the request to the remote SSE endpoint and stream the response."""
@@ -68,11 +83,11 @@ class SSEOxyGent(RemoteAgent):
         url = build_url(self.server_url, "/sse/chat")
         answer = ""
 
+        raw_headers = oxy_request.get_shared_data("_headers") or {}
         headers = {
-            k: v
-            for k, v in oxy_request.get_shared_data("_headers", {}).items()
-            if k.lower() not in EXCLUDED_HEADERS
+            k: v for k, v in raw_headers.items() if k.lower() not in EXCLUDED_HEADERS
         }
+
         headers.update(
             {
                 "Accept": "text/event-stream",
@@ -86,6 +101,7 @@ class SSEOxyGent(RemoteAgent):
 
         retry_count = 0
         last_retry_delay = None
+        message_retry = None
 
         while retry_count <= max_retries:
             try:
@@ -155,9 +171,17 @@ class SSEOxyGent(RemoteAgent):
                                             id=message_id,
                                             retry=message_retry,
                                         )
-                                except json.JSONDecodeError:
+                                except json.JSONDecodeError as e:
+                                    logger.warning(
+                                        f"Failed to decode SSE message data as JSON from {url}: {e} | raw data: {message_data[:200]}",
+                                        extra={
+                                            "trace_id": oxy_request.current_trace_id,
+                                            "node_id": oxy_request.node_id,
+                                        },
+                                        exc_info=True,
+                                    )
                                     await oxy_request.send_message(
-                                        data,
+                                        message_data,
                                         event=message_event,
                                         id=message_id,
                                         retry=message_retry,
@@ -170,12 +194,12 @@ class SSEOxyGent(RemoteAgent):
                 retry_count += 1
                 if retry_count > max_retries:
                     logger.error(
-                        f"Max retries ({max_retries}) exceeded for SSE connection. {self.server_url}",
+                        f"Max retries ({max_retries}) exceeded for SSE connection to {self.server_url}: {e}",
                         extra={
                             "trace_id": oxy_request.current_trace_id,
                             "node_id": oxy_request.node_id,
-                            "error": str(e),
                         },
+                        exc_info=True,
                     )
                     return OxyResponse(
                         state=OxyState.FAILED,
@@ -194,23 +218,24 @@ class SSEOxyGent(RemoteAgent):
                 last_retry_delay = retry_delay
 
                 logger.warning(
-                    f"SSE connection failed, retrying in {retry_delay:.2f} seconds (attempt {retry_count}/{max_retries}). {self.server_url}",
+                    f"SSE connection to {self.server_url} failed: {e}, retrying in {retry_delay:.2f} seconds (attempt {retry_count}/{max_retries})",
                     extra={
                         "trace_id": oxy_request.current_trace_id,
                         "node_id": oxy_request.node_id,
-                        "error": str(e),
                     },
+                    exc_info=True,
                 )
 
                 await asyncio.sleep(retry_delay)
 
             except Exception as e:
                 logger.error(
-                    f"Unexpected error in SSE connection: {e}",
+                    f"Unexpected error in SSE connection to {self.server_url} (url={url}): {e}",
                     extra={
                         "trace_id": oxy_request.current_trace_id,
                         "node_id": oxy_request.node_id,
                     },
+                    exc_info=True,
                 )
                 return OxyResponse(
                     state=OxyState.FAILED,

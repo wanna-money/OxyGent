@@ -4,7 +4,7 @@ from oxygent import MAS, oxy
 
 oxy_space = [
     oxy.HttpLLM(
-        name="default_name",
+        name="default_llm",
         api_key=os.getenv("DEFAULT_LLM_API_KEY"),
         base_url=os.getenv("DEFAULT_LLM_BASE_URL"),
         model_name=os.getenv("DEFAULT_LLM_MODEL_NAME"),
@@ -22,13 +22,13 @@ oxy_space = [
         name="master_agent",
         sub_agents=["file_agent", "math_agent"],
         is_master=True,
-        llm_model="default_name",
+        llm_model="default_llm",
     ),
     oxy.ReActAgent(
         name="file_agent",
         desc="A tool for querying local files",
         tools=["file_tools"],
-        llm_model="default_name",
+        llm_model="default_llm",
     ),
     oxy.SSEOxyGent(
         name="math_agent",

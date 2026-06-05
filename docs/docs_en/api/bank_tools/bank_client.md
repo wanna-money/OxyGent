@@ -29,7 +29,7 @@ The position of the class is:
 | ------------------------ | -------------------- | ------- | ------------------------------------------------------- |
 | `server_url`             | `AnyUrl`             | `""`    | URL of the remote bank server.                          |
 | `included_bank_name_list`| `list`               | `[]`    | Names of bank tools discovered from the server.         |
-| `headers`                | `Dict[str, str]`     | `{}`    | Extra HTTP headers sent with requests.                  |
+| `headers`                | `dict[str, str]`     | `{}`    | Extra HTTP headers sent with requests.                  |
 
 ## Methods
 

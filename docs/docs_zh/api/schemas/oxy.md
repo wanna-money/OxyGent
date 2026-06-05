@@ -39,11 +39,11 @@ oxygent/schemas/oxy.py
 | `mas`                      | `Optional[Any]`              | `None`                         | MAS 运行时句柄（不会被序列化）。             |
 | `caller`                   | `Optional[str]`              | `"user"`                       | 调用方 Oxy 的名称。                          |
 | `callee`                   | `Optional[str]`              | `""`                           | 被调用方 Oxy 的名称。                        |
-| `call_stack`               | `List[str]`                  | `["user"]`                     | 调用方名称栈。                               |
-| `node_id_stack`            | `List[str]`                  | `[""]`                         | 节点 ID 栈。                                 |
+| `call_stack`               | `list[str]`                  | `["user"]`                     | 调用方名称栈。                               |
+| `node_id_stack`            | `list[str]`                  | `[""]`                         | 节点 ID 栈。                                 |
 | `father_node_id`           | `Optional[str]`              | `""`                           | 父节点 ID。                                  |
-| `pre_node_ids`             | `Optional[List[str] \| str]` | `[]`                           | 前驱节点 ID。                                |
-| `latest_node_ids`          | `Optional[List[str] \| str]` | `[]`                           | 最新的并行节点 ID。                          |
+| `pre_node_ids`             | `Optional[list[str] \| str]` | `[]`                           | 前驱节点 ID。                                |
+| `latest_node_ids`          | `Optional[list[str] \| str]` | `[]`                           | 最新的并行节点 ID。                          |
 | `caller_category`          | `Optional[str]`              | `"user"`                       | 调用方类别（user/agent/tool）。              |
 | `callee_category`          | `Optional[str]`              | `""`                           | 被调用方类别。                               |
 | `node_id`                  | `Optional[str]`              | `""`                           | 当前节点 ID。                                |
@@ -63,7 +63,6 @@ oxygent/schemas/oxy.py
 | `has_oxy(self, oxy_name)`                                  | 否           | `bool`        | 检查 MAS 注册表中是否存在指定 Oxy。                                                                     |
 | `__deepcopy__(self, memo)`                                 | 否           | `OxyRequest`  | 自定义深拷贝，保留 MAS/shared\_data 并重置并行信息。                                                    |
 | `clone_with(self, **kwargs)`                               | 否           | `OxyRequest`  | 深拷贝后原子性地覆盖指定字段。                                                                          |
-| `retry_execute(self, oxy, oxy_request=None)`               | 是           | `OxyResponse` | 使用 `oxy.retries`/`oxy.delay` 进行带重试和退避的执行。                                                 |
 | `call(self, **kwargs)`                                     | 是           | `OxyResponse` | 带覆盖参数的克隆、权限检查、超时保护、`retrieve_tools` 特殊处理，然后执行。                              |
 | `start(self)`                                              | 是           | `OxyResponse` | 入口：使用当前请求执行目标 callee 的 `execute`。                                                        |
 | `send_message(self, message)`                              | 是           | `None`        | 通过 MAS/Redis 向前端推送结构化事件。                                                                   |

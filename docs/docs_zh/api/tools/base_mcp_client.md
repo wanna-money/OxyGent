@@ -33,7 +33,7 @@
 | 参数                      | 类型 / 允许值       | 默认值                                | 描述                                                     |
 | ------------------------- | -------------------- | ------------------------------------- | -------------------------------------------------------- |
 | `included_tool_name_list` | `list`               | `[]`                                  | 从 MCP 服务器发现并注册的工具名称列表。                  |
-| `headers`                 | `Dict[str, str]`     | `{}`                                  | 与服务器通信时使用的额外 HTTP 头。                       |
+| `headers`                 | `dict[str, str]`     | `{}`                                  | 与服务器通信时使用的额外 HTTP 头。                       |
 | `is_dynamic_headers`      | `bool`               | `False`                               | 是否在每次调用时从请求上下文重新构建 HTTP 头。           |
 | `is_inherit_headers`      | `bool`               | `False`                               | 是否从父请求继承 HTTP 头。                               |
 | `is_keep_alive`           | `bool`               | `Config.get_tool_mcp_is_keep_alive()` | 是否在多次工具调用间复用 MCP 连接。                      |

@@ -29,7 +29,7 @@ The position of the class is:
 | `api_key`    | `Optional[str]`                                        | `None`  | API key for authentication with the remote LLM service.                    |
 | `base_url`   | `Optional[str]`                                        | `""`    | Base URL endpoint for the remote LLM API (required).                       |
 | `model_name` | `Optional[str]`                                        | `""`    | Model identifier to use for requests (required).                           |
-| `headers`    | `Dict[str, str] \| Callable[[OxyRequest], Dict[str, str]]` | `lambda: {}` | Extra HTTP headers or a callable that returns headers per request.   |
+| `headers`    | `dict[str, str] \| Callable[[OxyRequest], dict[str, str]]` | `lambda: {}` | Extra HTTP headers or a callable that returns headers per request.   |
 
 ## Methods
 

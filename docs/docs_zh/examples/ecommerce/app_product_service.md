@@ -45,7 +45,7 @@ Config.set_server_port(8080)
 
 | 组件 | 类型 | 用途 |
 |---|---|---|
-| `default_name` | `HttpLLM` | 共享的 LLM 后端，`temperature=0.01`，`semaphore=4`。 |
+| `default_llm` | `HttpLLM` | 共享的 LLM 后端，`temperature=0.01`，`semaphore=4`。 |
 | `product_db` | `StdioMCPClient` | 通过 `uv` 运行 `mcp_servers/product_tools.py`。提供：`get_product_info`（按 ID 或名称查询商品详情）和 `get_products_by_category`（按分类列出商品）。模拟商品目录包含 3 个商品：商品 A（电子产品，5999 元）、商品 B（计算设备，12999 元）、商品 C（配件，899 元）。 |
 | `inventory_tools` | `StdioMCPClient` | 通过 `uv` 运行 `mcp_servers/inventory_tools.py`。提供六个工具：`check_inventory`、`check_stock_availability`、`release_reserved_stock`、`get_low_stock_products`、`get_inventory_by_warehouse` 和 `get_restock_suggestions`。跨四个仓库跟踪库存。 |
 | `product_agent` | `ReActAgent` | 本服务的主代理（`is_master=True`）。使用 `product_db` 和 `inventory_tools` 通过 LLM 驱动的推理处理所有商品和库存查询。 |

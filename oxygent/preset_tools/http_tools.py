@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import httpx
 
@@ -16,8 +16,8 @@ http_tools = FunctionHub(name="http_tools")
 )
 def http_get(
     url: str,
-    headers: Optional[Dict[str, str]] = None,
-    params: Optional[Dict[str, Any]] = None,
+    headers: Optional[dict[str, str]] = None,
+    params: Optional[dict[str, Any]] = None,
 ) -> str:
     """Send an HTTP GET request."""
     try:
@@ -34,7 +34,10 @@ def http_get(
                 ensure_ascii=False,
             )
     except Exception as e:
-        return json.dumps({"error": str(e)}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"http_get failed for url={url!r}, params={params!r}: {e}"},
+            ensure_ascii=False,
+        )
 
 
 @http_tools.tool(
@@ -42,8 +45,8 @@ def http_get(
 )
 def http_post(
     url: str,
-    data: Optional[Dict[str, Any]] = None,
-    headers: Optional[Dict[str, str]] = None,
+    data: Optional[dict[str, Any]] = None,
+    headers: Optional[dict[str, str]] = None,
 ) -> str:
     """Send an HTTP POST request."""
     try:
@@ -66,10 +69,13 @@ def http_post(
                 ensure_ascii=False,
             )
     except Exception as e:
-        return json.dumps({"error": str(e)}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"http_post failed for url={url!r}: {e}"},
+            ensure_ascii=False,
+        )
 
 
-async def main():
+async def main() -> None:
     # GET request example
     result = await http_get("https://www.json.cn/", params={"key": "value"})
     print("GET Result:", result)

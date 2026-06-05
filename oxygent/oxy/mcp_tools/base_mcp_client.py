@@ -8,7 +8,7 @@ and tool execution through the Model Context Protocol standard.
 import asyncio
 import logging
 from contextlib import AsyncExitStack
-from typing import Any, Dict
+from typing import Any, Optional
 
 import anyio
 from mcp import ClientSession
@@ -33,11 +33,11 @@ class BaseMCPClient(BaseTool):
         included_tool_name_list: List of tool names discovered from the MCP server.
     """
 
-    included_tool_name_list: list = Field(
+    included_tool_name_list: list[str] = Field(
         default_factory=list,
         description="Tool names discovered and registered from the MCP server",
     )
-    headers: Dict[str, str] = Field(
+    headers: dict[str, str] = Field(
         default_factory=dict, description="Extra HTTP headers"
     )
     is_dynamic_headers: bool = Field(
@@ -52,14 +52,14 @@ class BaseMCPClient(BaseTool):
         description="Whether to reuse the MCP connection across tool calls",
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the MCP client with necessary resources.
 
         Sets up the client session, cleanup mechanisms, and context managers for proper
         resource management throughout the client lifecycle.
         """
         super().__init__(**kwargs)
-        self._session: ClientSession = None
+        self._session: Optional[ClientSession] = None
         self._cleanup_lock: asyncio.Lock = asyncio.Lock()
         self._exit_stack: AsyncExitStack = AsyncExitStack()
         self._stdio_context: Any = None
@@ -67,7 +67,11 @@ class BaseMCPClient(BaseTool):
     async def list_tools(self) -> None:
         """Discover and register tools from the MCP server.
 
-        Connects to the MCP server, retrieves the list of available tools
+        Connects to the MCP server, retrieves the list of available tools,
+        and delegates to ``add_tools`` for registration.
+
+        Raises:
+            RuntimeError: If the client session has not been initialized.
         """
         if not self._session:
             raise RuntimeError(f"Server {self.name} not initialized")
@@ -75,8 +79,16 @@ class BaseMCPClient(BaseTool):
         tools_response = await self._session.list_tools()
         self.add_tools(tools_response)
 
-    def add_tools(self, tools_response) -> None:
-        """Register MCPTool instances dynamically based on the tools_response from the server."""
+    def add_tools(self, tools_response: Any) -> None:
+        """Register MCPTool instances from the server's tool listing response.
+
+        Each tool in ``tools_response`` is wrapped in an ``MCPTool`` proxy
+        and added to the MAS registry so that agents can discover and call it.
+
+        Args:
+            tools_response: The raw response from ``session.list_tools()``,
+                typically a sequence of ``("tools", [Tool, ...])`` tuples.
+        """
         params = self.model_dump(
             exclude={
                 "sse_url",
@@ -116,9 +128,19 @@ class BaseMCPClient(BaseTool):
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Execute a tool call through the MCP server.
 
-        Forwards the tool execution request to the appropriate MCP server tool and
-        processes the response. Handles both single and multiple content responses from
-        the MCP protocol.
+        Forwards the tool execution request to the appropriate MCP server tool
+        and processes the response. Handles both keep-alive and per-request
+        connection modes, with automatic reconnection on closed resources.
+
+        Args:
+            oxy_request: The request whose ``callee`` identifies the tool to
+                invoke and whose ``arguments`` are forwarded as tool input.
+
+        Returns:
+            An OxyResponse containing the tool's text output.
+
+        Raises:
+            RuntimeError: If the session is not initialized in keep-alive mode.
         """
         tool_name = oxy_request.callee
 
@@ -131,7 +153,7 @@ class BaseMCPClient(BaseTool):
                     tool_name, oxy_request.arguments
                 )
             except anyio.ClosedResourceError:
-                await self.init(is_fetch_tools=False)  # TODO: refetch tools
+                await self.init(is_fetch_tools=False)
                 mcp_response = await self._session.call_tool(
                     tool_name, oxy_request.arguments
                 )
@@ -154,7 +176,6 @@ class BaseMCPClient(BaseTool):
                 oxy_request.arguments,
                 headers=merged_headers,
             )
-        # TODO: Handle result objects and progress tracking
         results = [content.text.strip() for content in mcp_response.content]
         return OxyResponse(
             state=OxyState.COMPLETED,
@@ -167,16 +188,44 @@ class BaseMCPClient(BaseTool):
         Safely closes the MCP server session and all associated resources. Uses a
         cleanup lock to prevent concurrent cleanup operations and handles cancellation
         and other exceptions gracefully.
+
+        When ``init()`` ran inside ``asyncio.gather`` (which creates a child
+        task), the anyio cancel-scope was entered in that child task.  Closing
+        the exit stack from the current (different) task raises a
+        ``RuntimeError``.  In that case we fall back to
+        ``_on_cross_task_cleanup`` so subclasses can do transport-specific
+        teardown (e.g. killing a subprocess).
         """
         async with self._cleanup_lock:
             try:
                 await self._exit_stack.aclose()
+            except RuntimeError as e:
+                if "cancel scope" in str(e) or "different task" in str(e):
+                    await self._on_cross_task_cleanup()
+                else:
+                    logger.warning(
+                        f"MCP client cleanup failed for server '{self.name}': {e}",
+                        exc_info=True,
+                    )
             except asyncio.CancelledError:
-                # TODO cleanup(): Operation was cancelled
-                logger.error("MCP client cleanup was cancelled")
-            except Exception:
-                pass
-                # Suppress cleanup exceptions to prevent cascading failures
+                logger.error(
+                    f"MCP client cleanup was cancelled for server '{self.name}'",
+                    exc_info=True,
+                )
+            except Exception as e:
+                logger.warning(
+                    f"MCP client cleanup failed for server '{self.name}': {e}",
+                    exc_info=True,
+                )
             finally:
                 self._session = None
                 self._stdio_context = None
+
+    async def _on_cross_task_cleanup(self) -> None:
+        """Hook for subclasses to handle cleanup when the exit stack cannot
+        be closed because it was entered in a different asyncio task.
+
+        The default implementation is a no-op (suitable for HTTP-based
+        transports where the connection simply goes away).  ``StdioMCPClient``
+        overrides this to terminate the child process.
+        """

@@ -48,7 +48,7 @@ The service is given a distinct app name (`app-math`) and bound to port **8081**
 
 | Component | Type | Purpose |
 |---|---|---|
-| `default_name` | `HttpLLM` | Shared LLM backend. |
+| `default_llm` | `HttpLLM` | Shared LLM backend. |
 | `math_tools` | `StdioMCPClient` | Runs `mcp_servers/math_tools.py` via `uv`. Exposes two tools: `power` (exponentiation) and `calc_pi` (pi to N decimal places). |
 | `time_agent` | `SSEOxyGent` | Remote proxy to the time agent service on port 8082. |
 | `math_agent` | `WorkflowAgent` | The master agent for this service (`is_master=True`). Uses a custom `func_workflow` instead of LLM-driven reasoning. Has access to `math_tools` and `time_agent` as sub-agents. |

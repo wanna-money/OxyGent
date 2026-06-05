@@ -21,7 +21,7 @@ oxygent/mas.py
 | `oxy_space` | `list` | `[]` | Initial list of Oxy objects to be registered |
 | `oxy_name_to_oxy` | `dict[str, Oxy]` | `{}` | Dictionary mapping Oxy names to Oxy instances |
 | `master_agent_name` | `str` | `""` | Name of the master agent |
-| `first_query` | `str` | `""` | First query to be displayed in frontend |
+| `first_query` | `Union[str, list[str]]` | `""` | First query or list of queries to be displayed in frontend |
 | `agent_organization` | `dict` | `[]` | Organization structure of agents |
 | `vearch_client` | `Optional[VearchDB]` | `None` | Vector database client |
 | `es_client` | `Optional[AsyncElasticsearch]` | `None` | Elasticsearch client |
@@ -43,7 +43,7 @@ oxygent/mas.py
 | `init_all_oxy()` | Yes | `None` | Initialize all registered Oxy objects |
 | `batch_init_oxy()` | Yes | `None` | Batch initialize oxy objects of specified types |
 | `create_vearch_table()` | Yes | `None` | Create Vearch tables for tools |
-| `cleanup_servers()` | Yes | `None` | Gracefully shut down remote servers/clients |
+| `cleanup_all()` | Yes | `None` | Gracefully release resources held by all registered Oxy components |
 | `add_oxy()` | No | `None` | Register a single Oxy object |
 | `add_oxy_list()` | No | `None` | Register a list of Oxy objects |
 | `call()` | Yes | `Any` | Invoke an Oxy component directly and return its output |
@@ -69,6 +69,12 @@ async def main():
     async with MAS(oxy_space=oxy_space) as mas:
         await mas.start_web_service(
             first_query="Hello!" 
+        )
+
+async def main():
+    async with MAS(oxy_space=oxy_space) as mas:
+        await mas.start_web_service(
+            first_query=["How is the weather today?", "Tell me a joke", "What time is it?"]
         )
 
 async def main():

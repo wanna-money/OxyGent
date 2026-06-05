@@ -88,9 +88,7 @@ def test_replace_env_var_non_string():
 # Config.load_from_json
 # ──────────────────────────────────────────────────────────────────────────────
 def test_load_from_json_default():
-    cfg_data = {
-        "default": {"app": {"name": "test_app", "custom_key": "custom_val"}}
-    }
+    cfg_data = {"default": {"app": {"name": "test_app", "custom_key": "custom_val"}}}
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(cfg_data, f)
         f.flush()

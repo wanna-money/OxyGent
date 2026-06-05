@@ -1,12 +1,13 @@
-import logging
-from typing import List
+"""Observation and execution result schemas for tool output aggregation.
+
+Provides ExecResult (a single tool's output paired with its executor name)
+and Observation (an ordered collection of ExecResults rendered as text).
+"""
 
 from pydantic import BaseModel, Field
 
 from ..utils.common_utils import to_json
 from .oxy import OxyOutput, OxyResponse
-
-logger = logging.getLogger(__name__)
 
 
 class ExecResult(BaseModel):
@@ -17,9 +18,13 @@ class ExecResult(BaseModel):
 
 
 class Observation(BaseModel):
-    """Observation for multimodal."""
+    """Aggregated observation from one or more tool executions.
 
-    exec_results: List[ExecResult] = Field(
+    Collects individual ExecResult entries and provides a unified
+    string representation suitable for inclusion in agent prompts.
+    """
+
+    exec_results: list[ExecResult] = Field(
         default_factory=list, description="List of individual tool execution results"
     )
 
@@ -27,7 +32,7 @@ class Observation(BaseModel):
         """Add an exec result to exec_results."""
         self.exec_results.append(exec_result)
 
-    def to_str(self, is_prefix_included=True):
+    def to_str(self, is_prefix_included: bool = True) -> str:
         """Format all execution results as a human-readable string."""
         outs = []
         for exec_result in self.exec_results:

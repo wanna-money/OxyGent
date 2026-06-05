@@ -48,7 +48,7 @@ Config.set_server_port(8081)
 
 | 组件 | 类型 | 用途 |
 |---|---|---|
-| `default_name` | `HttpLLM` | 共享的 LLM 后端。 |
+| `default_llm` | `HttpLLM` | 共享的 LLM 后端。 |
 | `math_tools` | `StdioMCPClient` | 通过 `uv` 运行 `mcp_servers/math_tools.py`。暴露两个工具：`power`（幂运算）和 `calc_pi`（计算 pi 到 N 位小数）。 |
 | `time_agent` | `SSEOxyGent` | 远程代理，代理 8082 端口上的时间代理服务。 |
 | `math_agent` | `WorkflowAgent` | 本服务的主代理（`is_master=True`）。使用自定义的 `func_workflow` 而非 LLM 驱动的推理循环。可访问 `math_tools` 和 `time_agent` 作为子代理。 |

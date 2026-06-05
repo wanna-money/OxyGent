@@ -1,7 +1,7 @@
 """Token estimation and usage parsing utilities."""
 
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Optional
 
 from ..config import Config
 from ..schemas.usage import EstimationMethod, TokenUsage
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _to_dict(obj) -> dict:
+def _to_dict(obj: Any) -> dict[str, Any]:
     """Convert a dict, Pydantic model, or plain object to a flat dict.
 
     - dict → returned as-is
@@ -50,7 +50,7 @@ def _to_dict(obj) -> dict:
 
 
 def build_token_usage(
-    usage_data, messages: list, output: str, model_name: str
+    usage_data: Any, messages: list[dict[str, Any]], output: str, model_name: str
 ) -> TokenUsage:
     """Build TokenUsage from API usage data, with fallback to estimation.
 
@@ -80,16 +80,35 @@ def build_token_usage(
     u = _to_dict(usage_data)
 
     # --- input / output tokens ---
-    # OpenAI-family: prompt_tokens; Gemini native: promptTokenCount
-    input_tokens = u.get("prompt_tokens") or u.get("promptTokenCount", 0)
-    output_tokens = u.get("completion_tokens") or u.get("candidatesTokenCount", 0)
+    # OpenAI: prompt_tokens; Gemini native: promptTokenCount; Anthropic: input_tokens
+    input_tokens = u.get("prompt_tokens") or u.get("promptTokenCount") or u.get("input_tokens", 0)
+    output_tokens = u.get("completion_tokens") or u.get("candidatesTokenCount") or u.get("output_tokens", 0)
+
+    # --- total tokens (API-provided) ---
+    # Gemini: total = prompt + completion + thoughts (thoughts NOT included in completion)
+    # OpenAI: total = prompt + completion (reasoning already included in completion)
+    total_tokens = u.get("total_tokens") or 0
 
     # --- cached tokens ---
-    cached_tokens = 0
+    # cached_input_tokens: cache read hits (chain fallback)
+    # 1. prompt_tokens_details.cached_tokens        -> OpenAI / Doubao / Alibaba Cloud
+    # 2. top-level cache_read_input_tokens          -> Anthropic
+    # 3. top-level prompt_cache_hit_tokens          -> DeepSeek
+    # 4. top-level cachedContentTokenCount          -> Gemini native
+    cached_input_tokens = 0
     prompt_details = u.get("prompt_tokens_details")
     if prompt_details:
         d = _to_dict(prompt_details)
-        cached_tokens = d.get("cached_tokens") or d.get("cache_read_input_tokens", 0)
+        cached_input_tokens = d.get("cached_tokens") or 0
+    if not cached_input_tokens:
+        cached_input_tokens = u.get("cache_read_input_tokens") or 0
+    if not cached_input_tokens:
+        cached_input_tokens = u.get("prompt_cache_hit_tokens") or 0
+    if not cached_input_tokens:
+        cached_input_tokens = u.get("cachedContentTokenCount") or 0
+
+    # cache_creation_input_tokens: cache writes (Anthropic / Alibaba Cloud)
+    cache_creation_input_tokens = u.get("cache_creation_input_tokens") or 0
 
     # --- reasoning / thinking tokens ---
     # Priority: completion_tokens_details.reasoning_tokens (OpenAI/Doubao)
@@ -110,7 +129,9 @@ def build_token_usage(
     return TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
-        cached_tokens=cached_tokens,
+        total_tokens=total_tokens,
+        cached_input_tokens=cached_input_tokens,
+        cache_creation_input_tokens=cache_creation_input_tokens,
         reasoning_tokens=reasoning_tokens,
         model_name=model_name,
         estimation_method=EstimationMethod.EXACT,
@@ -122,7 +143,7 @@ def build_token_usage(
 # ---------------------------------------------------------------------------
 
 
-def aggregate_token_usage(oxy_request, usage: TokenUsage) -> None:
+def aggregate_token_usage(oxy_request: Any, usage: TokenUsage) -> None:
     """Aggregate token usage to session level in shared_data.
 
     Args:
@@ -138,7 +159,8 @@ def aggregate_token_usage(oxy_request, usage: TokenUsage) -> None:
             "total_tokens": 0,
             "input_tokens": 0,
             "output_tokens": 0,
-            "cached_tokens": 0,
+            "cached_input_tokens": 0,
+            "cache_creation_input_tokens": 0,
             "reasoning_tokens": 0,
             "request_count": 0,
             "by_model": {},
@@ -148,7 +170,8 @@ def aggregate_token_usage(oxy_request, usage: TokenUsage) -> None:
     tm["total_tokens"] += usage.total_tokens
     tm["input_tokens"] += usage.input_tokens
     tm["output_tokens"] += usage.output_tokens
-    tm["cached_tokens"] += usage.cached_tokens
+    tm["cached_input_tokens"] += usage.cached_input_tokens
+    tm["cache_creation_input_tokens"] += usage.cache_creation_input_tokens
     tm["reasoning_tokens"] += usage.reasoning_tokens
     tm["request_count"] += 1
 
@@ -158,7 +181,8 @@ def aggregate_token_usage(oxy_request, usage: TokenUsage) -> None:
             "total_tokens": 0,
             "input_tokens": 0,
             "output_tokens": 0,
-            "cached_tokens": 0,
+            "cached_input_tokens": 0,
+            "cache_creation_input_tokens": 0,
             "reasoning_tokens": 0,
             "request_count": 0,
         }
@@ -167,7 +191,8 @@ def aggregate_token_usage(oxy_request, usage: TokenUsage) -> None:
     mm["total_tokens"] += usage.total_tokens
     mm["input_tokens"] += usage.input_tokens
     mm["output_tokens"] += usage.output_tokens
-    mm["cached_tokens"] += usage.cached_tokens
+    mm["cached_input_tokens"] += usage.cached_input_tokens
+    mm["cache_creation_input_tokens"] += usage.cache_creation_input_tokens
     mm["reasoning_tokens"] += usage.reasoning_tokens
     mm["request_count"] += 1
 
@@ -180,7 +205,7 @@ def aggregate_token_usage(oxy_request, usage: TokenUsage) -> None:
 class TokenEstimator:
     """Utility class for estimating token counts when API doesn't provide usage."""
 
-    _encoder_cache: Dict[str, object] = {}
+    _encoder_cache: dict[str, object] = {}
 
     @classmethod
     def get_encoder(cls, model_name: str) -> Optional[object]:
@@ -206,7 +231,10 @@ class TokenEstimator:
             logger.debug("tiktoken not installed, using character-based estimation")
             return None
         except Exception as e:
-            logger.debug(f"Failed to get tiktoken encoder: {e}")
+            logger.debug(
+                f"Failed to get tiktoken encoder for model '{normalized_name}': {e}",
+                exc_info=True,
+            )
             return None
 
     @classmethod
@@ -223,7 +251,7 @@ class TokenEstimator:
 
     @classmethod
     def estimate_messages_tokens(
-        cls, messages: List[Dict], model_name: str = "default"
+        cls, messages: list[dict[str, Any]], model_name: str = "default"
     ) -> int:
         """Estimate token count for a list of messages.
 
@@ -254,7 +282,7 @@ class TokenEstimator:
 
     @classmethod
     def estimate_usage(
-        cls, messages: List[Dict], output: str, model_name: str
+        cls, messages: list[dict[str, Any]], output: str, model_name: str
     ) -> TokenUsage:
         """Estimate full request token usage."""
         has_tiktoken = cls.get_encoder(model_name) is not None

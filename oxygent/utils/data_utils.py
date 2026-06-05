@@ -1,4 +1,9 @@
-def add_post_and_child_node_ids(nodes):
+"""Data transformation utilities for node graph processing."""
+
+from typing import Any
+
+
+def add_post_and_child_node_ids(nodes: list[dict[str, Any]]) -> None:
     """Adds `post_node_ids` and `child_node_ids` fields to each node.
 
     Each node will gain:
