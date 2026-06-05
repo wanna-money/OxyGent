@@ -231,7 +231,7 @@ Oxy is a standardized component model that snaps together like LEGO bricks. Each
 ### Setup & Configuration
 
 **What are the system requirements?**
-- Python 3.8+
+- Python 3.10+
 - pip package manager
 - API key from an LLM provider (OpenAI, Anthropic, etc.)
 
@@ -275,7 +275,7 @@ Yes! OxyGent is designed for enterprise scenarios with features like:
 ### Troubleshooting
 
 **Common Issues:**
-- **Import Errors**: Ensure Python 3.8+ is installed and dependencies are up to date
+- **Import Errors**: Ensure Python 3.10+ is installed and dependencies are up to date
 - **API Key Errors**: Verify your LLM provider API key is correctly configured
 - **Agent Communication Issues**: Check that all Oxy components are properly registered
 
