@@ -2,7 +2,7 @@
 
 在较为复杂的 MAS 系统中，您可能需要更新提示词，以防关键信息在智能体（Agent）之间传递时丢失。
 
-OxyGent 支持通过外部方法处理提示词。例如，如果您在提示词中包含了文件内容，并希望确保每个 Agent 都能读取完整的提示词，可以使用 `update_query` 方法在查询中传递提示词。
+OxyGent 支持通过外部方法处理提示词。所有 `func_*` 钩子函数均支持同步和异步函数。例如，如果您在提示词中包含了文件内容，并希望确保每个 Agent 都能读取完整的提示词，可以使用 `update_query` 方法在查询中传递提示词。
 ## OxyRequest 常用方法
 
 `func_process_input` 接收一个 `OxyRequest` 对象，您可以通过以下方法访问和修改请求内容：
@@ -24,7 +24,17 @@ OxyGent 支持通过外部方法处理提示词。例如，如果您在提示词
 
 ## 示例：更新提示词
 ```python
+# 同步函数
 def update_query(oxy_request: OxyRequest):
+    user_query = oxy_request.get_query(master_level=True)
+    current_query = oxy_request.get_query()
+    oxy_request.set_query(
+        f"user query is {user_query}\ncurrent query is {current_query}"
+    )
+    return oxy_request
+
+# 也支持异步函数
+async def async_update_query(oxy_request: OxyRequest):
     user_query = oxy_request.get_query(master_level=True)
     current_query = oxy_request.get_query()
     oxy_request.set_query(

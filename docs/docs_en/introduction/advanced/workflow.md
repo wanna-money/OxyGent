@@ -2,7 +2,7 @@
 
 ## Simple Example
 
-OxyGent supports controlling the execution order of agents through external workflows. You can use the `call` method within a workflow to specify the task execution sequence of agents. For example, in `demo.py`, we use a workflow to ensure the agent queries the time before calculating Pi:
+OxyGent supports controlling the execution order of agents through external workflows. You can use the `call` method within a workflow to specify the task execution sequence of agents. Both sync and async functions are supported for `func_workflow`. For example, in `demo.py`, we use a workflow to ensure the agent queries the time before calculating Pi:
 
 ```python
 async def workflow(oxy_request: OxyRequest):

@@ -19,7 +19,7 @@ Config.set_agent_llm_model("default_llm")
 
 
 # -- Custom XML-based LLM response parser --
-def parse_llm_response(
+async def parse_llm_response(
     ori_response: str, oxy_request: OxyRequest = None
 ) -> LLMResponse:
     """Parse XML-formatted LLM output into a structured LLMResponse.

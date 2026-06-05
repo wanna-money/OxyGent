@@ -59,7 +59,7 @@ Please only use the tools explicitly defined above.
 
 ## Setting the LLM Output Parser
 
-`oxy.ReActAgent` supports passing a custom output parser via `func_parse_llm_response`.
+`oxy.ReActAgent` supports passing a custom output parser via `func_parse_llm_response`. Both sync and async functions are supported.
 
 For example, in OxyGent's default settings, JSON-formatted output is treated as a tool call instruction. If you want to attempt a tool call only when `tool_name` is valid, and treat JSON as plain text in other cases, you can define a custom parser as follows:
 
@@ -69,6 +69,7 @@ import yaml
 import xml.etree.ElementTree as ET
 from oxy.schemas import LLMResponse, LLMState
 
+# Sync function
 def json_parser(ori_response: str) -> LLMResponse:
     try:
         data = json.loads(ori_response)
@@ -96,6 +97,14 @@ def json_parser(ori_response: str) -> LLMResponse:
         )
 
 
+# Async function is also supported
+async def async_json_parser(ori_response: str) -> LLMResponse:
+    data = json.loads(ori_response)
+    return LLMResponse(
+        state=LLMState.ANSWER,
+        output=data,
+        ori_response=ori_response
+    )
 ```
 
 Then, you can pass this parser to `oxy.ReActAgent`:
@@ -131,8 +140,10 @@ oxy.ReActAgent(
 ),
 ```
 ### Notes
-1. **`func_parse_llm_response`**: Used for custom parsing of LLM output. It can handle tool call results or plain text as needed.
-2. **`func_format_output`**: This method is used to customize the output format of `oxy.Response`, helping you control how the final result is presented.
+1. **`func_parse_llm_response`**: Used for custom parsing of LLM output. It can handle tool call results or plain text as needed. Supports both sync and async functions.
+2. **`func_format_output`**: This method is used to customize the output format of `oxy.Response`, helping you control how the final result is presented. Supports both sync and async functions.
+
+> All `func_*` hooks in OxyGent support both sync and async functions. Sync functions are automatically wrapped as async at initialization time.
 
 [Previous: Processing Queries and Prompts](./process-input.md)
 [Next: Reflexion and Redo Pattern](./reflexion.md)

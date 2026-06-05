@@ -194,22 +194,30 @@ class Oxy(BaseModel, ABC):
         self._set_desc_for_llm()
         self.permitted_oxy.extend(self.preceding_oxy)
 
+    _async_func_fields = [
+        "func_process_input",
+        "func_process_output",
+        "func_format_input",
+        "func_format_output",
+        "func_execute",
+        "func_interceptor",
+        "func_map_memory_order",
+        "func_mock_process",
+        "func_parse_llm_response",
+        "func_parse_planner_response",
+        "func_parse_replanner_response",
+        "func_process",
+        "func_reflexion",
+        "func_retrieve_knowledge",
+        "func_workflow",
+    ]
+
     def _ensure_async_functions(self) -> None:
         """Ensure all function fields are async. Convert sync functions to async if needed."""
-        func_fields = [
-            "func_process_input",
-            "func_process_output",
-            "func_format_input",
-            "func_format_output",
-            "func_execute",
-            "func_interceptor",
-        ]
-
-        for field_name in func_fields:
+        for field_name in self._async_func_fields:
             func = getattr(self, field_name, None)
-            if func is not None:
-                async_func = ensure_async(func)
-                object.__setattr__(self, field_name, async_func)
+            if func is not None and callable(func):
+                object.__setattr__(self, field_name, ensure_async(func))
 
     def model_post_init(self, __context: Any) -> None:
         """Auto-populate class_name from the actual class if not explicitly set."""
@@ -708,13 +716,6 @@ Arguments:
                     attempt += 1
                     logger.warning(
                         f"Error executing oxy {self.name}: {e}. Attempt {attempt} of {self.retries}.",
-                        extra={
-                            "trace_id": oxy_request.current_trace_id,
-                            "node_id": oxy_request.node_id,
-                        },
-                    )
-                    logger.error(
-                        f"Error executing oxy {self.name}",
                         exc_info=True,
                         extra={
                             "trace_id": oxy_request.current_trace_id,

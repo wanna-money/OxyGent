@@ -43,6 +43,8 @@
 | `func_parse_llm_response` | `Optional[Callable[[str], LLMResponse]]`     | `None`        | 自定义的原始 LLM 输出解析器                              |
 | `func_reflexion`          | `Optional[Callable[[str, OxyRequest], str]]` | `None`        | 对 LLM 回答进行批判并要求修正的回调函数                    |
 
+> 所有 `func_*` 钩子参数（包括 `func_parse_llm_response`、`func_reflexion`、`func_map_memory_order`）均支持同步和异步函数。
+
 ## 方法
 
 | 方法                                                            | 协程（async）        | 返回值            | 用途（简要）                                                                                                    |

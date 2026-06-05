@@ -2,7 +2,7 @@
 
 ## 简单实例
 
-OxyGent支持以外部工作流控制智能体的工作次序。您可以通过在工作流中使用 `call` 方法指定智能体的任务执行顺序。例如，在 `demo.py` 中，我们使用工作流确保智能体在计算 Pi 之前首先查询时间：
+OxyGent支持以外部工作流控制智能体的工作次序。您可以通过在工作流中使用 `call` 方法指定智能体的任务执行顺序。`func_workflow` 支持同步和异步函数。例如，在 `demo.py` 中，我们使用工作流确保智能体在计算 Pi 之前首先查询时间：
 
 ```python
 async def workflow(oxy_request: OxyRequest):

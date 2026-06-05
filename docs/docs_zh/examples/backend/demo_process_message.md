@@ -59,9 +59,11 @@ async with MAS(oxy_space=oxy_space, func_process_message=process_message) as mas
 
 ## 核心概念
 
-- **func_process_message**：MAS 级钩子，在每条出站消息通过 SSE 发送到前端之前进行拦截。它接收消息字典和当前 `OxyRequest`，必须返回（可能已修改的）消息字典。
+- **func_process_message**：MAS 级钩子，在每条出站消息通过 SSE 发送到前端之前进行拦截。它接收消息字典和当前 `OxyRequest`，必须返回（可能已修改的）消息字典。支持同步和异步函数。
 - **流式消息结构**：流式 LLM 消息的 `type` 为 `"stream"`，`content.delta` 字段包含增量文本 token。
 - **消息转换**：你可以修改消息字典中的任何字段 -- 内容、元数据、类型 -- 甚至可以通过返回 `None` 或空字典来抑制消息。
+
+> OxyGent 中所有 `func_*` 钩子函数均支持同步和异步函数。同步函数会在初始化时自动包装为异步函数。
 
 ## 预期行为
 

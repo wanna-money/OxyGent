@@ -59,7 +59,7 @@ Please only use the tools explicitly defined above.
 
 ## 设置 LLM 的输出解析器
 
-`oxy.ReActAgent` 支持在 `func_parse_llm_response` 中传入自定义的输出解析器。
+`oxy.ReActAgent` 支持在 `func_parse_llm_response` 中传入自定义的输出解析器。同步函数和异步函数均可使用。
 
 例如，在 OxyGent 的默认设置中，JSON 格式的输出会被视为工具调用指令。如果您希望仅在 `tool_name` 合法时才尝试调用工具，而其他情况将 JSON 视为普通文本处理，可以自定义解析器，如下所示：
 
@@ -69,6 +69,7 @@ import yaml
 import xml.etree.ElementTree as ET
 from oxy.schemas import LLMResponse, LLMState
 
+# 同步函数
 def json_parser(ori_response: str) -> LLMResponse:
     try:
         data = json.loads(ori_response)
@@ -96,6 +97,14 @@ def json_parser(ori_response: str) -> LLMResponse:
         )
 
 
+# 也支持异步函数
+async def async_json_parser(ori_response: str) -> LLMResponse:
+    data = json.loads(ori_response)
+    return LLMResponse(
+        state=LLMState.ANSWER,
+        output=data,
+        ori_response=ori_response
+    )
 ```
 
 然后，您可以将该解析器传入 `oxy.ReActAgent`：
@@ -131,8 +140,10 @@ oxy.ReActAgent(
 ),
 ```
 ### 说明
-1. **`func_parse_llm_response`**：用于将 LLM 的输出进行自定义解析。可以根据工具调用结果或普通文本的需求进行处理。
-2. **`func_format_output`**：该方法用于自定义 `oxy.Response` 的输出格式，帮助您控制最终结果的呈现方式。
+1. **`func_parse_llm_response`**：用于将 LLM 的输出进行自定义解析。可以根据工具调用结果或普通文本的需求进行处理。支持同步和异步函数。
+2. **`func_format_output`**：该方法用于自定义 `oxy.Response` 的输出格式，帮助您控制最终结果的呈现方式。支持同步和异步函数。
+
+> OxyGent 中所有 `func_*` 钩子函数均支持同步和异步函数。同步函数会在初始化时自动包装为异步函数。
 
 [上一章：处理查询和提示词](./process-input.md)
 [下一章：反思重做模式](./reflexion.md)

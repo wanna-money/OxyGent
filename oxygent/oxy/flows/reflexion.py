@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from ...schemas import Message, OxyRequest, OxyResponse, OxyState
 from ...utils.llm_pydantic_parser import PydanticOutputParser
 from ..base_flow import BaseFlow
+from ..base_oxy import ensure_async
 
 logger = logging.getLogger(__name__)
 
@@ -112,10 +113,10 @@ Previous answer: {previous_answer}""",
 
         # Set default parsing functions if not provided
         if self.func_parse_worker_response is None:
-            self.func_parse_worker_response = self._default_parse_worker_response
+            self.func_parse_worker_response = ensure_async(self._default_parse_worker_response)
 
         if self.func_parse_reflexion_response is None:
-            self.func_parse_reflexion_response = self._default_parse_reflexion_response
+            self.func_parse_reflexion_response = ensure_async(self._default_parse_reflexion_response)
 
     def _default_parse_worker_response(self, response: str) -> str:
         """Default worker response parser - just return the response."""
@@ -193,7 +194,7 @@ Previous answer: {previous_answer}""",
                 callee=self.worker_agent, arguments={"query": current_query}
             )
 
-            current_answer = self.func_parse_worker_response(worker_response.output)
+            current_answer = await self.func_parse_worker_response(worker_response.output)
             logger.info(f"Worker answer: {current_answer[:200]}...")
 
             # Step 2: Evaluate with reflexion agent
@@ -210,7 +211,7 @@ Previous answer: {previous_answer}""",
                 callee=self.reflexion_agent, arguments={"query": evaluation_query}
             )
 
-            evaluation = self.func_parse_reflexion_response(reflexion_response.output)
+            evaluation = await self.func_parse_reflexion_response(reflexion_response.output)
             logger.info(f"Evaluation result: {evaluation.is_satisfactory}")
 
             # Step 3: Check if satisfactory

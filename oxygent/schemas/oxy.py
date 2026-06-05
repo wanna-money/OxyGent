@@ -423,7 +423,7 @@ class OxyRequest(BaseModel):
                             )
 
             dict_message = {"id": id, "event": event, "data": message, "retry": retry}
-            dict_message_processed = self.mas.func_process_message(dict_message, self)
+            dict_message_processed = await self.mas.func_process_message(dict_message, self)
             dict_message_filtered = {
                 k: v for k, v in dict_message_processed.items() if v is not None
             }

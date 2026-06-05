@@ -22,6 +22,10 @@ from oxygent.oxy.agents.sse_oxy_agent import SSEOxyGent
 from oxygent.schemas import OxyRequest, OxyState
 
 
+async def _identity_process_message(dict_message, oxy_request):
+    return dict_message
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Dummy MAS
 # ──────────────────────────────────────────────────────────────────────────────
@@ -32,7 +36,7 @@ class DummyMAS:
         self.name = "test_mas"
         self.background_tasks = {}
         self.send_message = AsyncMock()
-        self.func_process_message = lambda dict_message, oxy_request: dict_message
+        self.func_process_message = _identity_process_message
 
     def add_background_task(self, trace_id, task):
         self.background_tasks.setdefault(trace_id, set()).add(task)

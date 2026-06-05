@@ -32,6 +32,11 @@ oxygent/mas.py
 | `event_dict` | `dict` | `{}` | Dictionary for event management |
 | `message_prefix` | `str` | `"oxygent"` | Prefix for messages |
 | `global_data` | `dict` | `{}` | System-wide global data store |
+| `func_filter` | `Optional[Callable]` | `None` | MAS-level hook to modify incoming payload |
+| `func_interceptor` | `Optional[Callable]` | `None` | MAS-level hook to block requests |
+| `func_process_message` | `Optional[Callable]` | `None` | Hook to transform outgoing messages |
+
+> All MAS-level `func_*` hooks support both sync and async callables. Sync functions are automatically wrapped as async at initialization time.
 
 ## Methods
 

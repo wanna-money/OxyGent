@@ -173,7 +173,7 @@ class ShellUseAgent(ReActAgent):
                 arguments={"messages": full_memory},
             )
             oxy_request.arguments["full_memory"] = full_memory
-            llm_response = self.func_parse_llm_response(
+            llm_response = await self.func_parse_llm_response(
                 oxy_response.output, oxy_request
             )
 

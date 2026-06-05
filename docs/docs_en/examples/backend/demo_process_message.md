@@ -59,9 +59,11 @@ The `func_process_message` hook is passed as a parameter to the `MAS` constructo
 
 ## Key Concepts
 
-- **func_process_message**: A MAS-level hook that intercepts every outgoing message before it is sent to the frontend via SSE. It receives the message dictionary and the current `OxyRequest`, and must return the (possibly modified) message dictionary.
+- **func_process_message**: A MAS-level hook that intercepts every outgoing message before it is sent to the frontend via SSE. It receives the message dictionary and the current `OxyRequest`, and must return the (possibly modified) message dictionary. Supports both sync and async functions.
 - **Stream message structure**: Streaming LLM messages have `type: "stream"` with a `content.delta` field containing the incremental text token.
 - **Message transformation**: You can modify any field in the message dictionary -- content, metadata, type -- or even suppress messages by returning `None` or an empty dict.
+
+> All `func_*` hooks in OxyGent support both sync and async functions. Sync functions are automatically wrapped as async at initialization time.
 
 ## Expected Behavior
 

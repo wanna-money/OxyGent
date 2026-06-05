@@ -51,6 +51,10 @@ def patch_config_defaults(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
+async def _identity_process_message(msg, req):
+    return msg
+
+
 class DummyMAS:
     """Lightweight MAS stand-in for tests that only need oxy_name_to_oxy."""
 
@@ -63,7 +67,7 @@ class DummyMAS:
         self.message_prefix = "test"
         self.name = "test_mas"
         self.global_data: dict[str, Any] = {}
-        self.func_process_message = lambda msg, req: msg
+        self.func_process_message = _identity_process_message
         self.active_tasks: dict[str, asyncio.Task] = {}
         self.event_dict: dict[str, asyncio.Event] = {}
         self.stream_dict: dict[str, list] = {}

@@ -32,6 +32,10 @@ class ConcreteOxy(Oxy):
         return OxyResponse(state=OxyState.COMPLETED, output="success")
 
 
+async def _identity_process_message(msg, req):
+    return msg
+
+
 class DummyMAS:
     """Minimal MAS stub for Oxy.execute() lifecycle."""
 
@@ -41,7 +45,7 @@ class DummyMAS:
         self.global_data = {}
         self.message_prefix = "msg"
         self.name = "test_mas"
-        self.func_process_message = lambda msg, req: msg
+        self.func_process_message = _identity_process_message
 
     def add_background_task(self, trace_id, task):
         self.background_tasks.setdefault(trace_id, set()).add(task)

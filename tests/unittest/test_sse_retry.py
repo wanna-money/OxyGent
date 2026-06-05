@@ -9,6 +9,10 @@ import pytest
 from oxygent.schemas import OxyRequest, SSEMessage
 
 
+async def _identity_process_message(dict_message, oxy_request):
+    return dict_message
+
+
 class MockMAS:
     """Mock MAS for testing send_message functionality"""
 
@@ -16,7 +20,7 @@ class MockMAS:
         self.message_prefix = "test_msg"
         self.name = "test_mas"
         self.send_message = AsyncMock()
-        self.func_process_message = lambda dict_message, oxy_request: dict_message
+        self.func_process_message = _identity_process_message
         self.reset_retry_attempt = MagicMock()
         self.increment_retry_attempt = MagicMock(return_value=1)
         self.get_retry_attempt = MagicMock(return_value=0)
@@ -135,7 +139,7 @@ async def test_send_message_is_send_message_false(oxy_request):
 async def test_send_message_with_message_processing(oxy_request):
     """Test send_message with custom message processing"""
 
-    def custom_process_message(dict_message, oxy_request):
+    async def custom_process_message(dict_message, oxy_request):
         """Custom message processor that adds metadata"""
         processed = dict_message.copy()
         processed["data"]["processed"] = True

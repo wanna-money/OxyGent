@@ -52,6 +52,9 @@
 | `func_format_input`              | `Optional[Callable]` | `lambda x: x`                              | 为被调用方格式化请求                  |
 | `func_format_output`             | `Optional[Callable]` | `lambda x: x`                              | 为调用方格式化响应                    |
 | `func_execute`                   | `Optional[Callable]` | `None`                                     | 自定义执行入口                       |
+| `func_interceptor`               | `Optional[Callable]` | `None`                                     | 请求拦截器钩子                       |
+
+> 所有 `func_*` 钩子参数均支持同步和异步函数。同步函数会在初始化时通过 `ensure_async()` 自动包装为异步函数。
 | `mas`                            | `Optional[Any]`      | `None`                                     | 对 MAS 实例的引用                    |
 | `friendly_error_text`            | `Optional[str]`      | `None`                                     | 面向用户的备用错误信息                |
 | `semaphore`                      | `int`                | `16`                                       | 最大并发执行数                       |

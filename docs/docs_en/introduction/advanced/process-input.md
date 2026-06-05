@@ -2,7 +2,7 @@
 
 In more complex MAS systems, you may need to update prompts to prevent critical information from being lost as it passes between agents.
 
-OxyGent supports processing prompts through external methods. For example, if you include file content in a prompt and want to ensure that every Agent can read the complete prompt, you can use the `update_query` method to pass the prompt via the query.
+OxyGent supports processing prompts through external methods. Both sync and async functions are supported for all `func_*` hooks. For example, if you include file content in a prompt and want to ensure that every Agent can read the complete prompt, you can use the `update_query` method to pass the prompt via the query.
 
 ## OxyRequest Quick Reference
 
@@ -25,7 +25,17 @@ OxyGent supports processing prompts through external methods. For example, if yo
 
 ## Example: Updating the Prompt
 ```python
+# Sync function
 def update_query(oxy_request: OxyRequest):
+    user_query = oxy_request.get_query(master_level=True)
+    current_query = oxy_request.get_query()
+    oxy_request.set_query(
+        f"user query is {user_query}\ncurrent query is {current_query}"
+    )
+    return oxy_request
+
+# Async function is also supported
+async def async_update_query(oxy_request: OxyRequest):
     user_query = oxy_request.get_query(master_level=True)
     current_query = oxy_request.get_query()
     oxy_request.set_query(

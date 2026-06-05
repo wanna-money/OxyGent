@@ -43,6 +43,8 @@ The position of the class is:
 | `func_parse_llm_response` | `Optional[Callable[[str], LLMResponse]]`     | `None`        | Custom parser for raw LLM output                         |
 | `func_reflexion`          | `Optional[Callable[[str, OxyRequest], str]]` | `None`        | Callback that critiques an LLM answer and asks for fixes |
 
+> All `func_*` hook parameters (including `func_parse_llm_response`, `func_reflexion`, `func_map_memory_order`) support both sync and async callables.
+
 ## Methods
 
 | Method                                                        | Coroutine (async) | Return Value    | Purpose (concise)                                                                                                 |

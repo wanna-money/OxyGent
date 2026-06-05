@@ -71,10 +71,12 @@ Both hooks are passed as parameters to the `MAS` constructor.
 
 ## Key Concepts
 
-- **func_filter**: A MAS-level hook that modifies the incoming payload before it is processed. It receives and returns the payload dictionary. Use it for request enrichment (adding metadata, normalizing fields).
-- **func_interceptor**: A MAS-level hook that can short-circuit request processing. If it returns a non-`None` value, that value is returned to the client immediately and the request does not reach any agent. Use it for authentication and authorization.
+- **func_filter**: A MAS-level hook that modifies the incoming payload before it is processed. It receives and returns the payload dictionary. Use it for request enrichment (adding metadata, normalizing fields). Supports both sync and async functions.
+- **func_interceptor**: A MAS-level hook that can short-circuit request processing. If it returns a non-`None` value, that value is returned to the client immediately and the request does not reach any agent. Use it for authentication and authorization. Supports both sync and async functions.
 - **Hook execution order**: The interceptor runs before the filter. If the interceptor blocks the request, the filter is not executed.
 - **Config.set_agent_llm_model**: Sets a default LLM model name for all agents, reducing boilerplate when all agents share the same model.
+
+> All `func_*` hooks in OxyGent support both sync and async functions. Sync functions are automatically wrapped as async at initialization time.
 
 ## Expected Behavior
 

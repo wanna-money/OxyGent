@@ -139,8 +139,9 @@ def oxy_request(monkeypatch):
 # ──────────────────────────────────────────────────────────────────────────────
 # ❸ test
 # ──────────────────────────────────────────────────────────────────────────────
-def test_parse_llm_response(react_agent):
-    resp = react_agent._parse_llm_response('{"tool_name":"dummy_tool","arguments":{}}')
+@pytest.mark.asyncio
+async def test_parse_llm_response(react_agent):
+    resp = await react_agent._parse_llm_response('{"tool_name":"dummy_tool","arguments":{}}')
     assert resp.state is LLMState.TOOL_CALL
     assert resp.output["tool_name"] == "dummy_tool"
 

@@ -147,7 +147,7 @@ class PlanAndSolve(BaseFlow):
                         oxy_response.output
                     )
                 else:
-                    plan_response = self.func_parse_planner_response(
+                    plan_response = await self.func_parse_planner_response(
                         oxy_response.output
                     )
                 plan_steps = plan_response.steps
@@ -200,7 +200,7 @@ class PlanAndSolve(BaseFlow):
                         replanner_response.output
                     )
                 else:
-                    plan_response = self.func_parse_planner_response(
+                    plan_response = await self.func_parse_planner_response(
                         replanner_response.output
                     )
 

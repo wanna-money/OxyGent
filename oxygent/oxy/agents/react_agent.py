@@ -27,6 +27,7 @@ from ...schemas import (
     OxyState,
 )
 from ...utils.common_utils import chunk_list, extract_first_json, generate_uuid
+from ..base_oxy import ensure_async
 from .local_agent import LocalAgent
 
 logger = logging.getLogger(__name__)
@@ -102,7 +103,7 @@ class ReActAgent(LocalAgent):
             self.func_parse_llm_response = self._parse_llm_response
 
         if self.func_reflexion is None:
-            self.func_reflexion = self._default_reflexion
+            self.func_reflexion = ensure_async(self._default_reflexion)
 
         # Add retrieve_tools if vector search is configured
         if Config.get_vearch_config():
@@ -192,7 +193,7 @@ class ReActAgent(LocalAgent):
                     if memory_type == "short"
                     else self.weight_react_memory
                 )
-                scores.append(self.func_map_memory_order(i + 1) * weight)
+                scores.append(await self.func_map_memory_order(i + 1) * weight)
 
             # Sort indices by score (highest first) for priority selection
             sorted_scores = [
@@ -235,7 +236,7 @@ class ReActAgent(LocalAgent):
                 short_memory.add_message(Message.assistant_message(short_a_message))
         return short_memory
 
-    def _parse_llm_response(
+    async def _parse_llm_response(
         self, ori_response: str, oxy_request: OxyRequest = None
     ) -> LLMResponse:
         """Parse LLM response to determine next action.
@@ -277,7 +278,7 @@ class ReActAgent(LocalAgent):
                     ori_response=ori_response,
                 )
             else:
-                reflection_msg = self.func_reflexion(ori_response, oxy_request)
+                reflection_msg = await self.func_reflexion(ori_response, oxy_request)
                 if reflection_msg:
                     return LLMResponse(
                         state=LLMState.ERROR_PARSE,
@@ -335,7 +336,7 @@ class ReActAgent(LocalAgent):
                 arguments={"messages": full_memory},
             )
             oxy_request.arguments["full_memory"] = full_memory
-            llm_response = self.func_parse_llm_response(
+            llm_response = await self.func_parse_llm_response(
                 oxy_response.output, oxy_request
             )
 

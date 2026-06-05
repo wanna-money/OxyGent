@@ -72,6 +72,8 @@ def math_reflexion(response: str, oxy_request: OxyRequest) -> str:
     return None
 ```
 
+Both sync and async functions are supported for `func_reflexion`. Sync functions are automatically wrapped as async at initialization time.
+
 Reflexion needs to be specified for `oxy.ReActAgent` execution. It is worth noting that if you want the Master Agent to output reflexion-improved results, you need to add reflexion at each level.
 
 ```python

@@ -52,6 +52,9 @@ This class defines the core execution lifecycle, permission management,message h
 | `func_format_input`              | `Optional[Callable]` | `lambda x: x`                              | Format request for the callee      |
 | `func_format_output`             | `Optional[Callable]` | `lambda x: x`                              | Format response for the caller     |
 | `func_execute`                   | `Optional[Callable]` | `None`                                     | Custom execution entrypoint        |
+| `func_interceptor`               | `Optional[Callable]` | `None`                                     | Request interceptor hook           |
+
+> All `func_*` hook parameters support both sync and async callables. Sync functions are automatically wrapped as async at initialization time via `ensure_async()`.
 | `mas`                            | `Optional[Any]`      | `None`                                     | Reference to MAS instance          |
 | `friendly_error_text`            | `Optional[str]`      | `None`                                     | User-facing fallback error message |
 | `semaphore`                      | `int`                | `16`                                       | Maximum concurrent executions      |

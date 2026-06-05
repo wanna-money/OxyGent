@@ -32,6 +32,11 @@ oxygent/mas.py
 | `event_dict` | `dict` | `{}` | 事件管理字典 |
 | `message_prefix` | `str` | `"oxygent"` | 消息前缀 |
 | `global_data` | `dict` | `{}` | 系统级全局数据存储 |
+| `func_filter` | `Optional[Callable]` | `None` | MAS 级钩子，修改传入的 payload |
+| `func_interceptor` | `Optional[Callable]` | `None` | MAS 级钩子，拦截请求 |
+| `func_process_message` | `Optional[Callable]` | `None` | 转换出站消息的钩子 |
+
+> 所有 MAS 级 `func_*` 钩子均支持同步和异步函数。同步函数会在初始化时自动包装为异步函数。
 
 ## 方法
 

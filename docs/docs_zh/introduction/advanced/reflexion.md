@@ -72,6 +72,8 @@ def math_reflexion(response: str, oxy_request: OxyRequest) -> str:
     return None
 ```
 
+`func_reflexion` 支持同步和异步函数。同步函数会在初始化时自动包装为异步函数。
+
 反思需要指定`oxy.ReActAgent`执行。值得注意的是，如果您要让Master Agent输出反思后的结果，需要为每一层添加反思。
 
 ```python

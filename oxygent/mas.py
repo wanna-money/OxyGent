@@ -33,6 +33,7 @@ from .oxy import Oxy
 from .oxy.agents.base_agent import BaseAgent
 from .oxy.agents.remote_agent import RemoteAgent
 from .oxy.base_flow import BaseFlow
+from .oxy.base_oxy import ensure_async
 from .oxy.base_tool import BaseTool
 from .oxy.llms.base_llm import BaseLLM
 from .routes import router
@@ -196,6 +197,10 @@ class MAS(BaseModel):
                 present; mainly used by internal helpers and tests.
         """
         super().__init__(**kwargs)
+        for field_name in ("func_filter", "func_interceptor", "func_process_message"):
+            func = getattr(self, field_name, None)
+            if func is not None:
+                object.__setattr__(self, field_name, ensure_async(func))
         global logger
         logger = setup_logging()
         if self.name:
@@ -1623,7 +1628,7 @@ class MAS(BaseModel):
                 f"Received payload: {json.dumps(payload, ensure_ascii=False)}",
                 extra={"trace_id": current_trace_id},
             )
-            payload = self.func_filter(payload)
+            payload = await self.func_filter(payload)
 
             if "query" not in payload:
                 payload["query"] = ""
@@ -1642,9 +1647,7 @@ class MAS(BaseModel):
         async def chat(request: Request):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
-            intercepted_response = self.func_interceptor(payload)
-            if asyncio.iscoroutine(intercepted_response):
-                intercepted_response = await intercepted_response
+            intercepted_response = await self.func_interceptor(payload)
             if intercepted_response is not None:
                 return intercepted_response
             oxy_response = await self.chat_with_agent(payload=payload)
@@ -1657,9 +1660,7 @@ class MAS(BaseModel):
         async def sse_chat(request: Request):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
-            intercepted_response = self.func_interceptor(payload)
-            if asyncio.iscoroutine(intercepted_response):
-                intercepted_response = await intercepted_response
+            intercepted_response = await self.func_interceptor(payload)
             if intercepted_response is not None:
                 return intercepted_response
             current_trace_id = payload["current_trace_id"]
@@ -1681,9 +1682,7 @@ class MAS(BaseModel):
         async def async_chat(request: Request):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
-            intercepted_response = self.func_interceptor(payload)
-            if asyncio.iscoroutine(intercepted_response):
-                intercepted_response = await intercepted_response
+            intercepted_response = await self.func_interceptor(payload)
             if intercepted_response is not None:
                 return intercepted_response
 
@@ -1707,9 +1706,7 @@ class MAS(BaseModel):
         async def async_trace(request: Request):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
-            intercepted_response = self.func_interceptor(payload)
-            if asyncio.iscoroutine(intercepted_response):
-                intercepted_response = await intercepted_response
+            intercepted_response = await self.func_interceptor(payload)
             if intercepted_response is not None:
                 return intercepted_response
             trace_id = payload["trace_id"]
