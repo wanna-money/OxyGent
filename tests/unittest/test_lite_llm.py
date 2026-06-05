@@ -4,6 +4,8 @@ from unittest import mock
 
 import pytest
 
+litellm = pytest.importorskip("litellm")
+
 from oxygent.schemas import OxyRequest, OxyState
 
 
@@ -39,8 +41,6 @@ def llm(monkeypatch):
         raising=True,
     )
 
-    import litellm
-
     from oxygent.oxy.llms.lite_llm import LiteLLM
 
     inst = LiteLLM(
@@ -63,8 +63,6 @@ def llm_no_key(monkeypatch):
         passthrough,
         raising=True,
     )
-
-    import litellm
 
     from oxygent.oxy.llms.lite_llm import LiteLLM
 
@@ -219,8 +217,6 @@ async def test_base_url_forwarded(monkeypatch, oxy_request):
         passthrough,
         raising=True,
     )
-
-    import litellm
 
     from oxygent.oxy.llms.lite_llm import LiteLLM
 
