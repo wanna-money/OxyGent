@@ -65,7 +65,7 @@ OxyGent 是一个开源框架，将工具、模型、智能体统一为可插拔
 📈 **无限扩展**
 - 按 Metcalfe 定律线性扩容：分布式调度器让协作智能指数级增长。系统轻松应对全域优化与实时决策，任意规模无压力。
 
-OxyGent最新版本 (July 9, 2025) 在[GAIA](https://huggingface.co/spaces/gaia-benchmark/leaderboard)榜单中分数为59.14，目前开源框架第一OWL为60.8分。
+OxyGent最新版本 (July 15, 2025) 在[GAIA](https://huggingface.co/spaces/gaia-benchmark/leaderboard)榜单中分数为59.14，目前开源框架第一OWL为60.8分。
 
 ![](https://storage.jd.com/ai-gateway-routing/prod_data/oxygent_github_images/points.png)
 
@@ -219,6 +219,75 @@ OxyGent最新版本 (July 9, 2025) 在[GAIA](https://huggingface.co/spaces/gaia-
 <a href="https://github.com/jd-opensource/OxyGent/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=jd-opensource/OxyGent" />
 </a>
+
+## 常见问题 (FAQ)
+
+### 基础问题
+
+**OxyGent 是什么？**
+OxyGent 是一个开源框架，将工具、模型和智能体统一为模块化的 Oxy 组件。它为开发者提供透明的端到端流水线，用于构建、运行和持续进化多智能体系统。
+
+**OxyGent 与其他多智能体框架有什么不同？**
+OxyGent 使用独特的 "Oxy" 抽象来标准化智能体组件，支持热插拔和跨场景复用。与刚性的工作流系统不同，OxyGent 支持动态规划范式，智能体可以智能分解任务并实时适应变化。
+
+**什么是 Oxy 抽象？**
+Oxy 是一种标准化的组件模型，可以像乐高积木一样拼装。每个 Oxy 封装了特定的能力（工具、模型或智能体），通过简洁的 Python 接口，实现 AI 团队的快速组装和持续进化。
+
+### 安装与配置
+
+**系统要求是什么？**
+- Python 3.10+
+- pip 包管理器
+- LLM 供应商的 API Key（OpenAI、Anthropic 等）
+
+**如何安装 OxyGent？**
+```bash
+pip install oxygent
+```
+
+**OxyGent 支持本地模型吗？**
+支持！OxyGent 兼容任何提供兼容 API 的 LLM 供应商。通过环境变量（`DEFAULT_LLM_BASE_URL`、`DEFAULT_LLM_MODEL_NAME`）配置本地模型即可。
+
+### 智能体开发
+
+**如何创建自定义 Oxy？**
+创建一个继承 Oxy 基类的新类，并实现所需的方法。详见[文档](http://oxygent.jd.com/docs/)。
+
+**OxyGent 支持哪些规划范式？**
+OxyGent 支持多种规划范式：
+- **ReAct**：推理 + 行动模式，适用于简单任务
+- **动态规划**：智能体智能分解任务并协商解决方案
+- **混合规划**：组合多种范式以应对复杂场景
+
+**OxyGent 如何处理智能体协作？**
+OxyGent 的弹性架构支持任意智能体拓扑。智能体通过标准化接口通信，配合自动依赖映射和可视化调试工具进行优化。
+
+### 部署
+
+**如何部署 OxyGent 应用？**
+OxyGent 应用可以作为标准 Python 应用部署：
+- **本地开发**：运行 `python demo.py` 进行本地测试
+- **生产环境**：使用分布式调度器实现多节点扩展
+- **Docker**：将 OxyGent 应用容器化以实现一致的部署
+
+**OxyGent 适合企业使用吗？**
+适合！OxyGent 专为企业场景设计，具备以下特性：
+- 分布式调度实现水平扩展
+- 每一步决策全链路可审计
+- 内置评估引擎持续改进
+- 支持全域优化和实时决策
+
+### 常见问题排查
+
+**常见问题：**
+- **导入错误**：确保已安装 Python 3.10+ 且依赖是最新版本
+- **API Key 错误**：检查 LLM 供应商的 API Key 是否正确配置
+- **智能体通信异常**：确认所有 Oxy 组件已正确注册
+
+**在哪里获取帮助？**
+- [官方文档](http://oxygent.jd.com/docs/)
+- [GitHub Issues](https://github.com/jd-opensource/OxyGent/issues)
+- 企业内部 Slack（京东员工）
 
 ## 9. 许可证
 [Apache License]( ./LICENSE.md)
