@@ -11,6 +11,7 @@ from .agents import (
     SkillAgent,
     SSEOxyGent,
     WorkflowAgent,
+    A2AClientAgent,
 )
 from .api_tools import HttpTool
 from .bank_tools import BankClient, BankTool
@@ -23,7 +24,7 @@ from .flows import (
 )
 from .function_tools.function_hub import FunctionHub
 from .function_tools.function_tool import FunctionTool
-from .llms import HttpLLM, LocalLLM, MockLLM, OpenAILLM
+from .llms import HttpLLM, LiteLLM, LocalLLM, MockLLM, OpenAILLM
 from .mcp_tools import MCPTool, SSEMCPClient, StdioMCPClient, StreamableMCPClient
 
 __all__ = [
@@ -38,6 +39,7 @@ __all__ = [
     "SSEOxyGent",
     "HttpTool",
     "HttpLLM",
+    "LiteLLM",
     "OpenAILLM",
     "MockLLM",
     "LocalLLM",

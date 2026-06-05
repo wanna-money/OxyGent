@@ -8,6 +8,7 @@ The LLM in OxyGent refers to the traditional LLM form, which supports taking a s
 |----------|-------------------|----------------|
 | Cloud API (DeepSeek, Qwen, Gemini, etc.) | `oxy.HttpLLM` | `api_key`, `base_url`, `model_name` |
 | OpenAI or OpenAI-compatible API | `oxy.OpenAILLM` | `api_key`, `base_url`, `model_name` |
+| 100+ providers via LiteLLM (Anthropic, Bedrock, Vertex, etc.) | `oxy.LiteLLM` | `model_name` (e.g. `anthropic/claude-sonnet-4-20250514`) |
 | Ollama locally deployed model | `oxy.HttpLLM` | `base_url` (do not pass api_key) |
 | HuggingFace local model | `oxy.LocalLLM` | `model_path`, `device_map` |
 | Testing/Development (no real LLM needed) | `oxy.MockLLM` | `func_mock_process` |
@@ -56,6 +57,33 @@ oxy.OpenAILLM(
 - **Unified response format**: Provides unified `OxyResponse` format handling for both streaming and non-streaming responses.
 
 **Additional parameter**: `headers` — accepts `dict[str, str]` or `Callable[[OxyRequest], dict[str, str]]` for passing extra HTTP request headers.
+
+## Using LiteLLM (100+ Providers)
+
+[LiteLLM](https://github.com/BerriAI/litellm) provides a unified interface to 100+ LLM providers. Install with `pip install litellm`.
+
+```python
+oxy.LiteLLM(
+    name="default_llm",
+    model_name="anthropic/claude-sonnet-4-20250514",
+    # api_key="sk-...",  # or set ANTHROPIC_API_KEY env var
+)
+```
+
+LiteLLM routes to the correct provider based on the model name prefix:
+
+| Provider | `model_name` Example |
+|----------|---------------------|
+| Anthropic | `anthropic/claude-sonnet-4-20250514` |
+| OpenAI | `openai/gpt-4o` |
+| Google | `gemini/gemini-2.5-flash` |
+| AWS Bedrock | `bedrock/anthropic.claude-3-sonnet` |
+| Azure OpenAI | `azure/gpt-4o` |
+| Ollama | `ollama/llama3` |
+
+When `api_key` is not provided, LiteLLM falls back to provider-specific environment variables (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc.). You can also point at a LiteLLM proxy server via `base_url`.
+
+> LiteLLM requires `pip install litellm` separately. It is not included in the default requirements.
 
 ## Calling Ollama-Deployed Models
 
