@@ -28,4 +28,3 @@ pytesseract==0.3.13
 pytest==8.4.2
 pytest-asyncio==1.2.0
 a2a-sdk==0.3.26
-litellm>=1.60.0,<2.0.0

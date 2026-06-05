@@ -39,14 +39,18 @@ def llm(monkeypatch):
         raising=True,
     )
 
-    from oxygent.oxy.llms.litellm_llm import LiteLLM
+    import litellm
 
-    return LiteLLM(
+    from oxygent.oxy.llms.lite_llm import LiteLLM
+
+    inst = LiteLLM(
         name="litellm_test",
         model_name="anthropic/claude-sonnet-4-20250514",
         api_key="sk-test-key",
         llm_params={"temperature": 0.7},
     )
+    inst._litellm = litellm
+    return inst
 
 
 @pytest.fixture
@@ -60,12 +64,16 @@ def llm_no_key(monkeypatch):
         raising=True,
     )
 
-    from oxygent.oxy.llms.litellm_llm import LiteLLM
+    import litellm
 
-    return LiteLLM(
+    from oxygent.oxy.llms.lite_llm import LiteLLM
+
+    inst = LiteLLM(
         name="litellm_nokey",
         model_name="openai/gpt-4o",
     )
+    inst._litellm = litellm
+    return inst
 
 
 @pytest.fixture
@@ -120,9 +128,7 @@ async def test_streaming_success(monkeypatch, llm, oxy_request, mock_send_messag
 
         return gen()
 
-    monkeypatch.setattr(
-        "oxygent.oxy.llms.litellm_llm.litellm.acompletion", fake_acompletion
-    )
+    monkeypatch.setattr("litellm.acompletion", fake_acompletion)
 
     resp = await llm._execute(oxy_request)
 
@@ -143,7 +149,7 @@ async def test_non_streaming(monkeypatch, llm, oxy_request):
     )
 
     monkeypatch.setattr(
-        "oxygent.oxy.llms.litellm_llm.litellm.acompletion",
+        "litellm.acompletion",
         mock.AsyncMock(return_value=fake_resp),
     )
 
@@ -169,7 +175,7 @@ async def test_api_key_forwarded(monkeypatch, llm, oxy_request):
         captured.update(kwargs)
         return fake_resp
 
-    monkeypatch.setattr("oxygent.oxy.llms.litellm_llm.litellm.acompletion", capture)
+    monkeypatch.setattr("litellm.acompletion", capture)
 
     await llm._execute(oxy_request)
 
@@ -194,7 +200,7 @@ async def test_api_key_omitted_when_unset(monkeypatch, llm_no_key, oxy_request):
         captured.update(kwargs)
         return fake_resp
 
-    monkeypatch.setattr("oxygent.oxy.llms.litellm_llm.litellm.acompletion", capture)
+    monkeypatch.setattr("litellm.acompletion", capture)
 
     await llm_no_key._execute(oxy_request)
 
@@ -214,13 +220,16 @@ async def test_base_url_forwarded(monkeypatch, oxy_request):
         raising=True,
     )
 
-    from oxygent.oxy.llms.litellm_llm import LiteLLM
+    import litellm
+
+    from oxygent.oxy.llms.lite_llm import LiteLLM
 
     llm = LiteLLM(
         name="proxy_llm",
         model_name="openai/gpt-4o",
         base_url="http://localhost:4000",
     )
+    llm._litellm = litellm
 
     oxy_request.arguments["stream"] = False
 
@@ -235,7 +244,7 @@ async def test_base_url_forwarded(monkeypatch, oxy_request):
         captured.update(kwargs)
         return fake_resp
 
-    monkeypatch.setattr("oxygent.oxy.llms.litellm_llm.litellm.acompletion", capture)
+    monkeypatch.setattr("litellm.acompletion", capture)
 
     await llm._execute(oxy_request)
 
@@ -258,7 +267,7 @@ async def test_drop_params_default_true(monkeypatch, llm, oxy_request):
         captured.update(kwargs)
         return fake_resp
 
-    monkeypatch.setattr("oxygent.oxy.llms.litellm_llm.litellm.acompletion", capture)
+    monkeypatch.setattr("litellm.acompletion", capture)
 
     await llm._execute(oxy_request)
 
@@ -281,7 +290,7 @@ async def test_llm_params_merged(monkeypatch, llm, oxy_request):
         captured.update(kwargs)
         return fake_resp
 
-    monkeypatch.setattr("oxygent.oxy.llms.litellm_llm.litellm.acompletion", capture)
+    monkeypatch.setattr("litellm.acompletion", capture)
 
     await llm._execute(oxy_request)
 

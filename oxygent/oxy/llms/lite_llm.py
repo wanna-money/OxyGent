@@ -5,10 +5,10 @@ etc.) through a single unified interface via the LiteLLM library.
 """
 
 import logging
-from typing import Optional
+from typing import Any, Optional
 
-import litellm
 from pydantic import Field
+from pydantic import PrivateAttr
 
 from ...schemas import OxyRequest, OxyResponse, OxyState
 from .base_llm import BaseLLM
@@ -25,6 +25,8 @@ class LiteLLM(BaseLLM):
     ``openai/gpt-4o``, ``bedrock/anthropic.claude-3``).
 
     """
+
+    _litellm: Any = PrivateAttr(default=None)
 
     api_key: Optional[str] = Field(
         default=None,
@@ -44,6 +46,18 @@ class LiteLLM(BaseLLM):
         description="Silently drop provider-unsupported params (recommended).",
     )
 
+    async def init(self) -> None:
+        try:
+            import litellm
+
+            self._litellm = litellm
+        except ImportError as e:
+            raise ImportError(
+                f"LiteLLM '{self.name}' requires the 'litellm' package. "
+                "Please install it using: pip install 'litellm>=1.60.0,<2.0.0'"
+            ) from e
+        await super().init()
+
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Execute a request via litellm.acompletion."""
         messages = await self._get_messages(oxy_request)
@@ -61,7 +75,7 @@ class LiteLLM(BaseLLM):
 
         self._build_payload(oxy_request, payload)
 
-        completion = await litellm.acompletion(**payload)
+        completion = await self._litellm.acompletion(**payload)
         if payload["stream"]:
             answer = ""
             think_start = True
