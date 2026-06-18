@@ -70,7 +70,7 @@ The latest version of OxyGent (July 15, 2025) in the [GAIA](https://huggingface.
 ![](https://storage.jd.com/ai-gateway-routing/prod_data/oxygent_github_images/points.png)
 
 ## 3. Framework Core Classes
-![](https://oss-oxy.s3.cn-north-1.jdcloud-oss.com/oxygent_github_images/oxy.png)
+![](docs/images/structure.png)
 
 ## 4. Feature Highlight
 **For Developers**: Focus on business logic without reinventing the wheel.

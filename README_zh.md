@@ -67,7 +67,7 @@ OxyGent 是一个开源框架，将工具、模型、智能体统一为可插拔
 
 OxyGent最新版本 (July 9, 2025) 在[GAIA](https://huggingface.co/spaces/gaia-benchmark/leaderboard)榜单中分数为59.14，目前开源框架第一OWL为60.8分。
 
-![](https://storage.jd.com/ai-gateway-routing/prod_data/oxygent_github_images/points.png)
+![](docs/images/structure.png)
 
 ## 3. 框架核心类
 ![](https://oss-oxy.s3.cn-north-1.jdcloud-oss.com/oxygent_github_images/oxy.png)
