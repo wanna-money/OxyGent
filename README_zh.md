@@ -70,7 +70,7 @@ OxyGent最新版本 (July 9, 2025) 在[GAIA](https://huggingface.co/spaces/gaia-
 ![](https://storage.jd.com/ai-gateway-routing/prod_data/oxygent_github_images/points.png)
 
 ## 3. 框架核心类
-![](https://storage.jd.com/ai-gateway-routing/prod_data/oxygent_github_images/structure.png)
+![](https://oss-oxy.s3.cn-north-1.jdcloud-oss.com/oxygent_github_images/oxy.png)
 
 ## 4. 框架亮点
 - 对**开发者**：专注业务逻辑，无需重复造轮子
