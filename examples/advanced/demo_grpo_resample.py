@@ -5,6 +5,9 @@ from oxygent import MAS, Config, oxy, preset_tools
 from oxygent.routes import get_task_info
 
 Config.set_agent_llm_model("default_llm")
+Config.set_message_is_send_tool_call(False)
+Config.set_message_is_send_observation(False)
+Config.set_storage_es_engine("MemoryEs")
 
 oxy_space = [
     oxy.HttpLLM(
@@ -40,12 +43,13 @@ oxy_space = [
 
 
 async def main():
-    outputs = []
     async with MAS(oxy_space=oxy_space) as mas:
         # Step1
         payload = {"query": "What time is it now? Please save it into time.txt."}
         oxy_response = await mas.chat_with_agent(payload)
         trace_id = oxy_response.oxy_request.current_trace_id
+
+        await mas.await_background_tasks(trace_id)
 
         # Step2
         res = await get_task_info(trace_id)
@@ -53,14 +57,15 @@ async def main():
         for node in res["data"]["nodes"]:
             if node["node_type"] == "llm":
                 filterd_nodes.append(node)
+
+        # Step3
+        tasks = []
         for node in sorted(filterd_nodes, key=lambda x: x["create_time"]):
             print(node["node_id"], node["caller"], node["callee"])
-
-            # Step3
             payload = {"restart_node_id": node["node_id"]}
-            oxy_response = await mas.chat_with_agent(payload)
-            outputs.append(oxy_response.output)
-    print("\n".join(outputs))
+            tasks.append(mas.chat_with_agent(payload))
+        oxy_responses = await asyncio.gather(*tasks)
+        print("\n".join([oxy_response.output for oxy_response in oxy_responses]))
 
 
 if __name__ == "__main__":

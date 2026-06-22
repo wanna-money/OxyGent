@@ -17,8 +17,7 @@ try:
     from langgraph.graph import END, StateGraph
 except Exception as e:  # pragma: no cover
     raise RuntimeError(
-        "Missing dependency `langgraph`. Install it first, e.g.:\n"
-        "pip install langgraph"
+        "Missing dependency `langgraph`. Install it first, e.g.:\npip install langgraph"
     ) from e
 
 
@@ -59,7 +58,10 @@ def build_task(text: str, task_id: str, context_id: str) -> dict[str, Any]:
         "kind": "task",
         "id": task_id,
         "contextId": context_id,
-        "status": {"state": "completed", "message": build_message(text, task_id, context_id)},
+        "status": {
+            "state": "completed",
+            "message": build_message(text, task_id, context_id),
+        },
         "artifacts": [
             {
                 "artifactId": str(uuid4()),

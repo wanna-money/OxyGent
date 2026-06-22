@@ -11,7 +11,6 @@ from typing import Optional
 from openai import AsyncOpenAI
 from pydantic import PrivateAttr
 
-from ...config import Config
 from ...schemas import OxyRequest, OxyResponse, OxyState
 from .remote_llm import RemoteLLM
 
@@ -59,13 +58,7 @@ class OpenAILLM(RemoteLLM):
             "stream": True,
             "stream_options": {"include_usage": True},
         }
-        payload.update(Config.get_llm_config(exclude=["semaphore", "timeout"]))
-        for k, v in self.llm_params.items():
-            payload[k] = v
-        for k, v in oxy_request.arguments.items():
-            if k == "messages":
-                continue
-            payload[k] = v
+        self._build_payload(oxy_request, payload)
 
         client = self._get_client()
         completion = await client.chat.completions.create(**payload)

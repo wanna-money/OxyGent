@@ -39,11 +39,24 @@ async def poll_task(
             params=TaskQueryParams(id=task_id, metadata=metadata or None),
         )
         get_resp = await client.get_task(get_request)
-        print("[tasks/get]", json.dumps(get_resp.model_dump(mode="json", exclude_none=True), ensure_ascii=False))
+        print(
+            "[tasks/get]",
+            json.dumps(
+                get_resp.model_dump(mode="json", exclude_none=True), ensure_ascii=False
+            ),
+        )
 
-        task_obj = getattr(get_resp.root, "result", None) if getattr(get_resp, "root", None) else None
+        task_obj = (
+            getattr(get_resp.root, "result", None)
+            if getattr(get_resp, "root", None)
+            else None
+        )
         state = ""
-        if task_obj and getattr(task_obj, "status", None) and getattr(task_obj.status, "state", None):
+        if (
+            task_obj
+            and getattr(task_obj, "status", None)
+            and getattr(task_obj.status, "state", None)
+        ):
             state_obj = task_obj.status.state
             state = getattr(state_obj, "value", state_obj)
             state = str(state).lower()
@@ -53,7 +66,13 @@ async def poll_task(
             return
 
         if waited >= max_wait_seconds:
-            print({"taskId": task_id, "state": state or "unknown", "msg": "polling timeout"})
+            print(
+                {
+                    "taskId": task_id,
+                    "state": state or "unknown",
+                    "msg": "polling timeout",
+                }
+            )
             return
 
         await asyncio.sleep(interval_seconds)
@@ -97,12 +116,24 @@ async def main() -> None:
             )
             print("[turn1 stream]")
             async for chunk in client.send_message_streaming(streaming_request):
-                print(json.dumps(chunk.model_dump(mode="json", exclude_none=True), ensure_ascii=False))
+                print(
+                    json.dumps(
+                        chunk.model_dump(mode="json", exclude_none=True),
+                        ensure_ascii=False,
+                    )
+                )
             return
 
-        request = SendMessageRequest(id=str(uuid4()), params=MessageSendParams(**send_message_payload))
+        request = SendMessageRequest(
+            id=str(uuid4()), params=MessageSendParams(**send_message_payload)
+        )
         response = await client.send_message(request)
-        print("[turn1 send]", json.dumps(response.model_dump(mode="json", exclude_none=True), ensure_ascii=False))
+        print(
+            "[turn1 send]",
+            json.dumps(
+                response.model_dump(mode="json", exclude_none=True), ensure_ascii=False
+            ),
+        )
 
 
 if __name__ == "__main__":

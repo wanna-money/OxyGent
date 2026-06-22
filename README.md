@@ -218,6 +218,75 @@ Thanks to all the following [developers](https://github.com/jd-opensource/OxyGen
   <img src="https://contrib.rocks/image?repo=jd-opensource/OxyGent" />
 </a>
 
+## FAQ
+
+### General Questions
+
+**What is OxyGent?**
+OxyGent is an open-source framework that unifies tools, models, and agents into modular Oxy components. It empowers developers to build, run, and evolve multi-agent systems with transparent, end-to-end pipelines.
+
+**How is OxyGent different from other multi-agent frameworks?**
+OxyGent uses a unique "Oxy" abstraction that standardizes agent components, enabling hot-swapping and cross-scenario reuse. Unlike rigid workflow systems, OxyGent supports dynamic planning paradigms where agents intelligently decompose tasks and adapt to changes in real-time.
+
+**What is the Oxy abstraction?**
+Oxy is a standardized component model that snaps together like LEGO bricks. Each Oxy encapsulates a specific capability (tool, model, or agent) with clean Python interfaces, enabling rapid assembly and evolution of AI teams.
+
+### Setup & Configuration
+
+**What are the system requirements?**
+- Python 3.10+
+- pip package manager
+- API key from an LLM provider (OpenAI, Anthropic, etc.)
+
+**How do I install OxyGent?**
+```bash
+pip install oxygent
+```
+
+**Can I use OxyGent with local models?**
+Yes! OxyGent supports any LLM provider that exposes a compatible API. Configure your local model via environment variables (`DEFAULT_LLM_BASE_URL`, `DEFAULT_LLM_MODEL_NAME`).
+
+### Agent Development
+
+**How do I create a custom Oxy?**
+Create a new class that inherits from the base Oxy class and implement the required methods. See the [documentation](http://oxygent.jd.com/docs/) for detailed guides.
+
+**What planning paradigms does OxyGent support?**
+OxyGent supports multiple planning paradigms:
+- **ReAct**: Reasoning + Acting pattern for simple tasks
+- **Dynamic Planning**: Agents intelligently decompose tasks and negotiate solutions
+- **Hybrid Planning**: Combines multiple paradigms for complex scenarios
+
+**How does OxyGent handle agent collaboration?**
+OxyGent's elastic architecture supports any agent topology. Agents communicate through standardized interfaces, with automated dependency mapping and visual debugging tools for optimization.
+
+### Deployment
+
+**How do I deploy OxyGent applications?**
+OxyGent applications can be deployed as standard Python applications:
+- **Local Development**: Run `python demo.py` for local testing
+- **Production**: Use the distributed scheduler for scaling across multiple nodes
+- **Docker**: Containerize your OxyGent application for consistent deployment
+
+**Is OxyGent suitable for enterprise use?**
+Yes! OxyGent is designed for enterprise scenarios with features like:
+- Distributed scheduling for horizontal scaling
+- Full auditability of every decision
+- Built-in evaluation engines for continuous improvement
+- Support for domain-wide optimization and real-time decision making
+
+### Troubleshooting
+
+**Common Issues:**
+- **Import Errors**: Ensure Python 3.10+ is installed and dependencies are up to date
+- **API Key Errors**: Verify your LLM provider API key is correctly configured
+- **Agent Communication Issues**: Check that all Oxy components are properly registered
+
+**Where can I get help?**
+- [Official Documentation](http://oxygent.jd.com/docs/)
+- [GitHub Issues](https://github.com/jd-opensource/OxyGent/issues)
+- Internal Slack (for JD.com employees)
+
 ## 9. License
 [Apache License]( ./LICENSE.md)
 

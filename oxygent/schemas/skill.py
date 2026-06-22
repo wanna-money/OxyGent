@@ -68,34 +68,6 @@ class SkillMetadata(BaseModel):
         description="Name of the Skills/SkillHub component that registered this skill",
     )
 
-    def to_prompt_entry(self) -> str:
-        """Format for system prompt injection.
-
-        Returns a formatted string suitable for inclusion in the agent's
-        system prompt, showing the skill name and description.
-
-        Returns:
-            A formatted markdown string with skill name and description.
-        """
-        return f"- **{self.name}**: {self.description}"
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary for serialization.
-
-        Returns:
-            A dictionary representation of the metadata, excluding the
-            skill_path which is not needed for serialization.
-        """
-        return {
-            "name": self.name,
-            "description": self.description,
-            "version": self.version,
-            "author": self.author,
-            "disable_model_invocation": self.disable_model_invocation,
-            "user_invocable": self.user_invocable,
-            "argument_hint": self.argument_hint,
-        }
-
     @classmethod
     def from_frontmatter(
         cls,

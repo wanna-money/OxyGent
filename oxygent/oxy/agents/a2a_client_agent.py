@@ -1,8 +1,8 @@
 """A minimal A2A client agent for OxyGent.
 
-  This module provides a lightweight A2A client adapter with a small,
-  stable configuration surface for common request/response and streaming
-  scenarios.
+This module provides a lightweight A2A client adapter with a small,
+stable configuration surface for common request/response and streaming
+scenarios.
 """
 
 import asyncio
@@ -14,12 +14,8 @@ from urllib.parse import parse_qs, urlsplit, urlunsplit
 from uuid import uuid4
 
 import httpx
-from pydantic import Field, PrivateAttr
-
-from ...schemas import OxyRequest, OxyResponse, OxyState
-from .remote_agent import RemoteAgent
-
-from a2a.client import A2AClient as A2ASDKClient, A2ACardResolver
+from a2a.client import A2ACardResolver
+from a2a.client import A2AClient as A2ASDKClient
 from a2a.client.helpers import create_text_message_object
 from a2a.types import (
     CancelTaskRequest,
@@ -37,26 +33,13 @@ from a2a.types import (
 )
 from a2a.utils.message import get_message_text
 from a2a.utils.parts import get_text_parts
+from pydantic import Field, PrivateAttr
+
+from ...schemas import OxyRequest, OxyResponse, OxyState
+from ...utils.common_utils import EXCLUDED_HEADERS
+from .remote_agent import RemoteAgent
 
 logger = logging.getLogger(__name__)
-
-EXCLUDED_HEADERS = {
-    "host",
-    "connection",
-    "sec-ch-ua",
-    "sec-ch-ua-mobile",
-    "sec-ch-ua-platform",
-    "user-agent",
-    "referer",
-    "accept-encoding",
-    "accept-language",
-    "cache-control",
-    "sec-fetch-site",
-    "sec-fetch-mode",
-    "sec-fetch-dest",
-    "accept",
-    "content-length",
-}
 
 
 class A2AClientAgent(RemoteAgent):
@@ -81,7 +64,8 @@ class A2AClientAgent(RemoteAgent):
         ),
     )
     card_path: str | None = Field(
-        ".well-known/agent.json", description="Relative card path when using server_url."
+        ".well-known/agent.json",
+        description="Relative card path when using server_url.",
     )
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Default A2A metadata."
@@ -167,7 +151,9 @@ class A2AClientAgent(RemoteAgent):
         path = parsed.path.rstrip("/")
         if not path.endswith("/stream"):
             path = f"{path}/stream"
-        return urlunsplit((parsed.scheme, parsed.netloc, path, parsed.query, parsed.fragment))
+        return urlunsplit(
+            (parsed.scheme, parsed.netloc, path, parsed.query, parsed.fragment)
+        )
 
     def _resolve_card_endpoint(self) -> tuple[str, str]:
         """Resolve card endpoint from either server_url or full card URL."""
@@ -191,7 +177,7 @@ class A2AClientAgent(RemoteAgent):
             card_path = f"{card_path}?{query_str}"
         return server_url, card_path
 
-    async def init(self):
+    async def init(self) -> None:
         """Initialize A2A card resolver and SDK client."""
         await super().init()
         server_url, card_path = self._resolve_card_endpoint()
@@ -252,6 +238,21 @@ class A2AClientAgent(RemoteAgent):
             getattr(self._card, "url", ""),
             extra={"agent": self.name, "card_url": getattr(self._card, "url", "")},
         )
+
+    async def cleanup(self) -> None:
+        """Close the HTTP client and release connection pool resources."""
+        if self._http_client is not None:
+            try:
+                await self._http_client.aclose()
+            except Exception as e:
+                logger.warning(
+                    f"Error closing HTTP client for A2AClientAgent '{self.name}': {e}",
+                    exc_info=True,
+                )
+            finally:
+                self._http_client = None
+                self._client = None
+                self._card = None
 
     @staticmethod
     def _task_state(task: Task | None) -> str:
@@ -471,10 +472,8 @@ class A2AClientAgent(RemoteAgent):
                     "poll_error": str(e),
                 }
                 logger.warning(
-                    "Task polling failed agent=%s task_id=%s error=%s",
-                    self.name,
-                    task_id,
-                    e,
+                    f"Task polling failed agent={self.name} task_id={task_id} target_url={getattr(self._card, 'url', self.server_url)} error={e}",
+                    exc_info=True,
                 )
                 break
             if final_task:
@@ -537,7 +536,9 @@ class A2AClientAgent(RemoteAgent):
         )
         task = await self._get_task(task_id, metadata=metadata, http_kwargs=http_kwargs)
         return (
-            task.model_dump(mode="json", by_alias=True, exclude_none=True) if task else {}
+            task.model_dump(mode="json", by_alias=True, exclude_none=True)
+            if task
+            else {}
         )
 
     async def cancel_task(

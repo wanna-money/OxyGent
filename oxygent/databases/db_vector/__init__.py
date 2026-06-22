@@ -1,3 +1,5 @@
+"""Vector database backends (Vearch)."""
+
 from .base_vector_db import BaseVectorDB
 from .vearch_db import VearchDB
 

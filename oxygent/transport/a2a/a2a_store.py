@@ -1,4 +1,8 @@
-"""In-memory runtime stores for A2A server gateway."""
+"""In-memory runtime stores for the A2A server gateway.
+
+Provides ``A2AInMemoryStore`` which tracks task snapshots, per-context session
+state, and running-task markers during the lifetime of the gateway process.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +14,14 @@ from .a2a_protocol import build_agent_message, build_final_artifact
 
 
 class A2AInMemoryStore:
-    """Track task snapshots, context state, and running markers."""
+    """In-memory store for A2A task snapshots, context sessions, and run state.
+
+    Attributes:
+        task_store: Mapping of task_id to the latest task snapshot dict.
+        context_store: Mapping of context_id to session metadata (group_id,
+            last_trace_id, last_task_id).
+        running_task_ids: Set of task IDs currently being processed.
+    """
 
     def __init__(self):
         self.task_store: dict[str, dict[str, Any]] = {}
@@ -52,9 +63,28 @@ class A2AInMemoryStore:
         state: TaskState | str = TaskState.completed,
         error: str | None = None,
     ) -> dict[str, Any]:
-        """Build and cache task snapshot in memory."""
+        """Build a task snapshot dict and cache it in the store.
+
+        Constructs the appropriate status, message, artifacts, and error
+        fields based on the task state, then persists the snapshot in
+        ``task_store``.
+
+        Args:
+            task_id: Unique task identifier.
+            context_id: Associated context identifier.
+            answer: Answer text or status message.
+            trace_id: MAS trace identifier.
+            group_id: MAS group identifier.
+            state: Task lifecycle state. Defaults to ``completed``.
+            error: Optional error message for failed tasks.
+
+        Returns:
+            Complete task snapshot dictionary.
+        """
         state_value = (
-            state.value if isinstance(state, TaskState) else str(state or TaskState.unknown.value)
+            state.value
+            if isinstance(state, TaskState)
+            else str(state or TaskState.unknown.value)
         )
         if state_value == "pending":
             state_value = TaskState.submitted.value

@@ -1,4 +1,8 @@
-"""A2A agent card helpers for OxyGent MAS."""
+"""A2A agent card construction helpers for OxyGent MAS.
+
+Builds the JSON agent card that describes capabilities, skills, and endpoint
+information for A2A service discovery (``/.well-known/agent.json``).
+"""
 
 from __future__ import annotations
 
@@ -6,7 +10,14 @@ from typing import Any
 
 
 def card_identity(mas: Any) -> tuple[str, str]:
-    """Resolve card ``name`` and ``description`` from MAS master agent."""
+    """Resolve the agent card name and description from the MAS master agent.
+
+    Args:
+        mas: MAS runtime instance, or None.
+
+    Returns:
+        Tuple of (name, description) for the agent card.
+    """
     if not mas:
         return "master_agent", "A2A facade of OxyGent MAS"
 
@@ -20,7 +31,18 @@ def card_identity(mas: Any) -> tuple[str, str]:
 
 
 def effective_target(mas: Any, target_agent_name: str | None = None) -> str:
-    """Resolve the target MAS agent used to process incoming A2A requests."""
+    """Resolve the MAS agent name that should handle incoming A2A requests.
+
+    Priority: MAS master agent > explicit target > first agent in MAS >
+    ``"master_agent"`` fallback.
+
+    Args:
+        mas: MAS runtime instance, or None.
+        target_agent_name: Explicit target agent name override.
+
+    Returns:
+        Resolved agent name string.
+    """
     if mas and mas.master_agent_name:
         return mas.master_agent_name
     if target_agent_name:
@@ -35,7 +57,20 @@ def effective_target(mas: Any, target_agent_name: str | None = None) -> str:
 def build_skills_from_org(
     *, mas: Any, skills_override: list[dict[str, Any]] | None = None
 ) -> list[dict[str, Any]]:
-    """Build card skills from MAS organization tree or static override."""
+    """Build the skills list for the agent card from MAS organization or override.
+
+    Walks the MAS agent organization tree and creates an A2A skill entry for
+    each agent or flow node found. Falls back to a single generic chat skill
+    when no organization tree is available.
+
+    Args:
+        mas: MAS runtime instance, or None.
+        skills_override: If provided, returned as-is instead of building from
+            the organization tree.
+
+    Returns:
+        List of A2A skill dictionaries.
+    """
     if skills_override:
         return skills_override
 
@@ -55,7 +90,7 @@ def build_skills_from_org(
     org = mas.agent_organization or {}
     skills: list[dict[str, Any]] = []
 
-    def walk(node: dict[str, Any], path: list[str] | None = None):
+    def walk(node: dict[str, Any], path: list[str] | None = None) -> None:
         if not isinstance(node, dict):
             return
         curr_path = (path or []) + [node.get("name", "")]
@@ -104,7 +139,20 @@ def build_agent_card(
     mas: Any,
     skills_override: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Build an A2A-compatible agent card response."""
+    """Build a complete A2A-compatible agent card response.
+
+    Args:
+        request_base_url: Base URL of the current HTTP request.
+        a2a_base_path: Path prefix where A2A endpoints are mounted.
+        agent_version: Semantic version of the agent service.
+        capabilities: A2A capability flags (streaming, task_control, etc.).
+        mas: MAS runtime instance for dynamic skill/identity resolution.
+        skills_override: Optional static skills list to use instead of
+            auto-discovery from MAS.
+
+    Returns:
+        Complete agent card dictionary ready for JSON serialization.
+    """
     endpoint = request_base_url.rstrip("/") + a2a_base_path
     skills = build_skills_from_org(mas=mas, skills_override=skills_override)
     card_name, card_desc = card_identity(mas)

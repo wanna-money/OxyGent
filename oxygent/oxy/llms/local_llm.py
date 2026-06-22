@@ -7,7 +7,6 @@ import logging
 
 from pydantic import Field
 
-from ...config import Config
 from ...schemas import OxyRequest, OxyResponse, OxyState
 from .base_llm import BaseLLM
 
@@ -15,20 +14,35 @@ logger = logging.getLogger(__name__)
 
 
 class LocalLLM(BaseLLM):
-    """LLM that loads a transformer model from disk and runs inference locally."""
+    """LLM that loads a transformer model from disk and runs inference locally.
+
+    Attributes:
+        model_path: Filesystem path to the HuggingFace model directory.
+        device_map: Device placement strategy passed to
+            ``AutoModelForCausalLM.from_pretrained``.
+        dtype: Data type string (e.g. ``"bfloat16"``) for model weights.
+    """
 
     model_path: str = Field("")
     device_map: str = Field("auto")
     dtype: str = Field("bfloat16")
 
-    async def init(self):
-        """Load the model and tokenizer from the configured path."""
+    async def init(self) -> None:
+        """Load the model and tokenizer from the configured path.
+
+        Raises:
+            ImportError: If ``torch`` or ``transformers`` are not installed.
+        """
         try:
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer
         except ImportError as e:
+            logger.error(
+                f"LocalLLM '{self.name}' failed to import required packages (torch/transformers): {e}",
+                exc_info=True,
+            )
             raise ImportError(
-                "LocalLLM requires 'torch' and 'transformers' packages."
+                f"LocalLLM '{self.name}' requires 'torch' and 'transformers' packages. "
                 "Please install them using 'pip install torch transformers einops transformers_stream_generator accelerate'"
             ) from e
 
@@ -39,14 +53,16 @@ class LocalLLM(BaseLLM):
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_path)
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Generate a response by running the local model on the input messages."""
-        payload = Config.get_llm_config(exclude=["semaphore", "timeout"])
-        for k, v in self.llm_params.items():
-            payload[k] = v
-        for k, v in oxy_request.arguments.items():
-            if k == "messages":
-                continue
-            payload[k] = v
+        """Generate a response by running the local model on the input messages.
+
+        Args:
+            oxy_request: The request containing messages and generation parameters.
+
+        Returns:
+            An OxyResponse with the decoded model output.
+        """
+        payload = {}
+        self._build_payload(oxy_request, payload)
 
         replace_dict = {
             "max_tokens": "max_new_tokens",

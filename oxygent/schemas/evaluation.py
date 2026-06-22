@@ -5,9 +5,9 @@ including likes/dislikes, rating statistics, etc.
 """
 
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class RatingType(str, Enum):
@@ -38,8 +38,7 @@ class ConversationRating(BaseModel):
     create_time: str = Field(..., description="Rating creation time")
     update_time: Optional[str] = Field(None, description="Rating update time")
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class RatingRequest(BaseModel):
@@ -50,8 +49,7 @@ class RatingRequest(BaseModel):
     comment: Optional[str] = Field(None, description="Rating comment", max_length=500)
     erp: Optional[str] = Field(None, description="ERP system identifier")
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class RatingStats(BaseModel):
@@ -84,7 +82,7 @@ class ConversationWithRating(BaseModel):
     # Rating statistics information
     rating_stats: Optional[RatingStats] = Field(None, description="Rating statistics")
     # Rating history records list
-    rating_history: Optional[List["ConversationRating"]] = Field(
+    rating_history: Optional[list["ConversationRating"]] = Field(
         None, description="Complete rating history records list"
     )
 

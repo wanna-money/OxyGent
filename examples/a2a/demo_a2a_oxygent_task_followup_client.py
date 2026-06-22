@@ -10,7 +10,7 @@ Run:
 import asyncio
 import time
 
-from oxygent import Config, MAS, OxyRequest, oxy
+from oxygent import MAS, Config, OxyRequest, oxy
 
 SERVER_URL = "http://127.0.0.1:8090/a2a"
 

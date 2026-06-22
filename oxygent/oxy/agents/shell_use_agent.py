@@ -1,5 +1,12 @@
+"""Shell-use agent for terminal-based task execution via SSH.
+
+Provides ShellUseAgent, a ReAct-style agent that establishes SSH connections
+to remote systems and executes shell commands to accomplish tasks.
+"""
+
 import asyncio
 import logging
+from typing import Any
 
 from pydantic import Field
 
@@ -21,9 +28,9 @@ logger = logging.getLogger(__name__)
 class ShellUseAgent(ReActAgent):
     """ReAct-style agent that uses shell/SSH tools to accomplish tasks."""
 
-    auth_info: dict = Field(default_factory=dict)
+    auth_info: dict[str, Any] = Field(default_factory=dict)
 
-    async def init(self):
+    async def init(self) -> None:
         """Async initialization for the shell-use agent."""
         await super().init()
 
@@ -31,14 +38,45 @@ class ShellUseAgent(ReActAgent):
 
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(**self.auth_info)
+        try:
+            client.connect(**self.auth_info)
+        except Exception as e:
+            logger.error(
+                f"Failed to establish SSH connection for '{self.name}': {e}",
+                exc_info=True,
+            )
+            client.close()
+            raise
+
         ssh_channel = client.invoke_shell()
 
         await asyncio.sleep(1)
         if ssh_channel.recv_ready():
             output = ssh_channel.recv(4096).decode()
             self.mas.global_data["hello_terminal"] = clean_ansi_codes(output)
+        self.mas.global_data["ssh_client"] = client
         self.mas.global_data["ssh_channel"] = ssh_channel
+
+    async def cleanup(self) -> None:
+        """Close the SSH channel and client connection."""
+        channel = self.mas.global_data.pop("ssh_channel", None) if self.mas else None
+        client = self.mas.global_data.pop("ssh_client", None) if self.mas else None
+        try:
+            if channel is not None:
+                channel.close()
+        except Exception as e:
+            logger.warning(
+                f"Error closing SSH channel for '{self.name}': {e}",
+                exc_info=True,
+            )
+        try:
+            if client is not None:
+                client.close()
+        except Exception as e:
+            logger.warning(
+                f"Error closing SSH client for '{self.name}': {e}",
+                exc_info=True,
+            )
 
     def _parse_llm_response(
         self, ori_response: str, oxy_request: OxyRequest = None
@@ -69,22 +107,28 @@ class ShellUseAgent(ReActAgent):
                     output=json_text,
                     ori_response=ori_response,
                 )
-            else:
-                return LLMResponse(
-                    state=LLMState.TOOL_CALL,
-                    output=json_text,
-                    ori_response=ori_response,
-                )
-        except Exception as e:
-            logger.warning(e)
             return LLMResponse(
-                state=LLMState.ERROR_PARSE, output=e, ori_response=ori_response
+                state=LLMState.TOOL_CALL,
+                output=json_text,
+                ori_response=ori_response,
+            )
+        except Exception as e:
+            logger.warning(
+                f"Unexpected error parsing shell LLM response: {e} | response text: {ori_response[:500]}",
+                extra={
+                    "trace_id": oxy_request.current_trace_id,
+                    "node_id": oxy_request.node_id,
+                },
+                exc_info=True,
+            )
+            return LLMResponse(
+                state=LLMState.ERROR_PARSE, output=str(e), ori_response=ori_response
             )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
         """Run the ReAct loop using shell/SSH tool invocations."""
 
-        def mock_receive_email(query):
+        def mock_receive_email(query: str) -> str:
             return f"python3 receive_email.py Bob\n{query}\nvboxuser@ubuntu:~$ "
 
         oxy_request.set_query(mock_receive_email(oxy_request.get_query()))
@@ -129,7 +173,7 @@ class ShellUseAgent(ReActAgent):
                 arguments={"messages": full_memory},
             )
             oxy_request.arguments["full_memory"] = full_memory
-            llm_response = self.func_parse_llm_response(
+            llm_response = await self.func_parse_llm_response(
                 oxy_response.output, oxy_request
             )
 

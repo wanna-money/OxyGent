@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="shortcut icon" href="./image/group-favicon.png" type="image/x-icon">
-    <title>Node Visualization</title>
+    <title>Node Explorer - OxyGent</title>
     <link href="./css/normalize.css" rel="stylesheet">
     <link href="./css/node.css" rel="stylesheet">
     <link href="./css/style_load1.css" rel="stylesheet">
@@ -16,6 +16,7 @@
     <link href="./css/flowchart_view1.css" rel="stylesheet">
     <link href="./css/swimlane.css" rel="stylesheet">
     <link href="./css/timeline.css" rel="stylesheet">
+    <link href="./css/guide.css" rel="stylesheet">
 
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
     <script src="./js/marked.min.js"></script>
@@ -30,38 +31,47 @@
 </head>
 <body>
 
+<div class="node-header">
+    <div class="node-header-left">
+        <img class="node-header-logo" src="./image/group-favicon.png" alt="">
+        <span class="node-header-title">Node Explorer</span>
+    </div>
+    <div class="node-header-center">
+        <div class="tabs">
+            <div class="tab-item tab-text-active" data-id="flowchart-container">
+                <span class="tab-text">Flowchart</span>
+            </div>
+            <div class="tab-item" data-id="gantt-container-section">
+                <span class="tab-text">Gantt</span>
+            </div>
+            <div class="tab-item" data-id="swimlane-container-section">
+                <span class="tab-text">Swimlane</span>
+            </div>
+            <div class="tab-item" data-id="timeline-container-section">
+                <span class="tab-text">Timeline</span>
+            </div>
+        </div>
+    </div>
+    <div class="node-header-right">
+        <button class="node-header-btn" onclick="handleCollapse()" id="collapseToggleBtn" title="Toggle Graph">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,9 7,5 11,9"/></svg>
+            <span>Graph</span>
+        </button>
+        <button class="node-header-btn" onclick="startGuideTour()" title="Feature Guide">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M6 6a2 2 0 1 1 2.5 1.9c-.5.3-.5.6-.5 1.1"/><circle cx="8" cy="12" r="0.5" fill="currentColor" stroke="none"/></svg>
+            <span>Guide</span>
+        </button>
+        <button class="node-header-btn" onclick="window.open('index.html', '_self')">
+            <img src="./image/arrow-left.svg" alt=""/>
+            Back
+        </button>
+    </div>
+</div>
+
 <div class="node-warpper">
     <!-- 这部分要滚动吸顶 -->
     <div class="node-container-top">
     <div id="node-node-map" class="card">
-        <div class="node-node-map-container">
-            <div class="node-node-map-row ">
-                <div class="node-node-map-row-col">
-                    <div class="title">Node Map</div>
-                </div>
-                <div class="node-node-map-row-col">
-                    <div class="tabs ">
-                        <div class="tab-item tab-text-active" data-id="flowchart-container">
-                            <span class="tab-text ">View 1</span>
-                        </div>
-                        <div class="tab-item" data-id="gantt-container-section">
-                            <span class="tab-text ">View 2</span>
-                        </div>
-                        <div class="tab-item" data-id="swimlane-container-section">
-                            <span class="tab-text ">View 3</span>
-                        </div>
-                        <div class="tab-item" data-id="timeline-container-section">
-                            <span class="tab-text ">View 4</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="node-node-map-row-col">
-                    <div class="node-node-map-row-col-btn" onclick="handleCollapse()">
-                        <img alt="" src="image/group-down.svg">
-                    </div>
-                </div>
-            </div>
-        </div>
         <div class="collapse-card" id="collapseExample">
             <div class="tab-content">
                 <div id="flowchartId">
@@ -126,12 +136,25 @@
             <div class="right_top">
                 <span>PlayGround</span>
             </div>
-            <div class="right_middle">
+            <div class="right_content">
                 <div id="llm_result"></div>
             </div>
-            <div class="right_bottom">
-                <div id="llm_result_new">
-                </div>
+        </div>
+    </div>
+</div>
+
+<!-- Guide Tour Overlay -->
+<div class="tour-mask" id="tour-mask">
+    <div class="tour-spotlight" id="tour-spotlight"></div>
+    <div class="tour-tooltip" id="tour-tooltip">
+        <div class="tour-tooltip-icon" id="tour-icon"></div>
+        <div class="tour-tooltip-title" id="tour-title"></div>
+        <div class="tour-tooltip-desc" id="tour-desc"></div>
+        <div class="tour-tooltip-step">
+            <span class="tour-tooltip-counter" id="tour-counter"></span>
+            <div class="tour-tooltip-nav">
+                <button class="tour-tooltip-btn" id="tour-skip-btn" onclick="endGuideTour()">Skip</button>
+                <button class="tour-tooltip-btn primary" id="tour-next-btn" onclick="nextGuideTourStep()">Next</button>
             </div>
         </div>
     </div>
@@ -387,11 +410,10 @@
                 // 展示plan基本信息
                 $("#node_type").text(plan_data.node_type);
                 $("#trace_id").text('trace_id: ' + plan_data.trace_id);
-                $("#llm_result_new").empty();
 
-                // 展示结果
+                // 展示结果（切换节点时只展示原始结果）
 
-                var _resutData = renderPlayGround(plan_data)
+                var _resutData = renderPlayGround(plan_data, true)
                 $("#llm_result").html(_resutData);
                 updateURLParameter('id', plan_data.node_id);
                 if (plan_data.node_type === 'llm') {
@@ -428,19 +450,23 @@
         get_plan(next_id);
     }
 
+    var currentXhr = null;
+    var isGenerating = false;
+
     // 重新生成逻辑
     function call_llm() {
-        $("#llm_result_new").empty();
-
-        // 增加loading效果
-        $("#llm_result_new").html('<div class="loading"> <span></span> <span></span> <span></span> <span></span> <span></span> </div>');
-        // 不可点击效果
-        $("#call_llm").html('<img src="./image/refresh.svg" alt=""> planning').prop("disabled", true);
-
+        // 如果正在生成，点击则停止
+        if (isGenerating && currentXhr) {
+            currentXhr.abort();
+            currentXhr = null;
+            isGenerating = false;
+            $("#regen-loading").remove();
+            $("#call_llm").html('<img src="./image/refresh.svg" alt=""> Regenerate').prop("disabled", false);
+            return;
+        }
 
         var class_attrData = {};
         Array.from($('#modLeftClassAttrId input')).forEach(($input) => {
-            console.log('$input', $input);
             const key = $($input).attr('data-key');
             const type = $($input).attr('data-type');
             if (type === "string") {
@@ -454,15 +480,13 @@
             }
             if (type === "object") {
                 const preType = $($input).attr('data-pre-key');
-                class_attrData[preType] = {
-                    [key]: $($input).val(),
-                };
+                if (!class_attrData[preType]) class_attrData[preType] = {};
+                class_attrData[preType][key] = $($input).val();
             }
         })
 
         var arguments = {};
         Array.from($('#rightArgumentsId textarea')).forEach((element) => {
-            console.log('$input', element);
             const key = $(element).attr('data-key');
             const type = $(element).attr('data-type');
             if (type === "string") {
@@ -474,18 +498,11 @@
             if (type === "array") {
                 const preType = $(element).attr('data-pre-key');
                 const role = $(element).attr('data-role');
-
-                if (!arguments[preType]) {
-                    arguments[preType] = [];
-                }
-                arguments[preType].push({
-                    role: role,
-                    content: $(element).val(),
-                })
+                if (!arguments[preType]) arguments[preType] = [];
+                arguments[preType].push({ role: role, content: $(element).val() });
             }
         })
         Array.from($('#rightArgumentsId input')).forEach((element) => {
-            console.log('$input', element);
             const key = $(element).attr('data-key');
             const type = $(element).attr('data-type');
             if (type === "string") {
@@ -494,20 +511,21 @@
             if (type === "array") {
                 const preType = $(element).attr('data-pre-key');
                 const role = $(element).attr('data-role');
-
-                if (!arguments[preType]) {
-                    arguments[preType] = [];
-                }
-                arguments[preType].push({
-                    role: role,
-                    content: $(element).val(),
-                })
+                if (!arguments[preType]) arguments[preType] = [];
+                arguments[preType].push({ role: role, content: $(element).val() });
             }
         })
 
-        // $('.right_middle #llm_result').empty();
+        // loading + 按钮切换为 Stop
+        $("#llm_result").append('<div class="loading" id="regen-loading"> <span></span> <span></span> <span></span> <span></span> <span></span> </div>');
+        isGenerating = true;
+        $("#call_llm").html('<img src="./image/refresh.svg" alt=""> Stop').prop("disabled", false);
 
-        $.ajax({
+        // 立即滚动到底部，让用户看到 loading 动画
+        const scrollContainer = $('.right_content');
+        scrollContainer.scrollTop(scrollContainer[0].scrollHeight);
+
+        currentXhr = $.ajax({
             type: "POST",
             url: "../call",
             data: JSON.stringify({
@@ -517,40 +535,128 @@
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             success: function (response_data) {
-                const htmlData = renderPlayGround({
-                    ...plan_data,
-                    ...response_data.data
-                });
-
-                $("#llm_result_new").empty();
-                $("#llm_result_new").html(htmlData);
+                $("#regen-loading").remove();
+                if (response_data.code !== 200) {
+                    const errMsg = response_data.message || 'Unknown error';
+                    $("#llm_result").append(renderErrorBubble(errMsg));
+                } else {
+                    const htmlData = renderPlayGround({
+                        ...plan_data,
+                        ...response_data.data
+                    }, false);
+                    $("#llm_result").append(htmlData);
+                }
+                // 自动滚动到底部
+                const scrollContainer = $('.right_content');
+                scrollContainer.scrollTop(scrollContainer[0].scrollHeight);
+            },
+            error: function (xhr, status) {
+                $("#regen-loading").remove();
+                if (status === 'abort') return;
+                let errMsg = 'Request failed';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errMsg = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    errMsg = xhr.responseText;
+                } else if (status) {
+                    errMsg = status;
+                }
+                $("#llm_result").append(renderErrorBubble(errMsg));
+                const scrollContainer = $('.right_content');
+                scrollContainer.scrollTop(scrollContainer[0].scrollHeight);
+            },
+            complete: function () {
+                isGenerating = false;
+                currentXhr = null;
                 $("#call_llm").html('<img src="./image/refresh.svg" alt=""> Regenerate').prop("disabled", false);
             }
-        })
+        });
     }
 
-    function renderPlayGround(data, type) {
+    function renderPlayGround(data, isFirst) {
         const agentName = data.callee;
+        const rawOutput = data.output || '';
+        const renderedMd = marked.parse(rawOutput);
+        const itemId = 'pg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
 
-        let img = '';
+        let imgUrl = '';
+        let bgColor = '#E1EFFD';
         if (data.node_type === 'agent' || data.node_type === 'flow') {
             const rawIdx = agent_id_dict ? agent_id_dict[data.callee] : undefined;
             const idx = (rawIdx != null ? rawIdx : 0) % 16;
             const cur = agentImgMap[idx];
-            img = `<img alt="" src="${cur.imgUrl}" style="background-color: ${cur.bgColor}" />`;
+            imgUrl = cur.imgUrl;
+            bgColor = cur.bgColor;
         } else {
-            img = `<img alt="" src="${typeMap[data.node_type]}" style="background-color: #E1EFFD" />`;
+            imgUrl = typeMap[data.node_type];
         }
 
-        const div_agent_name = `
-            <div class="other">
-                
-                ${img}
-                <p>${agentName}</p>
-                <span>${data.output}</span>
+        const deleteBtn = isFirst ? '' : `<button class="pg-delete-btn" onclick="deletePgItem('${itemId}')" title="Delete"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>`;
+
+        const html = `
+            <div class="pg-item" id="${itemId}">
+                <div class="pg-avatar" style="background-color: ${bgColor}">
+                    <img alt="" src="${imgUrl}" />
+                </div>
+                <div class="pg-bubble">
+                    <div class="pg-bubble-header">
+                        <span class="pg-item-name">${agentName}</span>
+                        ${isFirst ? '' : '<span class="regen-badge">Regenerated</span>'}
+                        ${deleteBtn}
+                        <div class="pg-item-actions">
+                            <div class="output-toggle-group">
+                                <button class="output-toggle-btn active" onclick="togglePgView('${itemId}', 'md', this)">Markdown</button>
+                                <button class="output-toggle-btn" onclick="togglePgView('${itemId}', 'raw', this)">Raw</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pg-item-body markdown-body pg-md-view">${renderedMd}</div>
+                    <pre class="pg-item-body pg-raw-view" style="display:none;">${escapeHtml(rawOutput)}</pre>
+                </div>
             </div>
         `;
-        return div_agent_name;
+        return html;
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function renderErrorBubble(errMsg) {
+        return `
+            <div class="pg-item pg-error-item">
+                <div class="pg-avatar" style="background-color: #FEE2E2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                </div>
+                <div class="pg-bubble">
+                    <div class="pg-bubble-header">
+                        <span class="pg-item-name" style="color:#EF4444">Error</span>
+                    </div>
+                    <div class="pg-item-body" style="background:#FEF2F2; color:#991B1B;">
+                        <pre style="margin:0; white-space:pre-wrap; word-break:break-word; font-size:13px; font-family:monospace; color:inherit;">${escapeHtml(errMsg)}</pre>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    function togglePgView(itemId, mode, btn) {
+        const item = document.getElementById(itemId);
+        const mdView = item.querySelector('.pg-md-view');
+        const rawView = item.querySelector('.pg-raw-view');
+        const btns = item.querySelectorAll('.output-toggle-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (mode === 'md') {
+            mdView.style.display = '';
+            rawView.style.display = 'none';
+        } else {
+            mdView.style.display = 'none';
+            rawView.style.display = '';
+        }
+    }
+
+    function deletePgItem(itemId) {
+        $('#' + itemId).remove();
     }
 
 
@@ -568,14 +674,14 @@
         },
         securityLevel: 'loose',
         gantt: {
-            barHeight: 26,
+            barHeight: 24,
             barGap: 10,
             fontSize: 14,
             numberSectionStyles: 4,
             axisFormat: "%M:%S:%L",
             tickInterval: "millisecond",
             topAxis: false,
-            leftPadding: 150,
+            leftPadding: 120,
             rightPadding: 20,
         }
     });
@@ -781,14 +887,17 @@
 
     function handleCollapse() {
         const _visible = $('#collapseExample').css('display');
+        const btn = document.getElementById('collapseToggleBtn');
         if (_visible === 'block') {
             $('#collapseExample').css({
                 'display': 'none'
             });
+            btn && btn.classList.add('collapsed');
             adjustModLeftHeight('modLeftClassAttrId')
             adjustModLeftHeight('rightArgumentsId')
         } else {
             $('#collapseExample').css('display', 'block');
+            btn && btn.classList.remove('collapsed');
             adjustModLeftHeight('modLeftClassAttrId')
             adjustModLeftHeight('rightArgumentsId')
         }
@@ -811,21 +920,9 @@
         }
     });
 
-    // 动态调整modLeftClassAttrId的高度
-    adjustModLeftHeight('modLeftClassAttrId')
-    adjustModLeftHeight('rightArgumentsId')
-    // adjustModLeftHeight('rightPlayGroundId')
+    // 动态调整modLeftClassAttrId的高度（已改为flex布局自动处理）
     function adjustModLeftHeight(id) {
-        const modLeftClassAttrId = document.getElementById(id);
-        // 获取当前节点的距离顶部的高度
-        const currentTop = modLeftClassAttrId.offsetTop;
-        // 获取当前窗口的高度
-        const windowHeight = window.innerHeight;
-        // 计算可用高度
-        const availableHeight = windowHeight - currentTop - 35;
-        // 设置高度
-        modLeftClassAttrId.style.height = availableHeight + 'px';
-        modLeftClassAttrId.style.overflow = 'auto';
+        // no-op: flex layout handles height automatically
     }
     // Resize handle for the top visualization panel
     (function () {
@@ -863,5 +960,208 @@
             adjustModLeftHeight('rightArgumentsId');
         });
     })();
+
+    // ========== Feature Guide Tour ==========
+    var _guideTourRunning = false;
+    var _guideTourStepIndex = 0;
+    var _guideTourAutoTimer = null;
+
+    var _guideTourSteps = [
+        {
+            selector: '.tabs',
+            icon: '\u{1F4CA}',
+            title: 'View Tabs',
+            desc: 'Switch between Flowchart (call graph), Gantt (execution timing), Swimlane (agent interaction lanes), and Timeline (sequential step chain) views.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '#collapseToggleBtn',
+            icon: '\u{1F504}',
+            title: 'Toggle Graph',
+            desc: 'Collapse or expand the graph visualization panel to free up space for the configuration and playground sections below.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '#collapseExample',
+            icon: '\u{1F5BC}',
+            title: 'Graph Panel',
+            desc: 'Renders the Oxy execution graph for the current trace. Click any node to select it — the panels below will update to show that node\'s details. Drag the bottom edge to resize.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.agentCard',
+            icon: '\u{1F4E6}',
+            title: 'Oxy Info Card',
+            desc: 'Shows the selected Oxy node\'s name, type (Agent, Tool, LLM, Flow, etc.), trace_id, and its caller. Updates automatically when you click a different node in the graph.',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.mod-header-operation',
+            icon: '\u{2699}️',
+            title: 'Action Buttons',
+            desc: 'Pre/Next step through the execution sequence of the current node. Regenerate sends a POST /call request using the edited parameters from the left panel (only enabled for LLM nodes).',
+            tooltipPos: 'below'
+        },
+        {
+            selector: '.mod-left',
+            icon: '\u{1F4DD}',
+            title: 'Node Attributes',
+            desc: 'Editable class_attr of the selected node: system_prompt, model name, temperature, tool configs, etc. Changes here are sent as parameters when you click Regenerate.',
+            tooltipPos: 'right'
+        },
+        {
+            selector: '.mod-right',
+            icon: '\u{1F4E5}',
+            title: 'Input / Output',
+            desc: 'Shows the request arguments (messages, query, etc.) for the selected execution step. Editable — modified values are included when Regenerate is called.',
+            tooltipPos: 'left'
+        },
+        {
+            selector: '.node-right',
+            icon: '\u{1F3AE}',
+            title: 'PlayGround',
+            desc: 'Displays the LLM response (rendered as Markdown). After clicking Regenerate, the new response appends here so you can compare before and after results.',
+            tooltipPos: 'left'
+        }
+    ];
+
+    function startGuideTour() {
+        if (_guideTourRunning) return;
+        _guideTourRunning = true;
+        _guideTourStepIndex = 0;
+        document.getElementById('tour-mask').classList.add('visible');
+        _showGuideTourStep(0);
+    }
+
+    function _showGuideTourStep(index) {
+        if (index < 0 || index >= _guideTourSteps.length) {
+            endGuideTour();
+            return;
+        }
+
+        _guideTourStepIndex = index;
+        var step = _guideTourSteps[index];
+
+        var targetEl = document.querySelector(step.selector);
+        if (!targetEl) {
+            if (index < _guideTourSteps.length - 1) {
+                _showGuideTourStep(index + 1);
+            } else {
+                endGuideTour();
+            }
+            return;
+        }
+
+        var elRect = targetEl.getBoundingClientRect();
+        var pad = 4;
+        var spotLeft = elRect.left - pad;
+        var spotTop = elRect.top - pad;
+        var spotW = elRect.width + pad * 2;
+        var spotH = elRect.height + pad * 2;
+
+        var spotlight = document.getElementById('tour-spotlight');
+        spotlight.style.left = spotLeft + 'px';
+        spotlight.style.top = spotTop + 'px';
+        spotlight.style.width = spotW + 'px';
+        spotlight.style.height = spotH + 'px';
+
+        var tooltip = document.getElementById('tour-tooltip');
+        var firstShow = !tooltip.classList.contains('visible');
+
+        var winW = window.innerWidth;
+        var winH = window.innerHeight;
+        var ttWidth = 320;
+        var ttHeight = 180;
+        var gap = 16;
+        var resolvedPos = step.tooltipPos;
+
+        if (resolvedPos === 'right' && spotLeft + spotW + gap + ttWidth > winW) {
+            resolvedPos = 'left';
+        } else if (resolvedPos === 'left' && spotLeft - gap - ttWidth < 0) {
+            resolvedPos = 'right';
+        } else if (resolvedPos === 'below' && spotTop + spotH + gap + ttHeight > winH) {
+            resolvedPos = 'above';
+        } else if (resolvedPos === 'above' && spotTop - gap - ttHeight < 0) {
+            resolvedPos = 'below';
+        }
+
+        var ttLeft, ttTop;
+
+        if (resolvedPos === 'below') {
+            ttLeft = Math.max(gap, Math.min(spotLeft, winW - ttWidth - gap));
+            ttTop = spotTop + spotH + gap;
+        } else if (resolvedPos === 'above') {
+            ttLeft = Math.max(gap, Math.min(spotLeft, winW - ttWidth - gap));
+            ttTop = spotTop - ttHeight - gap;
+        } else if (resolvedPos === 'right') {
+            ttLeft = spotLeft + spotW + gap;
+            ttTop = Math.max(gap, Math.min(spotTop, winH - ttHeight - gap));
+        } else {
+            ttLeft = spotLeft - ttWidth - gap;
+            ttTop = Math.max(gap, Math.min(spotTop, winH - ttHeight - gap));
+        }
+
+        ttLeft = Math.max(gap, Math.min(ttLeft, winW - ttWidth - gap));
+        ttTop = Math.max(gap, Math.min(ttTop, winH - ttHeight - gap));
+
+        function writeContent() {
+            document.getElementById('tour-icon').textContent = step.icon;
+            document.getElementById('tour-title').textContent = step.title;
+            document.getElementById('tour-desc').textContent = step.desc;
+            document.getElementById('tour-counter').textContent = (index + 1) + ' / ' + _guideTourSteps.length;
+            var nextBtn = document.getElementById('tour-next-btn');
+            nextBtn.textContent = (index === _guideTourSteps.length - 1) ? 'Finish' : 'Next';
+        }
+
+        if (firstShow) {
+            tooltip.style.transition = 'none';
+            tooltip.style.left = ttLeft + 'px';
+            tooltip.style.top = ttTop + 'px';
+            void tooltip.offsetWidth;
+            tooltip.style.transition = '';
+            writeContent();
+            requestAnimationFrame(function() {
+                tooltip.classList.add('visible');
+            });
+        } else {
+            tooltip.style.left = ttLeft + 'px';
+            tooltip.style.top = ttTop + 'px';
+            tooltip.classList.add('content-swapping');
+            setTimeout(function() {
+                writeContent();
+                tooltip.classList.remove('content-swapping');
+            }, 180);
+        }
+
+        clearTimeout(_guideTourAutoTimer);
+        _guideTourAutoTimer = setTimeout(function() {
+            if (_guideTourRunning) nextGuideTourStep();
+        }, 6000);
+    }
+
+    function nextGuideTourStep() {
+        clearTimeout(_guideTourAutoTimer);
+        if (_guideTourStepIndex >= _guideTourSteps.length - 1) {
+            endGuideTour();
+        } else {
+            _showGuideTourStep(_guideTourStepIndex + 1);
+        }
+    }
+
+    function endGuideTour() {
+        clearTimeout(_guideTourAutoTimer);
+        _guideTourRunning = false;
+        var tooltip = document.getElementById('tour-tooltip');
+        tooltip.classList.remove('visible');
+        setTimeout(function() {
+            document.getElementById('tour-mask').classList.remove('visible');
+        }, 300);
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && _guideTourRunning) {
+            endGuideTour();
+        }
+    });
 </script>
 </html>

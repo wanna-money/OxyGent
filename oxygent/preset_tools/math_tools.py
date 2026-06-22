@@ -1,5 +1,7 @@
 """Math utility tools for OxyGent agents."""
 
+from typing import Any
+
 from pydantic import Field
 
 from oxygent.oxy import FunctionHub
@@ -26,12 +28,12 @@ def calc_pi(prec: int = Field(description="how many decimal places")) -> float:
     description="A tool that applies a binary operation to corresponding elements of two lists."
 )
 def list_operation(
-    list1: list = Field(description="The first list"),
-    list2: list = Field(description="The second list"),
+    list1: list[Any] = Field(description="The first list"),
+    list2: list[Any] = Field(description="The second list"),
     operation: str = Field(
         description="The operation to perform: 'add', 'subtract', 'multiply', 'divide', 'power', 'mod'"
     ),
-) -> list:
+) -> list[Any]:
     """
     Apply a binary operation element-wise between two lists.
 
@@ -73,9 +75,15 @@ def list_operation(
     try:
         return [op_func(a, b) for a, b in zip(list1, list2)]
     except ZeroDivisionError:
-        raise ValueError("Division by zero encountered in the operation")
+        raise ValueError(
+            f"Division by zero encountered in list_operation(operation={operation!r}, "
+            f"list1={list1!r}, list2={list2!r})"
+        )
     except Exception as e:
-        raise ValueError(f"Error performing {operation}: {str(e)}")
+        raise ValueError(
+            f"Error performing list_operation(operation={operation!r}, "
+            f"list1={list1!r}, list2={list2!r}): {e}"
+        )
 
 
 @math_tools.tool(
@@ -111,7 +119,7 @@ def calculate_expression(
         ast.UAdd: operator.pos,
     }
 
-    def safe_eval(node):
+    def safe_eval(node: Any) -> Any:
         """Safely evaluate an AST node."""
         if isinstance(node, ast.Constant):  # Python 3.8+
             return node.value
@@ -155,9 +163,13 @@ def calculate_expression(
 
         return f"{clean_expression}={result}"
 
-    except SyntaxError:
-        raise ValueError(f"Invalid mathematical expression: {expression}")
+    except SyntaxError as e:
+        raise ValueError(
+            f"Invalid mathematical expression in calculate_expression: {expression!r} ({e})"
+        )
     except ZeroDivisionError:
-        raise ValueError(f"Division by zero in expression: {expression}")
+        raise ValueError(f"Division by zero in calculate_expression: {expression!r}")
     except Exception as e:
-        raise ValueError(f"Error evaluating expression '{expression}': {str(e)}")
+        raise ValueError(
+            f"Error in calculate_expression(expression={expression!r}): {e}"
+        )

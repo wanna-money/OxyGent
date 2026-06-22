@@ -9,7 +9,7 @@ Run:
 
 import asyncio
 
-from oxygent import Config, MAS, OxyRequest, oxy
+from oxygent import MAS, Config, OxyRequest, oxy
 
 SERVER_URL = "http://127.0.0.1:8011"
 CLIENT_NAME = "google_sdk_stream_client"
@@ -41,7 +41,9 @@ async def main():
     async with MAS(oxy_space=oxy_space) as mas:
         response = await call_once(mas, "Please explain A2A in one short paragraph.")
         print("\n[final]", response.output)
-        print("session:", response.extra.get("context_id"), response.extra.get("task_id"))
+        print(
+            "session:", response.extra.get("context_id"), response.extra.get("task_id")
+        )
 
 
 if __name__ == "__main__":

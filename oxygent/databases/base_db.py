@@ -1,12 +1,13 @@
-"""base_db.py Base Database Class Module.
+"""Base database service class with retry and error handling.
 
-This file defines the base class for database services, providing common functionality
-such as retry mechanisms and error handling for database operations.
+Defines the abstract base class for all database services, providing common
+functionality such as configurable retry mechanisms and error handling.
 """
 
 import asyncio
 import functools
 import logging
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,9 @@ class BaseDB:
     subclasses, ensuring robust database operations with configurable retry policies.
     """
 
-    def try_decorator(max_retries=1, delay_between_retries=0.1):
+    def try_decorator(
+        max_retries: int = 1, delay_between_retries: float = 0.1
+    ) -> Callable:
         """Decorator factory that creates a retry mechanism for database operations.
 
         This decorator will automatically retry failed operations up to a specified number
@@ -33,9 +36,9 @@ class BaseDB:
             Callable: A decorator function that can be applied to async methods
         """
 
-        def decorator(func):
+        def decorator(func: Callable) -> Callable:
             @functools.wraps(func)
-            async def wrapper(*args, **kwargs):
+            async def wrapper(*args: Any, **kwargs: Any) -> Any:
                 """Wrapper function that implements the retry logic.
 
                 Args:
@@ -50,7 +53,10 @@ class BaseDB:
                     try:
                         return await func(*args, **kwargs)
                     except Exception as e:
-                        logger.error(e)
+                        logger.error(
+                            f"Failed to execute {func.__qualname__} (attempt {retries + 1}/{max_retries}): {e}",
+                            exc_info=True,
+                        )
                         retries += 1
                         if retries < max_retries:
                             await asyncio.sleep(delay_between_retries)
@@ -60,7 +66,7 @@ class BaseDB:
 
         return decorator
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """Class method called when a class is subclassed from BaseDB.
 
         This method automatically applies the retry decorator to all public methods

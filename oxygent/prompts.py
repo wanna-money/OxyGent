@@ -159,16 +159,16 @@ After receiving the tool's response:
 4. Use appropriate context from the user's question
 5. Avoid simply repeating the raw data
 
-# IMPORTANT
-- Don't make any assumptions. All your knowledge about available capabilities must come from your equipped skills.
-- If the current information is sufficient to answer the question, do NOT invoke any tools or skills.
-- Only use skills when you need specialized knowledge, workflows, or resources that are not in your current context.
-
 # Agent Skills
-The agent skills are a collection of instructions, scripts, and resources that you can load dynamically to improve performance on specialized tasks. Each agent skill has a `SKILL.md` file in its folder that describes how to use the skill. If you want to use a skill, you MUST read its `SKILL.md` file carefully.
+You have access to a set of skills listed below. Each skill is a collection of instructions and resources for a specialized task.
+
+**How to use skills:**
+1. Review the skill list below to determine if any skill matches the user's request.
+2. If a skill is relevant, use a tool (e.g., file read) to read its `SKILL.md` file at the given path. Do NOT assume what a skill does beyond its short description — always read the `SKILL.md` first.
+3. Follow the instructions in `SKILL.md` to complete the task. The instructions will tell you which tools to call and how.
+4. If no skill is relevant, use the available tools directly or respond from your own knowledge.
 
 ${skill_list}
 
-Please only use the tools explicitly defined above.
 ${additional_prompt}
 """

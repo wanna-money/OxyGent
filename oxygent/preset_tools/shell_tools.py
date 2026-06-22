@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import subprocess
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -15,7 +15,7 @@ shell_tools = FunctionHub(name="shell_tools")
 
 @shell_tools.tool(description="Run a shell command and return the output or error.")
 def run_shell_command(
-    args: List[str] = Field(description="command arguments"),
+    args: list[str] = Field(description="command arguments"),
     tail: int = 10,
     base_dir: Optional[str] = None,
 ) -> str:
@@ -35,8 +35,11 @@ def run_shell_command(
             return f"Error: {result.stderr}"
         return "\n".join(result.stdout.split("\n")[-tail:])
     except Exception as e:
-        logger.warning(f"Failed to run shell command: {e}")
-        return f"Error: {e}"
+        logger.warning(
+            f"Failed to run shell command (args={args!r}, base_dir={base_dir!r}): {e}",
+            exc_info=True,
+        )
+        return f"Error running shell command {args!r}: {e}"
 
 
 @shell_tools.tool(
@@ -72,7 +75,7 @@ async def execute_shell_command(
 
     except asyncio.TimeoutError:
         stderr_suffix = (
-            f"TimeoutError: The command execution exceeded "
+            f"TimeoutError: The command '{command}' exceeded "
             f"the timeout of {timeout} seconds."
         )
         returncode = -1
@@ -85,7 +88,11 @@ async def execute_shell_command(
                 stderr_str += f"\n{stderr_suffix}"
             else:
                 stderr_str = stderr_suffix
-        except ProcessLookupError:
+        except ProcessLookupError as e:
+            logger.warning(
+                f"Process already exited when terminating command '{command}': {e}",
+                exc_info=True,
+            )
             stdout_str = ""
             stderr_str = stderr_suffix
 

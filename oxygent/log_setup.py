@@ -1,4 +1,4 @@
-"""log_setup.py Logging utilities.
+"""Logging utilities for OxyGent.
 
 This module centralizes logging configuration for the project. It adds
 color‑coded output, trace/node context, and separate formatting rules for
@@ -41,7 +41,7 @@ class IDAwareFormatter(logging.Formatter):
     empty string so the surrounding formatting still works.
     """
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         # trace_id
         if hasattr(record, "trace_id"):
             record.trace_id = f" - {record.trace_id} -"
@@ -55,7 +55,7 @@ class IDAwareFormatter(logging.Formatter):
         return super().format(record)
 
 
-def get_style_by_record(record):
+def get_style_by_record(record: logging.LogRecord) -> str:
     """Return ANSI style string (may be empty) for *record*.
 
     The style is derived in this order:
@@ -94,14 +94,14 @@ def get_style_by_record(record):
 class ColorFormatter(IDAwareFormatter):
     """Formatter that adds ANSI color codes to the **entire** log line."""
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         return f"{get_style_by_record(record)}{super().format(record)}{Style.RESET_ALL}"
 
 
 class ColorMessageFormatter(IDAwareFormatter):
     """Formatter that adds ANSI color codes to the **message** part only."""
 
-    def formatMessage(self, record):
+    def formatMessage(self, record: logging.LogRecord) -> str:
         # message is the only part that gets colored
         record.message = (
             f"{get_style_by_record(record)}{record.getMessage()}{Style.RESET_ALL}"
@@ -109,7 +109,7 @@ class ColorMessageFormatter(IDAwareFormatter):
         return super().formatMessage(record)
 
 
-def setup_logging():
+def setup_logging() -> logging.Logger:
     """Configure root logger with colored stream handler and plain file handler.
 
     The configuration parameters are read from :class:`~oxygent.config.Config`.

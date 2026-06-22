@@ -1,3 +1,5 @@
+"""Pydantic schemas and enumerations for the OxyGent framework."""
+
 from .color import Color
 from .llm import LLMResponse, LLMState
 from .memory import Memory, Message

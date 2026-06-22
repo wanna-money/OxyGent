@@ -9,13 +9,11 @@ import asyncio
 import inspect
 import json
 import logging
-import traceback
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Optional
 
 from pydantic import BaseModel, Field
 
-# from ..mas import MAS
 from ..config import Config
 from ..schemas import OxyRequest, OxyResponse, OxyState
 from ..utils.common_utils import (
@@ -27,6 +25,20 @@ from ..utils.common_utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _serialize_data_for_es(
+    data: dict[str, Any], schema_getter: Callable[[], dict[str, Any]]
+) -> Any:
+    """Serialize shared_data or group_data for ES storage.
+
+    If a schema is configured (via *schema_getter*), only the keys present in
+    the schema are kept; otherwise the whole dict is serialised to JSON.
+    """
+    schema = schema_getter().get("properties", {})
+    if schema:
+        return {k: v for k, v in data.items() if k in schema}
+    return to_json(data)
 
 
 def ensure_async(func: Callable) -> Callable:
@@ -45,13 +57,13 @@ def ensure_async(func: Callable) -> Callable:
     if inspect.iscoroutinefunction(func):
         return func
 
-    async def async_wrapper(*args, **kwargs):
+    async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
         return func(*args, **kwargs)
 
     return async_wrapper
 
 
-async def default_async_identity(x):
+async def default_async_identity(x: Any) -> Any:
     """Default async identity function that returns input unchanged."""
     return x
 
@@ -82,7 +94,7 @@ class Oxy(BaseModel, ABC):
     input_schema: dict[str, Any] = Field(
         default_factory=dict, description="Input schema definition"
     )
-    system_args: list = Field(
+    system_args: list[str] = Field(
         default_factory=list,
         description="System-level arguments extracted from input_schema",
     )
@@ -92,10 +104,10 @@ class Oxy(BaseModel, ABC):
 
     is_permission_required: bool = Field(False, description="Whether needs permission")
     is_save_data: bool = Field(True, description="Whether to save data")
-    permitted_tool_name_list: list = Field(
+    permitted_tool_name_list: list[str] = Field(
         default_factory=list, description="List of tools this entity can call"
     )
-    permitted_oxy: list = Field(
+    permitted_oxy: list[str] = Field(
         default_factory=list, description="Additional tool permissions"
     )
 
@@ -166,7 +178,7 @@ class Oxy(BaseModel, ABC):
         description="Delay in seconds between retries",
     )
 
-    preceding_oxy: Optional[list] = Field(
+    preceding_oxy: Optional[list[str]] = Field(
         default_factory=list,
         description="A list of oxy names that must be called before the current oxy.",
     )
@@ -182,53 +194,60 @@ class Oxy(BaseModel, ABC):
         self._set_desc_for_llm()
         self.permitted_oxy.extend(self.preceding_oxy)
 
-    def _ensure_async_functions(self):
+    _async_func_fields = [
+        "func_process_input",
+        "func_process_output",
+        "func_format_input",
+        "func_format_output",
+        "func_execute",
+        "func_interceptor",
+        "func_map_memory_order",
+        "func_mock_process",
+        "func_parse_llm_response",
+        "func_parse_planner_response",
+        "func_parse_replanner_response",
+        "func_process",
+        "func_reflexion",
+        "func_retrieve_knowledge",
+        "func_workflow",
+    ]
+
+    def _ensure_async_functions(self) -> None:
         """Ensure all function fields are async. Convert sync functions to async if needed."""
-        func_fields = [
-            "func_process_input",
-            "func_process_output",
-            "func_format_input",
-            "func_format_output",
-            "func_execute",
-            "func_interceptor",
-        ]
-
-        for field_name in func_fields:
+        for field_name in self._async_func_fields:
             func = getattr(self, field_name, None)
-            if func is not None:
-                async_func = ensure_async(func)
-                object.__setattr__(self, field_name, async_func)
+            if func is not None and callable(func):
+                object.__setattr__(self, field_name, ensure_async(func))
 
-    def model_post_init(self, __context):
+    def model_post_init(self, __context: Any) -> None:
         """Auto-populate class_name from the actual class if not explicitly set."""
         if self.class_name is None:
             object.__setattr__(self, "class_name", self.__class__.__name__)
 
-    def set_mas(self, mas):
+    def set_mas(self, mas: Any) -> None:
         """Bind this Oxy instance to a MAS runtime container."""
         self.mas = mas
 
-    def add_permitted_tool(self, tool_name: str):
+    def add_permitted_tool(self, tool_name: str) -> None:
         """Add a tool to the permitted tools list."""
         if tool_name in self.permitted_tool_name_list:
             logger.warning(f"Tool {tool_name} already exists.")
         else:
             self.permitted_tool_name_list.append(tool_name)
 
-    def add_permitted_tools(self, tool_names: list):
+    def add_permitted_tools(self, tool_names: list[str]) -> None:
         """Add multiple tools to the permitted tools list."""
         for tool_name in tool_names:
             self.add_permitted_tool(tool_name)
 
-    def _set_desc_for_llm(self):
+    def _set_desc_for_llm(self) -> None:
         """Generate LLM-friendly description from input schema."""
         args_desc = []
         if "properties" in self.input_schema:
             for param_name, param_info in self.input_schema["properties"].items():
                 # Skip system parameters that shouldn't be shown to LLM
-                if param_info.get("description", "No description").startswith(
-                    "SystemArg"
-                ):
+                param_desc = param_info.get("description", "No description")
+                if param_desc.startswith("SystemArg."):
                     self.system_args.append(param_info["description"][10:])
                     continue
                 param_type = param_info.get("type", "string")
@@ -245,9 +264,17 @@ Arguments:
 {chr(10).join(args_desc)}
 """
 
-    async def init(self):
+    async def init(self) -> None:
         """Perform async initialization. Rebuilds the LLM-facing description."""
         self._set_desc_for_llm()
+
+    async def cleanup(self) -> None:
+        """Release resources acquired during init().
+
+        Subclasses that allocate external resources (connections, thread pools,
+        child processes, etc.) should override this method.  The default
+        implementation is a no-op.
+        """
 
     async def _pre_process(self, oxy_request: OxyRequest) -> OxyRequest:
         """Pre-process the request before execution."""
@@ -261,7 +288,7 @@ Arguments:
         oxy_request = await self.func_process_input(oxy_request)
         return oxy_request
 
-    async def _pre_log(self, oxy_request: OxyRequest):
+    async def _pre_log(self, oxy_request: OxyRequest) -> None:
         """Log the tool call information."""
         query = (
             oxy_request.arguments.get("query", "...")
@@ -277,7 +304,9 @@ Arguments:
             },
         )
 
-    async def _request_interceptor(self, oxy_request: OxyRequest):
+    async def _request_interceptor(
+        self, oxy_request: OxyRequest
+    ) -> Optional[OxyResponse]:
         """Intercept the request for restart/replay scenarios.
 
         When a reference_trace_id and restart_node_id are present, queries ES
@@ -381,7 +410,7 @@ Arguments:
                     },
                 )
 
-    async def _pre_save_data(self, oxy_request: OxyRequest):
+    async def _pre_save_data(self, oxy_request: OxyRequest) -> None:
         """Persist the initial node record to ES before execution starts."""
         if not self.is_save_data:
             return
@@ -389,17 +418,9 @@ Arguments:
             callee_name = oxy_request.callee
             callee_cat = oxy_request.callee_category
             # save shared_data
-            shared_data_schema = Config.get_es_schema_shared_data().get(
-                "properties", {}
+            to_save_shared_data = _serialize_data_for_es(
+                oxy_request.shared_data, Config.get_es_schema_shared_data
             )
-            if shared_data_schema:
-                to_save_shared_data = {
-                    k: v
-                    for k, v in oxy_request.shared_data.items()
-                    if k in shared_data_schema
-                }
-            else:
-                to_save_shared_data = to_json(oxy_request.shared_data)
             await self.mas.es_client.index(
                 Config.get_app_name() + "_node",
                 doc_id=oxy_request.node_id,
@@ -428,7 +449,7 @@ Arguments:
         """Format input arguments for execution."""
         return await self.func_format_input(oxy_request)
 
-    async def _pre_send_message(self, oxy_request: OxyRequest):
+    async def _pre_send_message(self, oxy_request: OxyRequest) -> None:
         """Send tool call message to frontend if enabled."""
         # Send tool_call message to frontend
         if self.is_send_tool_call:
@@ -458,7 +479,7 @@ Arguments:
     async def _before_execute(self, oxy_request: OxyRequest) -> OxyRequest:
         """Run preceding Oxy instances and merge their outputs into the request."""
         if self.preceding_oxy:
-            arguments = {k: v for k, v in oxy_request.arguments.items()}
+            arguments = oxy_request.arguments.copy()
             tasks = [
                 oxy_request.call(callee=oxy_name, arguments=arguments)
                 for oxy_name in self.preceding_oxy
@@ -474,7 +495,7 @@ Arguments:
         """Core execution logic. Subclasses must implement this method."""
         pass
 
-    async def _handle_exception(self, e):
+    async def _handle_exception(self, e: Exception) -> None:
         """Hook for subclass-specific exception handling during retries."""
         pass
 
@@ -486,7 +507,7 @@ Arguments:
         """Apply the output processing function to the response."""
         return await self.func_process_output(oxy_response)
 
-    async def _post_log(self, oxy_response: OxyResponse):
+    async def _post_log(self, oxy_response: OxyResponse) -> None:
         """Log the execution result."""
         obs = oxy_response.output if self.is_detailed_observation else "..."
         oxy_request = oxy_response.oxy_request
@@ -499,7 +520,7 @@ Arguments:
             },
         )
 
-    async def _post_save_data(self, oxy_response: OxyResponse):
+    async def _post_save_data(self, oxy_response: OxyResponse) -> None:
         """Save execution data to Elasticsearch for logging and training."""
         if not self.is_save_data:
             return
@@ -514,17 +535,9 @@ Arguments:
         callee_cat = oxy_request.callee_category
         if self.mas and self.mas.es_client:
             # save shared_data
-            shared_data_schema = Config.get_es_schema_shared_data().get(
-                "properties", {}
+            to_save_shared_data = _serialize_data_for_es(
+                oxy_request.shared_data, Config.get_es_schema_shared_data
             )
-            if shared_data_schema:
-                to_save_shared_data = {
-                    k: v
-                    for k, v in oxy_request.shared_data.items()
-                    if k in shared_data_schema
-                }
-            else:
-                to_save_shared_data = to_json(oxy_request.shared_data)
             await self.mas.es_client.update(
                 Config.get_app_name() + "_node",
                 doc_id=oxy_request.node_id,
@@ -556,7 +569,7 @@ Arguments:
             oxy_response.output = self.friendly_error_text
         return oxy_response
 
-    async def _post_send_message(self, oxy_response: OxyResponse):
+    async def _post_send_message(self, oxy_response: OxyResponse) -> None:
         """Send observation and answer messages to frontend if enabled."""
         oxy_request = oxy_response.oxy_request
 
@@ -633,16 +646,14 @@ Arguments:
             if self.mas:
                 oxy_request.create_time = get_format_time()
 
-                def pre_done_callback(task):
-                    self.mas.background_tasks.discard(task)
-                    event.set()
-
                 pre_save_data_task = asyncio.create_task(
                     self._pre_save_data(oxy_request)
                 )
 
-                pre_save_data_task.add_done_callback(pre_done_callback)
-                self.mas.background_tasks.add(pre_save_data_task)
+                pre_save_data_task.add_done_callback(lambda _: event.set())
+                self.mas.add_background_task(
+                    oxy_request.current_trace_id, pre_save_data_task
+                )
             else:
                 logger.warning(
                     "Temporary invocation without storing data.",
@@ -691,10 +702,10 @@ Arguments:
                         post_save_data_task = asyncio.create_task(
                             self._post_save_data(oxy_response)
                         )
-                        post_save_data_task.add_done_callback(
-                            self.mas.background_tasks.discard
+                        self.mas.add_background_task(
+                            oxy_request.current_trace_id,
+                            post_save_data_task,
                         )
-                        self.mas.background_tasks.add(post_save_data_task)
                     else:
                         await self._post_save_data(oxy_response)
 
@@ -704,14 +715,8 @@ Arguments:
                     await self._handle_exception(e)
                     attempt += 1
                     logger.warning(
-                        f"Error executing oxy {self.name}: {str(e)}. Attempt {attempt} of {self.retries}.",
-                        extra={
-                            "trace_id": oxy_request.current_trace_id,
-                            "node_id": oxy_request.node_id,
-                        },
-                    )
-                    logger.error(
-                        traceback.format_exc(),
+                        f"Error executing oxy {self.name}: {e}. Attempt {attempt} of {self.retries}.",
+                        exc_info=True,
                         extra={
                             "trace_id": oxy_request.current_trace_id,
                             "node_id": oxy_request.node_id,
@@ -720,9 +725,9 @@ Arguments:
                     if attempt < self.retries:
                         await asyncio.sleep(self.delay)
                     else:
-                        error_msg = traceback.format_exc()
                         logger.error(
-                            f"Max retries reached. Failed. {error_msg}",
+                            "Max retries reached. Failed.",
+                            exc_info=True,
                             extra={
                                 "trace_id": oxy_request.current_trace_id,
                                 "node_id": oxy_request.node_id,
@@ -730,7 +735,7 @@ Arguments:
                         )
                         oxy_response = OxyResponse(
                             state=OxyState.FAILED,
-                            output=f"Error executing oxy {self.name}: {str(e)}",
+                            output=f"Error executing oxy {self.name}: {e}",
                         )
 
             oxy_response.oxy_request = oxy_request
@@ -741,7 +746,7 @@ Arguments:
             if self.mas:
                 oxy_request.update_time = get_format_time()
 
-                async def _post_save_data_task(oxy_response):
+                async def _post_save_data_task(oxy_response: OxyResponse) -> None:
                     await event.wait()
                     await self._post_save_data(oxy_response)
 
@@ -749,10 +754,10 @@ Arguments:
                     post_save_data_task = asyncio.create_task(
                         _post_save_data_task(oxy_response)
                     )
-                    post_save_data_task.add_done_callback(
-                        self.mas.background_tasks.discard
+                    self.mas.add_background_task(
+                        oxy_request.current_trace_id,
+                        post_save_data_task,
                     )
-                    self.mas.background_tasks.add(post_save_data_task)
                 else:
                     await _post_save_data_task(oxy_response)
             else:

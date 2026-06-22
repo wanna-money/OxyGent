@@ -1,7 +1,9 @@
-from collections import defaultdict
+"""Data transformation utilities for node graph processing."""
+
+from typing import Any
 
 
-def add_post_and_child_node_ids(nodes):
+def add_post_and_child_node_ids(nodes: list[dict[str, Any]]) -> None:
     """Adds `post_node_ids` and `child_node_ids` fields to each node.
 
     Each node will gain:
@@ -28,82 +30,3 @@ def add_post_and_child_node_ids(nodes):
         father_node_id = n["father_node_id"]
         if father_node_id and father_node_id in node_map:
             node_map[father_node_id]["child_node_ids"].append(n["node_id"])
-
-
-def build_tree(input_data):
-    """Builds a tree structure from the input list of nodes."""
-    node_dict = {node["node_id"]: node.copy() for node in input_data}
-    for node in node_dict.values():
-        node["nodes"] = []
-
-    roots = [node for node in node_dict.values() if not node["from_node_id"]]
-
-    children_map = _build_children_map(node_dict)
-
-    root = roots[0]
-    return _build_node_entry(root, children_map)
-
-
-def _build_children_map(node_dict):
-    """Build a mapping from parent node_id to its list of child nodes."""
-    children_map = defaultdict(list)
-    for node in node_dict.values():
-        if node["from_node_id"]:
-            children_map[node["from_node_id"]].append(node)
-    return children_map
-
-
-def _build_node_entry(node, children_map):
-    """Create a tree-entry dict for a single node with its subtree."""
-    return {
-        "node_id": node["node_id"],
-        "node_name": node["node_name"],
-        "node_type": node["node_type"],
-        "nodes": _build_subtree(node, children_map),
-    }
-
-
-def _build_subtree(parent, children_map):
-    """Recursively build the subtree nodes list for a parent node."""
-    children = children_map.get(parent["node_id"], [])
-    non_parallel, parallel_groups = _group_children(children)
-    parallel_list = _process_parallel_groups(parallel_groups)
-
-    all_children = _merge_and_sort_children(non_parallel, parallel_list)
-
-    nodes = []
-    for _, item in all_children:
-        if isinstance(item, list):  # Parallel group
-            nodes.append([_build_node_entry(n, children_map) for n in item])
-        else:
-            nodes.append(_build_node_entry(item, children_map))
-    return nodes
-
-
-def _group_children(children):
-    """Separate children into non-parallel nodes and parallel groups."""
-    parallel_groups = defaultdict(list)
-    non_parallel = []
-    for child in children:
-        if "parallel_id" in child:
-            parallel_groups[child["parallel_id"]].append(child)
-        else:
-            non_parallel.append(child)
-    return non_parallel, parallel_groups
-
-
-def _process_parallel_groups(parallel_groups):
-    """Sort each parallel group by order and return (min_order, group) tuples."""
-    parallel_list = []
-    for group in parallel_groups.values():
-        group_sorted = sorted(group, key=lambda x: x["order"])
-        min_order = group_sorted[0]["order"]
-        parallel_list.append((min_order, group_sorted))
-    return parallel_list
-
-
-def _merge_and_sort_children(non_parallel, parallel_list):
-    """Merge non-parallel and parallel children, then sort by execution order."""
-    all_children = [(child["order"], child) for child in non_parallel] + parallel_list
-    all_children.sort(key=lambda x: x[0])
-    return all_children

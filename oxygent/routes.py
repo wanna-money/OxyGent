@@ -1,6 +1,4 @@
-"""routes.py.
-
-FastAPI routing layer for the OxyGent MAS service.
+"""FastAPI routing layer for the OxyGent MAS service.
 
 This module exposes several HTTP endpoints that support:
     * Health checks and root redirection
@@ -23,9 +21,8 @@ import json
 import logging
 import os
 import re
-import traceback
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import aiofiles
 from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
@@ -33,7 +30,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from .config import Config
-from .databases.db_es import JesEs, LocalEs
+from .databases.db_es import JesEs, LocalEs, MemoryEs
 from .db_factory import DBFactory
 from .evaluation_manager import EvaluationManager
 from .oxy_factory import OxyFactory
@@ -46,7 +43,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-async def get_es_client():
+async def get_es_client() -> Any:
     """Get Elasticsearch client based on configuration.
 
     Returns:
@@ -59,6 +56,8 @@ async def get_es_client():
         user = jes_config["user"]
         password = jes_config["password"]
         return db_factory.get_instance(JesEs, hosts, user, password)
+    elif Config.get_storage_es_engine() == "MemoryEs":
+        return MemoryEs()
     else:
         return db_factory.get_instance(LocalEs)
 
@@ -172,11 +171,9 @@ async def get_node_info(item_id: str):
                 "sort": [{"create_time": {"order": "asc"}}],
             },
         )
-        node_ids = []
-        for data in es_response["hits"]["hits"]:
-            node_ids.append(data["_source"]["node_id"])
+        node_ids = [data["_source"]["node_id"] for data in es_response["hits"]["hits"]]
 
-        if len(node_ids) == 0:
+        if not node_ids:
             return WebResponse(code=400, message="illegal node_id").to_dict()
 
         if trace_id == item_id:
@@ -221,26 +218,15 @@ async def get_node_info(item_id: str):
                             }
                 return WebResponse(data=node_data).to_dict()
 
-    except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(error_msg)
+    except Exception as e:
+        logger.error(f"Get node info error for item_id={item_id}: {e}", exc_info=True)
         return WebResponse(code=500, message="遇到问题").to_dict()
 
 
 # Define the data model for the LLM call request
 @router.get("/view")
 async def get_task_info(item_id: str):
-    db_factory = DBFactory()
-    if Config.get_es_config():
-        jes_config = Config.get_es_config()
-        hosts = jes_config["hosts"]
-        user = jes_config["user"]
-        password = jes_config["password"]
-        es_client = db_factory.get_instance(JesEs, hosts, user, password)
-    else:
-        es_client = db_factory.get_instance(LocalEs)
-
-    # es_client.exists(Config.get_app_name() + "_node", doc_id=item_id)
+    es_client = await get_es_client()
 
     # If item_id is node_id
     es_response = await es_client.search(
@@ -264,9 +250,6 @@ async def get_task_info(item_id: str):
     )
     nodes = []
     for data in es_response["hits"]["hits"]:
-        data["_source"]["call_stack"] = data["_source"]["call_stack"]
-        data["_source"]["node_id_stack"] = data["_source"]["node_id_stack"]
-        data["_source"]["pre_node_ids"] = data["_source"]["pre_node_ids"]
         if (
             len(data["_source"]["pre_node_ids"]) == 1
             and data["_source"]["pre_node_ids"][0] == ""
@@ -281,8 +264,8 @@ async def get_task_info(item_id: str):
 
 
 class Item(BaseModel):
-    class_attr: dict
-    arguments: dict
+    class_attr: dict[str, Any]
+    arguments: dict[str, Any]
 
 
 @router.post("/call")
@@ -332,10 +315,12 @@ async def call(item: Item):
         oxy = OxyFactory.create_oxy(item.class_attr["class_name"], **item.class_attr)
         oxy_response = await oxy.execute(OxyRequest(arguments=item.arguments))
         return WebResponse(data={"output": oxy_response.output}).to_dict()
-    except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(error_msg)
-        return WebResponse(code=500, message="遇到问题").to_dict()
+    except Exception as e:
+        logger.error(
+            f"Call error for class_name={item.class_attr.get('class_name', 'unknown')}: {e}",
+            exc_info=True,
+        )
+        return WebResponse(code=500, message=str(e)).to_dict()
 
 
 class Script(BaseModel):
@@ -429,7 +414,7 @@ class PromptCreateRequest(BaseModel):
     category: str = "custom"
     agent_type: str = ""
     is_active: bool = True
-    tags: List[str] = []
+    tags: list[str] = []
     created_by: str = "user"
 
 
@@ -438,7 +423,7 @@ class PromptUpdateRequest(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = None
     agent_type: Optional[str] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
     is_active: Optional[bool] = None
 
 
@@ -453,7 +438,7 @@ class PromptResponse(BaseModel):
     created_at: str
     updated_at: str
     created_by: str
-    tags: List[str]
+    tags: list[str]
 
 
 class PromptApiResponse(BaseModel):
@@ -484,7 +469,7 @@ async def list_prompts(
             success=True, message="Successfully retrieved prompt list", data=prompts
         )
     except Exception as e:
-        logger.error(f"Failed to list prompts: {e}")
+        logger.error(f"Failed to list prompts: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -508,7 +493,7 @@ async def get_prompt(prompt_key: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get prompt {prompt_key}: {e}")
+        logger.error(f"Failed to get prompt {prompt_key}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -547,7 +532,9 @@ async def create_prompt(request: PromptCreateRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create prompt: {e}")
+        logger.error(
+            f"Failed to create prompt '{request.prompt_key}': {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -636,7 +623,7 @@ async def update_prompt(prompt_key: str, request: PromptUpdateRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update prompt {prompt_key}: {e}")
+        logger.error(f"Failed to update prompt {prompt_key}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -660,7 +647,7 @@ async def delete_prompt(prompt_key: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete prompt {prompt_key}: {e}")
+        logger.error(f"Failed to delete prompt {prompt_key}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -680,7 +667,9 @@ async def search_prompts(
             success=True, message="Successfully searched prompts", data=results
         )
     except Exception as e:
-        logger.error(f"Failed to search prompts: {e}")
+        logger.error(
+            f"Failed to search prompts with keyword='{keyword}': {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -702,7 +691,9 @@ async def get_prompt_history(prompt_key: str):
             success=True, message="Successfully retrieved prompt history", data=history
         )
     except Exception as e:
-        logger.error(f"Failed to get prompt history for {prompt_key}: {e}")
+        logger.error(
+            f"Failed to get prompt history for {prompt_key}: {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -747,7 +738,8 @@ async def revert_prompt_to_version(prompt_key: str, target_version: int):
         raise
     except Exception as e:
         logger.error(
-            f"Failed to revert prompt {prompt_key} to version {target_version}: {e}"
+            f"Failed to revert prompt {prompt_key} to version {target_version}: {e}",
+            exc_info=True,
         )
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -786,7 +778,10 @@ async def get_prompt_version(prompt_key: str, version: int):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get version {version} of prompt {prompt_key}: {e}")
+        logger.error(
+            f"Failed to get version {version} of prompt {prompt_key}: {e}",
+            exc_info=True,
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -798,7 +793,7 @@ async def get_prompt_version(prompt_key: str, version: int):
 _global_mas_instance = None
 
 
-def set_global_mas_instance(mas_instance):
+def set_global_mas_instance(mas_instance: Any) -> None:
     """Set global MAS instance for API access"""
     global _global_mas_instance
     _global_mas_instance = mas_instance
@@ -832,10 +827,8 @@ async def get_agents():
         ).to_dict()
 
     except Exception as e:
-        logger.error(f"Failed to get agents: {e}")
-        return WebResponse(
-            code=500, message=f"Failed to get agents: {str(e)}"
-        ).to_dict()
+        logger.error(f"Failed to get agents: {e}", exc_info=True)
+        return WebResponse(code=500, message=f"Failed to get agents: {e}").to_dict()
 
 
 # ---------------------------------------------------------------------------
@@ -866,7 +859,7 @@ async def create_rating(rating_request: RatingRequest, request: Request):
             return WebResponse(
                 data={
                     "rating_id": result.rating_id,
-                    "stats": result.current_stats.dict()
+                    "stats": result.current_stats.model_dump()
                     if result.current_stats
                     else None,
                 },
@@ -875,9 +868,15 @@ async def create_rating(rating_request: RatingRequest, request: Request):
         else:
             return WebResponse(code=400, message=result.message, data={}).to_dict()
 
-    except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Create rating error: {error_msg}")
+    except Exception as e:
+        logger.error(
+            "Create rating error for trace_id=%s: %s",
+            rating_request.trace_id
+            if hasattr(rating_request, "trace_id")
+            else "unknown",
+            e,
+            exc_info=True,
+        )
         return WebResponse(code=500, message="Rating operation failed").to_dict()
 
 
@@ -895,7 +894,7 @@ async def get_rating_stats(trace_id: str):
         stats = await evaluation_manager.get_rating_stats(trace_id)
 
         if stats:
-            return WebResponse(data=stats.dict()).to_dict()
+            return WebResponse(data=stats.model_dump()).to_dict()
         else:
             return WebResponse(
                 data={
@@ -908,16 +907,17 @@ async def get_rating_stats(trace_id: str):
                 message="No rating data available",
             ).to_dict()
 
-    except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Get rating stats error: {error_msg}")
+    except Exception as e:
+        logger.error(
+            f"Get rating stats error for trace_id={trace_id}: {e}", exc_info=True
+        )
         return WebResponse(
             code=500, message="Failed to get rating statistics"
         ).to_dict()
 
 
 @router.get("/rating/{trace_id}/current")
-async def get_current_rating(trace_id: str, erp: str = None):
+async def get_current_rating(trace_id: str, erp: Optional[str] = None):
     """Get current rating record for a specific conversation.
 
     Args:
@@ -935,18 +935,21 @@ async def get_current_rating(trace_id: str, erp: str = None):
         return WebResponse(
             data={
                 "trace_id": trace_id,
-                "current_rating": current_rating.dict() if current_rating else None,
+                "current_rating": current_rating.model_dump()
+                if current_rating
+                else None,
             }
         ).to_dict()
 
-    except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Get current rating error: {error_msg}")
+    except Exception as e:
+        logger.error(
+            f"Get current rating error for trace_id={trace_id}: {e}", exc_info=True
+        )
         return WebResponse(code=500, message="Failed to get current rating").to_dict()
 
 
 @router.get("/rating/{trace_id}/history")
-async def get_rating_history(trace_id: str, erp: str = None):
+async def get_rating_history(trace_id: str, erp: Optional[str] = None):
     """Get all rating history records for a specific conversation.
 
     Each conversation can have multiple rating records, returned in descending order by creation time.
@@ -962,7 +965,7 @@ async def get_rating_history(trace_id: str, erp: str = None):
         history = await evaluation_manager.get_rating_history(trace_id, erp=erp)
 
         # Convert rating records to dictionary format
-        ratings_data = [rating.dict() for rating in history]
+        ratings_data = [rating.model_dump() for rating in history]
 
         return WebResponse(
             data={
@@ -973,9 +976,10 @@ async def get_rating_history(trace_id: str, erp: str = None):
             }
         ).to_dict()
 
-    except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Get rating history error: {error_msg}")
+    except Exception as e:
+        logger.error(
+            f"Get rating history error for trace_id={trace_id}: {e}", exc_info=True
+        )
         return WebResponse(code=500, message="Failed to get rating history").to_dict()
 
 
@@ -987,14 +991,13 @@ async def debug_rating_stats(trace_id: str):
         return WebResponse(
             data={
                 "trace_id": trace_id,
-                "stats": stats.dict() if stats else None,
+                "stats": stats.model_dump() if stats else None,
                 "found": stats is not None,
             }
         ).to_dict()
     except Exception as e:
-        error_msg = traceback.format_exc()
-        logger.error(f"Debug rating stats error: {error_msg}")
-        return WebResponse(code=500, message=f"Debug query failed: {str(e)}").to_dict()
+        logger.error("Debug rating stats error", exc_info=True)
+        return WebResponse(code=500, message=f"Debug query failed: {e}").to_dict()
 
 
 @router.get("/debug/trace/{trace_id}")
@@ -1021,9 +1024,8 @@ async def debug_trace_info(trace_id: str):
             }
         ).to_dict()
     except Exception as e:
-        error_msg = traceback.format_exc()
-        logger.error(f"Debug trace info error: {error_msg}")
-        return WebResponse(code=500, message=f"Query failed: {str(e)}").to_dict()
+        logger.error("Debug trace info error", exc_info=True)
+        return WebResponse(code=500, message=f"Query failed: {e}").to_dict()
 
 
 @router.delete("/rating/clear_all")
@@ -1043,10 +1045,9 @@ async def clear_all_rating_data():
                 message=f"Partial clearing failed, errors: {', '.join(result['errors'])}",
             ).to_dict()
     except Exception as e:
-        error_msg = traceback.format_exc()
-        logger.error(f"Clear all rating data error: {error_msg}")
+        logger.error("Clear all rating data error", exc_info=True)
         return WebResponse(
-            code=500, message=f"Failed to clear rating data: {str(e)}"
+            code=500, message=f"Failed to clear rating data: {e}"
         ).to_dict()
 
 
@@ -1075,11 +1076,8 @@ async def setup_rating_indices():
                 message=f"Failed to setup indexes, errors: {', '.join(result['errors'])}",
             ).to_dict()
     except Exception as e:
-        error_msg = traceback.format_exc()
-        logger.error(f"Setup rating indices error: {error_msg}")
-        return WebResponse(
-            code=500, message=f"Failed to setup indexes: {str(e)}"
-        ).to_dict()
+        logger.error("Setup rating indices error", exc_info=True)
+        return WebResponse(code=500, message=f"Failed to setup indexes: {e}").to_dict()
 
 
 @router.get("/history_with_ratings")
@@ -1141,7 +1139,7 @@ async def get_history_with_ratings(
                 },
             )
         except Exception as es_error:
-            logger.error(f"Elasticsearch search error: {es_error}")
+            logger.error(f"Elasticsearch search error: {es_error}", exc_info=True)
             return WebResponse(
                 code=500, message=f"Database query failed: {str(es_error)}"
             ).to_dict()
@@ -1179,7 +1177,9 @@ async def get_history_with_ratings(
                     groups_metadata_dict[group_id]["latest_create_time"] = create_time
 
             except Exception as hit_error:
-                logger.warning(f"Error processing trace hit: {hit_error}")
+                logger.warning(
+                    f"Error processing trace hit: {hit_error}", exc_info=True
+                )
                 continue
 
         groups_metadata = list(groups_metadata_dict.values())
@@ -1331,11 +1331,11 @@ async def get_history_with_ratings(
             }
         ).to_dict()
 
-    except Exception:
-        import traceback
-
-        error_msg = traceback.format_exc()
-        logger.error(f"Get history with ratings error: {error_msg}")
+    except Exception as e:
+        logger.error(
+            f"Get history with ratings error (page={page}, rating_filter={rating_filter}, search_term={search_term}): {e}",
+            exc_info=True,
+        )
         return WebResponse(
             code=500, message="Failed to get conversation history"
         ).to_dict()
@@ -1355,9 +1355,8 @@ async def get_rating_analytics(days: int = 7):
         stats = await evaluation_manager.get_overall_rating_stats(days)
         return WebResponse(data=stats).to_dict()
 
-    except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Get rating analytics error: {error_msg}")
+    except Exception as e:
+        logger.error(f"Get rating analytics error (days={days}): {e}", exc_info=True)
         return WebResponse(code=500, message="Failed to get rating analytics").to_dict()
 
 
@@ -1381,14 +1380,15 @@ async def rebuild_rating_stats(trace_id: str):
         return WebResponse(
             data={
                 "trace_id": trace_id,
-                "rebuilt_stats": stats.dict(),
+                "rebuilt_stats": stats.model_dump(),
                 "message": "Statistics recalculated",
             }
         ).to_dict()
 
-    except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Rebuild rating stats error: {error_msg}")
+    except Exception as e:
+        logger.error(
+            f"Rebuild rating stats error for trace_id={trace_id}: {e}", exc_info=True
+        )
         return WebResponse(code=500, message="Failed to rebuild statistics").to_dict()
 
 
@@ -1413,9 +1413,10 @@ async def delete_rating(rating_id: str):
         else:
             return WebResponse(code=404, message="Rating record not found").to_dict()
 
-    except Exception:
-        error_msg = traceback.format_exc()
-        logger.error(f"Delete rating error: {error_msg}")
+    except Exception as e:
+        logger.error(
+            f"Delete rating error for rating_id={rating_id}: {e}", exc_info=True
+        )
         return WebResponse(code=500, message="Failed to delete rating").to_dict()
 
 
@@ -1544,7 +1545,5 @@ async def optimize_prompt(request: PromptOptimizeRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to optimize prompt {request.prompt_key}: {e}")
-        error_msg = traceback.format_exc()
-        logger.error(error_msg)
+        logger.error(f"Failed to optimize prompt {request.prompt_key}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

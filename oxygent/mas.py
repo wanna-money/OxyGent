@@ -1,31 +1,22 @@
-"""mas.py OxyGent MAS (Multi-Agent System) Module.
+"""OxyGent Multi-Agent System (MAS) runtime container.
 
-NOTE: This module contains the following parts:
-    - launcher
-    - register
-    - agent organization
-    - resource management
-    The core variables are:
-    - name: Identifier for the MAS instance
-    - oxy_name_to_oxy: Dictionary mapping Oxy names to Oxy instances (register table)
-    - oxy_space: List of Oxy instances (registered Oxy)
-    - master_agent_name: Name of the master agent (instance of BaseAgent)
-    - active_tasks: Dictionary to manage active tasks, for SSE and other async operations
-    - es_client / redis_client / vearch_client: Database clients for Elasticsearch, Redis, and Vearch
-    - agent_organization: Dictionary representing the organization structure of agents
-    - lock: Boolean to control task execution flow
+Provides the MAS class — the top-level runtime that registers all Oxy instances
+(agents, tools, LLMs), initializes database connections, builds the agent
+organization tree, and offers multiple execution modes:
+
+- ``start_web_service()`` — FastAPI + SSE server with built-in web UI
+- ``start_cli_mode()`` — Interactive REPL for local testing
+- ``start_batch_processing()`` — Concurrent batch execution
+- ``chat_with_agent()`` — Programmatic entry point for single queries
 """
 
-# from __future__ import annotations
 import asyncio
 import copy
-import inspect
 import json
 import os
 import time
-import traceback
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, AsyncIterator, Callable, Optional, Union
 
 import msgpack
 from elasticsearch import AsyncElasticsearch
@@ -33,7 +24,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
 from .config import Config
-from .databases.db_es import JesEs, LocalEs
+from .databases.db_es import JesEs, LocalEs, MemoryEs
 from .databases.db_redis import JimdbApRedis, LocalRedis
 from .databases.db_vector import VearchDB
 from .db_factory import DBFactory
@@ -42,9 +33,9 @@ from .oxy import Oxy
 from .oxy.agents.base_agent import BaseAgent
 from .oxy.agents.remote_agent import RemoteAgent
 from .oxy.base_flow import BaseFlow
+from .oxy.base_oxy import ensure_async
 from .oxy.base_tool import BaseTool
 from .oxy.llms.base_llm import BaseLLM
-from .oxy.mcp_tools.base_mcp_client import BaseMCPClient
 from .routes import router
 from .schemas import OxyRequest, OxyResponse, SSEMessage, WebResponse
 from .utils.common_utils import (
@@ -60,18 +51,32 @@ logger = None
 
 
 class MAS(BaseModel):
-    """The main class for the OxyGent Multi-Agent System (MAS)."""
+    """Runtime container that manages all Oxy instances and routes messages.
+
+    Registers agents, tools, and LLMs into a name-to-instance lookup table,
+    initializes database connections (ES, Redis, Vearch), builds the agent
+    organization tree, and provides multiple execution entry points (web,
+    CLI, batch, programmatic).
+
+    Attributes:
+        name: Identifier for this MAS instance.
+        oxy_name_to_oxy: Registry mapping Oxy names to their instances.
+        master_agent_name: Name of the entry-point master agent.
+        es_client: Elasticsearch client for persistence.
+        redis_client: Redis client for SSE message queuing.
+        vearch_client: Vector DB client for tool retrieval.
+    """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     name: str = Field("", description="Identifier for the mas.")
 
-    default_oxy_space: list = Field(
+    default_oxy_space: list[Oxy] = Field(
         default_factory=list,
         description="Built-in core Oxy components always registered",
     )
 
-    oxy_space: list = Field(
+    oxy_space: list[Oxy] = Field(
         default_factory=list,
         description="User-provided Oxy instances to register at startup",
     )
@@ -85,7 +90,7 @@ class MAS(BaseModel):
         "", description="Name of the master agent serving as the entry point"
     )
 
-    first_query: str = Field(
+    first_query: Union[str, list[str]] = Field(
         "", description="Initial query sent to the master agent on web UI load"
     )
 
@@ -94,7 +99,7 @@ class MAS(BaseModel):
         description="Welcome message displayed to users on session start",
     )
 
-    agent_organization: dict = Field(
+    agent_organization: dict[str, Any] = Field(
         default_factory=dict,
         description="Hierarchical tree of agents and their callable tools",
     )
@@ -110,15 +115,15 @@ class MAS(BaseModel):
     )
 
     lock: bool = Field(False, description="Global lock flag to pause new requests")
-    active_tasks: dict = Field(
+    active_tasks: dict[str, asyncio.Task] = Field(
         default_factory=dict,
         description="Currently running task futures keyed by trace_id",
     )
-    background_tasks: set = Field(
-        default_factory=set,
-        description="Background asyncio tasks (e.g. data persistence)",
+    background_tasks: dict[str, set[asyncio.Task]] = Field(
+        default_factory=dict,
+        description="Background asyncio tasks keyed by trace_id",
     )
-    event_dict: dict = Field(
+    event_dict: dict[str, asyncio.Event] = Field(
         default_factory=dict,
         description="Asyncio events for coordinating task completion",
     )
@@ -127,7 +132,7 @@ class MAS(BaseModel):
         "oxygent", description="Prefix for Redis message queue keys"
     )
 
-    global_data: dict = Field(
+    global_data: dict[str, Any] = Field(
         default_factory=dict,
         description="Application-scoped public data shared across all traces",
     )
@@ -149,26 +154,26 @@ class MAS(BaseModel):
         description="Hook to transform outgoing messages before sending",
     )
 
-    routers: list = Field(
+    routers: list[Any] = Field(
         default_factory=list,
         description="Additional FastAPI routers to mount on the web server",
     )
-    middlewares: list = Field(
+    middlewares: list[Any] = Field(
         default_factory=list,
         description="Additional ASGI middlewares for the web server",
     )
-    mounts: list = Field(
+    mounts: list[dict[str, Any]] = Field(
         default_factory=list, description="Additional ASGI mounts for the web server"
     )
 
-    stream_dict: dict[str, list] = Field(
+    stream_dict: dict[str, list[str]] = Field(
         default_factory=dict, description="SSE stream buffers keyed by trace_id"
     )
     feedback_dict: dict[str, asyncio.Queue] = Field(
         default_factory=dict,
         description="Feedback queues keyed by trace_id for interactive responses",
     )
-    channel_id_dict: dict[str, list] = Field(
+    channel_id_dict: dict[str, list[str]] = Field(
         default_factory=dict,
         description="Channel IDs used by each trace for message routing",
     )
@@ -180,7 +185,7 @@ class MAS(BaseModel):
     a2a_target_agent_name: str = Field("")
     a2a_base_path: str = Field("/a2a")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Construct a new :class:`MAS`.
 
         Args:
@@ -192,6 +197,10 @@ class MAS(BaseModel):
                 present; mainly used by internal helpers and tests.
         """
         super().__init__(**kwargs)
+        for field_name in ("func_filter", "func_interceptor", "func_process_message"):
+            func = getattr(self, field_name, None)
+            if func is not None:
+                object.__setattr__(self, field_name, ensure_async(func))
         global logger
         logger = setup_logging()
         if self.name:
@@ -199,7 +208,7 @@ class MAS(BaseModel):
         else:
             self.name = Config.get_app_name()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "MAS":
         await self.init()
 
         # Register this MAS instance globally for API access
@@ -209,34 +218,81 @@ class MAS(BaseModel):
             set_global_mas_instance(self)
             logger.debug("Registered MAS instance globally for API access")
         except Exception as e:
-            logger.warning(f"Failed to register MAS instance globally: {e}")
+            logger.warning(
+                f"Failed to register MAS instance globally: {e}", exc_info=True
+            )
 
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await asyncio.gather(*self.background_tasks)
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        async def _safe(coro, label: str) -> None:
+            try:
+                await coro
+                logger.info(f"✓ {label} shutdown completed.")
+            except Exception as e:
+                logger.warning(f"Error during shutdown ({label}): {e}", exc_info=True)
+
+        logger.info("=" * 64)
+        logger.info("🔒 OxyGent MAS Application Shutdown Initiated")
+        logger.info("=" * 64)
+
+        # 1. Wait for background tasks
+        all_tasks = [t for tasks in self.background_tasks.values() for t in tasks]
+        if all_tasks:
+            await _safe(
+                asyncio.gather(*all_tasks, return_exceptions=True),
+                "background tasks",
+            )
+
+        # 2. Tear down resources — each step runs regardless of prior failures
+        from .live_prompt import close_prompt_manager
+
+        await _safe(close_prompt_manager(), "prompt manager")
+
+        if self.es_client:
+            await _safe(self.es_client.close(), "ES client")
+
+        if self.redis_client:
+            await _safe(self.redis_client.close(), "Redis client")
+
+        await _safe(self.cleanup_all(), "oxy cleanup")
+
         logger.info("=" * 64)
         logger.info("🪂 OxyGent MAS Application Exit")
         logger.info("=" * 64)
-        if self.es_client:
-            await self.es_client.close()
-        if self.redis_client:
-            await self.redis_client.close()
-        await self.cleanup_servers()
+
+    def add_background_task(self, trace_id: str, task: asyncio.Task) -> None:
+        """Register a background task under the given trace_id."""
+        self.background_tasks.setdefault(trace_id, set()).add(task)
+        task.add_done_callback(lambda t: self._discard_background_task(trace_id, t))
+
+    def _discard_background_task(self, trace_id: str, task: asyncio.Task) -> None:
+        """Remove a finished task from its trace_id bucket."""
+        bucket = self.background_tasks.get(trace_id)
+        if bucket is not None:
+            bucket.discard(task)
+            if not bucket:
+                del self.background_tasks[trace_id]
+
+    async def await_background_tasks(self, trace_id: str) -> None:
+        """Wait for all background tasks belonging to *trace_id* to finish."""
+        tasks = self.background_tasks.get(trace_id)
+        if tasks:
+            await asyncio.gather(*tasks)
 
     @classmethod
-    async def create(cls, **kwargs):
+    async def create(cls, **kwargs: Any) -> "MAS":
         self = cls(**kwargs)
         await self.init()
         return self
 
-    def show_banner(self):
+    def show_banner(self) -> None:
         """Print the OxyGent ASCII art banner."""
         from .banner import oxygent_slant as banner_str
 
         print(banner_str[1:-1])
 
-    def show_mas_info(self):
+    def show_mas_info(self) -> None:
         """Print basic MAS configuration info."""
         import platform
         from datetime import datetime
@@ -253,7 +309,7 @@ class MAS(BaseModel):
         logger.info(f"Start Time   : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("=" * 64)
 
-    def add_oxy(self, oxy: Oxy):
+    def add_oxy(self, oxy: Oxy) -> None:
         """Register a single Oxy object.
 
         Args:
@@ -267,7 +323,7 @@ class MAS(BaseModel):
             raise Exception(f"oxy [{oxy.name}] already exists.")
         self.oxy_name_to_oxy[oxy.name] = oxy
 
-    def add_oxy_list(self, oxy_list: list[Oxy]):
+    def add_oxy_list(self, oxy_list: list[Oxy]) -> None:
         """Register a list of Oxy objects.
 
         Args:
@@ -276,7 +332,7 @@ class MAS(BaseModel):
         for oxy in oxy_list:
             self.add_oxy(oxy)
 
-    async def init(self):
+    async def init(self) -> None:
         """Initialize the MAS. This coroutine performs all necessary setup steps to
         prepare the MAS for operation.
 
@@ -318,29 +374,26 @@ class MAS(BaseModel):
             await setup_dynamic_agents(self)
             logger.debug("Dynamic agent management initialized")
         except Exception as e:
-            logger.warning(f"Failed to setup dynamic agents: {e}")
+            logger.warning(f"Failed to setup dynamic agents: {e}", exc_info=True)
         logger.info("=" * 64)
 
-    async def cleanup_servers(self) -> None:
-        """Gracefully shut down remote servers/clients.
+    async def cleanup_all(self) -> None:
+        """Gracefully release resources held by all registered Oxy components.
 
-        The method concurrently calls ``cleanup()`` on every
-        :class:`BaseMCPClient` that has been registered.  It is automatically
-        invoked by :func:`__aexit__`.
+        Calls ``cleanup()`` on every registered :class:`Oxy` instance.
+        Each cleanup is invoked individually so that a failure in one
+        component does not prevent others from releasing their resources.
         """
-        cleanup_tasks = []
-        for oxy in self.oxy_name_to_oxy.values():
-            if not isinstance(oxy, BaseMCPClient):
-                continue
-            cleanup_tasks.append(asyncio.create_task(oxy.cleanup()))
-
-        if cleanup_tasks:
+        for oxy_name, oxy in self.oxy_name_to_oxy.items():
             try:
-                await asyncio.gather(*cleanup_tasks, return_exceptions=False)
+                await oxy.cleanup()
             except Exception as e:
-                logger.warning(f"Warning during final cleanup: {e}")
+                logger.warning(
+                    f"Error during cleanup of oxy '{oxy_name}': {e}",
+                    exc_info=True,
+                )
 
-    async def init_db(self):
+    async def init_db(self) -> None:
         """Es --- (table_name: key)
 
         {app_name}_trace: trace_id: record trace of each call
@@ -356,244 +409,47 @@ class MAS(BaseModel):
             user = jes_config["user"]
             password = jes_config["password"]
             self.es_client = db_factory.get_instance(JesEs, hosts, user, password)
+        elif Config.get_storage_es_engine() == "MemoryEs":
+            self.es_client = MemoryEs()
         else:
             self.es_client = db_factory.get_instance(LocalEs)
-        # trace table
+
+        app = Config.get_app_name()
+        settings = Config.get_es_settings_config()
+
+        # Create core indices
         await self.es_client.create_index(
-            Config.get_app_name() + "_trace",
-            {
-                "mappings": {
-                    "properties": {
-                        "request_id": {"type": "keyword"},
-                        "group_id": {"type": "keyword"},
-                        "group_data": Config.get_es_schema_group_data(),
-                        "trace_id": {"type": "keyword"},
-                        "shared_data": Config.get_es_schema_shared_data(),
-                        "original_payload": {"type": "text"},
-                        "from_trace_id": {"type": "keyword"},
-                        "root_trace_ids": {"type": "keyword"},
-                        "input": {"type": "text"},
-                        "callee": {"type": "keyword"},
-                        "output": {"type": "text"},
-                        "create_time": {
-                            "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                            "type": "date",
-                        },
-                        "update_time": {
-                            "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                            "type": "date",
-                        },
-                    },
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_trace",
+            self._trace_index_schema(settings),
         )
-        # message table
         if Config.get_message_is_stored():
             await self.es_client.create_index(
-                Config.get_app_name() + "_message",
-                {
-                    "mappings": {
-                        "properties": {
-                            "message_id": {"type": "keyword"},
-                            "group_id": {"type": "keyword"},
-                            "trace_id": {"type": "keyword"},
-                            "node_id": {"type": "keyword"},
-                            "node_name": {"type": "keyword"},
-                            "message": {"type": "text"},
-                            "message_type": {"type": "keyword"},
-                            "message_event": {"type": "keyword"},
-                            "message_timestamp": {"type": "long"},
-                            "create_time": {
-                                "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                                "type": "date",
-                            },
-                        },
-                    },
-                    "settings": Config.get_es_settings_config(),
-                },
+                app + "_message",
+                self._message_index_schema(settings),
             )
-        # node table
         await self.es_client.create_index(
-            Config.get_app_name() + "_node",
-            {
-                "mappings": {
-                    "properties": {
-                        "node_id": {"type": "keyword"},
-                        "copied_node_id": {"type": "keyword"},
-                        "node_type": {"type": "keyword"},
-                        "group_id": {"type": "keyword"},
-                        "trace_id": {"type": "keyword"},
-                        "caller": {"type": "keyword"},
-                        "callee": {"type": "keyword"},
-                        "parallel_id": {"type": "keyword"},
-                        "father_node_id": {"type": "keyword"},
-                        "input": {"type": "text"},
-                        "input_md5": {"type": "keyword"},
-                        "output": {"type": "text"},
-                        "state": {"type": "keyword"},
-                        "extra": {"type": "text"},
-                        "call_stack": {"type": "text"},
-                        "node_id_stack": {"type": "text"},
-                        "pre_node_ids": {"type": "text"},
-                        "shared_data": Config.get_es_schema_shared_data(),
-                        "create_time": {
-                            "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                            "type": "date",
-                        },
-                        "update_time": {
-                            "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                            "type": "date",
-                        },
-                    },
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_node",
+            self._node_index_schema(settings),
         )
-        # history table
         await self.es_client.create_index(
-            Config.get_app_name() + "_history",
-            {
-                "mappings": {
-                    "properties": {
-                        "history_id": {"type": "keyword"},
-                        "session_name": {"type": "keyword"},
-                        "trace_id": {"type": "keyword"},
-                        "memory": {"type": "text"},
-                        "create_time": {
-                            "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
-                            "type": "date",
-                        },
-                    },
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_history",
+            self._history_index_schema(settings),
         )
-        # prompt table
         await self.es_client.create_index(
-            Config.get_app_name() + "_prompt",
-            {
-                "mappings": {
-                    "properties": {
-                        "prompt_key": {
-                            "type": "keyword"  # Prompt key for exact matching
-                        },
-                        "prompt_content": {
-                            "type": "text",
-                            "analyzer": "standard",  # Prompt content
-                        },
-                        "description": {
-                            "type": "text"  # Prompt description
-                        },
-                        "category": {
-                            "type": "keyword"  # Category: system, expert, workflow, etc.
-                        },
-                        "agent_type": {
-                            "type": "keyword"  # Corresponding Agent type
-                        },
-                        "version": {
-                            "type": "integer"  # Version number
-                        },
-                        "is_active": {
-                            "type": "boolean"  # Whether active
-                        },
-                        "created_at": {"type": "date"},
-                        "updated_at": {"type": "date"},
-                        "created_by": {
-                            "type": "keyword"  # Creator
-                        },
-                        "tags": {
-                            "type": "keyword"  # Tags
-                        },
-                    }
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_prompt",
+            self._prompt_index_schema(settings),
         )
-        # prompt history table
         await self.es_client.create_index(
-            Config.get_app_name() + "_prompt_history",
-            {
-                "mappings": {
-                    "properties": {
-                        "prompt_key": {
-                            "type": "keyword"  # Prompt key for exact matching
-                        },
-                        "prompt_content": {
-                            "type": "text",
-                            "analyzer": "standard",  # Prompt content
-                        },
-                        "description": {
-                            "type": "text"  # Prompt description
-                        },
-                        "category": {
-                            "type": "keyword"  # Category: system, expert, workflow, etc.
-                        },
-                        "agent_type": {
-                            "type": "keyword"  # Corresponding Agent type
-                        },
-                        "version": {
-                            "type": "integer"  # Version number
-                        },
-                        "is_active": {
-                            "type": "boolean"  # Whether active
-                        },
-                        "is_history": {
-                            "type": "boolean"  # Whether this is a history record
-                        },
-                        "history_id": {
-                            "type": "keyword"  # History record ID
-                        },
-                        "created_at": {"type": "date"},
-                        "updated_at": {"type": "date"},
-                        "archived_at": {"type": "date"},
-                        "created_by": {
-                            "type": "keyword"  # Creator
-                        },
-                        "tags": {
-                            "type": "keyword"  # Tags
-                        },
-                    }
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_prompt_history",
+            self._prompt_history_index_schema(settings),
         )
-        # Rating record index mapping
         await self.es_client.create_index(
-            Config.get_app_name() + "_rating",
-            {
-                "mappings": {
-                    "properties": {
-                        "rating_id": {"type": "keyword"},
-                        "trace_id": {"type": "keyword"},
-                        "rating_type": {"type": "keyword"},
-                        "user_id": {"type": "keyword"},
-                        "user_ip": {"type": "ip"},
-                        "comment": {"type": "text"},
-                        "erp": {"type": "keyword"},
-                        "create_time": {"type": "keyword"},
-                        "update_time": {"type": "keyword"},
-                    }
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_rating",
+            self._rating_index_schema(settings),
         )
-        # Rating statistics index mapping
         await self.es_client.create_index(
-            Config.get_app_name() + "_rating_stats",
-            {
-                "mappings": {
-                    "properties": {
-                        "trace_id": {"type": "keyword"},
-                        "like_count": {"type": "integer"},
-                        "dislike_count": {"type": "integer"},
-                        "total_ratings": {"type": "integer"},
-                        "satisfaction_rate": {"type": "float"},
-                        "last_updated": {"type": "keyword"},
-                    }
-                },
-                "settings": Config.get_es_settings_config(),
-            },
+            app + "_rating_stats",
+            self._rating_stats_index_schema(settings),
         )
 
         # init redis client
@@ -609,36 +465,270 @@ class MAS(BaseModel):
         else:
             self.redis_client = LocalRedis()
 
-    async def batch_init_oxy(self, *class_type):
+    # ------------------------------------------------------------------
+    # Index schema definitions
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _trace_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "request_id": {"type": "keyword"},
+                    "group_id": {"type": "keyword"},
+                    "group_data": Config.get_es_schema_group_data(),
+                    "trace_id": {"type": "keyword"},
+                    "shared_data": Config.get_es_schema_shared_data(),
+                    "original_payload": {"type": "text"},
+                    "from_trace_id": {"type": "keyword"},
+                    "root_trace_ids": {"type": "keyword"},
+                    "input": {"type": "text"},
+                    "callee": {"type": "keyword"},
+                    "output": {"type": "text"},
+                    "create_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                    "update_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                },
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _message_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "message_id": {"type": "keyword"},
+                    "group_id": {"type": "keyword"},
+                    "trace_id": {"type": "keyword"},
+                    "node_id": {"type": "keyword"},
+                    "node_name": {"type": "keyword"},
+                    "message": {"type": "text"},
+                    "message_type": {"type": "keyword"},
+                    "message_event": {"type": "keyword"},
+                    "message_timestamp": {"type": "long"},
+                    "create_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                },
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _node_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "node_id": {"type": "keyword"},
+                    "copied_node_id": {"type": "keyword"},
+                    "node_type": {"type": "keyword"},
+                    "group_id": {"type": "keyword"},
+                    "trace_id": {"type": "keyword"},
+                    "caller": {"type": "keyword"},
+                    "callee": {"type": "keyword"},
+                    "parallel_id": {"type": "keyword"},
+                    "father_node_id": {"type": "keyword"},
+                    "input": {"type": "text"},
+                    "input_md5": {"type": "keyword"},
+                    "output": {"type": "text"},
+                    "state": {"type": "keyword"},
+                    "extra": {"type": "text"},
+                    "call_stack": {"type": "text"},
+                    "node_id_stack": {"type": "text"},
+                    "pre_node_ids": {"type": "text"},
+                    "shared_data": Config.get_es_schema_shared_data(),
+                    "create_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                    "update_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                },
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _history_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "history_id": {"type": "keyword"},
+                    "session_name": {"type": "keyword"},
+                    "trace_id": {"type": "keyword"},
+                    "memory": {"type": "text"},
+                    "create_time": {
+                        "format": "yyyy-MM-dd HH:mm:ss.SSSSSSSSS",
+                        "type": "date",
+                    },
+                },
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _prompt_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "prompt_key": {"type": "keyword"},
+                    "prompt_content": {
+                        "type": "text",
+                        "analyzer": "standard",
+                    },
+                    "description": {"type": "text"},
+                    "category": {"type": "keyword"},
+                    "agent_type": {"type": "keyword"},
+                    "version": {"type": "integer"},
+                    "is_active": {"type": "boolean"},
+                    "created_at": {"type": "date"},
+                    "updated_at": {"type": "date"},
+                    "created_by": {"type": "keyword"},
+                    "tags": {"type": "keyword"},
+                }
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _prompt_history_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "prompt_key": {"type": "keyword"},
+                    "prompt_content": {
+                        "type": "text",
+                        "analyzer": "standard",
+                    },
+                    "description": {"type": "text"},
+                    "category": {"type": "keyword"},
+                    "agent_type": {"type": "keyword"},
+                    "version": {"type": "integer"},
+                    "is_active": {"type": "boolean"},
+                    "is_history": {"type": "boolean"},
+                    "history_id": {"type": "keyword"},
+                    "created_at": {"type": "date"},
+                    "updated_at": {"type": "date"},
+                    "archived_at": {"type": "date"},
+                    "created_by": {"type": "keyword"},
+                    "tags": {"type": "keyword"},
+                }
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _rating_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "rating_id": {"type": "keyword"},
+                    "trace_id": {"type": "keyword"},
+                    "rating_type": {"type": "keyword"},
+                    "user_id": {"type": "keyword"},
+                    "user_ip": {"type": "ip"},
+                    "comment": {"type": "text"},
+                    "erp": {"type": "keyword"},
+                    "create_time": {"type": "keyword"},
+                    "update_time": {"type": "keyword"},
+                }
+            },
+            "settings": settings,
+        }
+
+    @staticmethod
+    def _rating_stats_index_schema(settings: dict) -> dict:
+        return {
+            "mappings": {
+                "properties": {
+                    "trace_id": {"type": "keyword"},
+                    "like_count": {"type": "integer"},
+                    "dislike_count": {"type": "integer"},
+                    "total_ratings": {"type": "integer"},
+                    "satisfaction_rate": {"type": "float"},
+                    "last_updated": {"type": "keyword"},
+                }
+            },
+            "settings": settings,
+        }
+
+    async def batch_init_oxy(self, *class_type: type) -> None:
         """Batch initialize oxy objects of specified types asynchronously.
 
         Args:
             class_types: List of class types to initialize (e.g., BaseLLM, BaseTool, BaseAgent).
 
         NOTE:
-            Initialize all oxy objects of the specified class types,
+            Initialize all oxy objects of the specified class types.
+            If any init fails, already-initialized oxy objects of the same
+            batch are cleaned up before the exception propagates.
         """
-        tasks = []
-        for oxy_name in list(self.oxy_name_to_oxy.keys()):
-            oxy = self.oxy_name_to_oxy[oxy_name]
-            if not isinstance(oxy, class_type):
-                continue
+        targets = [
+            (name, oxy)
+            for name, oxy in self.oxy_name_to_oxy.items()
+            if isinstance(oxy, class_type)
+        ]
+        for _name, oxy in targets:
             oxy.set_mas(self)
-            task = oxy.init()
-            if Config.get_tool_is_concurrent_init():
-                tasks.append(task)
-            else:
-                await task
-        if tasks:
-            await asyncio.gather(*tasks)
 
-    async def init_all_oxy(self):
+        initialized_names: list[str] = []
+        if Config.get_tool_is_concurrent_init():
+            results = await asyncio.gather(
+                *(oxy.init() for _name, oxy in targets),
+                return_exceptions=True,
+            )
+            first_error = None
+            for (name, _oxy), result in zip(targets, results):
+                if isinstance(result, Exception):
+                    logger.error(
+                        f"Failed to initialize oxy '{name}': {result}", exc_info=result
+                    )
+                    if first_error is None:
+                        first_error = result
+                else:
+                    initialized_names.append(name)
+            if first_error is not None:
+                for name in initialized_names:
+                    try:
+                        await self.oxy_name_to_oxy[name].cleanup()
+                    except Exception as ce:
+                        logger.warning(
+                            f"Error during rollback cleanup of oxy '{name}': {ce}",
+                            exc_info=True,
+                        )
+                raise first_error
+        else:
+            try:
+                for name, oxy in targets:
+                    await oxy.init()
+                    initialized_names.append(name)
+            except Exception:
+                for name in initialized_names:
+                    try:
+                        await self.oxy_name_to_oxy[name].cleanup()
+                    except Exception as ce:
+                        logger.warning(
+                            f"Error during rollback cleanup of oxy '{name}': {ce}",
+                            exc_info=True,
+                        )
+                raise
+
+    async def init_all_oxy(self) -> None:
         """Initializing all tools and agents assign values of agent.tools to each
         agent."""
         await self.batch_init_oxy(BaseLLM, BaseTool)
         await self.batch_init_oxy(BaseFlow, BaseAgent)
 
-    def init_master_agent_name(self):
+    def init_master_agent_name(self) -> None:
         """Initialize the master agent name.
 
         This method iterates through all registered Oxy objects and checks if they are
@@ -658,17 +748,18 @@ class MAS(BaseModel):
     # ------------------------------------------------------------------
     # Organisation helpers
     # ------------------------------------------------------------------
-    def is_agent(self, oxy_name):
+    def is_agent(self, oxy_name: str) -> bool:
         """Check if the oxy_name is an agent."""
         if not oxy_name:
             return False
-        # return self.oxy_name_to_oxy[oxy_name].category == 'agent'
         return isinstance(self.oxy_name_to_oxy[oxy_name], (BaseFlow, BaseAgent))
 
-    def init_agent_organization(self):
+    def init_agent_organization(self) -> None:
         """Build the agent organization tree structure, including tools."""
 
-        def add_tools(agent_organization: list, agent_names: list, path: list = []):
+        def add_tools(agent_organization: list, agent_names: list, path: list = None):
+            if path is None:
+                path = []
             for agent_name in agent_names:
                 agent = self.oxy_name_to_oxy[agent_name]
                 temp_path = path.copy()
@@ -687,13 +778,9 @@ class MAS(BaseModel):
                 else:
                     agent_organization[-1]["children"] = []
 
-                tool_name_list = []
-                for tool_name in list(
+                tool_name_list = list(
                     set(agent.permitted_tool_name_list + agent.permitted_oxy)
-                ):
-                    # if not agent.is_sourcing_tools and tool_name == 'retrieve_tools':
-                    #     continue
-                    tool_name_list.append(tool_name)
+                )
 
                 add_tools(agent_organization[-1]["children"], tool_name_list, temp_path)
 
@@ -706,7 +793,7 @@ class MAS(BaseModel):
 
         self.agent_organization = agent_organization[0]
 
-    def show_org(self):
+    def show_org(self) -> None:
         """Display the agent organization tree."""
         logger.info("🌐 OxyGent MAS Organization Structure Overview")
         logger.info("=" * 64)
@@ -717,7 +804,7 @@ class MAS(BaseModel):
     # Optional Vearch integration
     # ------------------------------------------------------------------
 
-    async def create_vearch_table(self):
+    async def create_vearch_table(self) -> None:
         """Link to the vearch database and create tables for tools."""
         tool_list = []
         for tool_name, tool in self.oxy_name_to_oxy.items():
@@ -741,7 +828,7 @@ class MAS(BaseModel):
     # Misc. public helpers
     # ------------------------------------------------------------------
 
-    async def wait_next(self):
+    async def wait_next(self) -> None:
         """Block execution until :attr:`lock` becomes ``False``.
 
         This coroutine is particularly useful in *step‑debug* or *demo* modes where a
@@ -755,7 +842,7 @@ class MAS(BaseModel):
             else:
                 return
 
-    def set_oxy_attr(self, oxy_name, attr_key, attr_value):
+    def set_oxy_attr(self, oxy_name: str, attr_key: str, attr_value: Any) -> bool:
         """Dynamically mutate a component attribute at runtime.
 
         Args:
@@ -779,11 +866,14 @@ class MAS(BaseModel):
             return True
         except Exception as e:
             logger.error(
-                f"Failed to set attribute [{attr_key}] for oxy [{oxy_name}]: {e}"
+                f"Failed to set attribute [{attr_key}] for oxy [{oxy_name}]: {e}",
+                exc_info=True,
             )
             return False
 
-    async def call(self, callee, arguments, **kwargs):
+    async def call(
+        self, callee: str, arguments: dict[str, Any], **kwargs: Any
+    ) -> OxyResponse:
         """Invoke an *Oxy* component directly and return its output.
 
         Args:
@@ -810,7 +900,7 @@ class MAS(BaseModel):
 
     async def send_message(
         self, sse_message: SSEMessage, redis_key: str, group_id: str = ""
-    ):
+    ) -> None:
         """Push *message* onto a capped Redis list.
 
         The data is MsgPack‑encoded before being stored.  At most **10** items
@@ -890,9 +980,8 @@ class MAS(BaseModel):
                             },
                         )
                     )
-                    save_message_task.add_done_callback(self.background_tasks.discard)
-                    self.background_tasks.add(save_message_task)
-                    self.stream_dict[node_id].clear()
+                    self.add_background_task(current_trace_id, save_message_task)
+                    self.stream_dict.pop(node_id, None)
             else:
                 save_message_task = asyncio.create_task(
                     self.es_client.index(
@@ -912,20 +1001,21 @@ class MAS(BaseModel):
                         },
                     )
                 )
-                save_message_task.add_done_callback(self.background_tasks.discard)
-                self.background_tasks.add(save_message_task)
+                self.add_background_task(current_trace_id, save_message_task)
         if message_is_send:
             bytes_msg = msgpack.packb(msgpack_preprocess(sse_message.to_sse()))
             await self.redis_client.lpush(redis_key, bytes_msg)
 
-    def clear_queues(self, trace_id):
+    def clear_queues(self, trace_id: str) -> None:
         """Clear all Redis message queues for active traces."""
         for channel_id in self.channel_id_dict.get(trace_id, []):
             if channel_id in self.feedback_dict:
                 del self.feedback_dict[channel_id]
 
     @staticmethod
-    def _parse_dict_field(raw_value, field_name: str = "dict field") -> dict:
+    def _parse_dict_field(
+        raw_value: Any, field_name: str = "dict field"
+    ) -> dict[str, Any]:
         """Parse a raw value from ES into a dict.
 
         Handles str (JSON), dict, or other types gracefully.
@@ -935,7 +1025,8 @@ class MAS(BaseModel):
                 return json.loads(raw_value)
             except json.JSONDecodeError:
                 logger.warning(
-                    f"Failed to parse {field_name} from string, using empty dict"
+                    f"Failed to parse {field_name} from string (raw value: {raw_value!r}), using empty dict",
+                    exc_info=True,
                 )
                 return {}
         elif isinstance(raw_value, dict):
@@ -944,7 +1035,7 @@ class MAS(BaseModel):
 
     async def chat_with_agent(
         self,
-        payload: dict = None,
+        payload: Optional[dict[str, Any]] = None,
         send_msg_key: str = "",
     ) -> OxyResponse:
         """Top‑level helper that forwards a *chat query* into the MAS.
@@ -1010,6 +1101,9 @@ class MAS(BaseModel):
                     trace_source.get("original_payload", "{}"),
                     "original_payload",
                 )
+                stored_payload.pop("restart_node_output", None)
+                stored_payload.pop("current_trace_id", None)
+                stored_payload.pop("request_id", None)
 
                 # Step 3: rebuild payload — original as base, restart fields on top
                 payload.clear()
@@ -1022,7 +1116,7 @@ class MAS(BaseModel):
                     # Fallback for old traces that lack original_payload
                     logger.warning(
                         f"Trace {reference_trace_id} has no original_payload, "
-                        f"falling back to trace-level fields"
+                        "falling back to trace-level fields"
                     )
 
                 # Remove per-execution fields so they are regenerated
@@ -1074,6 +1168,8 @@ class MAS(BaseModel):
             # Special handling: when from_trace_id exists, inherit and merge historical group_data from ES
             # Note: This logic runs after the loop above to ensure merged result is the final value
             if "from_trace_id" in payload and payload["from_trace_id"]:
+                # Wait for previous trace's background tasks to finish before proceeding
+                await self.await_background_tasks(payload["from_trace_id"])
                 es_response_group_id = await self.es_client.search(
                     Config.get_app_name() + "_trace",
                     {
@@ -1118,8 +1214,20 @@ class MAS(BaseModel):
                     group_id=oxy_request.group_id,
                 )
             return oxy_response
-        except Exception:
-            logger.error(traceback.format_exc())
+        except Exception as e:
+            callee = (
+                oxy_request.callee if oxy_request else payload.get("callee", "unknown")
+            )
+            trace_id = (
+                oxy_request.current_trace_id
+                if oxy_request
+                else payload.get("current_trace_id", "unknown")
+            )
+            query_preview = str(payload.get("query", ""))[:200] if payload else "N/A"
+            logger.error(
+                f"Error in chat_with_agent (callee={callee}, trace_id={trace_id}, query={query_preview!r}): {e}",
+                exc_info=True,
+            )
             raise
         finally:
             if oxy_request:
@@ -1129,7 +1237,7 @@ class MAS(BaseModel):
     # Interactive CLI helper
     # ------------------------------------------------------------------
 
-    async def start_cli_mode(self, first_query=None):
+    async def start_cli_mode(self, first_query: Optional[str] = None) -> None:
         """Start an interactive CLI REPL for chatting with agents."""
         from_trace_id = ""
         if first_query:
@@ -1155,7 +1263,9 @@ class MAS(BaseModel):
     # FastAPI + SSE web service (unedited original docstring preserved)
     # ------------------------------------------------------------------
 
-    async def _process_redis_messages(self, redis_key, current_trace_id):
+    async def _process_redis_messages(
+        self, redis_key: str, current_trace_id: str
+    ) -> AsyncIterator[dict[str, Any]]:
         """Consume messages from Redis and yield them as SSE events."""
         while True:
             bytes_msg = await self.redis_client.rpop(redis_key)
@@ -1195,7 +1305,9 @@ class MAS(BaseModel):
                 # Send message
                 yield sse_message_dict
 
-    async def event_stream(self, redis_key, current_trace_id, task):
+    async def event_stream(
+        self, redis_key: str, current_trace_id: str, task: asyncio.Task
+    ) -> AsyncIterator[dict[str, Any]]:
         """Generate an SSE event stream for the given trace."""
         try:
             task.add_done_callback(
@@ -1214,7 +1326,9 @@ class MAS(BaseModel):
             self.active_tasks[current_trace_id].cancel()
             raise
 
-    async def yield_async_message(self, redis_key, current_trace_id):
+    async def yield_async_message(
+        self, redis_key: str, current_trace_id: str
+    ) -> AsyncIterator[dict[str, Any]]:
         """Yield async messages for the given trace from the Redis queue."""
         try:
             async for message in self._process_redis_messages(
@@ -1230,19 +1344,19 @@ class MAS(BaseModel):
 
     async def start_web_service(
         self,
-        first_query=None,
-        welcome_message=None,
-        host=None,
-        port=None,
-        routers=None,
-        middlewares=None,
-        mounts=None,
-        shared_data=None,
-        group_data=None,
+        first_query: Optional[Union[str, list[str]]] = None,
+        welcome_message: Optional[str] = None,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        routers: Optional[list[APIRouter]] = None,
+        middlewares: Optional[list[Any]] = None,
+        mounts: Optional[list[dict[str, Any]]] = None,
+        shared_data: Optional[dict[str, Any]] = None,
+        group_data: Optional[dict[str, Any]] = None,
         enable_a2a_server: bool | None = None,
         a2a_target_agent_name: str | None = None,
         a2a_base_path: str | None = None,
-    ):
+    ) -> None:
         """Start the FastAPI + SSE service (see original inline documentation)."""
         self.routers.extend(routers or [])
         self.middlewares.extend(middlewares or [])
@@ -1267,7 +1381,7 @@ class MAS(BaseModel):
             try:
                 a2a_router = a2a_server_agent.build_router()
             except Exception as e:
-                logger.warning(f"Failed to build auto A2A router: {e}")
+                logger.warning(f"Failed to build auto A2A router: {e}", exc_info=True)
                 a2a_router = None
             prefix = getattr(a2a_router, "prefix", "")
             if a2a_router and prefix not in existing_prefixes:
@@ -1294,7 +1408,7 @@ class MAS(BaseModel):
         from fastapi.staticfiles import StaticFiles
         from sse_starlette.sse import EventSourceResponse
 
-        def get_banks_from_router(router: APIRouter) -> List[Dict[str, Any]]:
+        def get_banks_from_router(router: APIRouter) -> list[dict[str, Any]]:
             banks = []
             for route in router.routes:
                 if isinstance(route, APIRoute) and "bank" in getattr(route, "tags", []):
@@ -1499,6 +1613,10 @@ class MAS(BaseModel):
                     try:
                         payload = json.loads(params["payload"])
                     except Exception as e:
+                        logger.warning(
+                            f"Failed to parse GET payload parameter as JSON (raw value: {params.get('payload', '')!r}): {e}",
+                            exc_info=True,
+                        )
                         return WebResponse(
                             code=400, message=f"can not convert data into JSON: {e}"
                         ).to_dict()
@@ -1510,7 +1628,7 @@ class MAS(BaseModel):
                 f"Received payload: {json.dumps(payload, ensure_ascii=False)}",
                 extra={"trace_id": current_trace_id},
             )
-            payload = self.func_filter(payload)
+            payload = await self.func_filter(payload)
 
             if "query" not in payload:
                 payload["query"] = ""
@@ -1529,7 +1647,7 @@ class MAS(BaseModel):
         async def chat(request: Request):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
-            intercepted_response = self.func_interceptor(payload)
+            intercepted_response = await self.func_interceptor(payload)
             if intercepted_response is not None:
                 return intercepted_response
             oxy_response = await self.chat_with_agent(payload=payload)
@@ -1542,7 +1660,7 @@ class MAS(BaseModel):
         async def sse_chat(request: Request):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
-            intercepted_response = self.func_interceptor(payload)
+            intercepted_response = await self.func_interceptor(payload)
             if intercepted_response is not None:
                 return intercepted_response
             current_trace_id = payload["current_trace_id"]
@@ -1564,7 +1682,7 @@ class MAS(BaseModel):
         async def async_chat(request: Request):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
-            intercepted_response = self.func_interceptor(payload)
+            intercepted_response = await self.func_interceptor(payload)
             if intercepted_response is not None:
                 return intercepted_response
 
@@ -1588,7 +1706,7 @@ class MAS(BaseModel):
         async def async_trace(request: Request):
             payload = await request_to_payload(request)
             # Apply request interceptor if configured
-            intercepted_response = self.func_interceptor(payload)
+            intercepted_response = await self.func_interceptor(payload)
             if intercepted_response is not None:
                 return intercepted_response
             trace_id = payload["trace_id"]
@@ -1654,7 +1772,9 @@ class MAS(BaseModel):
     # Batch helper
     # ------------------------------------------------------------------
 
-    async def start_batch_processing(self, querys, return_trace_id=False):
+    async def start_batch_processing(
+        self, querys: list[str], return_trace_id: bool = False
+    ) -> list[Any]:
         """Execute a batch of queries concurrently.
 
         Args:
@@ -1665,8 +1785,6 @@ class MAS(BaseModel):
         Returns:
             list: Answers (or dicts with *output* + *trace_id*).
         """
-        import time
-
         cost_times = []
 
         async def handle_query(query):
@@ -1698,9 +1816,9 @@ class MAS(BaseModel):
 class BankRouter(APIRouter):
     """FastAPI router that exposes bank tools as HTTP endpoints."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(tags=["bank"], *args, **kwargs)
 
-    def set_mas(self, mas: MAS):
+    def set_mas(self, mas: MAS) -> None:
         """Bind the MAS instance to this bank router."""
         self.mas = mas

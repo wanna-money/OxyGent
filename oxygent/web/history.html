@@ -7,52 +7,49 @@
     <meta http-equiv="Expires" content="0">
     <link rel="shortcut icon" href="./image/group-favicon.png" type="image/x-icon">
     <title>History - OxyGent</title>
-    <link rel="stylesheet" href="./css/style.css">
-    <link rel="stylesheet" href="./css/main.css"/>
     <link rel="stylesheet" href="./css/history.css"/>
+    <link rel="stylesheet" href="./css/guide.css"/>
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 </head>
 <body>
-<div class="history-container">
-    <div class="header">
-        <div class="header-left">
-            <img class="header-left-img" src="./image/group-favicon.png" alt="OxyGent">
-        </div>
-        <div id="header_title_id" class="header-title">History Manager</div>
-        <div class="header-right">
-            <button onclick="window.location.href='./index.html'" title="Back to Chat">
-                <img src="./image/arrow-left.svg" alt="Back">
-            </button>
-        </div>
-    </div>    
-    <div class="history-content">
+<div class="node-header">
+    <div class="node-header-left">
+        <img class="node-header-logo" src="./image/group-favicon.png" alt="">
+        <span class="node-header-title">History Manager</span>
+    </div>
+    <div class="node-header-center">
         <div class="search-bar">
-            <div class="search-input-container">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
                 <input type="text" id="searchInput" placeholder="Search conversations..." onkeypress="handleSearchKeyPress(event)" oninput="toggleClearButton()">
-                <button class="clear-search-button" id="clearSearchBtn" onclick="clearSearch()" style="display: none;" title="Clear search">
-                    ✕
-                </button>
-                <button class="search-button" onclick="searchConversations()" title="Search">
-                    Search
-                </button>
+                <button class="search-clear-btn" id="clearSearchBtn" onclick="clearSearch()" style="display: none;" title="Clear">✕</button>
             </div>
-            <div class="filter-container">
-                <select id="ratingFilter" onchange="filterConversations()" class="filter-select">
-                    <option value="all">All Conversations</option>
-                    <option value="liked">Liked 👍</option>
-                    <option value="disliked">Disliked 👎</option>
-                    <option value="unrated">Unrated</option>
-                </select>
-            </div>
+            <select id="ratingFilter" onchange="filterConversations()" class="filter-select">
+                <option value="all">All</option>
+                <option value="liked">Liked 👍</option>
+                <option value="disliked">Disliked 👎</option>
+                <option value="unrated">Unrated</option>
+            </select>
         </div>
-        
-        <div class="conversations-list" id="conversationsList">
-            <!-- Conversations will be loaded here -->
-        </div>
-        
-        <div class="pagination" id="pagination">
-            <!-- Pagination controls will be loaded here -->
-        </div>
+    </div>
+    <div class="node-header-right">
+        <button class="node-header-btn" onclick="startGuideTour()" title="Feature Guide">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M6 6a2 2 0 1 1 2.5 1.9c-.5.3-.5.6-.5 1.1"/><circle cx="8" cy="12" r="0.5" fill="currentColor" stroke="none"/></svg>
+            <span>Guide</span>
+        </button>
+        <button class="node-header-btn" onclick="window.open('index.html', '_self')">
+            <img src="./image/arrow-left.svg" alt=""/>
+            Back
+        </button>
+    </div>
+</div>
+<div class="history-wrapper">
+    <div class="conversations-list" id="conversationsList">
+        <!-- Conversations will be loaded here -->
+    </div>
+
+    <div class="pagination" id="pagination">
+        <!-- Pagination controls will be loaded here -->
     </div>
 </div>
 
@@ -523,6 +520,227 @@
             </div>
         `);
     }
+</script>
+
+<!-- Guide Tour Overlay -->
+<div class="tour-mask" id="tour-mask">
+    <div class="tour-spotlight" id="tour-spotlight"></div>
+    <div class="tour-tooltip" id="tour-tooltip">
+        <div class="tour-tooltip-icon" id="tour-icon"></div>
+        <div class="tour-tooltip-title" id="tour-title"></div>
+        <div class="tour-tooltip-desc" id="tour-desc"></div>
+        <div class="tour-tooltip-step">
+            <span class="tour-tooltip-counter" id="tour-counter"></span>
+            <div class="tour-tooltip-nav">
+                <button class="tour-tooltip-btn" id="tour-skip-btn" onclick="endGuideTour()">Skip</button>
+                <button class="tour-tooltip-btn primary" id="tour-next-btn" onclick="nextGuideTourStep()">Next</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ========== Feature Guide Tour ==========
+var _guideTourRunning = false;
+var _guideTourStepIndex = 0;
+var _guideTourAutoTimer = null;
+
+var _guideTourSteps = [
+    {
+        selector: '.search-box',
+        icon: '\u{1F50D}',
+        title: 'Search Conversations',
+        desc: 'Enter a keyword and press Enter to search server-side. The backend filters conversations by content match. Click the × button to clear and reload all results.',
+        tooltipPos: 'below'
+    },
+    {
+        selector: '.filter-select',
+        icon: '\u{1F3AF}',
+        title: 'Rating Filter',
+        desc: 'Filter by user feedback status: Liked (👍), Disliked (👎), or Unrated. Switching resets to page 1 and clears any search term.',
+        tooltipPos: 'below'
+    },
+    {
+        selector: '.conversation-group',
+        icon: '\u{1F4AC}',
+        title: 'Conversation Group',
+        desc: 'Groups conversations by session (group_id). Shows the callee agent name, aggregated 👍/👎 counts, conversation count, and the initial query. Color-coded border indicates overall rating.',
+        tooltipPos: 'below'
+    },
+    {
+        selector: '.btn-toggle-group',
+        icon: '\u{1F4C2}',
+        title: 'Expand / Collapse',
+        desc: 'Expand to see each individual conversation turn: numbered entries with their own query, output preview, per-turn ratings, user feedback comments, and trace_id. Click "View Details" to open in Node Explorer.',
+        tooltipPos: 'left'
+    },
+    {
+        selector: '.pagination',
+        icon: '\u{1F4D1}',
+        title: 'Pagination',
+        desc: 'Server-side pagination — 20 groups per page. Navigate between pages; the view scrolls to top automatically on page change.',
+        tooltipPos: 'above'
+    }
+];
+
+function startGuideTour() {
+    if (_guideTourRunning) return;
+    _guideTourRunning = true;
+    _guideTourStepIndex = 0;
+    document.getElementById('tour-mask').classList.add('visible');
+    _showGuideTourStep(0);
+}
+
+function _showGuideTourStep(index) {
+    if (index < 0 || index >= _guideTourSteps.length) {
+        endGuideTour();
+        return;
+    }
+
+    _guideTourStepIndex = index;
+    var step = _guideTourSteps[index];
+
+    var targetEl = document.querySelector(step.selector);
+    if (!targetEl || targetEl.offsetHeight === 0 || targetEl.children.length === 0) {
+        if (index < _guideTourSteps.length - 1) {
+            _showGuideTourStep(index + 1);
+        } else {
+            endGuideTour();
+        }
+        return;
+    }
+
+    var elRect = targetEl.getBoundingClientRect();
+    var winH = window.innerHeight;
+
+    if (elRect.bottom > winH || elRect.top < 0) {
+        var wrapper = document.querySelector('.history-wrapper');
+        if (wrapper) {
+            var wrapperRect = wrapper.getBoundingClientRect();
+            var targetTop = elRect.top - wrapperRect.top + wrapper.scrollTop;
+            wrapper.scrollTop = targetTop - wrapperRect.height / 2 + elRect.height / 2;
+        }
+        setTimeout(function() {
+            _positionGuideTour(index, step, targetEl);
+        }, 50);
+        return;
+    }
+
+    _positionGuideTour(index, step, targetEl);
+}
+
+function _positionGuideTour(index, step, targetEl) {
+    var elRect = targetEl.getBoundingClientRect();
+    var pad = 4;
+    var spotLeft = elRect.left - pad;
+    var spotTop = elRect.top - pad;
+    var spotW = elRect.width + pad * 2;
+    var spotH = elRect.height + pad * 2;
+
+    var spotlight = document.getElementById('tour-spotlight');
+    spotlight.style.left = spotLeft + 'px';
+    spotlight.style.top = spotTop + 'px';
+    spotlight.style.width = spotW + 'px';
+    spotlight.style.height = spotH + 'px';
+
+    var tooltip = document.getElementById('tour-tooltip');
+    var firstShow = !tooltip.classList.contains('visible');
+
+    var winW = window.innerWidth;
+    var winH = window.innerHeight;
+    var ttWidth = 320;
+    var ttHeight = 180;
+    var gap = 16;
+    var resolvedPos = step.tooltipPos;
+
+    if (resolvedPos === 'right' && spotLeft + spotW + gap + ttWidth > winW) {
+        resolvedPos = 'left';
+    } else if (resolvedPos === 'left' && spotLeft - gap - ttWidth < 0) {
+        resolvedPos = 'right';
+    } else if (resolvedPos === 'below' && spotTop + spotH + gap + ttHeight > winH) {
+        resolvedPos = 'above';
+    } else if (resolvedPos === 'above' && spotTop - gap - ttHeight < 0) {
+        resolvedPos = 'below';
+    }
+
+    var ttLeft, ttTop;
+
+    if (resolvedPos === 'below') {
+        ttLeft = Math.max(gap, Math.min(spotLeft, winW - ttWidth - gap));
+        ttTop = spotTop + spotH + gap;
+    } else if (resolvedPos === 'above') {
+        ttLeft = Math.max(gap, Math.min(spotLeft, winW - ttWidth - gap));
+        ttTop = spotTop - ttHeight - gap;
+    } else if (resolvedPos === 'right') {
+        ttLeft = spotLeft + spotW + gap;
+        ttTop = Math.max(gap, Math.min(spotTop, winH - ttHeight - gap));
+    } else {
+        ttLeft = spotLeft - ttWidth - gap;
+        ttTop = Math.max(gap, Math.min(spotTop, winH - ttHeight - gap));
+    }
+
+    ttLeft = Math.max(gap, Math.min(ttLeft, winW - ttWidth - gap));
+    ttTop = Math.max(gap, Math.min(ttTop, winH - ttHeight - gap));
+
+    function writeContent() {
+        document.getElementById('tour-icon').textContent = step.icon;
+        document.getElementById('tour-title').textContent = step.title;
+        document.getElementById('tour-desc').textContent = step.desc;
+        document.getElementById('tour-counter').textContent = (index + 1) + ' / ' + _guideTourSteps.length;
+        var nextBtn = document.getElementById('tour-next-btn');
+        nextBtn.textContent = (index === _guideTourSteps.length - 1) ? 'Finish' : 'Next';
+    }
+
+    if (firstShow) {
+        tooltip.style.transition = 'none';
+        tooltip.style.left = ttLeft + 'px';
+        tooltip.style.top = ttTop + 'px';
+        void tooltip.offsetWidth;
+        tooltip.style.transition = '';
+        writeContent();
+        requestAnimationFrame(function() {
+            tooltip.classList.add('visible');
+        });
+    } else {
+        tooltip.style.left = ttLeft + 'px';
+        tooltip.style.top = ttTop + 'px';
+        tooltip.classList.add('content-swapping');
+        setTimeout(function() {
+            writeContent();
+            tooltip.classList.remove('content-swapping');
+        }, 180);
+    }
+
+    clearTimeout(_guideTourAutoTimer);
+    _guideTourAutoTimer = setTimeout(function() {
+        if (_guideTourRunning) nextGuideTourStep();
+    }, 6000);
+}
+
+function nextGuideTourStep() {
+    clearTimeout(_guideTourAutoTimer);
+    if (_guideTourStepIndex >= _guideTourSteps.length - 1) {
+        endGuideTour();
+    } else {
+        _showGuideTourStep(_guideTourStepIndex + 1);
+    }
+}
+
+function endGuideTour() {
+    clearTimeout(_guideTourAutoTimer);
+    _guideTourRunning = false;
+    var tooltip = document.getElementById('tour-tooltip');
+    tooltip.classList.remove('visible');
+    setTimeout(function() {
+        document.getElementById('tour-mask').classList.remove('visible');
+    }, 300);
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && _guideTourRunning) {
+        endGuideTour();
+    }
+});
 </script>
 </body>
 </html>

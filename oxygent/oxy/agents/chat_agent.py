@@ -14,12 +14,8 @@ from .local_agent import LocalAgent
 class ChatAgent(LocalAgent):
     """A conversational agent that manages chat interactions with language models."""
 
-    def __init__(self, **kwargs):
-        """Initialize the chat agent."""
-        super().__init__(**kwargs)
-
     @model_validator(mode="after")
-    def set_default_prompt(self):
+    def set_default_prompt(self) -> "ChatAgent":
         """Pydantic model validator that injects the default chat prompt if none provided."""
         if not self.prompt:
             self.prompt = "You are a helpful assistant."

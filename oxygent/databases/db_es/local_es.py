@@ -1,4 +1,4 @@
-"""local_es.py – Local Elasticsearch implementation (cross‑platform, UTF‑8‑safe)
+"""Local filesystem-based Elasticsearch implementation (cross-platform, UTF-8-safe).
 
 This module simulates a subset of Elasticsearch by persisting documents as JSON
 files on the local filesystem.  The design goals are:
@@ -20,7 +20,7 @@ import json
 import locale
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import aiofiles
 import aiofiles.os
@@ -51,7 +51,7 @@ class LocalEs(BaseEs):
     def _mapping_path(self, index_name: str) -> str:
         return os.path.join(self.data_dir, f"{index_name}_mapping.json")
 
-    async def _write_json_atomic(self, path: str, data: Dict[str, Any]) -> None:
+    async def _write_json_atomic(self, path: str, data: dict[str, Any]) -> None:
         """Write *data* to *path* atomically, UTF‑8 encoded."""
         async with tempfile.NamedTemporaryFile(
             mode="w", delete=False, dir=self.data_dir, suffix=".tmp", encoding="utf-8"
@@ -68,7 +68,7 @@ class LocalEs(BaseEs):
     # Encoding‑aware read helper (returns **None** on unrecoverable corruption)
     # ------------------------------------------------------------------
 
-    async def _read_json_safe(self, path: str) -> Optional[Dict[str, Any]]:
+    async def _read_json_safe(self, path: str) -> Optional[dict[str, Any]]:
         if not await aiofiles.os.path.exists(path):
             return {}
 
@@ -79,7 +79,7 @@ class LocalEs(BaseEs):
         except UnicodeDecodeError:
             pass  # Will fallback.
         except json.JSONDecodeError:
-            logger.error("JSON corrupted (utf‑8) → %s", path)
+            logger.error(f"JSON corrupted (utf‑8) → {path}", exc_info=True)
             return None  # unrecoverable corruption
 
         # b) fallback – system code‑page
@@ -89,14 +89,14 @@ class LocalEs(BaseEs):
                 raw = await f.read()
             data = json.loads(raw)
         except (UnicodeDecodeError, json.JSONDecodeError):
-            logger.error("JSON corrupted (%s) → %s", fallback_enc, path)
+            logger.error(f"JSON corrupted ({fallback_enc}) → {path}", exc_info=True)
             return None
 
         # c) successful fallback – migrate
         try:
             await self._write_json_atomic(path, data)
         except Exception as err:  # noqa: BLE001 – non‑critical
-            logger.warning("Could not rewrite %s as UTF‑8: %s", path, err)
+            logger.warning(f"Could not rewrite {path} as UTF‑8: {err}", exc_info=True)
         return data
 
     # ------------------------------------------------------------------
@@ -166,22 +166,29 @@ class LocalEs(BaseEs):
             try:
                 # Best-effort backup: copy the newly-persisted state.
                 await self._write_json_atomic(backup_path, data)
-            except Exception:  # noqa: BLE001 – backup is non-critical
-                pass
+            except Exception as e:  # noqa: BLE001 – backup is non-critical
+                logger.debug(
+                    f"Failed to write backup for index {index_name}: {e}",
+                    exc_info=True,
+                )
 
         return {"_id": doc_id, "result": "updated" if update_mode else "created"}
 
-    async def index(self, index_name: str, doc_id: str, body: dict[str, Any]):
+    async def index(
+        self, index_name: str, doc_id: str, body: dict[str, Any]
+    ) -> dict[str, str]:
         return await self.insert(index_name, doc_id, body, update_mode=False)
 
-    async def update(self, index_name: str, doc_id: str, body: dict[str, Any]):
+    async def update(
+        self, index_name: str, doc_id: str, body: dict[str, Any]
+    ) -> dict[str, str]:
         return await self.insert(index_name, doc_id, body, update_mode=True)
 
     async def exists(self, index_name: str, doc_id: str) -> bool:
         data = await self._read_json_safe(self._index_path(index_name)) or {}
         return doc_id in data
 
-    async def search(self, index_name: str, body: dict[str, Any]):
+    async def search(self, index_name: str, body: dict[str, Any]) -> dict[str, Any]:
         data = await self._read_json_safe(self._index_path(index_name)) or {}
         docs = self._build_docs(data)
         docs = self._filter_docs(docs, body.get("query", {}))
@@ -193,189 +200,6 @@ class LocalEs(BaseEs):
             docs = self._apply_source_filtering(docs, source_fields)
 
         return {"hits": {"hits": docs[: body.get("size", 10)]}}
-
-    # ------------------------------------------------------------------
-    # Helpers for naive query execution
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _build_docs(data: dict[str, Any]):
-        return [{"_id": k, "_source": v} for k, v in data.items()]
-
-    @staticmethod
-    def _apply_source_filtering(docs: list[dict[str, Any]], source_fields: list[str]):
-        """Filter _source fields to only include specified fields."""
-        filtered_docs = []
-        for doc in docs:
-            filtered_doc = doc.copy()
-            filtered_source = {}
-            for field in source_fields:
-                if field in doc["_source"]:
-                    filtered_source[field] = doc["_source"][field]
-            filtered_doc["_source"] = filtered_source
-            filtered_docs.append(filtered_doc)
-        return filtered_docs
-
-    def _filter_docs(self, docs: list[dict[str, Any]], query: dict[str, Any]):
-        if not query:
-            return docs
-
-        if "match_all" in query:
-            return docs
-
-        if "term" in query:
-            k, v = next(iter(query["term"].items()))
-            if k == "_id":
-                return [d for d in docs if d["_id"] == v]
-            return [d for d in docs if d["_source"].get(k) == v]
-
-        if "terms" in query:
-            k, vlist = next(iter(query["terms"].items()))
-            return [d for d in docs if d["_source"].get(k) in vlist]
-
-        if "match" in query:
-            k, v = next(iter(query["match"].items()))
-            v_lower = str(v).lower()
-            if k == "_id":
-                return [d for d in docs if v_lower in str(d["_id"]).lower()]
-            return [d for d in docs if v_lower in str(d["_source"].get(k, "")).lower()]
-
-        if "range" in query:
-            k, bounds = next(iter(query["range"].items()))
-            filtered = []
-            for d in docs:
-                val = d["_source"].get(k)
-                if val is None:
-                    continue
-                if "gte" in bounds and val < bounds["gte"]:
-                    continue
-                if "gt" in bounds and val <= bounds["gt"]:
-                    continue
-                if "lte" in bounds and val > bounds["lte"]:
-                    continue
-                if "lt" in bounds and val >= bounds["lt"]:
-                    continue
-                filtered.append(d)
-            return filtered
-
-        if "bool" in query:
-            bool_query = query["bool"]
-            filtered_docs = docs
-
-            # must: all conditions must match (AND)
-            for condition in bool_query.get("must", []):
-                filtered_docs = self._filter_docs(filtered_docs, condition)
-
-            # filter: same semantics as must for our purposes (AND, no scoring)
-            for condition in bool_query.get("filter", []):
-                filtered_docs = self._filter_docs(filtered_docs, condition)
-
-            # must_not: exclude docs matching any condition
-            for cond in bool_query.get("must_not", []):
-                filtered_docs = [
-                    d
-                    for d in filtered_docs
-                    if not self._match_single_condition(d, cond)
-                ]
-
-            # should: at least one condition must match (OR)
-            should_conditions = bool_query.get("should", [])
-            if should_conditions:
-                # When must/filter are absent, should acts as OR filter.
-                # When must/filter are present, should is optional (boost only)
-                # — we skip it here since we don't score.
-                has_required = bool_query.get("must") or bool_query.get("filter")
-                if not has_required:
-                    filtered_docs = [
-                        d
-                        for d in filtered_docs
-                        if any(
-                            self._match_single_condition(d, cond)
-                            for cond in should_conditions
-                        )
-                    ]
-
-            return filtered_docs
-
-        return docs
-
-    async def find_node_safe(self, index_name: str, trace_id: str, node_id: str):
-        result = await self.get_by_node_id(index_name, node_id)
-        if result:
-            if result["_source"].get("trace_id") == trace_id:
-                return result
-            else:
-                logger.warning(
-                    f"Node {node_id} found but trace_id mismatch: expected {trace_id}, got {result['_source'].get('trace_id')}"
-                )
-
-        compound_query = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {"term": {"trace_id": trace_id}},
-                        {"term": {"node_id": node_id}},
-                    ]
-                }
-            },
-            "size": 1,
-        }
-
-        search_result = await self.search(index_name, compound_query)
-        hits = search_result.get("hits", {}).get("hits", [])
-        return hits[0] if hits else None
-
-    def _match_single_condition(
-        self, doc: dict[str, Any], condition: dict[str, Any]
-    ) -> bool:
-        if "term" in condition:
-            k, v = next(iter(condition["term"].items()))
-            if k == "_id":
-                return doc["_id"] == v
-            return doc["_source"].get(k) == v
-
-        if "terms" in condition:
-            k, vlist = next(iter(condition["terms"].items()))
-            return doc["_source"].get(k) in vlist
-
-        if "match" in condition:
-            k, v = next(iter(condition["match"].items()))
-            if k == "_id":
-                field_value = str(doc["_id"])
-            else:
-                field_value = str(doc["_source"].get(k, ""))
-            return str(v).lower() in field_value.lower()
-
-        if "range" in condition:
-            k, bounds = next(iter(condition["range"].items()))
-            val = doc["_source"].get(k)
-            if val is None:
-                return False
-            if "gte" in bounds and val < bounds["gte"]:
-                return False
-            if "gt" in bounds and val <= bounds["gt"]:
-                return False
-            if "lte" in bounds and val > bounds["lte"]:
-                return False
-            if "lt" in bounds and val >= bounds["lt"]:
-                return False
-            return True
-
-        return False
-
-    @staticmethod
-    def _sort_docs(docs: list[dict[str, Any]], spec: list[dict[str, Any]]):
-        for s in reversed(spec):
-            for field, order in s.items():
-                reverse = order.get("order", "asc") == "desc"
-                docs.sort(
-                    key=lambda d, f=field: (
-                        d["_source"].get(f) is None,
-                        d["_source"].get(f),
-                    ),
-                    reverse=reverse,
-                )
-        return docs
 
     async def get_by_node_id(
         self, index_name: str, node_id: str
@@ -415,8 +239,11 @@ class LocalEs(BaseEs):
             await self._write_json_atomic(data_path, data)
             try:
                 await self._write_json_atomic(backup_path, data)
-            except Exception:  # noqa: BLE001 – backup is non-critical
-                pass
+            except Exception as e:  # noqa: BLE001 – backup is non-critical
+                logger.debug(
+                    f"Failed to write backup for index {index_name} after update_by_node_id: {e}",
+                    exc_info=True,
+                )
 
             return {"_id": target_doc_id, "result": "updated"}
 
@@ -445,8 +272,11 @@ class LocalEs(BaseEs):
             await self._write_json_atomic(data_path, data)
             try:
                 await self._write_json_atomic(backup_path, data)
-            except Exception:  # noqa: BLE001 – backup is non-critical
-                pass
+            except Exception as e:  # noqa: BLE001 – backup is non-critical
+                logger.debug(
+                    f"Failed to write backup for index {index_name} after delete: {e}",
+                    exc_info=True,
+                )
 
             return {"_id": doc_id, "result": "deleted"}
 

@@ -3,7 +3,7 @@
 Defines BankClient which connects to a bank server and registers its tools dynamically.
 """
 
-from typing import Dict
+from typing import Any
 
 import httpx
 from pydantic import AnyUrl, Field
@@ -15,18 +15,27 @@ from .base_bank import BaseBank
 
 
 class BankClient(BaseBank):
-    """Client that connects to a remote BankRouter and registers its tools as BankTool instances."""
+    """Client that connects to a remote BankRouter and registers its tools.
+
+    On initialization, fetches the tool listing from the bank server and
+    creates individual BankTool proxy instances in the MAS registry.
+
+    Attributes:
+        server_url: URL of the remote bank server.
+        included_bank_name_list: Names of bank tools discovered from the server.
+        headers: Extra HTTP headers sent with every request.
+    """
 
     server_url: AnyUrl = Field("", description="URL of the remote bank server")
-    included_bank_name_list: list = Field(
+    included_bank_name_list: list[str] = Field(
         default_factory=list,
         description="Names of bank tools discovered from the server",
     )
-    headers: Dict[str, str] = Field(
+    headers: dict[str, str] = Field(
         default_factory=dict, description="Extra HTTP headers"
     )
 
-    async def init(self):
+    async def init(self) -> None:
         """Connect to the bank server and fetch the tool list."""
         await super().init()
         url = build_url(self.server_url, "list_banks")
@@ -34,8 +43,14 @@ class BankClient(BaseBank):
             response = await client.get(url, headers=self.headers, timeout=self.timeout)
             self.add_tools(response.json())
 
-    def add_tools(self, tools_response) -> None:
-        """Register BankTool instances dynamically from the bank server's tools_response."""
+    def add_tools(self, tools_response: list[dict[str, Any]]) -> None:
+        """Register BankTool instances from the bank server's tool listing.
+
+        Args:
+            tools_response: A list of tool descriptor dicts, each containing
+                ``name``, ``description``, ``endpoint``, ``inputSchema``,
+                and optionally ``type``.
+        """
         params = self.model_dump(
             exclude={
                 "sse_url",

@@ -5,7 +5,7 @@ execute each step via a worker agent, evaluate results, and replan if needed.
 """
 
 import logging
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class Plan(BaseModel):
     """A structured execution plan containing ordered steps."""
 
-    steps: List[str] = Field(
+    steps: list[str] = Field(
         description="different steps to follow, should be in sorted order"
     )
 
@@ -40,7 +40,22 @@ class Action(BaseModel):
 
 
 class PlanAndSolve(BaseFlow):
-    """Plan-and-Solve Prompting Workflow."""
+    """Plan-and-Solve prompting workflow.
+
+    Decomposes a user goal into ordered steps via a planner agent, executes
+    each step through an executor agent, and optionally replans after each
+    step using a replanner agent.  The loop continues until all steps are
+    completed or ``max_replan_rounds`` is exhausted.
+
+    Attributes:
+        max_replan_rounds: Maximum number of replanning iterations allowed.
+        planner_agent_name: Name of the agent that generates plans.
+        pre_plan_steps: Optional predefined steps prepended before planning.
+        enable_replanner: Whether to enable replanning after each step.
+        replanner_agent_name: Name of the agent used for replanning.
+        executor_agent_name: Name of the agent that executes individual steps.
+        llm_model: LLM model name used as a fallback summariser.
+    """
 
     max_replan_rounds: int = Field(
         30, description="Maximum number of replanning iterations allowed"
@@ -49,7 +64,7 @@ class PlanAndSolve(BaseFlow):
     planner_agent_name: str = Field(
         "planner_agent", description="Name of the agent used to generate plans"
     )
-    pre_plan_steps: List[str] = Field(
+    pre_plan_steps: Optional[list[str]] = Field(
         None, description="Predefined steps to prepend before the generated plan"
     )
 
@@ -86,7 +101,7 @@ class PlanAndSolve(BaseFlow):
         description="replanner pydantic parser",
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the Plan-and-Solve flow."""
         super().__init__(**kwargs)
 
@@ -98,7 +113,19 @@ class PlanAndSolve(BaseFlow):
         )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Run the plan-solve-evaluate-replan loop until the goal is achieved or rounds are exhausted."""
+        """Run the plan-solve-evaluate-replan loop.
+
+        Plans the goal (unless pre-defined steps are provided), executes each
+        step sequentially, and optionally replans after every step.  Exits
+        early when all steps are completed or the replanner signals a final
+        response.
+
+        Args:
+            oxy_request: The incoming request containing the user query.
+
+        Returns:
+            An OxyResponse with the final answer.
+        """
         plan_str = ""
         past_steps = ""
         original_query = oxy_request.get_query()
@@ -120,7 +147,7 @@ class PlanAndSolve(BaseFlow):
                         oxy_response.output
                     )
                 else:
-                    plan_response = self.func_parse_planner_response(
+                    plan_response = await self.func_parse_planner_response(
                         oxy_response.output
                     )
                 plan_steps = plan_response.steps
@@ -134,31 +161,31 @@ class PlanAndSolve(BaseFlow):
                 The current step to execute is:{task}
                 You should only execute the current step, and do not execute other steps in our plan. Do not execute more than one step continuously or skip any step.
             """.strip()
-            excutor_response = await oxy_request.call(
+            executor_response = await oxy_request.call(
                 callee=self.executor_agent_name,
                 arguments={"query": task_formatted},
             )
             past_steps = (
                 past_steps
                 + "\n"
-                + f"task:{task}, execute task result:{excutor_response.output}"
+                + f"task:{task}, execute task result:{executor_response.output}"
             )
             if self.enable_replanner:
                 # Replanning logic
-                query = """
+                query = f"""
                 The target of user is:
-                {input}
+                {original_query}
 
                 The origin plan is:
-                {plan}
+                {plan_str}
 
                 We have finished the following steps:
                 {past_steps}
 
-                Please update the plan considering the mentioned information. If no more operation is supposed, Use **Response** to answer the user. 
-                Otherwise, please update the plan. The plan should only contain the steps to be executed, and do not 
+                Please update the plan considering the mentioned information. If no more operation is supposed, Use **Response** to answer the user.
+                Otherwise, please update the plan. The plan should only contain the steps to be executed, and do not
                 include the past steps or any other information.
-                """.format(input=original_query, plan=plan_str, past_steps=past_steps)
+                """
                 if self.pydantic_parser_replanner:
                     query = self.pydantic_parser_replanner.format(query)
 
@@ -173,7 +200,7 @@ class PlanAndSolve(BaseFlow):
                         replanner_response.output
                     )
                 else:
-                    plan_response = self.func_parse_planner_response(
+                    plan_response = await self.func_parse_planner_response(
                         replanner_response.output
                     )
 
@@ -194,7 +221,7 @@ class PlanAndSolve(BaseFlow):
                 if 0 == len(plan_steps):
                     return OxyResponse(
                         state=OxyState.COMPLETED,
-                        output=excutor_response.output,
+                        output=executor_response.output,
                     )
 
         plan_steps = plan_response.steps

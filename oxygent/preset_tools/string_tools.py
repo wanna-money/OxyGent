@@ -42,7 +42,7 @@ async def validate_email(
 
 
 # Async main function
-async def main():
+async def main() -> None:
     # Test text data
     test_text = """
     This is some example text containing emails and URLs.

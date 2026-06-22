@@ -236,37 +236,28 @@ function createPromptCard(prompt) {
     card.className = 'prompt-card';
     card.dataset.promptKey = prompt.prompt_key;
 
-    const truncatedContent = prompt.prompt_content.length > 200
-        ? prompt.prompt_content.substring(0, 200) + '...'
+    const truncatedContent = prompt.prompt_content.length > 300
+        ? prompt.prompt_content.substring(0, 300) + '...'
         : prompt.prompt_content;
 
     card.innerHTML = `
         <div class="prompt-card-header">
             <h3 class="prompt-title">${escapeHtml(prompt.prompt_key)}</h3>
-            <div class="prompt-meta">
+            <div class="prompt-card-right">
                 <span class="badge badge-agent">${escapeHtml(prompt.agent_type || 'General')}</span>
-                <span class="badge badge-version">v${prompt.version || 1}</span>
+                <span class="badge-version-btn" onclick="event.stopPropagation(); showVersionHistory('${escapeHtml(prompt.prompt_key)}')" title="View version history">
+                    v${prompt.version || 1}
+                    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+                </span>
             </div>
         </div>
-        <div class="prompt-content">
+        <div class="prompt-content" onclick="editPrompt('${escapeHtml(prompt.prompt_key)}')">
             ${escapeHtml(truncatedContent)}
         </div>
-        <div class="prompt-actions" style="grid-template-columns: 1fr 1fr; gap: 8px;">
-            <button class="btn btn-sm btn-primary" onclick="editPrompt('${escapeHtml(prompt.prompt_key)}')">
-                ✏️ Edit
-                <span class="btn-badge"></span>
-            </button>
-            <button class="btn btn-sm btn-info" onclick="showOptimizeModal('${escapeHtml(prompt.prompt_key)}')">
-                ✨ Optimize
-                <span class="btn-badge"></span>
-            </button>
-            <button class="btn btn-sm btn-primary" onclick="refreshPrompt('${escapeHtml(prompt.prompt_key)}')">
-                🔄 Refresh
-                <span class="btn-badge"></span>
-            </button>
-            <button class="btn btn-sm btn-primary" onclick="showVersionHistory('${escapeHtml(prompt.prompt_key)}')">
-                📋 History
-                <span class="btn-badge"></span>
+        <div class="prompt-card-footer">
+            <button class="optimize-btn" onclick="event.stopPropagation(); showOptimizeModal('${escapeHtml(prompt.prompt_key)}')" title="Optimize prompt">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1v2M8 13v2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M1 8h2M13 8h2M3.5 12.5l1.4-1.4M11.1 4.9l1.4-1.4"/><circle cx="8" cy="8" r="2.5"/></svg>
+                Optimize
             </button>
         </div>
     `;

@@ -1,18 +1,26 @@
-"""Reflexion Flow for OxyGent"""
+"""Reflexion flow for iterative answer improvement.
+
+Implements a generate-evaluate-refine loop: a worker agent produces an
+answer, a reflexion agent evaluates it against quality criteria, and if
+unsatisfactory the worker is prompted to improve.  The cycle repeats up
+to ``max_reflexion_rounds`` times.  Also includes MathReflexion, a
+math-specific variant with numeric evaluation templates.
+"""
 
 import logging
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from pydantic import BaseModel, Field
 
 from ...schemas import Message, OxyRequest, OxyResponse, OxyState
 from ...utils.llm_pydantic_parser import PydanticOutputParser
 from ..base_flow import BaseFlow
+from ..base_oxy import ensure_async
 
 logger = logging.getLogger(__name__)
 
 
-class ReflectionEvaluation(BaseModel):
+class ReflexionEvaluation(BaseModel):
     """Reflection evaluation result."""
 
     is_satisfactory: bool = Field(description="Whether the answer is satisfactory")
@@ -23,7 +31,20 @@ class ReflectionEvaluation(BaseModel):
 
 
 class Reflexion(BaseFlow):
-    """Reflexion Flow for iterative answer improvement."""
+    """Reflexion flow for iterative answer improvement.
+
+    Orchestrates a worker agent and a reflexion (evaluator) agent in a loop:
+    the worker generates an answer, the evaluator scores it, and if the
+    answer is unsatisfactory the worker receives targeted feedback and
+    tries again.
+
+    Attributes:
+        max_reflexion_rounds: Maximum number of generate-evaluate iterations.
+        worker_agent: Name of the agent that produces answers.
+        reflexion_agent: Name of the agent that evaluates answers.
+        evaluation_template: Prompt template for the evaluation query.
+        improvement_template: Prompt template for the improvement query.
+    """
 
     max_reflexion_rounds: int = Field(3, description="Maximum reflexion iterations")
 
@@ -37,13 +58,13 @@ class Reflexion(BaseFlow):
         )
     )
 
-    func_parse_reflexion_response: Optional[Callable[[str], ReflectionEvaluation]] = (
+    func_parse_reflexion_response: Optional[Callable[[str], ReflexionEvaluation]] = (
         Field(None, exclude=True, description="Reflexion response parser")
     )
 
     # Pydantic parsers
     pydantic_parser_reflexion: PydanticOutputParser = Field(
-        default_factory=lambda: PydanticOutputParser(output_cls=ReflectionEvaluation),
+        default_factory=lambda: PydanticOutputParser(output_cls=ReflexionEvaluation),
         description="Reflexion pydantic parser",
     )
 
@@ -79,7 +100,7 @@ Previous answer: {previous_answer}""",
         description="Template for improvement query",
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the Reflexion flow with worker and evaluator agents."""
         super().__init__(**kwargs)
 
@@ -92,16 +113,16 @@ Previous answer: {previous_answer}""",
 
         # Set default parsing functions if not provided
         if self.func_parse_worker_response is None:
-            self.func_parse_worker_response = self._default_parse_worker_response
+            self.func_parse_worker_response = ensure_async(self._default_parse_worker_response)
 
         if self.func_parse_reflexion_response is None:
-            self.func_parse_reflexion_response = self._default_parse_reflexion_response
+            self.func_parse_reflexion_response = ensure_async(self._default_parse_reflexion_response)
 
     def _default_parse_worker_response(self, response: str) -> str:
         """Default worker response parser - just return the response."""
         return response.strip()
 
-    def _default_parse_reflexion_response(self, response: str) -> ReflectionEvaluation:
+    def _default_parse_reflexion_response(self, response: str) -> ReflexionEvaluation:
         """Default reflexion response parser."""
         if self.pydantic_parser_reflexion:
             return self.pydantic_parser_reflexion.parse(response)
@@ -109,8 +130,18 @@ Previous answer: {previous_answer}""",
             # Fallback parsing logic
             return self._parse_reflexion_text(response)
 
-    def _parse_reflexion_text(self, response: str) -> ReflectionEvaluation:
-        """Parse the evaluator LLM response into a satisfaction flag and feedback text."""
+    def _parse_reflexion_text(self, response: str) -> ReflexionEvaluation:
+        """Parse the evaluator LLM response into a ReflexionEvaluation.
+
+        Falls back to line-by-line keyword matching when the pydantic
+        parser is unavailable.
+
+        Args:
+            response: Raw text output from the reflexion agent.
+
+        Returns:
+            A ReflexionEvaluation with satisfaction flag and feedback.
+        """
         lines = response.split("\n")
 
         is_satisfactory = False
@@ -131,14 +162,24 @@ Previous answer: {previous_answer}""",
             elif "improvement suggestions:" in line.lower():
                 improvement_suggestions = line.split(":", 1)[-1].strip()
 
-        return ReflectionEvaluation(
+        return ReflexionEvaluation(
             is_satisfactory=is_satisfactory,
             evaluation_reason=evaluation_reason or "No specific reason provided",
             improvement_suggestions=improvement_suggestions,
         )
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Execute the reflexion flow."""
+        """Execute the reflexion loop.
+
+        Runs the worker-evaluate-improve cycle until the answer is judged
+        satisfactory or ``max_reflexion_rounds`` is exhausted.
+
+        Args:
+            oxy_request: The incoming request containing the user query.
+
+        Returns:
+            An OxyResponse with the final (possibly refined) answer.
+        """
 
         original_query = oxy_request.get_query()
         current_query = original_query
@@ -153,7 +194,7 @@ Previous answer: {previous_answer}""",
                 callee=self.worker_agent, arguments={"query": current_query}
             )
 
-            current_answer = self.func_parse_worker_response(worker_response.output)
+            current_answer = await self.func_parse_worker_response(worker_response.output)
             logger.info(f"Worker answer: {current_answer[:200]}...")
 
             # Step 2: Evaluate with reflexion agent
@@ -170,7 +211,7 @@ Previous answer: {previous_answer}""",
                 callee=self.reflexion_agent, arguments={"query": evaluation_query}
             )
 
-            evaluation = self.func_parse_reflexion_response(reflexion_response.output)
+            evaluation = await self.func_parse_reflexion_response(reflexion_response.output)
             logger.info(f"Evaluation result: {evaluation.is_satisfactory}")
 
             # Step 3: Check if satisfactory
@@ -181,7 +222,7 @@ Previous answer: {previous_answer}""",
                     output=f"Final answer optimized through {current_round + 1} rounds of reflexion:\n\n{current_answer}",
                     extra={
                         "reflexion_rounds": current_round + 1,
-                        "final_evaluation": evaluation.dict(),
+                        "final_evaluation": evaluation.model_dump(),
                     },
                 )
 
@@ -233,16 +274,21 @@ Please provide the best possible final answer considering all the feedback above
             output=f"Answer after {self.max_reflexion_rounds + 1} rounds of reflexion attempts:\n\n{final_response.output}",
             extra={
                 "reflexion_rounds": self.max_reflexion_rounds + 1,
-                "final_evaluation": evaluation.dict(),
+                "final_evaluation": evaluation.model_dump(),
                 "reached_max_rounds": True,
             },
         )
 
 
 class MathReflexion(Reflexion):
-    """Math-specific Reflexion flow with numeric answer comparison."""
+    """Math-specific Reflexion flow with numeric answer comparison.
 
-    def __init__(self, **kwargs):
+    Pre-configures the worker and evaluator agents and evaluation template
+    for mathematical problem-solving, with checks for calculation
+    correctness, step completeness, and formula accuracy.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
         # Set default agents for math problems
         if "worker_agent" not in kwargs:
             kwargs["worker_agent"] = "math_expert_agent"
@@ -272,51 +318,3 @@ Return your evaluation in the following format:
 - improvement_suggestions: [Specific correction suggestions if failed]"""
 
         super().__init__(**kwargs)
-
-
-# Usage example in oxy_space
-def create_reflexion_flow_agents():
-    """Create reflexion flow agents for use in oxy_space."""
-
-    return [
-        # General Reflexion Flow
-        Reflexion(
-            name="general_reflexion_flow",
-            desc="General reflexion flow for answer quality improvement",
-            worker_agent="worker_agent",
-            reflexion_agent="reflexion_agent",
-            max_reflexion_rounds=3,
-        ),
-        # Math Reflexion Flow
-        MathReflexion(
-            name="math_reflexion_flow",
-            desc="Specialized reflexion flow for mathematical problems",
-            max_reflexion_rounds=3,
-        ),
-        # Custom Reflexion Flow with specific templates
-        Reflexion(
-            name="detailed_reflexion_flow",
-            desc="Detailed reflexion flow with custom evaluation criteria",
-            worker_agent="detailed_worker_agent",
-            reflexion_agent="detailed_reflexion_agent",
-            max_reflexion_rounds=5,
-            evaluation_template="""Evaluate this answer comprehensively:
-
-Question: {query}
-Answer: {answer}
-
-Rate on scale 1-10 for:
-- Accuracy and factual correctness
-- Completeness of information
-- Clarity and readability  
-- Practical usefulness
-- Professional tone
-
-Provide detailed feedback and specific improvement suggestions.
-
-Format:
-- is_satisfactory: true/false (true only if all aspects score 8+)
-- evaluation_reason: [Detailed scoring and analysis]
-- improvement_suggestions: [Specific actionable improvements]""",
-        ),
-    ]

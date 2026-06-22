@@ -1,6 +1,6 @@
 """SSE (Server-Sent Events) utility functions for streaming responses."""
 
-from typing import Any, AsyncIterator, Dict, Optional
+from typing import Any, AsyncIterator, Optional
 
 import aiohttp
 
@@ -13,7 +13,7 @@ async def iter_sse_events(
     max_event_bytes: int = 512 * 1024,  # 512 KiB per event block (anti-DoS)
     max_data_bytes: int = 512 * 1024,  # 512 KiB of accumulated "data:" per event
     allow_partial_final_event: bool = True,  # flush remaining bytes on EOF
-) -> AsyncIterator[Dict[str, Any]]:
+) -> AsyncIterator[dict[str, Any]]:
     """
     Parse an HTTP response body as a Server-Sent Events (SSE) stream.
 
@@ -33,7 +33,7 @@ async def iter_sse_events(
     - Accepts `retry` only if non-negative int.
     """
 
-    def _parse_event_block(raw: bytes) -> Optional[Dict[str, Any]]:
+    def _parse_event_block(raw: bytes) -> Optional[dict[str, Any]]:
         # Trim leading/trailing newlines within the event block.
         raw = raw.strip(b"\n")
         if not raw:

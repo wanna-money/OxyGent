@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """AgentScope A2A server demo.
 
 Run:
@@ -8,9 +7,9 @@ Then call with OxyGent client:
     PYTHONPATH=. python examples/a2a/agentscope_interop/demo_oxygent_client_call_agentscope_server.py
 """
 
+import logging
 import uuid
 from typing import Any, AsyncGenerator
-import logging
 
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.events import Event
@@ -137,6 +136,7 @@ app = A2AStarletteApplication(
 
 if __name__ == "__main__":
     import uvicorn
+
     logging.basicConfig(level=logging.INFO)
     logger.info("Starting AgentScope A2A server at %s:%s", HOST, PORT)
 

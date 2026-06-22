@@ -10,7 +10,6 @@ import logging
 
 import httpx
 
-from ...config import Config
 from ...schemas import OxyRequest, OxyResponse, OxyState
 from .remote_llm import RemoteLLM
 
@@ -84,13 +83,7 @@ class HttpLLM(RemoteLLM):
                 "stream": True,
                 "stream_options": {"include_usage": True},
             }
-            payload.update(Config.get_llm_config(exclude=["semaphore", "timeout"]))
-            for k, v in self.llm_params.items():
-                payload[k] = v
-            for k, v in oxy_request.arguments.items():
-                if k == "messages":
-                    continue
-                payload[k] = v
+            self._build_payload(oxy_request, payload)
 
         if payload.get("stream", False) and (use_openai or not is_gemini):
             result_parts: list[str] = []
@@ -108,15 +101,24 @@ class HttpLLM(RemoteLLM):
                             break
                         try:
                             chunk = json.loads(line)
-                        except json.JSONDecodeError:
-                            continue
-                        except Exception as e:
-                            logger.error(
-                                e,
+                        except json.JSONDecodeError as e:
+                            logger.warning(
+                                f"Failed to decode streaming chunk as JSON from {url}: {e} | line: {line[:200]}",
                                 extra={
                                     "trace_id": oxy_request.current_trace_id,
                                     "node_id": oxy_request.node_id,
                                 },
+                                exc_info=True,
+                            )
+                            continue
+                        except Exception as e:
+                            logger.error(
+                                f"Unexpected error parsing streaming chunk from {url}: {e} | line: {line[:200]}",
+                                extra={
+                                    "trace_id": oxy_request.current_trace_id,
+                                    "node_id": oxy_request.node_id,
+                                },
+                                exc_info=True,
                             )
                             continue
                         # Extract usage from final chunk

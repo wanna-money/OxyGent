@@ -245,3 +245,5 @@ CLAUDE.md
 cache_dir/
 local_file/
 deployment/
+docs_app/
+other_frameworks/

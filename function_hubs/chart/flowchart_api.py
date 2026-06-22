@@ -35,7 +35,7 @@ async def save_flowchart(request: SaveFlowchartRequest):
             file_name = f"flowchart-{timestamp}.html"
         
         # 创建HTML内容
-        from oxygent.chart.create_flow_image import create_html_with_mermaid
+        from function_hubs.chart.flow_image_gen_tools import create_html_with_mermaid
         
         success = create_html_with_mermaid(request.mermaid_code, file_name)
         
@@ -51,7 +51,7 @@ async def generate_flowchart(request: GenerateFlowchartRequest):
     """根据描述生成流程图"""
     try:
         # 导入生成函数
-        from oxygent.chart.create_flow_image import generate_flow_chart, call_ollama_api, create_html_with_mermaid
+        from function_hubs.chart.flow_image_gen_tools import create_html_with_mermaid, call_openai_api
         
         # 生成文件名
         if request.file_name:
@@ -65,8 +65,8 @@ async def generate_flowchart(request: GenerateFlowchartRequest):
         # 确保使用绝对路径
         file_name = os.path.abspath(file_name)
         
-        # 调用 Ollama API 生成 Mermaid 代码
-        mermaid_code = call_ollama_api(request.description)
+        # 调用 OpenAI 兼容 API 生成 Mermaid 代码
+        mermaid_code = call_openai_api(request.description)
         
         # 创建 HTML 文件
         success = create_html_with_mermaid(mermaid_code, file_name)
@@ -75,7 +75,7 @@ async def generate_flowchart(request: GenerateFlowchartRequest):
             abs_path = os.path.abspath(file_name)
             
             # 每次请求都打开浏览器
-            from oxygent.chart.open_chart_tools import open_chart_tools
+            from function_hubs.chart.open_chart_tools import open_chart_tools
             print(f"准备打开文件: {abs_path}")
             await open_chart_tools.open_html_chart(abs_path)
             

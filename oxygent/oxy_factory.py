@@ -27,15 +27,16 @@ class OxyFactory:
     }
 
     # Initialize creators mapping at module load time
-    _creators = {}
+    _creators: dict[str, type] = {}
 
     @classmethod
-    def _init_creators(cls):
+    def _init_creators(cls) -> None:
         """Initialize the class creators mapping."""
         from .oxy import (
             ChatAgent,
             FunctionTool,
             HttpLLM,
+            LiteLLM,
             HttpTool,
             MCPTool,
             OpenAILLM,
@@ -53,6 +54,7 @@ class OxyFactory:
                 "WorkflowAgent": WorkflowAgent,
                 "HttpTool": HttpTool,
                 "HttpLLM": HttpLLM,
+                "LiteLLM": LiteLLM,
                 "OpenAILLM": OpenAILLM,
                 "MCPTool": MCPTool,
                 "StdioMCPClient": StdioMCPClient,

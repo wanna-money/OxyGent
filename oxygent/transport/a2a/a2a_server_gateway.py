@@ -1,4 +1,9 @@
-"""A2A server gateway for OxyGent MAS."""
+"""A2A server gateway for OxyGent MAS.
+
+Provides ``A2AServerGateway``, a Pydantic model that binds to a MAS runtime
+and builds a FastAPI router exposing A2A-compatible endpoints for synchronous
+chat, SSE streaming, task lifecycle management, and agent card discovery.
+"""
 
 from __future__ import annotations
 
@@ -29,7 +34,21 @@ logger = logging.getLogger(__name__)
 
 
 class A2AServerGateway(BaseModel):
-    """Protocol gateway that serves A2A endpoints for OxyGent."""
+    """Protocol gateway that serves A2A endpoints backed by an OxyGent MAS.
+
+    Handles agent card generation, JSON-RPC and plain-POST dispatch,
+    synchronous ``message/send``, SSE ``message/stream``, and task
+    lifecycle operations (get, cancel, resubscribe).
+
+    Attributes:
+        mas: Bound MAS runtime instance (set via ``set_mas()``).
+        target_agent_name: Resolved target agent for incoming requests.
+        a2a_base_path: URL prefix for all A2A endpoints.
+        agent_version: Semantic version exposed in the agent card.
+        capabilities: A2A capability flags (streaming, task_control, etc.).
+        parse_stream_delta: Whether to parse SSE payloads for content deltas.
+        skills: Optional static skill definitions override.
+    """
 
     mas: Any = Field(None, exclude=True, repr=False)
     target_agent_name: str = Field(
@@ -81,8 +100,13 @@ class A2AServerGateway(BaseModel):
 
     _store: A2AInMemoryStore = PrivateAttr(default_factory=A2AInMemoryStore)
 
-    def set_mas(self, mas):
-        """Bind MAS runtime and sync default target to master agent."""
+    def set_mas(self, mas: Any) -> None:
+        """Bind a MAS runtime and synchronize the default target agent.
+
+        Args:
+            mas: The MAS instance to bind. The master agent name is
+                extracted and used as the default request target.
+        """
         self.mas = mas
         master_name = getattr(mas, "master_agent_name", "") if mas else ""
         self.target_agent_name = master_name or "master_agent"
@@ -132,7 +156,9 @@ class A2AServerGateway(BaseModel):
         return rpc_error(req_id, code, message)
 
     @staticmethod
-    def _build_message_event(text: str, task_id: str, context_id: str) -> dict[str, Any]:
+    def _build_message_event(
+        text: str, task_id: str, context_id: str
+    ) -> dict[str, Any]:
         return build_message_event(text, task_id, context_id)
 
     def _effective_target(self) -> str:
@@ -234,12 +260,21 @@ class A2AServerGateway(BaseModel):
         )
         return answer, trace_id, group_id
 
-    def build_router(self):
-        """Build FastAPI router exposing A2A-compatible endpoints."""
+    def build_router(self) -> APIRouter:
+        """Build a FastAPI router exposing A2A-compatible endpoints.
+
+        Registers routes for agent card discovery, unified JSON-RPC/plain POST
+        dispatch, message send/stream, and task lifecycle operations.
+
+        Returns:
+            Configured APIRouter ready to be included in a FastAPI app.
+        """
         from sse_starlette.sse import EventSourceResponse
 
         router = APIRouter(prefix=self.a2a_base_path, tags=["a2a"])
-        logger.info("A2A router initialized", extra={"a2a_base_path": self.a2a_base_path})
+        logger.info(
+            "A2A router initialized", extra={"a2a_base_path": self.a2a_base_path}
+        )
 
         @router.get("/.well-known/agent.json")
         async def get_agent_card(request: Request):
@@ -352,7 +387,9 @@ class A2AServerGateway(BaseModel):
             )
 
             if self._store.is_running(task_id):
-                logger.info("A2A stream task already running", extra={"task_id": task_id})
+                logger.info(
+                    "A2A stream task already running", extra={"task_id": task_id}
+                )
                 running_task = self._store.get_task(task_id)
                 if running_task:
                     yield self._build_message_event(
@@ -404,14 +441,18 @@ class A2AServerGateway(BaseModel):
 
             redis_key = f"{self.mas.message_prefix}:{self.mas.name}:{task_id}"
             mas_task = asyncio.create_task(
-                self.mas.chat_with_agent(payload=payload_for_mas, send_msg_key=redis_key)
+                self.mas.chat_with_agent(
+                    payload=payload_for_mas, send_msg_key=redis_key
+                )
             )
             emitted = ""
             final_answer = ""
             last_snapshot_chars = 0
             last_snapshot_time = time.monotonic()
             try:
-                async for sse_msg in self.mas._process_redis_messages(redis_key, task_id):
+                async for sse_msg in self.mas._process_redis_messages(
+                    redis_key, task_id
+                ):
                     if sse_msg.get("event", "message") == "close":
                         break
                     data = sse_msg.get("data")
@@ -529,7 +570,10 @@ class A2AServerGateway(BaseModel):
         async def run_resubscribe(task_id: str):
             task = await run_get_task(task_id)
             message = (
-                task.get("status", {}).get("message", {}).get("parts", [{}])[0].get("text", "")
+                task.get("status", {})
+                .get("message", {})
+                .get("parts", [{}])[0]
+                .get("text", "")
             )
             context_id = task.get("contextId", "")
             return message, context_id
@@ -551,7 +595,9 @@ class A2AServerGateway(BaseModel):
 
         async def handle_unified_post(payload: dict[str, Any]):
             if not isinstance(payload, dict):
-                raise HTTPException(status_code=400, detail="payload must be a JSON object")
+                raise HTTPException(
+                    status_code=400, detail="payload must be a JSON object"
+                )
 
             method = payload.get("method")
             req_id = payload.get("id")
@@ -575,40 +621,58 @@ class A2AServerGateway(BaseModel):
                         async for event in run_send_message_stream(
                             params if isinstance(params, dict) else {}
                         ):
-                            yield {"data": json.dumps(self._rpc_ok(req_id, event), ensure_ascii=False)}
+                            yield {
+                                "data": json.dumps(
+                                    self._rpc_ok(req_id, event), ensure_ascii=False
+                                )
+                            }
 
                     return EventSourceResponse(stream_gen())
 
                 try:
                     if method == "tasks/get":
                         task_id = params.get("id") or params.get("taskId")
-                        return self._rpc_ok(req_id, await run_get_task(str(task_id or "")))
+                        return self._rpc_ok(
+                            req_id, await run_get_task(str(task_id or ""))
+                        )
                     if method == "tasks/cancel":
                         task_id = params.get("id") or params.get("taskId")
-                        return self._rpc_ok(req_id, await run_cancel_task(str(task_id or "")))
+                        return self._rpc_ok(
+                            req_id, await run_cancel_task(str(task_id or ""))
+                        )
                     if method == "tasks/resubscribe":
                         task_id = params.get("id") or params.get("taskId")
                         msg, context_id = await run_resubscribe(str(task_id or ""))
 
                         async def resub_stream_gen():
-                            event = self._build_message_event(str(msg), str(task_id), context_id)
-                            yield {"data": json.dumps(self._rpc_ok(req_id, event), ensure_ascii=False)}
+                            event = self._build_message_event(
+                                str(msg), str(task_id), context_id
+                            )
+                            yield {
+                                "data": json.dumps(
+                                    self._rpc_ok(req_id, event), ensure_ascii=False
+                                )
+                            }
 
                         return EventSourceResponse(resub_stream_gen())
                 except ValueError as e:
                     logger.warning(
                         "A2A JSON-RPC validation error",
+                        exc_info=True,
                         extra={"method": method, "error": str(e)},
                     )
                     return self._rpc_error(req_id, -32602, str(e))
                 except LookupError as e:
                     logger.warning(
                         "A2A JSON-RPC lookup error",
+                        exc_info=True,
                         extra={"method": method, "error": str(e)},
                     )
                     return self._rpc_error(req_id, -32004, str(e))
                 except Exception as e:
-                    logger.exception("A2A JSON-RPC unexpected error", extra={"method": method})
+                    logger.exception(
+                        "A2A JSON-RPC unexpected error", extra={"method": method}
+                    )
                     return self._rpc_error(req_id, -32000, str(e))
 
                 return self._rpc_error(req_id, -32601, f"method `{method}` not found")
@@ -641,23 +705,28 @@ class A2AServerGateway(BaseModel):
                 if action == "resubscribe":
                     msg, context_id = await run_resubscribe(str(task_id or ""))
                     return {
-                        "event": self._build_message_event(str(msg), str(task_id), context_id)
+                        "event": self._build_message_event(
+                            str(msg), str(task_id), context_id
+                        )
                     }
             except ValueError as e:
                 logger.warning(
                     "A2A plain POST validation error",
+                    exc_info=True,
                     extra={"action": action, "error": str(e)},
                 )
                 raise HTTPException(status_code=400, detail=str(e))
             except LookupError as e:
                 logger.warning(
                     "A2A plain POST lookup error",
+                    exc_info=True,
                     extra={"action": action, "error": str(e)},
                 )
                 raise HTTPException(status_code=404, detail=str(e))
             except RuntimeError as e:
                 logger.warning(
                     "A2A plain POST runtime error",
+                    exc_info=True,
                     extra={"action": action, "error": str(e)},
                 )
                 raise HTTPException(status_code=500, detail=str(e))

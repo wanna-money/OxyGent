@@ -15,7 +15,7 @@ ssh_tools = FunctionHub(name="ssh_tools", timeout=600)
 async def ssh_tool(
     shell_command: str = Field(description="The shell command to execute"),
     oxy_request: OxyRequest = None,
-):
+) -> str:
     ssh_channel = oxy_request.get_global_data("ssh_channel")
     ssh_channel.send(f"{shell_command}\n")
 

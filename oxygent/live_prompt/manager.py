@@ -9,7 +9,7 @@ The system automatically falls back to LocalEs when Elasticsearch is unavailable
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from ..config import Config
 from ..databases.db_es import JesEs, LocalEs
@@ -31,7 +31,9 @@ class PromptManager:
         db_client: The database client instance (JesEs or LocalEs).
     """
 
-    def __init__(self, es_host: str = None, index_name: str = None):
+    def __init__(
+        self, es_host: Optional[str] = None, index_name: Optional[str] = None
+    ) -> None:
         """Initialize the prompt manager.
 
         Args:
@@ -67,7 +69,7 @@ class PromptManager:
         agent_type: str = "",
         version: int = 1,
         is_active: bool = True,
-        tags: List[str] = None,
+        tags: Optional[list[str]] = None,
         created_by: str = "user",
     ) -> bool:
         """Save or update a prompt with version history and concurrency control.
@@ -133,7 +135,9 @@ class PromptManager:
                         body=history_doc,
                     )
                 except Exception as e:
-                    logger.warning(f"Failed to save history for {prompt_key}: {e}")
+                    logger.warning(
+                        f"Failed to save history for {prompt_key}: {e}", exc_info=True
+                    )
 
                 # Update existing record
                 doc["created_at"] = existing.get("created_at")
@@ -161,7 +165,9 @@ class PromptManager:
                 logger.info(f"✓ Persisted to ES: {prompt_key} (phase 2)")
             except Exception as es_error:
                 # ES write failed - rollback cache to maintain consistency
-                logger.error(f"ES write failed for {prompt_key}: {es_error}")
+                logger.error(
+                    f"ES write failed for {prompt_key}: {es_error}", exc_info=True
+                )
                 logger.warning("Rolling back cache to previous state")
 
                 async with self._cache_lock:
@@ -187,12 +193,12 @@ class PromptManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to save prompt {prompt_key}: {e}")
+            logger.error(f"Failed to save prompt {prompt_key}: {e}", exc_info=True)
             return False
 
     async def get_prompt(
         self, prompt_key: str, use_cache: bool = True
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """Retrieve a prompt by its key.
 
         Fetches prompt data from the database and updates the local cache.
@@ -246,10 +252,10 @@ class PromptManager:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to get prompt {prompt_key}: {e}")
+            logger.error(f"Failed to get prompt {prompt_key}: {e}", exc_info=True)
             return None
 
-    async def clear_cache(self, prompt_key: str = None):
+    async def clear_cache(self, prompt_key: Optional[str] = None) -> None:
         """Clear cache for specific key or all keys.
 
         Args:
@@ -285,7 +291,7 @@ class PromptManager:
             return prompt_data["prompt_content"]
         return fallback_content
 
-    async def get_prompt_history(self, prompt_key: str) -> List[Dict[str, Any]]:
+    async def get_prompt_history(self, prompt_key: str) -> list[dict[str, Any]]:
         """Get prompt version history.
 
         Retrieves the version history for a specific prompt, sorted by version
@@ -345,7 +351,9 @@ class PromptManager:
             return histories
 
         except Exception as e:
-            logger.error(f"Failed to get prompt history for {prompt_key}: {e}")
+            logger.error(
+                f"Failed to get prompt history for {prompt_key}: {e}", exc_info=True
+            )
             return []
 
     async def revert_to_version(self, prompt_key: str, target_version: int) -> bool:
@@ -386,11 +394,9 @@ class PromptManager:
 
             except Exception as e:
                 logger.error(
-                    f"Version {target_version} not found for {prompt_key}: {e}"
+                    f"Version {target_version} not found for {prompt_key}: {e}",
+                    exc_info=True,
                 )
-                import traceback
-
-                traceback.print_exc()
                 return False
 
             # Clear cache before reverting to ensure fresh data
@@ -420,20 +426,18 @@ class PromptManager:
 
         except Exception as e:
             logger.error(
-                f"Failed to revert {prompt_key} to version {target_version}: {e}"
+                f"Failed to revert {prompt_key} to version {target_version}: {e}",
+                exc_info=True,
             )
-            import traceback
-
-            traceback.print_exc()
             return False
 
     async def list_prompts(
         self,
-        category: str = None,
-        agent_type: str = None,
-        is_active: bool = None,
-        tags: List[str] = None,
-    ) -> List[Dict[str, Any]]:
+        category: Optional[str] = None,
+        agent_type: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        tags: Optional[list[str]] = None,
+    ) -> list[dict[str, Any]]:
         """List prompts with optional filtering.
 
         Retrieves all prompts matching the specified criteria. Supports filtering
@@ -512,7 +516,7 @@ class PromptManager:
             return results
 
         except Exception as e:
-            logger.error(f"Failed to list prompts: {e}")
+            logger.error(f"Failed to list prompts: {e}", exc_info=True)
             return []
 
     async def delete_prompt(self, prompt_key: str) -> bool:
@@ -534,7 +538,9 @@ class PromptManager:
                 )
                 logger.info(f"Deleted from ES: {prompt_key}")
             except Exception as es_error:
-                logger.error(f"ES delete failed for {prompt_key}: {es_error}")
+                logger.error(
+                    f"ES delete failed for {prompt_key}: {es_error}", exc_info=True
+                )
                 # Don't clear cache if ES delete fails
                 # This prevents data resurrection on restart
                 raise  # Re-raise to trigger outer exception handler
@@ -548,13 +554,13 @@ class PromptManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to delete prompt {prompt_key}: {e}")
+            logger.error(f"Failed to delete prompt {prompt_key}: {e}", exc_info=True)
             # Cache remains unchanged - consistent with ES state
             return False
 
     async def search_prompts(
-        self, keyword: str, category: str = None
-    ) -> List[Dict[str, Any]]:
+        self, keyword: str, category: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """Search prompts by keyword with optional category filter.
 
         Performs full-text search across prompt fields including key, description,
@@ -618,10 +624,14 @@ class PromptManager:
             return results
 
         except Exception as e:
-            logger.error(f"Failed to search prompts: {e}")
+            logger.error(
+                f"Failed to search prompts with keyword '{keyword}': {e}", exc_info=True
+            )
             return []
 
-    async def _update_local_version_tracker(self, prompt_key: str, version: int):
+    async def _update_local_version_tracker(
+        self, prompt_key: str, version: int
+    ) -> None:
         """Update local version tracker for ES polling synchronization.
 
         Args:
@@ -637,7 +647,7 @@ class PromptManager:
         except Exception as e:
             logger.debug(f"Failed to update local version tracker: {e}")
 
-    async def start_version_sync(self):
+    async def start_version_sync(self) -> None:
         """Start version synchronization for multi-instance cache consistency.
 
         This method should be called after initializing the PromptManager to enable
@@ -653,9 +663,9 @@ class PromptManager:
                 await coordinator.start()
                 logger.info("Version synchronization started")
         except Exception as e:
-            logger.error(f"Failed to start version synchronization: {e}")
+            logger.error(f"Failed to start version synchronization: {e}", exc_info=True)
 
-    async def stop_version_sync(self):
+    async def stop_version_sync(self) -> None:
         """Stop version synchronization.
 
         This method should be called when shutting down the application.
@@ -665,9 +675,11 @@ class PromptManager:
                 await self._version_sync_coordinator.stop()
                 logger.info("Version synchronization stopped")
             except Exception as e:
-                logger.error(f"Error stopping version synchronization: {e}")
+                logger.error(
+                    f"Error stopping version synchronization: {e}", exc_info=True
+                )
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the database connection.
 
         Properly closes the underlying database client connection to free resources.
@@ -701,18 +713,17 @@ async def get_prompt_manager() -> PromptManager:
         prompt_manager = (
             PromptManager()
         )  # Don't pass es_host, let it auto-read from Config
-        # await prompt_manager.init_index()
         try:
             await prompt_manager.start_version_sync()
             _version_sync_started = True
             logger.info("Version sync auto-started with PromptManager")
         except Exception as e:
-            logger.error(f"Failed to auto-start version sync: {e}")
+            logger.error(f"Failed to auto-start version sync: {e}", exc_info=True)
 
     return prompt_manager
 
 
-async def close_prompt_manager():
+async def close_prompt_manager() -> None:
     """Close the global prompt manager and clean up resources.
 
     This function should be called when the application is shutting down
@@ -729,9 +740,9 @@ async def close_prompt_manager():
                 logger.info("Version sync stopped during shutdown")
 
             await prompt_manager.close()
-            logger.info("Prompt manager closed successfully")
+            logger.debug("Prompt manager closed successfully")
         except Exception as e:
-            logger.error(f"Error closing prompt manager: {e}")
+            logger.error(f"Error closing prompt manager: {e}", exc_info=True)
         finally:
             prompt_manager = None
 
@@ -761,7 +772,7 @@ async def get_dynamic_prompt(
             prompt_key, fallback_content, use_cache=use_cache
         )
     except Exception as e:
-        logger.error(f"Failed to get dynamic prompt {prompt_key}: {e}")
+        logger.error(f"Failed to get dynamic prompt {prompt_key}: {e}", exc_info=True)
         return fallback_content
 
 
@@ -804,6 +815,8 @@ async def resolve_prompt_from_es(
             return ""
 
     except Exception as e:
-        logger.error(f"Failed to resolve hot prompt for {prompt_key}: {e}")
+        logger.error(
+            f"Failed to resolve hot prompt for {prompt_key}: {e}", exc_info=True
+        )
         # Return default prompt or empty string on error
         return default_prompt if default_prompt else ""

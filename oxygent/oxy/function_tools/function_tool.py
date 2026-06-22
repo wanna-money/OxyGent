@@ -7,7 +7,7 @@ function signatures and handles execution with proper error handling.
 
 import logging
 from inspect import Parameter, signature
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from pydantic import Field
 from pydantic.fields import FieldInfo
@@ -42,14 +42,14 @@ class FunctionTool(BaseTool):
         False, description="Whether this tool needs oxy_request parameter"
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the function tool and extract input schema from function
         signature."""
         super().__init__(**kwargs)
         self.input_schema = self._extract_input_schema(self.func_process)
         self._set_desc_for_llm()
 
-    def _extract_input_schema(self, func):
+    def _extract_input_schema(self, func: Callable[..., Any]) -> dict[str, Any]:
         """Extract input schema from function signature.
 
         Args:
@@ -97,7 +97,19 @@ class FunctionTool(BaseTool):
         return schema
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Execute the wrapped function with provided arguments."""
+        """Execute the wrapped function with provided arguments.
+
+        Resolves each parameter from ``oxy_request.arguments``, falling back
+        to the function's default values when a parameter is absent.
+
+        Args:
+            oxy_request: The request whose arguments map to the wrapped
+                function's parameters.
+
+        Returns:
+            An OxyResponse with COMPLETED state on success, or FAILED state
+            with the error message on exception.
+        """
         try:
             func_kwargs = {}
             sig = signature(self.func_process)
@@ -135,8 +147,10 @@ class FunctionTool(BaseTool):
             result = await self.func_process(**func_kwargs)
             return OxyResponse(state=OxyState.COMPLETED, output=result)
         except Exception as e:
-            import traceback
-
-            error_msg = traceback.format_exc()
-            logger.error(f"Error in function tool {self.name}: {error_msg}")
+            func_name = getattr(self.func_process, "__name__", repr(self.func_process))
+            logger.error(
+                f"Error in function tool '{self.name}' (func={func_name}, "
+                f"arguments={oxy_request.arguments}): {e}",
+                exc_info=True,
+            )
             return OxyResponse(state=OxyState.FAILED, output=str(e))

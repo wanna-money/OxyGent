@@ -9,7 +9,7 @@ import copy
 import json
 import logging
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import aiofiles
 from pydantic import Field
@@ -58,7 +58,7 @@ class BaseLLM(Oxy):
         default_factory=Config.get_llm_timeout, description="Timeout in seconds."
     )
 
-    llm_params: dict = Field(
+    llm_params: dict[str, Any] = Field(
         default_factory=dict, description="Additional provider-specific LLM parameters"
     )
     is_send_think: bool = Field(
@@ -101,11 +101,19 @@ class BaseLLM(Oxy):
         default=False, description="Whether to omit the system prompt from the LLM call"
     )
 
-    async def _get_messages(self, oxy_request: OxyRequest):
+    async def _get_messages(self, oxy_request: OxyRequest) -> list[dict[str, Any]]:
         """Build the message list for the LLM call.
 
-        Merges the system prompt, parses multimodal content (text, image, video, file),
-        and optionally converts URLs to base64. Returns the assembled message list.
+        Merges the system prompt into the first user message when system prompts
+        are disabled, parses multimodal content (text, image, video, file), and
+        optionally converts media URLs to base64-encoded data URIs.
+
+        Args:
+            oxy_request: The incoming request whose ``arguments["messages"]``
+                list will be processed.
+
+        Returns:
+            A list of message dicts ready to be sent to the LLM provider.
         """
         # merge system prompt
         if (
@@ -217,10 +225,22 @@ class BaseLLM(Oxy):
         return messages_processed
 
     async def _execute(self, oxy_request: OxyRequest) -> OxyResponse:
-        """Execute the LLM request."""
+        """Execute the LLM request.
+
+        Subclasses must override this method with provider-specific logic.
+
+        Args:
+            oxy_request: The request containing messages and LLM parameters.
+
+        Returns:
+            An OxyResponse with the model's generated text.
+
+        Raises:
+            NotImplementedError: Always, unless overridden by a subclass.
+        """
         raise NotImplementedError("This method is not yet implemented")
 
-    async def _post_send_message(self, oxy_response: OxyResponse):
+    async def _post_send_message(self, oxy_response: OxyResponse) -> None:
         """Send think messages to the frontend after response generation.
 
         Extracts and forwards thinking process messages to the frontend if
@@ -253,24 +273,61 @@ class BaseLLM(Oxy):
                 pass
             except Exception as e:
                 logger.error(
-                    e,
+                    f"Unexpected error extracting think message from LLM output (model={self.name}, caller={oxy_request.caller}): {e}",
                     extra={
                         "trace_id": oxy_request.current_trace_id,
                         "node_id": oxy_request.node_id,
                     },
+                    exc_info=True,
                 )
 
     async def _after_execute(self, oxy_response: OxyResponse) -> OxyResponse:
-        """Post-execution hook: aggregate token usage then serialize to dict."""
+        """Post-execution hook: aggregate token usage then serialize to dict.
+
+        Args:
+            oxy_response: The response returned by ``_execute``.
+
+        Returns:
+            The same OxyResponse with ``extra["usage"]`` converted to a dict.
+        """
         usage = oxy_response.extra.get("usage")
         if isinstance(usage, TokenUsage):
             aggregate_token_usage(oxy_response.oxy_request, usage)
             oxy_response.extra["usage"] = usage.model_dump()
         return oxy_response
 
-    def _build_token_usage(self, usage_data, messages: list, output: str):
-        """Build TokenUsage with fallback to estimation.
+    def _build_payload(self, oxy_request: OxyRequest, payload: dict) -> dict:
+        """Merge global LLM config, instance params, and request args into payload.
 
-        Delegates to ``token_utils.build_token_usage``.
+        Priority (last wins): global config < self.llm_params < request arguments.
+        The ``messages`` key in request arguments is always skipped.
+
+        Args:
+            oxy_request: The current request whose arguments are merged.
+            payload: The mutable dict to update in place.
+
+        Returns:
+            The same ``payload`` dict after all merges have been applied.
+        """
+        payload.update(Config.get_llm_config(exclude=["semaphore", "timeout"]))
+        payload.update(self.llm_params)
+        for k, v in oxy_request.arguments.items():
+            if k != "messages":
+                payload[k] = v
+        return payload
+
+    def _build_token_usage(
+        self, usage_data: Any, messages: list[dict[str, Any]], output: str
+    ) -> TokenUsage:
+        """Build a TokenUsage object, falling back to estimation when the
+        provider does not return usage data.
+
+        Args:
+            usage_data: Raw usage dict/object returned by the provider, or None.
+            messages: The messages sent to the model (used for estimation).
+            output: The generated text (used for estimation).
+
+        Returns:
+            A populated TokenUsage instance.
         """
         return build_token_usage(usage_data, messages, output, self.model_name)
