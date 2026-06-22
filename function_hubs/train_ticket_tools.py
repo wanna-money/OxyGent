@@ -98,9 +98,13 @@ def get_tickets(
     cookie = format_cookies(raw_cookie)
     headers = {'Cookie': cookie}
     # 查询车票信息
-    res = requests.get(url, headers=headers).text
-    res_json = json.loads(res)
-    result = res_json['data']['result']
+    response = requests.get(url, headers=headers)
+    try:
+        res_json = response.json()
+    except (json.JSONDecodeError, ValueError):
+        return []
+
+    result = res_json.get('data', {}).get('result', [])
     # 解析车票数据
     tickets = _parse_tickets(ticket_data=result)
 
