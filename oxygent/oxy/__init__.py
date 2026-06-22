@@ -23,7 +23,7 @@ from .flows import (
 )
 from .function_tools.function_hub import FunctionHub
 from .function_tools.function_tool import FunctionTool
-from .llms import HttpLLM, LiteLLM, LocalLLM, MockLLM, OpenAILLM
+from .llms import ActorLLM, HttpLLM, LiteLLM, LocalLLM, MockLLM, OpenAILLM
 from .mcp_tools import MCPTool, SSEMCPClient, StdioMCPClient, StreamableMCPClient
 
 __all__ = [
@@ -37,6 +37,7 @@ __all__ = [
     "ShellUseAgent",
     "SSEOxyGent",
     "HttpTool",
+    "ActorLLM",
     "HttpLLM",
     "LiteLLM",
     "OpenAILLM",

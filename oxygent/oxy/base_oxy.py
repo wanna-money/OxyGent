@@ -621,12 +621,15 @@ Arguments:
             oxy_request = await self._pre_process(oxy_request)
             await self._pre_log(oxy_request)
 
-            key_to_md5 = {
-                k: v
-                for k, v in oxy_request.arguments.items()
-                if isinstance(v, (int, str, float, list, dict, tuple, set))
-            }
-            oxy_request.input_md5 = get_md5(to_json(key_to_md5))
+            key_to_md5 = {}
+            for k, v in oxy_request.arguments.items():
+                if isinstance(v, set):
+                    key_to_md5[k] = sorted(v, key=str)
+                elif isinstance(v, (int, str, float, list, dict, tuple)):
+                    key_to_md5[k] = v
+            oxy_request.input_md5 = get_md5(
+                json.dumps(key_to_md5, sort_keys=True, ensure_ascii=False, default=str)
+            )
             result = await self._request_interceptor(oxy_request)
             if isinstance(result, OxyResponse):
                 await self._pre_send_message(oxy_request)
