@@ -378,6 +378,7 @@ Arguments:
                     oxy_request.restart_node_output
                     and current_node_order == oxy_request.restart_node_order
                 ):
+                    await oxy_request.send_message({"type": "re_run", "content": {}})
                     oxy_request.set_shared_data("_is_read_cache_for_restart", False)
                     restart_node_output = oxy_request.restart_node_output
                     logger.info(
@@ -400,6 +401,7 @@ Arguments:
                     oxy_response.oxy_request = oxy_request
                     return await self._format_output(oxy_response)
                 else:
+                    await oxy_request.send_message({"type": "re_run", "content": {}})
                     oxy_request.set_shared_data("_is_read_cache_for_restart", False)
             else:
                 logger.warning(

@@ -1010,3 +1010,28 @@
 .json-editor-btn-apply:hover {
     background: #104ab5;
 }
+
+.rerun-divider {
+    display: flex;
+    align-items: center;
+    margin: 16px 0;
+    padding: 0 12px;
+    list-style: none;
+}
+
+.rerun-divider::before,
+.rerun-divider::after {
+    content: '';
+    flex: 1;
+    border-top: 1px dashed #b0b8c9;
+}
+
+.rerun-divider-label {
+    flex-shrink: 0;
+    padding: 2px 12px;
+    font-size: 12px;
+    color: #6b7280;
+    background: #f3f4f6;
+    border-radius: 10px;
+    margin: 0 10px;
+}
