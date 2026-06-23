@@ -2540,6 +2540,9 @@
                         outputHead.append(toggleGroup);
                         div_right.append(outputHead);
 
+                        // Timeline container: wraps output + action buttons with a single continuous vertical line
+                        var timelineContainer = $("<div class='node-timeline-container'>");
+
                         // Wrapper containing both markdown and raw views
                         var outputWrapper = $("<div class='plannings-output-wrapper'>");
 
@@ -2555,7 +2558,7 @@
                         rawLink.append(rawInner);
                         outputWrapper.append(rawLink);
 
-                        div_right.append(outputWrapper);
+                        timelineContainer.append(outputWrapper);
 
                         // 节点操作按钮
                         var curNodeId = agent_log["plannings"][i].node_id;
@@ -2577,7 +2580,9 @@
                                     .html("<span class='node-action-icon'>&#9998;</span> Edit & ReRun")
                             );
                         }
-                        div_right.append(node_actions);
+                        timelineContainer.append(node_actions);
+
+                        div_right.append(timelineContainer);
                 }
             }
 
