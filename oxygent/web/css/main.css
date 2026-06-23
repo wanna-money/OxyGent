@@ -1035,3 +1035,31 @@
     border-radius: 10px;
     margin: 0 10px;
 }
+
+#chatbox li.me:hover,
+#chatbox li.master:hover,
+#chatbox li.other:hover {
+    background: rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.node-actions .btn-locate {
+    background: none;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #6b7280;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+}
+
+.node-actions .btn-locate:hover {
+    border-color: #f59e0b;
+    color: #b45309;
+    background: #fffbeb;
+}

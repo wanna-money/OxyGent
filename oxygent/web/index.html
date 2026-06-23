@@ -384,6 +384,54 @@
             container.appendChild(pill);
         });
     }
+
+    function serializeSession() {
+        return {
+            version: 2,
+            branches: branches,
+            activeBranchId: activeBranchId,
+            branchCounter: branchCounter,
+            traceGraphData: traceGraphData,
+            nodeCopiedIdMap: nodeCopiedIdMap,
+            traceGraphTurnIndex: traceGraphTurnIndex,
+            from_trace_id: from_trace_id
+        };
+    }
+
+    function deserializeSession(data) {
+        clearInterval(interval_id);
+        $("#play").html('<img src="./image/play.svg" alt="" />');
+        $("#play")[0].setAttribute('data-status', 'play');
+
+        if (data && data.version === 2 && data.branches) {
+            branches = data.branches;
+            activeBranchId = data.activeBranchId;
+            branchCounter = data.branchCounter;
+            traceGraphData = data.traceGraphData || {};
+            nodeCopiedIdMap = data.nodeCopiedIdMap || {};
+            traceGraphTurnIndex = data.traceGraphTurnIndex || 0;
+            from_trace_id = data.from_trace_id || "";
+            replayHighlightIds = new Set();
+        } else {
+            var framesList = Array.isArray(data) ? data : [];
+            branches = [];
+            branchCounter = 0;
+            activeBranchId = null;
+            traceGraphReset();
+            var rootBranch = createBranch(null, null);
+            rootBranch.frames = framesList;
+        }
+
+        chats = [];
+        plan_dict = {};
+        nodeContentMap = {};
+        init_organization();
+        begin();
+        renderTimeline();
+        renderTraceGraph();
+        no_change_history = false;
+    }
+
     var agent_id_dict = {};
     var agent_organization = {};
     var current_streaming_agent = null; // 当前正在流式输出的agent名称（向后兼容）
@@ -1952,8 +2000,34 @@
         // Ignore clicks on the ReRun button (handled separately)
         if ($(e.target).closest('.tg-node-rerun').length) return;
         var bid = $(this).attr('data-branch-id');
-        if (bid) {
-            switchBranch(bid);
+        var nodeId = $(this).attr('data-node-id');
+        if (!bid) return;
+        // Switch to the node's branch if not already active
+        if (bid !== activeBranchId) {
+            var b = branches.find(function(x) { return x.id === bid; });
+            if (!b) return;
+            activeBranchId = b.id;
+            from_trace_id = b.traceId || "";
+            no_change_history = false;
+            renderTraceGraph();
+            renderTimeline();
+        }
+        // Jump to the frame corresponding to this node
+        var targetFrame = -1;
+        if (nodeId) {
+            var nodes = traceGraphData[bid] || [];
+            for (var i = 0; i < nodes.length; i++) {
+                if (nodes[i].node_id === nodeId) {
+                    targetFrame = nodes[i].frameIndex;
+                    break;
+                }
+            }
+        }
+        var f = getActiveFrames();
+        if (targetFrame >= 0 && targetFrame < f.length) {
+            jumpToFrame(targetFrame);
+        } else {
+            jumpToFrame(Math.max(0, f.length - 1));
         }
     });
 
@@ -1964,6 +2038,21 @@
         var nodeId = $(this).attr('data-node-id');
         if (!nodeId || llm_is_work) return;
         restart_from_node(nodeId, undefined);
+    });
+
+    // Click a chat message → jump to the frame where it first appeared.
+    div_chatbox.on('click', 'li', function (e) {
+        // Don't intercept clicks on interactive children (rating buttons, links)
+        if ($(e.target).closest('button, a, input, .rating-container').length) return;
+        var msgIndex = $(this).index(); // 0-based position among siblings
+        var f = getActiveFrames();
+        // Find the earliest frame whose answer array is long enough to include this message
+        for (var i = 0; i < f.length; i++) {
+            if (f[i].answer && f[i].answer.length > msgIndex) {
+                jumpToFrame(i);
+                return;
+            }
+        }
     });
 
     // Set traceId on active branch and re-render the graph.
@@ -2350,6 +2439,8 @@
             ? JSON.parse(JSON.stringify(forkFrame))
             : {};
         seedFrame["answer"] = JSON.parse(JSON.stringify(chats));
+        seedFrame["agent_log"] = {};
+        seedFrame["tool_call"] = [];
         frames.push(seedFrame);
         show_id = frames.length - 1;
         show_step();
@@ -2466,13 +2557,17 @@
 
                         div_right.append(outputWrapper);
 
-                        // 节点操作按钮：仅 tool 和 llm 类型支持重跑
+                        // 节点操作按钮
                         var curNodeId = agent_log["plannings"][i].node_id;
                         var curCalleeCategory = agent_log["plannings"][i].callee_category || "";
                         nodeContentMap[curNodeId] = markdownInput;
+                        var node_actions = $("<div class='node-actions'>")
+                            .attr("data-node-id", curNodeId);
+                        node_actions.append(
+                            $("<button type='button' class='btn-locate' title='Locate in Trace Graph'>")
+                                .html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Locate')
+                        );
                         if (curCalleeCategory === "llm" || curCalleeCategory === "tool") {
-                            var node_actions = $("<div class='node-actions'>")
-                                .attr("data-node-id", curNodeId);
                             node_actions.append(
                                 $("<button type='button' class='btn-restart' title='Restart from this node'>")
                                     .html("<span class='node-action-icon'>&#9654;</span> ReRun")
@@ -2481,8 +2576,8 @@
                                 $("<button type='button' class='btn-edit-restart' title='Edit output and restart'>")
                                     .html("<span class='node-action-icon'>&#9998;</span> Edit & ReRun")
                             );
-                            div_right.append(node_actions);
                         }
+                        div_right.append(node_actions);
                 }
             }
 
@@ -2540,6 +2635,62 @@
             aimDom.next().css({
                 display: "none",
             })
+        }
+    });
+
+    // Locate button → jump to the frame corresponding to this node
+    $("#agent_log").on("click", ".btn-locate", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var nodeId = $(this).closest(".node-actions").attr("data-node-id");
+        if (!nodeId) return;
+        // Search traceGraphData for this node (covers LLM/tool nodes)
+        var targetFrameIdx = -1;
+        var targetBranchId = null;
+        for (var bid in traceGraphData) {
+            var nodes = traceGraphData[bid];
+            for (var i = 0; i < nodes.length; i++) {
+                if (nodes[i].node_id === nodeId || nodes[i].copied_node_id === nodeId) {
+                    targetFrameIdx = nodes[i].frameIndex;
+                    targetBranchId = bid;
+                    break;
+                }
+            }
+            if (targetBranchId) break;
+        }
+        // Fallback: search frames' agent_log for agent nodes not in traceGraphData
+        if (targetFrameIdx < 0) {
+            for (var bi = 0; bi < branches.length; bi++) {
+                var br = branches[bi];
+                for (var fi = 0; fi < br.frames.length; fi++) {
+                    var al = br.frames[fi].agent_log;
+                    if (al && al.plannings) {
+                        for (var pi = 0; pi < al.plannings.length; pi++) {
+                            if (al.plannings[pi].node_id === nodeId) {
+                                targetFrameIdx = Math.max(0, fi - 1);
+                                targetBranchId = br.id;
+                                break;
+                            }
+                        }
+                    }
+                    if (targetBranchId) break;
+                }
+                if (targetBranchId) break;
+            }
+        }
+        if (targetBranchId && targetBranchId !== activeBranchId) {
+            var b = branches.find(function(x) { return x.id === targetBranchId; });
+            if (b) {
+                activeBranchId = b.id;
+                from_trace_id = b.traceId || "";
+                no_change_history = false;
+                renderTraceGraph();
+                renderTimeline();
+            }
+        }
+        var f = getActiveFrames();
+        if (targetFrameIdx >= 0 && targetFrameIdx < f.length) {
+            jumpToFrame(targetFrameIdx);
         }
     });
 
@@ -2735,7 +2886,7 @@
             type: "POST",
             url: "../save_script",
             data: JSON.stringify({
-                contents: getActiveFrames(),
+                contents: serializeSession(),
                 name: now_script_id.replace('.json', '')
             }),
             contentType: "application/json; charset=utf-8",
@@ -2743,7 +2894,6 @@
             success: function (response) {
                 MessageSDK.show('success!')
                 list_historys();
-                // $(".nice-select").find("input").val(response.data.script_id);
             }
         })
     }
@@ -2771,28 +2921,9 @@
                 item_id: script_id
             },
             success: function (response) {
-                // Wrap loaded flat list into a single root branch
-                branches = [];
-                branchCounter = 0;
-                activeBranchId = null;
-                traceGraphReset();
-                var rootBranch = createBranch(null, null);
-                rootBranch.frames = response.data.contents;
-                clearInterval(interval_id);
-
-                $("#play").html(`
-                        <img src="./image/play.svg" alt="" />
-                    `);
-                $("#play")[0].setAttribute('data-status', 'play');
-
-                init_organization();
-                begin();
-                renderTimeline();
-                renderTraceGraph();
-                no_change_history = false;
+                deserializeSession(response.data.contents);
                 now_script_id = script_id;
-                renderHeaderTitle(now_script_id)
-                // 强制刷新页面
+                renderHeaderTitle(now_script_id);
                 $("#message_input").val("");
                 $("#message_input").attr("placeholder", "Click here to create a new reproduce script and start a new conversation.");
                 $("#chat_send").on('click', function () {
@@ -2800,8 +2931,6 @@
                 });
                 $("#message_send").prop("disabled", true);
                 $("#message_addtional").prop("disabled", true);
-
-
             }
         })
     }
@@ -2833,6 +2962,40 @@
     function show_step() {
         $("#step").text((show_id + 1) + " / " + getActiveFrames().length);
         updateTimelineActive();
+        highlightTraceGraphNode();
+    }
+
+    function highlightTraceGraphNode() {
+        $('#tracegraph-body .tg-node').removeClass('tg-node-current');
+        var ab = getActiveBranch();
+        if (!ab) return;
+        var nodes = traceGraphData[ab.id] || [];
+        // Find the latest node whose frameIndex <= show_id
+        var bestNode = null;
+        for (var i = nodes.length - 1; i >= 0; i--) {
+            if (nodes[i].frameIndex <= show_id) {
+                bestNode = nodes[i];
+                break;
+            }
+        }
+        if (bestNode) {
+            var el = $('#tracegraph-body .tg-node[data-node-id="' + bestNode.node_id + '"]');
+            el.addClass('tg-node-current');
+            // Auto-scroll trace graph to the highlighted node
+            if (el.length) {
+                var container = document.getElementById('tracegraph-body');
+                var node = el[0];
+                if (container && node) {
+                    var nodeTop = node.offsetTop;
+                    var nodeH = node.offsetHeight;
+                    var cH = container.clientHeight;
+                    var cST = container.scrollTop;
+                    if (nodeTop < cST || nodeTop + nodeH > cST + cH) {
+                        container.scrollTop = nodeTop - cH / 2 + nodeH / 2;
+                    }
+                }
+            }
+        }
     }
 
     // ========== Timeline Functions ==========
@@ -3335,17 +3498,16 @@
                 }
 
                 if (selectedValues[0] === 'Export') {
-                    var _exportFrames = getActiveFrames();
-                    if (!_exportFrames.length) {
+                    var _exportData = serializeSession();
+                    if (!_exportData.branches || !_exportData.branches.length) {
                         return
                     }
-                    var jsonData = JSON.stringify(_exportFrames, null, 2);
-                    // 创建下载链接
+                    var jsonData = JSON.stringify(_exportData, null, 2);
                     var blob = new Blob([jsonData], {type: 'application/json'});
                     var url = URL.createObjectURL(blob);
                     var a = document.createElement('a');
                     a.href = url;
-                    a.download = now_script_id ;
+                    a.download = now_script_id || 'session.json';
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
@@ -3376,28 +3538,10 @@
             reader.onload = function (e) {
                 try {
                     var _options = JSON.parse(e.target.result);
-                    if (Array.isArray(_options)) {
-                        // Wrap imported flat list into a single root branch
-                        branches = [];
-                        branchCounter = 0;
-                        activeBranchId = null;
-                        traceGraphReset();
-                        var rootBranch = createBranch(null, null);
-                        rootBranch.frames = _options;
-                        clearInterval(interval_id);
-
-                        $("#play").html(`
-                                <img src="./image/play.svg" alt="" />
-                            `);
-                        $("#play")[0].setAttribute('data-status', 'play');
-
-                        init_organization();
-                        begin();
-                        renderTimeline();
-                        renderTraceGraph();
-                        no_change_history = false;
-                        // now_script_id = script_id;
-
+                    if (Array.isArray(_options) || (_options && _options.version === 2)) {
+                        deserializeSession(_options);
+                        now_script_id = file.name;
+                        renderHeaderTitle(now_script_id);
                         $("#message_input").val("");
                         $("#message_input").attr("placeholder", "Click here to create a new reproduce script and start a new conversation.");
                         $("#chat_send").on('click', function () {
@@ -3405,9 +3549,8 @@
                         });
                         $("#message_send").prop("disabled", true);
                         $("#message_addtional").prop("disabled", true);
-
                     } else {
-                        alert('导入的JSON数据格式不正确，必须是数组格式');
+                        alert('导入的JSON数据格式不正确');
                     }
                 } catch (error) {
                     alert('解析JSON文件失败: ' + error.message);

@@ -332,13 +332,13 @@ body.tracegraph-hidden .btn-tracegraph-toggle svg {
 }
 
 .timeline-frame:hover {
-    border-color: #93b4f5;
-    box-shadow: 0 2px 8px rgba(21, 94, 239, 0.1);
+    border-color: #fbbf24;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
 }
 
 .timeline-frame.active {
-    border-color: #155EEF;
-    box-shadow: 0 0 0 2px rgba(21, 94, 239, 0.18);
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
 }
 
 .timeline-frame.visited {
@@ -366,7 +366,7 @@ body.tracegraph-hidden .btn-tracegraph-toggle svg {
 }
 
 .timeline-frame.active .timeline-thumb-badge {
-    color: #155EEF;
+    color: #b45309;
 }
 
 .container {

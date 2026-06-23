@@ -367,6 +367,22 @@
     cursor: not-allowed;
 }
 
+.tg-node.tg-node-current {
+    border-color: #f59e0b;
+    background: #fffbeb;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+
+.tg-node.tg-node-current .tg-node-callee {
+    color: #b45309;
+}
+
+.tg-node.tg-node-current .tg-node-caller {
+    color: #b45309;
+    background-color: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
 /* Node currently being replayed during a ReRun (matched via copied_node_id) */
 .tg-node.replaying {
     border-color: #f59e0b;

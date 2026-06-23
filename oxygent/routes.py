@@ -332,7 +332,7 @@ class Script(BaseModel):
     """
 
     name: str
-    contents: list
+    contents: Any
 
 
 # ---------------------------------------------------------------------------
