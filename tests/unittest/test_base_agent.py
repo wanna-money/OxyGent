@@ -64,7 +64,7 @@ class TestBaseAgent:
             current_trace_id="trace123",
         )
         await dummy_agent._pre_save_data(oxy_request)
-        dummy_agent.mas.es_client.index.assert_called()
+        dummy_agent.mas.es_client.upsert.assert_called()
 
     async def test_post_save_data(self, dummy_agent):
         """Test _post_save_data stores post-trace data and history."""
@@ -83,6 +83,5 @@ class TestBaseAgent:
         )
 
         await dummy_agent._post_save_data(oxy_response)
-        # trace record is updated via update(), history record via index()
-        dummy_agent.mas.es_client.update.assert_called()
-        dummy_agent.mas.es_client.index.assert_called()
+        # both trace/node record and history record are stored via upsert()
+        dummy_agent.mas.es_client.upsert.assert_called()

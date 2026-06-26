@@ -67,6 +67,14 @@ class BaseEs(BaseDB, ABC):
         """Update a document by ID. Subclasses must implement this."""
         pass
 
+    async def upsert(self, index_name: str, doc_id: str, body: dict[str, Any]) -> None:
+        """Update a document if it exists, or create it with the given body if not.
+
+        Default implementation delegates to update(); subclasses that talk to
+        real Elasticsearch should override with doc_as_upsert semantics.
+        """
+        await self.update(index_name, doc_id, body)
+
     @abstractmethod
     async def search(self, index_name: str, body: dict[str, Any]) -> dict[str, Any]:
         """Execute a search query against an Elasticsearch index.

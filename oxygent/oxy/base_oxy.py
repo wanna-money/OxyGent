@@ -423,7 +423,7 @@ Arguments:
             to_save_shared_data = _serialize_data_for_es(
                 oxy_request.shared_data, Config.get_es_schema_shared_data
             )
-            await self.mas.es_client.index(
+            await self.mas.es_client.upsert(
                 Config.get_app_name() + "_node",
                 doc_id=oxy_request.node_id,
                 body={
@@ -540,7 +540,7 @@ Arguments:
             to_save_shared_data = _serialize_data_for_es(
                 oxy_request.shared_data, Config.get_es_schema_shared_data
             )
-            await self.mas.es_client.update(
+            await self.mas.es_client.upsert(
                 Config.get_app_name() + "_node",
                 doc_id=oxy_request.node_id,
                 body={

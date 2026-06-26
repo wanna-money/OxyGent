@@ -34,12 +34,17 @@ logger = logging.getLogger(__name__)
 
 
 class LocalEs(BaseEs):
-    """Very small file‑system‑backed ES shim."""
+    """Very small file‑system‑backed ES shim with write-behind caching."""
 
     def __init__(self) -> None:  # noqa: D401 – simple init
         self.data_dir: str = os.path.join(Config.get_cache_save_dir(), "local_es_data")
         os.makedirs(self.data_dir, exist_ok=True)
         self._locks: dict[str, asyncio.Lock] = {}
+        self._cache: dict[str, dict[str, Any]] = {}
+        self._cache_lock: asyncio.Lock = asyncio.Lock()
+        self._dirty: set[str] = set()
+        self._flush_interval: float = 0.5
+        self._flush_task: Optional[asyncio.Task] = None
 
     # ------------------------------------------------------------------
     # Utilities (paths, atomic IO helpers)
@@ -118,6 +123,54 @@ class LocalEs(BaseEs):
             await self._write_json_atomic(index_path, {})
         return {"acknowledged": True}
 
+    async def _ensure_cached(self, index_name: str) -> dict[str, Any]:
+        """Load an index into the in-memory cache if not already present."""
+        if index_name not in self._cache:
+            data_path = self._index_path(index_name)
+            self._cache[index_name] = (
+                await self._read_json_safe(data_path) or {}
+            )
+        return self._cache[index_name]
+
+    def _schedule_flush(self, index_name: str) -> None:
+        """Mark an index as dirty and ensure the flush loop is running."""
+        self._dirty.add(index_name)
+        if self._flush_task is None or self._flush_task.done():
+            self._flush_task = asyncio.create_task(self._flush_loop())
+
+    async def _flush_loop(self) -> None:
+        """Periodically flush dirty indices to disk."""
+        while self._dirty:
+            await asyncio.sleep(self._flush_interval)
+            await self._flush_dirty()
+
+    async def _flush_dirty(self) -> None:
+        """Flush all dirty indices to disk."""
+        async with self._cache_lock:
+            to_flush = list(self._dirty)
+            self._dirty.clear()
+            snapshots: dict[str, dict[str, Any]] = {}
+            for index_name in to_flush:
+                data = self._cache.get(index_name)
+                if data is not None:
+                    snapshots[index_name] = json.loads(
+                        json.dumps(data, ensure_ascii=False, default=str)
+                    )
+
+        for index_name, snapshot in snapshots.items():
+            data_path = self._index_path(index_name)
+            backup_path = f"{data_path}.bak"
+            lock = self._locks.setdefault(index_name, asyncio.Lock())
+            async with lock:
+                await self._write_json_atomic(data_path, snapshot)
+                try:
+                    await self._write_json_atomic(backup_path, snapshot)
+                except Exception as e:  # noqa: BLE001
+                    logger.debug(
+                        f"Failed to write backup for index {index_name}: {e}",
+                        exc_info=True,
+                    )
+
     async def insert(
         self,
         index_name: str,
@@ -126,52 +179,15 @@ class LocalEs(BaseEs):
         *,
         update_mode: bool,
     ) -> dict[str, str]:
-        data_path = self._index_path(index_name)
-        backup_path = f"{data_path}.bak"
-
-        lock = self._locks.setdefault(index_name, asyncio.Lock())
-        async with lock:
-            # --- load existing data ---
-            data = await self._read_json_safe(data_path)
-
-            if data is None:  # unrecoverable corruption; try backup once
-                if await aiofiles.os.path.exists(backup_path):
-                    await aiofiles.os.replace(backup_path, data_path)
-                    data = await self._read_json_safe(data_path)
-
-            if data is None:
-                # still corrupted – preserve original file, switch to fresh store
-                corrupt_path = f"{data_path}.corrupt"
-                await aiofiles.os.rename(data_path, corrupt_path)
-                logger.error(
-                    "Index %s is corrupted – moved to %s", index_name, corrupt_path
-                )
-                data = {}
-
-            # --- apply mutation ---
+        async with self._cache_lock:
+            data = await self._ensure_cached(index_name)
             if update_mode:
                 merged = data.get(doc_id, {})
                 merged.update(body)
                 data[doc_id] = merged
             else:
                 data[doc_id] = body
-
-            # --- persist & backup ---
-            # Write new data atomically first.  _write_json_atomic uses a temp
-            # file + os.replace, so data_path is *never* absent — the old file
-            # is atomically overwritten.  We create the backup *afterwards* so
-            # that concurrent lock-free readers (search) never see a missing
-            # data_path.
-            await self._write_json_atomic(data_path, data)
-            try:
-                # Best-effort backup: copy the newly-persisted state.
-                await self._write_json_atomic(backup_path, data)
-            except Exception as e:  # noqa: BLE001 – backup is non-critical
-                logger.debug(
-                    f"Failed to write backup for index {index_name}: {e}",
-                    exc_info=True,
-                )
-
+        self._schedule_flush(index_name)
         return {"_id": doc_id, "result": "updated" if update_mode else "created"}
 
     async def index(
@@ -184,13 +200,21 @@ class LocalEs(BaseEs):
     ) -> dict[str, str]:
         return await self.insert(index_name, doc_id, body, update_mode=True)
 
+    async def upsert(
+        self, index_name: str, doc_id: str, body: dict[str, Any]
+    ) -> dict[str, str]:
+        return await self.insert(index_name, doc_id, body, update_mode=True)
+
     async def exists(self, index_name: str, doc_id: str) -> bool:
-        data = await self._read_json_safe(self._index_path(index_name)) or {}
-        return doc_id in data
+        async with self._cache_lock:
+            data = await self._ensure_cached(index_name)
+            return doc_id in data
 
     async def search(self, index_name: str, body: dict[str, Any]) -> dict[str, Any]:
-        data = await self._read_json_safe(self._index_path(index_name)) or {}
-        docs = self._build_docs(data)
+        async with self._cache_lock:
+            data = await self._ensure_cached(index_name)
+            data_snapshot = {k: v.copy() if isinstance(v, dict) else v for k, v in data.items()}
+        docs = self._build_docs(data_snapshot)
         docs = self._filter_docs(docs, body.get("query", {}))
         docs = self._sort_docs(docs, body.get("sort", []))
 
@@ -204,81 +228,44 @@ class LocalEs(BaseEs):
     async def get_by_node_id(
         self, index_name: str, node_id: str
     ) -> Optional[dict[str, Any]]:
-        data = await self._read_json_safe(self._index_path(index_name)) or {}
-
-        for doc_id, doc_content in data.items():
-            if isinstance(doc_content, dict) and doc_content.get("node_id") == node_id:
-                return {"_id": doc_id, "_source": doc_content}
-
+        async with self._cache_lock:
+            data = await self._ensure_cached(index_name)
+            for doc_id, doc_content in data.items():
+                if isinstance(doc_content, dict) and doc_content.get("node_id") == node_id:
+                    return {"_id": doc_id, "_source": doc_content.copy()}
         return None
 
     async def update_by_node_id(
         self, index_name: str, node_id: str, updates: dict[str, Any]
     ) -> dict[str, str]:
-        data_path = self._index_path(index_name)
-        backup_path = f"{data_path}.bak"
-
-        lock = self._locks.setdefault(index_name, asyncio.Lock())
-        async with lock:
-            data = await self._read_json_safe(data_path) or {}
-
-            target_doc_id = None
+        async with self._cache_lock:
+            data = await self._ensure_cached(index_name)
             for doc_id, doc_content in data.items():
                 if (
                     isinstance(doc_content, dict)
                     and doc_content.get("node_id") == node_id
                 ):
-                    target_doc_id = doc_id
-                    break
-
-            if target_doc_id is None:
-                return {"_id": "", "result": "not_found"}
-
-            data[target_doc_id].update(updates)
-
-            await self._write_json_atomic(data_path, data)
-            try:
-                await self._write_json_atomic(backup_path, data)
-            except Exception as e:  # noqa: BLE001 – backup is non-critical
-                logger.debug(
-                    f"Failed to write backup for index {index_name} after update_by_node_id: {e}",
-                    exc_info=True,
-                )
-
-            return {"_id": target_doc_id, "result": "updated"}
+                    doc_content.update(updates)
+                    self._schedule_flush(index_name)
+                    return {"_id": doc_id, "result": "updated"}
+        return {"_id": "", "result": "not_found"}
 
     async def delete(self, index_name: str, doc_id: str) -> dict[str, str]:
-        """Delete a document from the index.
-
-        Args:
-            index_name: Name of the index
-            doc_id: ID of the document to delete
-
-        Returns:
-            Result of the delete operation
-        """
-        data_path = self._index_path(index_name)
-        backup_path = f"{data_path}.bak"
-
-        lock = self._locks.setdefault(index_name, asyncio.Lock())
-        async with lock:
-            data = await self._read_json_safe(data_path) or {}
-
+        """Delete a document from the index."""
+        async with self._cache_lock:
+            data = await self._ensure_cached(index_name)
             if doc_id not in data:
                 return {"_id": doc_id, "result": "not_found"}
-
             del data[doc_id]
+        self._schedule_flush(index_name)
+        return {"_id": doc_id, "result": "deleted"}
 
-            await self._write_json_atomic(data_path, data)
+    async def close(self) -> bool:
+        """Flush all pending writes and shut down."""
+        if self._flush_task and not self._flush_task.done():
             try:
-                await self._write_json_atomic(backup_path, data)
-            except Exception as e:  # noqa: BLE001 – backup is non-critical
-                logger.debug(
-                    f"Failed to write backup for index {index_name} after delete: {e}",
-                    exc_info=True,
-                )
-
-            return {"_id": doc_id, "result": "deleted"}
-
-    async def close(self) -> bool:  # noqa: D401 – nothing to clean
+                await self._flush_task
+            except Exception:  # noqa: BLE001
+                pass
+        await self._flush_dirty()
         return True

@@ -71,6 +71,15 @@ class MemoryEs(BaseEs):
         store[doc_id] = merged
         return {"_id": doc_id, "result": "updated"}
 
+    async def upsert(
+        self, index_name: str, doc_id: str, body: dict[str, Any]
+    ) -> dict[str, str]:
+        store = self._indices.setdefault(index_name, {})
+        merged = store.get(doc_id, {})
+        merged.update(copy.deepcopy(body))
+        store[doc_id] = merged
+        return {"_id": doc_id, "result": "updated"}
+
     async def exists(self, index_name: str, doc_id: str) -> bool:
         return doc_id in self._indices.get(index_name, {})
 

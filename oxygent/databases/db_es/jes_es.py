@@ -116,6 +116,17 @@ class JesEs(BaseEs):
             self.client.update, index=index_name, id=doc_id, body={"doc": body}
         )
 
+    async def upsert(
+        self, index_name: str, doc_id: str, body: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Update a document if it exists, or create it with body if not."""
+        return await self._run_sync(
+            self.client.update,
+            index=index_name,
+            id=doc_id,
+            body={"doc": body, "doc_as_upsert": True},
+        )
+
     async def search(self, index_name: str, body: dict[str, Any]) -> dict[str, Any]:
         """Search for documents matching the query."""
         return await self._run_sync(self.client.search, index=index_name, body=body)
