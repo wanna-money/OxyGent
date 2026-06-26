@@ -72,7 +72,7 @@ This agent extends BaseAgent to provide local execution capabilities with:
 | `reload_prompt()`                                             | Yes               | `bool`        | Hot-reload prompt from the live prompt system.                                    |
 | `init()`                                                      | Yes               | `None`        | One-time setup; runs tool discovery, multimodal check and optional team spawning. |
 | `_get_history(oxy_request, is_get_user_master_session=False)` | Yes               | `Memory`      | Retrieve recent conversation history from Elasticsearch.                          |
-| `_get_llm_tool_desc_list(oxy_request, query)`                 | Yes               | `str`         | Assemble tool descriptions (static list or retrieved) for the LLM.                |
+| `_get_llm_tool_desc_list(oxy_request, query)`                 | Yes               | `list[str]`   | Assemble tool descriptions (static list or retrieved) for the LLM.                |
 | `_build_instruction(arguments)`                               | No                | `str`         | Substitute `${var}` placeholders in the prompt.                                   |
 | `_pre_process(oxy_request)`                                   | Yes               | `OxyRequest`  | Attach short-term memory (and master memory if opted-in) before handling.         |
 | `_before_execute(oxy_request)`                                | Yes               | `OxyRequest`  | Inject `tools_description`, `additional_prompt`, and multimodal attachments.      |

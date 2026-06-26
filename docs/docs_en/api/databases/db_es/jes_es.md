@@ -39,6 +39,7 @@ The position of the class is:
 | `create_index()` | Yes | `dict or None` | Create a new index with specified configuration |
 | `index()` | Yes | `dict` | Index a document in Elasticsearch |
 | `update()` | Yes | `dict` | Update an existing document |
+| `upsert()` | Yes | `dict` | Update or create a document using `doc_as_upsert` |
 | `search()` | Yes | `dict` | Execute a search query against an index |
 | `exists()` | Yes | `bool` | Check if a document exists in the specified index |
 | `close()` | Yes | `None` | Close the Elasticsearch client connection |

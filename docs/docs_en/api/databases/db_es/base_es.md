@@ -34,6 +34,7 @@ The position of the class is:
 | `create_index()` | Yes | `Any` | Abstract method to create a new index with specified configuration |
 | `index()` | Yes | `Any` | Abstract method to index a document in Elasticsearch |
 | `update()` | Yes | `Any` | Abstract method to update an existing document |
+| `upsert()` | Yes | `Any` | Update a document if it exists, or create it with the given body if not |
 | `search()` | Yes | `Any` | Abstract method to execute a search query against an index |
 | `exists()` | Yes | `bool` | Abstract method to check if a document exists in the specified index |
 | `close()` | Yes | `None` | Abstract method to close the Elasticsearch client connection |

@@ -36,6 +36,7 @@
 | `create_index(index_name, body)`          | 是               | `dict`               | 创建带有 mapping 的索引；返回 `{"acknowledged": True}`。          |
 | `index(index_name, doc_id, body)`         | 是               | `dict`               | 存储文档（深拷贝）；返回 `{"_id": doc_id, "result": "created"}`。 |
 | `update(index_name, doc_id, body)`        | 是               | `dict`               | 将更新合并到已有文档中。                                    |
+| `upsert(index_name, doc_id, body)` | 是 | `dict` | 更新或创建文档（合并语义）。 |
 | `exists(index_name, doc_id)`              | 是               | `bool`               | 检查索引中是否存在某文档。                            |
 | `search(index_name, body)`               | 是               | `dict`               | 过滤、排序，应用 `_source` 过滤；返回 ES 格式的命中结果。         |
 | `delete(index_name, doc_id)`              | 是               | `dict`               | 删除文档；返回 `"deleted"` 或 `"not_found"`。                 |

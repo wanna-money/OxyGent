@@ -61,3 +61,18 @@ Shows how to connect OxyGent to an Ollama-served model. An `HttpLLM` is configur
 - `mas.call()` -- direct LLM invocation for testing connectivity
 
 **[Detailed Guide →](./demo_ollama.md)**
+
+---
+
+### LiteLLM Integration
+
+**File:** `examples/llms/demo_litellm.py`
+
+Demonstrates how to use any LLM provider through LiteLLM in OxyGent. A `LiteLLM` component is configured with a `model_name` following LiteLLM's `provider/model` naming convention (e.g., `anthropic/claude-sonnet-4-20250514`). The API key can be passed directly or read from the corresponding provider environment variable. Optionally, `base_url` can point to a LiteLLM proxy server for centralized API key management. The example pairs the LiteLLM model with a `ReActAgent` and invokes it via `mas.call()` with a simple math question.
+
+**Key Components:**
+- `LiteLLM` -- unified LLM interface supporting 100+ providers
+- `ReActAgent` -- reasoning-and-acting agent backed by LiteLLM
+- `mas.call()` -- agent invocation with a user message
+
+**[Detailed Guide →](./demo_litellm.md)**

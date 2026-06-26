@@ -39,6 +39,7 @@
 | `create_index()` | 是 | `dict or None` | 使用指定配置创建新索引 |
 | `index()` | 是 | `dict` | 在 Elasticsearch 中索引文档 |
 | `update()` | 是 | `dict` | 更新已有文档 |
+| `upsert()` | 是 | `dict` | 使用 `doc_as_upsert` 更新或创建文档 |
 | `search()` | 是 | `dict` | 对索引执行搜索查询 |
 | `exists()` | 是 | `bool` | 检查指定索引中是否存在某文档 |
 | `close()` | 是 | `None` | 关闭 Elasticsearch 客户端连接 |

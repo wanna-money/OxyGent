@@ -11,6 +11,8 @@ The position of the class is:
 │   │   ├── [HttpLLM](./http_llm.md)
 │   │   └── [OpenAILLM](./openai_llm.md)
 │   ├── [LocalLLM](./local_llm.md)
+│   ├── [ActorLLM](./actor_llm.md)
+│   ├── [LiteLLM](./lite_llm.md)
 │   └── [MockLLM](./mock_llm.md)
 └── [BaseTool](../tools/base_tools.md)
 ```

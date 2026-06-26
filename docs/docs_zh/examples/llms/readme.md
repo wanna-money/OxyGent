@@ -61,3 +61,18 @@
 - `mas.call()` -- 直接调用 LLM 以测试连通性
 
 **[详细文档 →](./demo_ollama.md)**
+
+---
+
+### LiteLLM 集成
+
+**文件:** `examples/llms/demo_litellm.py`
+
+演示了如何在 OxyGent 中通过 LiteLLM 使用任意 LLM 提供商。示例将 `LiteLLM` 组件的 `model_name` 按照 LiteLLM 的 `provider/model` 命名规范进行配置（如 `anthropic/claude-sonnet-4-20250514`）。API 密钥可以直接传入，也可以从对应提供商的环境变量中读取。`base_url` 可选配置，用于指向 LiteLLM 代理服务器以集中管理 API 密钥。示例将 LiteLLM 模型与一个 `ReActAgent` 配合，通过 `mas.call()` 发送一个简单的数学问题进行调用。
+
+**核心组件:**
+- `LiteLLM` -- 支持 100+ 提供商的统一 LLM 接口
+- `ReActAgent` -- 由 LiteLLM 驱动的推理与行动智能体
+- `mas.call()` -- 通过用户消息调用智能体
+
+**[详细文档 →](./demo_litellm.md)**

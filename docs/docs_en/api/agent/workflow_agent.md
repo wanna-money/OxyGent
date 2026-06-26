@@ -34,7 +34,7 @@ The position of the class is:
 | ------------------------- | -------------------------------------------- | ------------- | -------------------------------------------------------- |
 | `func_workflow`        | `Optional[Callable]`                                        | `None`          | The workflow function to execute              |
 
-> `func_workflow` supports both sync and async callables.
+> `func_workflow` must be an async callable.
 
 ## Methods
 

@@ -34,6 +34,7 @@
 | `create_index()` | 是 | `Any` | 抽象方法，使用指定配置创建新索引 |
 | `index()` | 是 | `Any` | 抽象方法，在 Elasticsearch 中索引文档 |
 | `update()` | 是 | `Any` | 抽象方法，更新已有文档 |
+| `upsert()` | 是 | `Any` | 若文档存在则更新，若不存在则以给定内容创建 |
 | `search()` | 是 | `Any` | 抽象方法，对索引执行搜索查询 |
 | `exists()` | 是 | `bool` | 抽象方法，检查指定索引中是否存在某文档 |
 | `close()` | 是 | `None` | 抽象方法，关闭 Elasticsearch 客户端连接 |

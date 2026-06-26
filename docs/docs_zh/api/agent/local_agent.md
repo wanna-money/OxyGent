@@ -72,7 +72,7 @@
 | `reload_prompt()`                                             | 是                | `bool`        | 从实时提示词系统热重载提示词。                                                        |
 | `init()`                                                      | 是                | `None`        | 一次性初始化；执行工具发现、多模态检查和可选的团队生成。                                   |
 | `_get_history(oxy_request, is_get_user_master_session=False)` | 是                | `Memory`      | 从 Elasticsearch 检索近期对话历史。                                                  |
-| `_get_llm_tool_desc_list(oxy_request, query)`                 | 是                | `str`         | 为 LLM 组装工具描述（静态列表或检索结果）。                                            |
+| `_get_llm_tool_desc_list(oxy_request, query)`                 | 是                | `list[str]`   | 为 LLM 组装工具描述（静态列表或检索结果）。                                            |
 | `_build_instruction(arguments)`                               | 否                | `str`         | 替换提示词中的 `${var}` 占位符。                                                     |
 | `_pre_process(oxy_request)`                                   | 是                | `OxyRequest`  | 在处理前附加短期记忆（以及可选的主 Agent 记忆）。                                       |
 | `_before_execute(oxy_request)`                                | 是                | `OxyRequest`  | 注入 `tools_description`、`additional_prompt` 和多模态附件。                           |

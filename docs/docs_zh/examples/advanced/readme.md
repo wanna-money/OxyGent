@@ -109,3 +109,15 @@
 **核心组件:** `HttpLLM`, `StdioMCPClient` (x2), `ReActAgent(top_k_tools=3)`, Vearch向量数据库
 
 **[详细文档 →](./demo_top_k_tools.md)**
+
+---
+
+### 运行时 Oxy 管理
+
+**文件:** `examples/advanced/demo_oxy_manage.py`
+
+演示如何使用内置的 `oxy_manage_tools` FunctionHub 在运行时动态管理智能体组织架构。一个配备了 `oxy_manage_tools` 的"doctor_agent"可以创建新的智能体、分配工具、在父节点之间移动 Oxy 实例以及删除智能体 — 所有操作均在系统运行过程中完成。示例使用 `first_query` 的 `list[str]` 形式依次发出四条指令：创建数学智能体、解决数学问题、重组智能体结构、查询时间。
+
+**核心组件:** `HttpLLM`, `preset_tools`（math、time、file）, `ReActAgent` (x3), `preset_tools.oxy_manage_tools`, `first_query`（`list[str]` 形式）
+
+**[详细文档 →](./demo_oxy_manage.md)**

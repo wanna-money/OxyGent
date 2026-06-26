@@ -109,3 +109,15 @@ Demonstrates automatic top-K tool retrieval using vector similarity. By setting 
 **Key Components:** `HttpLLM`, `StdioMCPClient` (x2), `ReActAgent(top_k_tools=3)`, Vearch vector DB
 
 **[Detailed Guide →](./demo_top_k_tools.md)**
+
+---
+
+### Runtime Oxy Management
+
+**File:** `examples/advanced/demo_oxy_manage.py`
+
+Demonstrates how to use the built-in `oxy_manage_tools` FunctionHub to dynamically manage the agent organization at runtime. A "doctor_agent" equipped with `oxy_manage_tools` can create new agents, assign tools, move Oxy instances between parents, and delete agents — all while the system is running. The example uses `first_query` with a `list[str]` to issue four sequential commands: creating a math agent, solving a math problem, reorganizing agents, and querying the time.
+
+**Key Components:** `HttpLLM`, `preset_tools` (math, time, file), `ReActAgent` (x3), `preset_tools.oxy_manage_tools`, `first_query` as `list[str]`
+
+**[Detailed Guide →](./demo_oxy_manage.md)**

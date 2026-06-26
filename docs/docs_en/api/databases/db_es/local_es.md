@@ -19,14 +19,16 @@ The position of the class is:
 
 ## Introduction
 
-`LocalEs` is a filesystem-based Elasticsearch implementation that simulates a subset of Elasticsearch functionality by persisting documents as JSON files on the local filesystem. It provides robust cross-platform behavior with UTF-8 persistence, atomic file operations, and data safety features. This implementation is designed for development and testing scenarios where a full Elasticsearch instance is not available.
+`LocalEs` is a filesystem-based Elasticsearch implementation that simulates a subset of Elasticsearch functionality by persisting documents as JSON files on the local filesystem. It uses an in-memory write-behind cache for high-performance concurrent writes — mutations are applied to memory instantly and flushed to disk asynchronously. It provides robust cross-platform behavior with UTF-8 persistence, atomic file operations, and data safety features. This implementation is designed for development and testing scenarios where a full Elasticsearch instance is not available.
 
 ## Parameters
 
 | Parameter | Type / Allowed value | Default | Description |
 | --------- | -------------------- | ------- | ----------- |
 | `data_dir` | `str` | `local_es_data` | Directory path for storing JSON files |
-| `_locks` | `dict[str, asyncio.Lock]` | `{}` | Dictionary of locks for thread-safe index operations |
+| `_cache` | `dict[str, dict]` | `{}` | In-memory cache mapping index names to their document data |
+| `_cache_lock` | `asyncio.Lock` | - | Lock protecting cache reads and writes |
+| `_flush_interval` | `float` | `0.5` | Interval in seconds between background disk flushes |
 
 ## Methods
 
@@ -35,11 +37,11 @@ The position of the class is:
 | `create_index()` | Yes | `dict[str, bool]` | Create a new index with specified configuration |
 | `index()` | Yes | `dict[str, str]` | Index a document in the filesystem |
 | `update()` | Yes | `dict[str, str]` | Update an existing document |
+| `upsert()` | Yes | `dict[str, str]` | Update or create a document (merge semantics) |
 | `search()` | Yes | `dict` | Execute a search query with basic filtering and sorting |
 | `exists()` | Yes | `bool` | Check if a document exists in the specified index |
-| `close()` | Yes | `bool` | Close the local ES client (no-op, returns True) |
+| `close()` | Yes | `bool` | Flush all pending writes to disk and shut down |
 | `insert()` | Yes | `dict[str, str]` | Internal method to insert or update documents with atomic operations |
-| `find_node_safe()` | Yes | `Optional[dict]` | Find a node by node_id with trace_id validation |
 | `get_by_node_id()` | Yes | `Optional[dict]` | Get a document by node_id |
 | `update_by_node_id()` | Yes | `dict[str, str]` | Update a document by node_id |
 | `_index_path()` | No | `str` | Get the file path for an index |
@@ -50,6 +52,9 @@ The position of the class is:
 | `_filter_docs()` | No | `list[dict]` | Filter documents based on query conditions |
 | `_sort_docs()` | No | `list[dict]` | Static method to sort documents based on sort specifications |
 | `_match_single_condition()` | No | `bool` | Check if a document matches a single query condition |
+| `_ensure_cached()` | Yes | `dict` | Load an index into memory cache on first access |
+| `_schedule_flush()` | No | `None` | Mark index as dirty and ensure flush loop is running |
+| `_flush_dirty()` | Yes | `None` | Flush all dirty indices to disk |
 
 
 ## Inherited

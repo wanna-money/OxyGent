@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added `ActorLLM` — a new LLM backend that runs inference on local transformer models via Ray actors
+- Added `upsert()` method to all ES clients (`BaseEs`, `JesEs`, `LocalEs`, `MemoryEs`) providing create-or-update semantics
+- Added "Locate" button on agent log nodes for jumping to the corresponding node in the Trace Graph
+- Added chat message click-to-jump: clicking a chat message navigates to the frame where it first appeared
+- Added Trace Graph node highlighting that syncs with the current timeline position
+- Added rerun divider in chat history to visually separate conversation turns across reruns
+
+### Changed
+- Optimized `LocalEs` with write-behind caching for significantly improved concurrent write performance
+- Changed `_pre_save_data` and `_post_save_data` in `Oxy` to use `upsert()` instead of `index()`/`update()`, eliminating race conditions in concurrent node persistence
+- Improved input MD5 hash computation to be deterministic for `set` and `dict` types
+- Improved session serialization format (v2) for save/load/export/import with full branch and trace state preservation
+- Improved rerun flow: new branch now forks from the owner of the rerun node with correct chat history restoration
+- Changed timeline and Trace Graph highlight color from blue to amber for better visual distinction
+
+### Fixed
+- Fixed node data loss (`input`/`output` fields missing) under high-concurrency parallel agent execution
+- Fixed rerun node SSE notification to frontend
+
+---
+
+## [1.1.2] - 2026-06-05
+
+### Added
 - Added `oxy_manage_tools` — system-level FunctionHub for runtime CRUD on the agent organization tree (list, get, create, delete, move, modify Oxy instances)
 - Added fine-grained cache token tracking across 5 LLM providers
 - Added support for `first_query` to accept `list[str]` with frontend querys panel

@@ -53,6 +53,9 @@ This class defines the core execution lifecycle, permission management,message h
 | `func_format_output`             | `Optional[Callable]` | `lambda x: x`                              | Format response for the caller     |
 | `func_execute`                   | `Optional[Callable]` | `None`                                     | Custom execution entrypoint        |
 | `func_interceptor`               | `Optional[Callable]` | `None`                                     | Request interceptor hook           |
+| `system_args`                    | `list[str]`          | `[]`                                       | System-level arguments extracted from input_schema |
+| `preceding_oxy`                  | `Optional[list[str]]`| `[]`                                       | Oxy names that must be called before the current Oxy |
+| `preceding_placeholder`          | `str`                | `"preceding_text"`                         | Key name in arguments for injecting preceding Oxy outputs |
 
 > All `func_*` hook parameters support both sync and async callables. Sync functions are automatically wrapped as async at initialization time via `ensure_async()`.
 | `mas`                            | `Optional[Any]`      | `None`                                     | Reference to MAS instance          |
@@ -85,7 +88,7 @@ This class defines the core execution lifecycle, permission management,message h
 | `_post_process(oxy_response)`       | Yes               | Apply response post-processing                           |
 | `_post_log(oxy_response)`           | Yes               | Emit *observation* log                                   |
 | `_post_save_data(oxy_response)`     | Yes               | Persist final node data                                  |
-| `_format_output(oxy_response)`      | No                | Final formatting & friendly-error swap                   |
+| `_format_output(oxy_response)`      | Yes               | Final formatting & friendly-error swap                   |
 | `_post_send_message(oxy_response)`  | Yes               | Send *observation* / *answer* to front-end               |
 | `execute(oxy_request)`              | Yes               | Orchestrate the full async lifecycle with retries        |
 

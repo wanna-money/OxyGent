@@ -52,7 +52,7 @@ The position of the class is:
 | `__init__(**kwargs)`                                          | No                | `None`          | Initialise prompt, response parser, reflexion function and attach `retrieve_tools` if vector search is configured |
 | `_default_reflexion(response, oxy_request)`                   | No                | `Optional[str]` | Basic quality check — returns feedback if the LLM reply is empty                                                  |
 | `_get_history(oxy_request, is_get_user_master_session=False)` | Yes               | `Memory`        | Retrieve and intelligently prune conversation history (scored & token-limited)                                    |
-| `_parse_llm_response(ori_response, oxy_request=None)`         | No                | `LLMResponse`   | Detects *tool call*, *answer*, or *format error* and structures the result                                        |
+| `_parse_llm_response(ori_response, oxy_request=None)`         | Yes               | `LLMResponse`   | Detects *tool call*, *answer*, or *format error* and structures the result                                        |
 | `_execute(oxy_request)`                                       | Yes               | `OxyResponse`   | Implements the ReAct loop: think → call tools → observe → repeat until answer or max rounds                       |
 
 ## Inherited

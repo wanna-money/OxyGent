@@ -37,6 +37,7 @@ The position of the class is:
 
 | Method                        | Coroutine (async) | Return Value  | Purpose (concise)                                                                                                                                                                               |
 | ----------------------------- | ----------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `set_default_prompt()`        | No                | `ChatAgent`   | Pydantic model validator that sets the default chat prompt if none is provided |
 | `_execute(self, oxy_request)` | Yes               | `OxyResponse` | Builds a temporary conversation **memory**, appends the latest user query, merges any `llm_params`, and calls the configured LLM model; returns the model’s reply wrapped in an `OxyResponse`.  |
 
 ## Inherited

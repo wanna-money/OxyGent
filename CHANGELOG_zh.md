@@ -5,6 +5,30 @@
 ## [Unreleased]
 
 ### Added
+- 新增 `ActorLLM` — 通过 Ray Actor 在本地 Transformer 模型上运行推理的 LLM 后端
+- 新增所有 ES 客户端（`BaseEs`、`JesEs`、`LocalEs`、`MemoryEs`）的 `upsert()` 方法，提供创建或更新语义
+- 新增 Agent 日志节点的"定位"按钮，支持跳转到 Trace Graph 中对应节点
+- 新增聊天消息点击跳转功能：点击聊天消息可导航到该消息首次出现的帧
+- 新增 Trace Graph 节点高亮，与当前时间线位置同步
+- 新增重新运行分隔线，在聊天历史中直观分隔跨重运行的对话轮次
+
+### Changed
+- 优化 `LocalEs`，引入 write-behind 缓存机制，显著提升并发写入性能
+- 将 `Oxy` 中的 `_pre_save_data` 和 `_post_save_data` 改为使用 `upsert()` 替代 `index()`/`update()`，消除并发节点持久化中的竞态条件
+- 优化输入 MD5 哈希计算，确保 `set` 和 `dict` 类型的确定性
+- 优化会话序列化格式（v2），保存/加载/导出/导入时完整保留分支和追踪状态
+- 优化重新运行流程：新分支从重运行节点的所属分支正确分叉，并恢复正确的聊天历史
+- 将时间线和 Trace Graph 高亮颜色从蓝色改为琥珀色，提升视觉区分度
+
+### Fixed
+- 修复高并发并行 Agent 执行时节点数据丢失（`input`/`output` 字段缺失）的问题
+- 修复重新运行节点时向前端发送 SSE 通知的问题
+
+---
+
+## [1.1.2] - 2026-06-05
+
+### Added
 - 新增 `oxy_manage_tools` — 系统级 FunctionHub，支持运行时对 Agent 组织架构进行 CRUD 操作（列出、查看、创建、删除、移动、修改 Oxy 实例）
 - 新增细粒度缓存 Token 追踪，覆盖 5 个 LLM 供应商
 - 新增 `first_query` 支持 `list[str]` 类型，前端新增 querys 面板

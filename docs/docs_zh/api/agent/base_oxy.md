@@ -53,6 +53,9 @@
 | `func_format_output`             | `Optional[Callable]` | `lambda x: x`                              | 为调用方格式化响应                    |
 | `func_execute`                   | `Optional[Callable]` | `None`                                     | 自定义执行入口                       |
 | `func_interceptor`               | `Optional[Callable]` | `None`                                     | 请求拦截器钩子                       |
+| `system_args`                    | `list[str]`          | `[]`                                       | 从 input_schema 中提取的系统级参数 |
+| `preceding_oxy`                  | `Optional[list[str]]`| `[]`                                       | 在当前 Oxy 之前必须调用的 Oxy 名称列表 |
+| `preceding_placeholder`          | `str`                | `"preceding_text"`                         | 用于注入前置 Oxy 输出的参数键名 |
 
 > 所有 `func_*` 钩子参数均支持同步和异步函数。同步函数会在初始化时通过 `ensure_async()` 自动包装为异步函数。
 | `mas`                            | `Optional[Any]`      | `None`                                     | 对 MAS 实例的引用                    |
@@ -85,7 +88,7 @@
 | `_post_process(oxy_response)`       | 是                | 应用响应后处理                                            |
 | `_post_log(oxy_response)`           | 是                | 生成 *observation* 日志                                   |
 | `_post_save_data(oxy_response)`     | 是                | 持久化最终节点数据                                         |
-| `_format_output(oxy_response)`      | 否                | 最终格式化和友好错误替换                                    |
+| `_format_output(oxy_response)`      | 是                | 最终格式化和友好错误替换                                    |
 | `_post_send_message(oxy_response)`  | 是                | 向前端发送 *observation* / *answer*                        |
 | `execute(oxy_request)`              | 是                | 编排完整的异步生命周期（含重试）                            |
 

@@ -49,7 +49,7 @@ Agents are the core building block in your apps. A typical agent uses a large la
 
 ## Inheritance
 
-The class `BaseAgent` inherits from `Oxy` and must be inherited by all agents.
+The class `BaseAgent` inherits from `BaseFlow` and must be inherited by all agents.
 
 
 ## Inherited

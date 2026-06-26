@@ -11,6 +11,7 @@ The LLM in OxyGent refers to the traditional LLM form, which supports taking a s
 | 100+ providers via LiteLLM (Anthropic, Bedrock, Vertex, etc.) | `oxy.LiteLLM` | `model_name` (e.g. `anthropic/claude-sonnet-4-20250514`) |
 | Ollama locally deployed model | `oxy.HttpLLM` | `base_url` (do not pass api_key) |
 | HuggingFace local model | `oxy.LocalLLM` | `model_path`, `device_map` |
+| Ray Actor local model | `oxy.ActorLLM` | `actor_llm`, `actor_llm_timeout` |
 | Testing/Development (no real LLM needed) | `oxy.MockLLM` | `func_mock_process` |
 
 ## Calling General Models
@@ -143,6 +144,21 @@ oxy.LocalLLM(
 ```
 
 > LocalLLM requires additional installation of the `torch` and `transformers` packages.
+
+## Using Ray Actor Models (ActorLLM)
+
+If you have a model deployed as a Ray actor, you can use `oxy.ActorLLM`:
+
+```python
+oxy.ActorLLM(
+    name="actor_llm",
+    actor_llm=your_ray_actor_handle,
+    actor_llm_timeout=120,
+    raise_on_error=False,
+),
+```
+
+> ActorLLM requires Ray or a compatible `ray_adapter` module. The actor must implement an `agent_generate_one_step()` method.
 
 ## Common Parameter Settings
 OxyGent supports fine-grained model parameter configuration. You can set LLM parameters either at call time or in [Config](../getting-started/config.md). Here are some commonly used parameters:

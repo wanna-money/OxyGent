@@ -36,6 +36,7 @@ The position of the class is:
 | `create_index(index_name, body)`          | Yes               | `dict`               | Create an index with mapping; returns `{"acknowledged": True}`.          |
 | `index(index_name, doc_id, body)`         | Yes               | `dict`               | Store a document (deep-copied); returns `{"_id": doc_id, "result": "created"}`. |
 | `update(index_name, doc_id, body)`        | Yes               | `dict`               | Merge updates into existing document.                                    |
+| `upsert(index_name, doc_id, body)` | Yes | `dict` | Update or create a document (merge semantics). |
 | `exists(index_name, doc_id)`              | Yes               | `bool`               | Check whether a document exists in the index.                            |
 | `search(index_name, body)`               | Yes               | `dict`               | Filter, sort, apply `_source` filtering; returns ES-format hits.         |
 | `delete(index_name, doc_id)`              | Yes               | `dict`               | Delete a document; returns `"deleted"` or `"not_found"`.                 |

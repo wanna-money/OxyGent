@@ -52,7 +52,7 @@
 | `__init__(**kwargs)`                                          | 否                | `None`          | 初始化提示词、响应解析器、反思函数，并在配置向量搜索时附加 `retrieve_tools`                                           |
 | `_default_reflexion(response, oxy_request)`                   | 否                | `Optional[str]` | 基本质量检查 - 如果 LLM 回复为空则返回反馈                                                                         |
 | `_get_history(oxy_request, is_get_user_master_session=False)` | 是                | `Memory`        | 检索并智能裁剪对话历史（评分和 Token 限制）                                                                         |
-| `_parse_llm_response(ori_response, oxy_request=None)`         | 否                | `LLMResponse`   | 检测 *tool call*、*answer* 或 *format error* 并结构化结果                                                          |
+| `_parse_llm_response(ori_response, oxy_request=None)`         | 是                | `LLMResponse`   | 检测 *tool call*、*answer* 或 *format error* 并结构化结果                                                          |
 | `_execute(oxy_request)`                                       | 是                | `OxyResponse`   | 实现 ReAct 循环：思考 -> 调用工具 -> 观察 -> 重复直到得到答案或达到最大轮数                                            |
 
 ## 继承
