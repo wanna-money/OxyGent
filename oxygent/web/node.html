@@ -53,6 +53,11 @@
         </div>
     </div>
     <div class="node-header-right">
+        <label class="flowchart-toggle-master" id="flowchartMasterLabel" title="Show the outermost master agent wrapper in the flowchart">
+            <input type="checkbox" id="flowchartMasterToggle" onchange="toggleFlowchartMaster(this.checked)">
+            <span class="flowchart-toggle-slider"></span>
+            <span class="flowchart-toggle-text">Master Node</span>
+        </label>
         <button class="node-header-btn" onclick="handleCollapse()" id="collapseToggleBtn" title="Toggle Graph">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,9 7,5 11,9"/></svg>
             <span>Graph</span>
@@ -205,8 +210,19 @@
     })();
 
     $(document).ready(function () {
+        var saved = localStorage.getItem('flowchart_show_master') !== 'false';
+        $('#flowchartMasterToggle').prop('checked', saved);
         intiNode()
     })
+
+    function toggleFlowchartMaster(checked) {
+        localStorage.setItem('flowchart_show_master', checked ? 'true' : 'false');
+        if (ViewsDatas && ViewsDatas.length > 0) {
+            renderFlowchart(ViewsDatas, 'flowchart-container');
+            var currentId = getCurrentNodeId();
+            highlightNodeInView('view1', currentId);
+        }
+    }
 
     function intiNode() {
         $.ajax({
@@ -854,6 +870,7 @@
             $('#flowchart-container-gantt').css('display', 'none');
             $('#swimlane-container').css('display', 'none');
             $('#timeline-container').css('display', 'none');
+            $('#flowchartMasterLabel').css('display', '');
             highlightNodeInView('view1', currentId);
 
         } else if (index === 'gantt-container-section') {
@@ -862,6 +879,7 @@
             $('#flowchart-container-gantt').css('display', 'block');
             $('#swimlane-container').css('display', 'none');
             $('#timeline-container').css('display', 'none');
+            $('#flowchartMasterLabel').css('display', 'none');
 
             setTimeout(() => {
                 highlightNodeInView('view2', currentId);
@@ -872,6 +890,7 @@
             $('#flowchart-container-gantt').css('display', 'none');
             $('#swimlane-container').css('display', 'block');
             $('#timeline-container').css('display', 'none');
+            $('#flowchartMasterLabel').css('display', 'none');
             highlightNodeInView('view3', currentId);
         } else if (index === 'timeline-container-section') {
             renderTraceChain(ViewsDatas, 'timeline-container');
@@ -879,6 +898,7 @@
             $('#flowchart-container-gantt').css('display', 'none');
             $('#swimlane-container').css('display', 'none');
             $('#timeline-container').css('display', 'flex');
+            $('#flowchartMasterLabel').css('display', 'none');
             highlightNodeInView('view4', currentId);
         }
         // 3.让下部里面相应索引号的item显示，其余的item隐藏

@@ -239,13 +239,14 @@ function renderFlowchart(agentNodes, containerId) {
         return elements;
     }
 
+    const showMaster = localStorage.getItem('flowchart_show_master') !== 'false';
     const rootNode = agentNodes.find(node => !node.father_node_id);
     const nodesMap = new Map(agentNodes.map(node => [node.node_id, node]));
 
     if (rootNode) {
-        // We will render the children of the root, as the root itself is just a logical container
-        const flowchartElements = buildFlow(rootNode.child_node_ids, rootNode.node_id); 
-        // const flowchartElements = buildFlow([rootNode.node_id], null);
+        const flowchartElements = showMaster
+            ? buildFlow([rootNode.node_id], null)
+            : buildFlow(rootNode.child_node_ids, rootNode.node_id);
         const container = document.getElementById(containerId);
         $('#flowchart-container').html('').removeAttr('data-processed');
         flowchartElements.forEach(el => container.appendChild(el));
